@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Media;
@@ -18,12 +19,41 @@ namespace CtrDxEditor.Content
     /// <summary>A fully resolved, composited object sprite: ordered layers plus per-object scale.</summary>
     public sealed record ObjectSprite(IReadOnlyList<SpriteLayerDraw> Layers, double Scale);
 
-    /// <summary>Lazily loads atlas images and frame data from the configured content root.</summary>
-    public sealed class SpriteCache(string contentRoot)
+    /// <summary>Reads sprite atlases from a preloaded platform content store.</summary>
+    public sealed class SpriteCache(IContentStore store)
     {
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
         private readonly Dictionary<string, Bitmap?> _thumbnails = [];
+
+        /// <summary>Creates a sprite cache for a desktop content folder.</summary>
+        public SpriteCache(string contentRoot)
+            : this(new FolderContentStore(contentRoot))
+        {
+            PreloadAsync().GetAwaiter().GetResult();
+        }
+
+        /// <summary>Loads every statically-known atlas image and frame table into memory once.</summary>
+        public async Task PreloadAsync()
+        {
+            foreach (VisualDescriptor v in VisualDescriptorMap.ByElement.Values)
+            {
+                foreach (SpriteLayer layer in v.Layers)
+                {
+                    if (!_bitmaps.ContainsKey(layer.AtlasPngRelPath))
+                    {
+                        byte[] png = await store.ReadBytesAsync(layer.AtlasPngRelPath);
+                        using MemoryStream ms = new(png);
+                        _bitmaps[layer.AtlasPngRelPath] = new Bitmap(ms);
+                    }
+                    if (!_atlases.ContainsKey(layer.AtlasJsonRelPath))
+                    {
+                        string json = await store.ReadTextAsync(layer.AtlasJsonRelPath);
+                        _atlases[layer.AtlasJsonRelPath] = new Atlas(AtlasJsonLoader.ParseFrames(json));
+                    }
+                }
+            }
+        }
 
         /// <summary>A small composited preview of an object's sprite, for the palette. Cached per element.</summary>
         public Bitmap? GetThumbnail(string element)
@@ -96,9 +126,9 @@ namespace CtrDxEditor.Content
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
             foreach (SpriteLayer layer in v.Layers)
             {
-                Bitmap bitmap = LoadBitmap(layer.AtlasPngRelPath);
-                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath).Find(layer.FrameName);
-                if (frame is not null)
+                Bitmap? bitmap = LoadBitmap(layer.AtlasPngRelPath);
+                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.Find(layer.FrameName);
+                if (bitmap is not null && frame is not null)
                 {
                     layers.Add(new SpriteLayerDraw(bitmap, frame));
                 }
@@ -107,25 +137,14 @@ namespace CtrDxEditor.Content
             return layers.Count == 0 ? null : new ObjectSprite(layers, v.Scale);
         }
 
-        private Bitmap LoadBitmap(string relPath)
+        private Bitmap? LoadBitmap(string relPath)
         {
-            if (!_bitmaps.TryGetValue(relPath, out Bitmap? bmp))
-            {
-                bmp = new Bitmap(Path.Combine(contentRoot, relPath));
-                _bitmaps[relPath] = bmp;
-            }
-            return bmp;
+            return _bitmaps.TryGetValue(relPath, out Bitmap? bmp) ? bmp : null;
         }
 
-        private Atlas LoadAtlas(string relPath)
+        private Atlas? LoadAtlas(string relPath)
         {
-            if (!_atlases.TryGetValue(relPath, out Atlas? atlas))
-            {
-                string json = File.ReadAllText(Path.Combine(contentRoot, relPath));
-                atlas = new Atlas(AtlasJsonLoader.ParseFrames(json));
-                _atlases[relPath] = atlas;
-            }
-            return atlas;
+            return _atlases.TryGetValue(relPath, out Atlas? atlas) ? atlas : null;
         }
     }
 }

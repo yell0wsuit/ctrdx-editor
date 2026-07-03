@@ -49,6 +49,14 @@ namespace CtrDxEditor.Content
         public static IReadOnlyDictionary<string, VisualDescriptor> ByElement { get; } =
             All.ToDictionary(v => v.Element);
 
+        /// <summary>Distinct atlas PNG and JSON relative paths that every built-in sprite depends on.</summary>
+        public static IReadOnlyCollection<string> RequiredAssetPaths { get; } =
+            [
+                .. All.SelectMany(v => v.Layers)
+                      .SelectMany(l => new[] { l.AtlasPngRelPath, l.AtlasJsonRelPath })
+                      .Distinct(),
+            ];
+
         /// <summary>Returns a visual descriptor by object element name, or null when unsupported.</summary>
         public static VisualDescriptor? For(string element)
         {
