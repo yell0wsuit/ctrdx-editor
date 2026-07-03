@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CtrDxEditor.ViewModels"
+        x:Class="CtrDxEditor.Views.ContentSetupWindow"
+        x:DataType="vm:ContentSetupViewModel"
+        Width="520" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Title="Content Setup">
+  <StackPanel Margin="24" Spacing="16">
+    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Content assets required" />
+    <TextBlock TextWrapping="Wrap"
+               Text="CtrDxEditor needs its content assets (sprites, fonts, cursors) before it can open. Download them now, or point the editor at a folder you already have." />
+
+    <ProgressBar Minimum="0" Maximum="1"
+                 Value="{Binding Progress}"
+                 IsVisible="{Binding IsBusy}" />
+
+    <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
+               Text="{Binding ErrorMessage}"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="Quit" Click="Quit_Click" IsEnabled="{Binding !IsBusy}" />
+      <Button Content="Open releases page" Click="OpenReleases_Click" IsEnabled="{Binding !IsBusy}" />
+      <Button Content="Locate folder..." Click="Locate_Click" IsEnabled="{Binding !IsBusy}" />
+      <Button Content="Download assets" Classes="accent"
+              Command="{Binding DownloadCommand}" />
+    </StackPanel>
+  </StackPanel>
+</Window>
