@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
+
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Data;
 using Avalonia.Markup.Xaml;
 
 using CtrDxEditor.Content;
@@ -19,38 +22,44 @@ namespace CtrDxEditor
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                MainWindow window = new();
+                desktop.MainWindow = window;
+
                 string? contentPath = ContentRoot.TryResolve();
                 if (contentPath is not null)
                 {
-                    desktop.MainWindow = ShowEditor(contentPath);
+                    window.DataContext = new EditorViewModel(contentPath);
                 }
                 else
                 {
-                    desktop.MainWindow = ShowSetup(desktop);
+                    // The editor stays uninitialized (null DataContext) behind the setup
+                    // dialog until the user provides content. Run once the host window is
+                    // shown so the ReactiveDialogHost is in the visual tree.
+                    window.Opened += async (_, _) => await RunSetupAsync(window, desktop);
                 }
             }
             base.OnFrameworkInitializationCompleted();
         }
 
-        private static MainWindow ShowEditor(string contentPath) =>
-            new() { DataContext = new EditorViewModel(contentPath) };
-
-        private static ContentSetupWindow ShowSetup(IClassicDesktopStyleApplicationLifetime desktop)
+        private static async Task RunSetupAsync(
+            MainWindow window, IClassicDesktopStyleApplicationLifetime desktop)
         {
             ContentSetupViewModel vm = new(
                 ContentRoot.DefaultContentDir,
                 ContentDownloader.DownloadAsync,
                 SaveContentPath);
 
-            ContentSetupWindow setup = new(vm);
-            vm.Completed += () =>
+            ContentSetupDialog dialog = new() { DataContext = vm };
+            Optional<string> result = await dialog.ShowAsync();
+
+            if (result.GetValueOrDefault() is string contentPath)
             {
-                MainWindow editor = ShowEditor(vm.ResolvedContentPath!);
-                desktop.MainWindow = editor;
-                editor.Show();
-                setup.Close();
-            };
-            return setup;
+                window.DataContext = new EditorViewModel(contentPath);
+            }
+            else
+            {
+                desktop.Shutdown();
+            }
         }
 
         private static void SaveContentPath(string contentPath)

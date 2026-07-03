@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:CtrDxEditor.Localization"
+             x:Class="CtrDxEditor.Views.ContentSetupDialog"
+             x:CompileBindings="False">
+  <StackPanel Margin="24" Spacing="16" Width="460">
+    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{loc:Tr Dialog.ContentSetup.Title}" />
+
+    <!-- Idle: describe the choice. -->
+    <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
+               Text="{loc:Tr Dialog.ContentSetup.Description}" />
+
+    <!-- Busy: the description is replaced by live download progress. -->
+    <StackPanel Spacing="8" IsVisible="{Binding IsBusy}">
+      <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
+      <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
+    </StackPanel>
+
+    <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
+               Text="{Binding ErrorMessage}"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                IsVisible="{Binding !IsBusy}">
+      <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
+      <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
+      <Button Content="{loc:Tr Dialog.ContentSetup.Locate}" Click="Locate_Click" />
+      <Button Content="{loc:Tr Dialog.ContentSetup.Quit}" Click="Quit_Click" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

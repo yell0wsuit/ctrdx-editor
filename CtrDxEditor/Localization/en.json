@@ -20,6 +20,17 @@
     "Dialog.Save.Title": "Save level XML",
     "Dialog.FileType.LevelXml": "Level XML",
 
+    "Dialog.ContentSetup.Title": "Assets required",
+    "Dialog.ContentSetup.Description": "Cut the Rope: DX - Level Editor needs assets before it can open. You can download them now, or point at a folder you already have.",
+    "Dialog.ContentSetup.Downloading": "Downloading assets… {0:P0}",
+    "Dialog.ContentSetup.PickerTitle": "Select the asset location",
+    "Dialog.ContentSetup.Quit": "Quit",
+    "Dialog.ContentSetup.DownloadManually": "Download manually",
+    "Dialog.ContentSetup.Locate": "Locate folder...",
+    "Dialog.ContentSetup.Download": "Download assets",
+    "Dialog.ContentSetup.Error.DownloadFailed": "Download failed: ",
+    "Dialog.ContentSetup.Error.InvalidFolder": "The selected folder is not a valid asset folder (missing file_manifest.json or listed assets).",
+
     "Object.target": "Om Nom",
     "Object.candy": "Candy",
     "Object.star": "Star",

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
@@ -53,7 +54,7 @@ namespace CtrDxEditor.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Download failed: " + ex.Message;
+                ErrorMessage = Localizer.Get("Dialog.ContentSetup.Error.DownloadFailed") + ex.Message;
             }
             finally
             {
@@ -66,9 +67,7 @@ namespace CtrDxEditor.ViewModels
         {
             if (!ContentLocation.IsValid(dir))
             {
-                ErrorMessage =
-                    "That folder is not a valid content folder " +
-                    "(missing file_manifest.json or listed assets).";
+                ErrorMessage = Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder");
                 return;
             }
             Succeed(dir);

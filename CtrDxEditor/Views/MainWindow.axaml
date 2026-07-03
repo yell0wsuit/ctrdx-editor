@@ -7,10 +7,12 @@
         xmlns:conv="using:CtrDxEditor.Converters"
         xmlns:loc="using:CtrDxEditor.Localization"
         xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:dialogs="using:AvaloniaDialogs.Views"
         x:Class="CtrDxEditor.Views.MainWindow"
         x:DataType="vm:EditorViewModel"
         Width="1100" Height="720"
         Title="{loc:Tr Window.Title}">
+  <dialogs:ReactiveDialogHost CloseOnClickAway="False">
   <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="{loc:Tr Menu.File}">
@@ -172,4 +174,5 @@
       </Grid>
     </Grid>
   </DockPanel>
+  </dialogs:ReactiveDialogHost>
 </Window>

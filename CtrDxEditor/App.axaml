@@ -1,10 +1,12 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:dialogHostAvalonia="using:DialogHostAvalonia"
              x:Class="CtrDxEditor.App"
              RequestedThemeVariant="Dark">
   <Application.Styles>
     <FluentTheme />
     <icons:MaterialIconStyles />
+    <dialogHostAvalonia:DialogHostStyles />
   </Application.Styles>
 </Application>
