@@ -3,6 +3,7 @@ using Avalonia.Browser;
 
 using CtrDxEditor;
 using CtrDxEditor.Browser.Content;
+using CtrDxEditor.Startup;
 
 [assembly: System.Runtime.Versioning.SupportedOSPlatform("browser")]
 

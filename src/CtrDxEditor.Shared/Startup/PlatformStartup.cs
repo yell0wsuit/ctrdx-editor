@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 
-namespace CtrDxEditor
+namespace CtrDxEditor.Startup
 {
     /// <summary>Platform-provided services that drive application startup (one per head).</summary>
     public sealed class PlatformStartup

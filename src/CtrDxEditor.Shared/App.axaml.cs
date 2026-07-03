@@ -6,6 +6,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Startup;
 using CtrDxEditor.ViewModels;
 using CtrDxEditor.Views;
 

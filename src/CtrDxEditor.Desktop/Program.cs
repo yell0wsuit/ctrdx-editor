@@ -5,6 +5,7 @@ using Avalonia;
 
 using CtrDxEditor;
 using CtrDxEditor.Content;
+using CtrDxEditor.Startup;
 
 namespace CtrDxEditor.Desktop
 {
