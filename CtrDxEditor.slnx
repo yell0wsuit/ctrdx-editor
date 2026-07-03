@@ -3,5 +3,4 @@
   <Project Path="CtrDxEditor.Core/CtrDxEditor.Core.csproj" />
   <Project Path="CtrDxEditor.Tests/CtrDxEditor.Tests.csproj" />
   <Project Path="CtrDxEditor/CtrDxEditor.csproj" />
-  <Project Path="tools/FetchContentAssets/FetchContentAssets.csproj" />
 </Solution>
