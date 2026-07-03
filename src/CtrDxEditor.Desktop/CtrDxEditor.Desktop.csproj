@@ -4,6 +4,7 @@
     <RootNamespace>CtrDxEditor.Desktop</RootNamespace>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DesktopPublish>true</DesktopPublish>
     <PublishAot>true</PublishAot>
     <TrimMode>full</TrimMode>
   </PropertyGroup>

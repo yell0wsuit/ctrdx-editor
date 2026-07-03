@@ -10,6 +10,8 @@
     <GenerateDocumentationFile Condition="'$(Configuration)' != 'Release'">true</GenerateDocumentationFile>
     <IsTestProjectName>$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests'))</IsTestProjectName>
     <IsAotCompatible Condition="'$(IsTestProjectName)' != 'True'">true</IsAotCompatible>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(DesktopPublish)' == 'true'">
     <SelfContained Condition="'$(PublishAot)' == 'true' and '$(Configuration)' == 'Release'">true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <PublishReadyToRun>false</PublishReadyToRun>
