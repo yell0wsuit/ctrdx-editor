@@ -8,5 +8,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsTestProjectName>$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests'))</IsTestProjectName>
+    <IsAotCompatible Condition="'$(IsTestProjectName)' != 'True'">true</IsAotCompatible>
   </PropertyGroup>
 </Project>
