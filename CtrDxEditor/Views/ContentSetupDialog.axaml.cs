@@ -30,15 +30,9 @@ namespace CtrDxEditor.Views
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
-            if (_vm is not null)
-            {
-                _vm.Completed -= OnCompleted;
-            }
+            _vm?.Completed -= OnCompleted;
             _vm = DataContext as ContentSetupViewModel;
-            if (_vm is not null)
-            {
-                _vm.Completed += OnCompleted;
-            }
+            _vm?.Completed += OnCompleted;
         }
 
         private void OnCompleted()
