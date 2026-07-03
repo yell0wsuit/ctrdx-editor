@@ -7,11 +7,6 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <PublishAot>true</PublishAot>
     <TrimMode>full</TrimMode>
-    <SelfContained Condition="'$(PublishAot)' == 'true' and '$(Configuration)' == 'Release'">true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishReadyToRun>false</PublishReadyToRun>
-    <StripSymbols>true</StripSymbols>
-    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
