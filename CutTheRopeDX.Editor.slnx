@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="CutTheRopeDX.Editor.Core.Tests/CutTheRopeDX.Editor.Core.Tests.csproj" />
-  <Project Path="CutTheRopeDX.Editor.Core/CutTheRopeDX.Editor.Core.csproj" />
-  <Project Path="CutTheRopeDX.Editor/CutTheRopeDX.Editor.csproj" />
-  <Project Path="tools/FetchContentAssets/FetchContentAssets.csproj" />
-</Solution>

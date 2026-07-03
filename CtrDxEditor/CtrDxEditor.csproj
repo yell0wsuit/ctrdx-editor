@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>CtrDxEditor</RootNamespace>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CtrDxEditor.Core\CtrDxEditor.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Translation files ship next to the editor; Localizer reads them at startup. -->
+    <Content Include="Localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    Local-dev only: fetch the binary content assets (atlas .png, fonts, cursors)
+    the editor renders. Git-tracked text content (maps/*.xml, atlas *.json) ships
+    in the repo; binaries are listed in content/file_manifest.json and pulled from
+    the ctrdx-assets release. The editor reads content/ in place via ContentRoot,
+    so nothing is copied to the output dir. CI sets CI=true and skips the fetch.
+  -->
+  <Target Name="RestoreContentAssets"
+    BeforeTargets="CollectPackageReferences"
+    Condition="'$(CI)' != 'true'">
+    <Exec
+      Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../tools/FetchContentAssets/FetchContentAssets.csproj&quot; -- &quot;$(MSBuildProjectDirectory)/../content&quot;"
+      WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+  </Target>
+</Project>
