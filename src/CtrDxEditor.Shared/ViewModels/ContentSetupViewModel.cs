@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,12 +11,11 @@ using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
-    /// <summary>Backs the first-run Content Setup dialog: download the asset bundle or locate an existing folder.</summary>
+    /// <summary>Backs the first-run Content Setup dialog: download the asset bundle or upload a zip file.</summary>
     public sealed partial class ContentSetupViewModel : ViewModelBase
     {
         private readonly IContentInstaller _installer;
-        private readonly string _downloadContentDir;
-        private readonly Func<string, Task> _onInstalled;
+        private readonly Func<Task> _onInstalled;
         private CancellationTokenSource? _downloadCts;
 
         [ObservableProperty] public partial bool IsBusy { get; set; }
@@ -29,13 +29,9 @@ namespace CtrDxEditor.ViewModels
         public IAsyncRelayCommand DownloadCommand { get; }
 
         /// <summary>Creates a content setup view model.</summary>
-        public ContentSetupViewModel(
-            IContentInstaller installer,
-            string downloadContentDir,
-            Func<string, Task> onInstalled)
+        public ContentSetupViewModel(IContentInstaller installer, Func<Task> onInstalled)
         {
             _installer = installer;
-            _downloadContentDir = downloadContentDir;
             _onInstalled = onInstalled;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.
             DownloadCommand = new AsyncRelayCommand(DownloadAsync);
@@ -52,7 +48,7 @@ namespace CtrDxEditor.ViewModels
             {
                 Progress<double> progress = new(p => Progress = p);
                 await _installer.InstallFromDownloadAsync(progress, cts.Token);
-                await CompleteAsync(_downloadContentDir);
+                await CompleteAsync();
             }
             catch (OperationCanceledException)
             {
@@ -76,20 +72,29 @@ namespace CtrDxEditor.ViewModels
             _downloadCts?.Cancel();
         }
 
-        /// <summary>Validates a user-picked folder; on success saves and completes, otherwise sets an error.</summary>
-        public async Task ApplyLocatedFolder(string dir)
+        /// <summary>Installs from a user-picked zip stream (CORS-proof fallback).</summary>
+        public async Task InstallFromZipAsync(Stream zip)
         {
-            if (!ContentLocation.IsValid(dir))
+            IsBusy = true;
+            ErrorMessage = null;
+            try
             {
-                ErrorMessage = Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder");
-                return;
+                await _installer.InstallFromZipAsync(zip, CancellationToken.None);
+                await CompleteAsync();
             }
-            await CompleteAsync(dir);
+            catch (Exception ex)
+            {
+                ErrorMessage = Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder") + ex.Message;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
-        private async Task CompleteAsync(string contentDir)
+        private async Task CompleteAsync()
         {
-            await _onInstalled(contentDir);
+            await _onInstalled();
             Completed?.Invoke();
         }
     }

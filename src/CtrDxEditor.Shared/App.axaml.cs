@@ -58,9 +58,7 @@ namespace CtrDxEditor
                 return;
             }
 
-            // TODO(Task 6): switch to the parameterless-completion ContentSetupViewModel constructor
-            // and drop the unused downloadContentDir/contentPath parameters below.
-            ContentSetupViewModel vm = new(_startup.Installer, string.Empty, async _ =>
+            ContentSetupViewModel vm = new(_startup.Installer, async () =>
                 await ShowEditorAsync(root, _startup.InstalledStore()));
             ContentSetupDialog dialog = new() { DataContext = vm };
             _ = await dialog.ShowAsync();

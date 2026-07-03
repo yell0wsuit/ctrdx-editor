@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -46,22 +47,23 @@ namespace CtrDxEditor.Views
             Close("");
         }
 
-        private async void Locate_Click(object? sender, RoutedEventArgs e)
+        private async void PickZip_Click(object? sender, RoutedEventArgs e)
         {
-            if (_vm is null || TopLevel.GetTopLevel(this) is not TopLevel top)
+            if (DataContext is not ContentSetupViewModel vm)
             {
                 return;
             }
-
-            IReadOnlyList<IStorageFolder> folders = await top.StorageProvider.OpenFolderPickerAsync(
-                new FolderPickerOpenOptions
+            IReadOnlyList<IStorageFile> files = await TopLevel.GetTopLevel(this)!.StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
                 {
-                    Title = Localizer.Get("Dialog.Common.PickerTitle"),
+                    Title = Localizer.Get("Dialog.ContentSetup.PickZip"),
                     AllowMultiple = false,
+                    FileTypeFilter = [new FilePickerFileType("Zip") { Patterns = ["*.zip"] }],
                 });
-            if (folders.Count > 0 && folders[0].TryGetLocalPath() is string path)
+            if (files.Count == 1)
             {
-                await _vm.ApplyLocatedFolder(path);
+                await using Stream stream = await files[0].OpenReadAsync();
+                await vm.InstallFromZipAsync(stream);
             }
         }
 
