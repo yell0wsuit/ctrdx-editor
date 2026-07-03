@@ -16,7 +16,7 @@ namespace CtrDxEditor.ViewModels
 {
     public sealed partial class EditorViewModel : ViewModelBase
     {
-        private readonly string _contentRoot = ContentRoot.Resolve();
+        private readonly string _contentRoot;
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
 
         [ObservableProperty] private LevelDocument? _document;
@@ -33,8 +33,9 @@ namespace CtrDxEditor.ViewModels
         public ObservableCollection<LevelObject> ObjectList { get; } = [];
         public event Action? ObjectMutated;
 
-        public EditorViewModel()
+        public EditorViewModel(string contentRoot)
         {
+            _contentRoot = contentRoot;
             Sprites = new SpriteCache(_contentRoot);
 
             string sample = Path.Combine(_contentRoot, "maps", "2_21.xml");

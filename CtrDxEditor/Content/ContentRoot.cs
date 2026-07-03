@@ -3,24 +3,22 @@ using System.IO;
 
 namespace CtrDxEditor.Content
 {
-    /// <summary>Locates the repository's content/ directory by walking up from the app base dir.</summary>
+    /// <summary>Resolves the content directory in the running app's environment (settings + exe location).</summary>
     public static class ContentRoot
     {
-        public static string Resolve()
+        /// <summary>Path to the persisted settings file: EditorConfig/settings.json next to the executable.</summary>
+        public static string SettingsPath =>
+            Path.Combine(AppContext.BaseDirectory, "EditorConfig", "settings.json");
+
+        /// <summary>Default download destination: content/ next to the executable.</summary>
+        public static string DefaultContentDir =>
+            Path.Combine(AppContext.BaseDirectory, "content");
+
+        /// <summary>Returns the resolved content directory, or null when the user must set it up.</summary>
+        public static string? TryResolve()
         {
-            DirectoryInfo? dir = new(AppContext.BaseDirectory);
-            while (dir is not null)
-            {
-                string candidate = Path.Combine(dir.FullName, "content");
-                if (File.Exists(Path.Combine(candidate, "file_manifest.json")))
-                {
-                    return candidate;
-                }
-                dir = dir.Parent;
-            }
-            throw new DirectoryNotFoundException(
-                "Could not locate the 'content' directory in any parent of " + AppContext.BaseDirectory +
-                ". Expected a 'content' folder containing 'file_manifest.json'.");
+            EditorSettings settings = EditorSettings.Load(SettingsPath);
+            return ContentLocation.Resolve(AppContext.BaseDirectory, settings.ContentPath);
         }
     }
 }
