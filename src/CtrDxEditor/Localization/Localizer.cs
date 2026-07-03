@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
 
 namespace CtrDxEditor.Localization
@@ -53,7 +54,7 @@ namespace CtrDxEditor.Localization
             }
 
             using FileStream stream = File.OpenRead(path);
-            return JsonSerializer.Deserialize<Dictionary<string, string>>(stream) ?? [];
+            return JsonSerializer.Deserialize(stream, AppJsonContext.Default.DictionaryStringString) ?? [];
         }
 
         /// <summary>UI string for a key; returns the key itself when missing so gaps are visible.</summary>

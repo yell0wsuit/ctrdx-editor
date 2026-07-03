@@ -1,8 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:vm="using:CtrDxEditor.ViewModels"
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
-             x:CompileBindings="False">
+             x:DataType="vm:ContentSetupViewModel">
   <StackPanel Margin="24" Spacing="16" Width="460">
     <!-- Title reflects the current phase. -->
     <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"

@@ -12,8 +12,6 @@ namespace CtrDxEditor.Content
         [JsonPropertyName("contentPath")]
         public string? ContentPath { get; set; }
 
-        private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
-
         /// <summary>Loads settings from <paramref name="path"/>; returns empty settings when the file is missing or unreadable.</summary>
         public static EditorSettings Load(string path)
         {
@@ -24,7 +22,7 @@ namespace CtrDxEditor.Content
                     return new EditorSettings();
                 }
                 string json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize<EditorSettings>(json, Options) ?? new EditorSettings();
+                return JsonSerializer.Deserialize(json, AppJsonContext.Default.EditorSettings) ?? new EditorSettings();
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
             {
@@ -40,7 +38,7 @@ namespace CtrDxEditor.Content
             {
                 _ = Directory.CreateDirectory(dir);
             }
-            File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
+            File.WriteAllText(path, JsonSerializer.Serialize(this, AppJsonContext.Default.EditorSettings));
         }
     }
 }
