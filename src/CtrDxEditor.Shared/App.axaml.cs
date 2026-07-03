@@ -12,15 +12,16 @@ using CtrDxEditor.Views;
 namespace CtrDxEditor
 {
     /// <summary>Avalonia application root: platform-neutral startup driven by an injected <see cref="PlatformStartup"/>.</summary>
-    public partial class App : Application
+    /// <remarks>Creates the application with its platform services.</remarks>
+    public partial class App(PlatformStartup startup) : Application
     {
-        private readonly PlatformStartup _startup;
-
-        /// <summary>Creates the application with its platform services.</summary>
-        public App(PlatformStartup startup) => _startup = startup;
+        private readonly PlatformStartup _startup = startup;
 
         /// <inheritdoc />
-        public override void Initialize() => AvaloniaXamlLoader.Load(this);
+        public override void Initialize()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
 
         /// <inheritdoc />
         public override void OnFrameworkInitializationCompleted()

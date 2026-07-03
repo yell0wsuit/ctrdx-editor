@@ -3,6 +3,7 @@
     <TargetFramework>net10.0-browser</TargetFramework>
     <RootNamespace>CtrDxEditor.Browser</RootNamespace>
     <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Browser uses the wasm SDK's own publish pipeline; never single-file/AOT-desktop. -->
     <RunAOTCompilation>false</RunAOTCompilation>
     <WasmNativeStrip>true</WasmNativeStrip>

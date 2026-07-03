@@ -1,29 +1,25 @@
-using System.Threading.Tasks;
-
 using Avalonia;
 using Avalonia.Browser;
 
 using CtrDxEditor;
-using CtrDxEditor.Content;
+using CtrDxEditor.Browser.Content;
 
 [assembly: System.Runtime.Versioning.SupportedOSPlatform("browser")]
 
-internal sealed partial class Program
-{
-    private static Task Main()
-    {
-        return BuildAvaloniaApp().StartBrowserAppAsync("out");
-    }
+await IndexedDb.ImportAsync();
+await BuildAvaloniaApp().StartBrowserAppAsync("out");
 
-    private static AppBuilder BuildAvaloniaApp()
+AppBuilder BuildAvaloniaApp()
+{
+    IndexedDbSettingsStore settings = new();
+    IndexedDbContentStore contentStore = new();
+    PlatformStartup startup = new()
     {
-        PlatformStartup startup = new()
-        {
-            Settings = null!,
-            Installer = null!,
-            InstalledStore = null!,
-            ResolveInstalled = () => Task.FromResult<IContentStore?>(null),
-        };
-        return AppBuilder.Configure(() => new App(startup)).WithInterFont();
-    }
+        Settings = settings,
+        Installer = new BrowserContentInstaller(),
+        InstalledStore = () => new IndexedDbContentStore(),
+        ResolveInstalled = async () =>
+            await contentStore.IsPopulatedAsync() ? contentStore : null,
+    };
+    return AppBuilder.Configure(() => new App(startup)).WithInterFont();
 }
