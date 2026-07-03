@@ -19,13 +19,13 @@ namespace CtrDxEditor.ViewModels
         private readonly string _contentRoot;
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
 
-        [ObservableProperty] private LevelDocument? _document;
-        [ObservableProperty] private ViewTransform _view = ViewTransform.Identity;
-        [ObservableProperty] private LevelObject? _selectedObject;
-        [ObservableProperty] private LevelObject? _lockedObject;
-        [ObservableProperty] private bool _snapEnabled;
-        [ObservableProperty] private bool _showHitboxes = true;
-        [ObservableProperty] private bool _showMobileHitboxes;
+        [ObservableProperty] public partial LevelDocument? Document { get; set; }
+        [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
+        [ObservableProperty] public partial LevelObject? SelectedObject { get; set; }
+        [ObservableProperty] public partial LevelObject? LockedObject { get; set; }
+        [ObservableProperty] public partial bool SnapEnabled { get; set; }
+        [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
+        [ObservableProperty] public partial bool ShowMobileHitboxes { get; set; }
 
         public SpriteCache Sprites { get; }
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];

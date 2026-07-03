@@ -18,9 +18,9 @@ namespace CtrDxEditor.ViewModels
         private readonly Action<string> _saveContentPath;
         private CancellationTokenSource? _downloadCts;
 
-        [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private double _progress;
-        [ObservableProperty] private string? _errorMessage;
+        [ObservableProperty] public partial bool IsBusy { get; set; }
+        [ObservableProperty] public partial double Progress { get; set; }
+        [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
         /// <summary>The resolved content directory once setup succeeds; null until then.</summary>
         public string? ResolvedContentPath { get; private set; }
