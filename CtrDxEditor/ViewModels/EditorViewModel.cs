@@ -37,12 +37,6 @@ namespace CtrDxEditor.ViewModels
         {
             _contentRoot = contentRoot;
             Sprites = new SpriteCache(_contentRoot);
-
-            string sample = Path.Combine(_contentRoot, "maps", "2_21.xml");
-            if (File.Exists(sample))
-            {
-                LoadLevel(sample);
-            }
         }
 
         public void LoadLevel(string path)
