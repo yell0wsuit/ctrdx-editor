@@ -6,6 +6,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for adding and removing objects in level documents.</summary>
     public class DocumentMutationTests
     {
         private const string Level = """
@@ -21,6 +22,7 @@ namespace CtrDxEditor.Core.Tests
     </map>
     """;
 
+        /// <summary>Verifies that adding then removing an object restores the original object list.</summary>
         [Fact]
         public void AddThenRemoveReturnsToOriginalCount()
         {
@@ -36,6 +38,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("candy", doc.Objects[0].Type);
         }
 
+        /// <summary>Verifies that added objects are included in saved XML.</summary>
         [Fact]
         public void AddedObjectAppearsInSavedXml()
         {

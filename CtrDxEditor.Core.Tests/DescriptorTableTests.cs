@@ -4,8 +4,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for built-in object descriptor metadata.</summary>
     public class DescriptorTableTests
     {
+        /// <summary>Verifies that the default descriptor table contains the initial supported objects.</summary>
         [Fact]
         public void DefaultKnowsTheFourV1Objects()
         {
@@ -17,6 +19,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(t.Knows("bubble"));
         }
 
+        /// <summary>Verifies singleton limits for target and candy descriptors.</summary>
         [Fact]
         public void TargetAndCandyAreSingletons()
         {
@@ -25,6 +28,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(int.MaxValue, DescriptorTable.Default.For("star")!.MaxCount);
         }
 
+        /// <summary>Verifies the default timeout value for star descriptors.</summary>
         [Fact]
         public void StarDefaultTimeoutIsMinusOne()
         {

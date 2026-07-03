@@ -4,6 +4,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for parsing level XML documents.</summary>
     public class LevelDocumentTests
     {
         private const string TwoPartLevel = """
@@ -22,6 +23,7 @@ namespace CtrDxEditor.Core.Tests
     </map>
     """;
 
+        /// <summary>Verifies that parsing reads settings and object wrappers from level XML.</summary>
         [Fact]
         public void ParseReadsSettingsAndObjects()
         {

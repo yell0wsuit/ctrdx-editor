@@ -9,6 +9,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for descriptor placement capacity checks.</summary>
     public class CardinalityTests
     {
         private static LevelObject Obj(string xml)
@@ -16,6 +17,7 @@ namespace CtrDxEditor.Core.Tests
             return new(XElement.Parse(xml));
         }
 
+        /// <summary>Verifies that singleton target descriptors are full once one target exists.</summary>
         [Fact]
         public void TargetIsAtCapacityOnceOneExists()
         {
@@ -25,6 +27,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(Cardinality.IsAtCapacity(target, objects));
         }
 
+        /// <summary>Verifies that unbounded star descriptors remain placeable with existing stars.</summary>
         [Fact]
         public void StarsAreNeverAtCapacity()
         {

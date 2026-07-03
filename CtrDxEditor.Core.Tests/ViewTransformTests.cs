@@ -4,8 +4,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for view zoom and pan coordinate transforms.</summary>
     public class ViewTransformTests
     {
+        /// <summary>Verifies that level-to-screen conversion applies zoom before pan.</summary>
         [Fact]
         public void LevelToScreenAppliesZoomThenPan()
         {
@@ -14,6 +16,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new Vec2(210, 105), t.LevelToScreen(new Vec2(100, 50)));
         }
 
+        /// <summary>Verifies that screen-to-level conversion inverts level-to-screen conversion.</summary>
         [Fact]
         public void ScreenToLevelInvertsLevelToScreen()
         {

@@ -7,6 +7,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for parsing TexturePacker atlas JSON.</summary>
     public class AtlasJsonLoaderTests
     {
         private const string SampleJson = /*lang=json,strict*/ """
@@ -24,6 +25,7 @@ namespace CtrDxEditor.Core.Tests
     }
     """;
 
+        /// <summary>Verifies that frame rectangles, trim metadata, and source size are parsed.</summary>
         [Fact]
         public void ParseFramesReadsRectTrimAndSourceSize()
         {
@@ -38,6 +40,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(f.Rotated);
         }
 
+        /// <summary>Verifies that an empty frames array returns no atlas frames.</summary>
         [Fact]
         public void ParseFramesOnEmptyFramesReturnsEmpty()
         {

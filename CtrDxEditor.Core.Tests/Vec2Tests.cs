@@ -4,8 +4,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for level-space vector operations.</summary>
     public class Vec2Tests
     {
+        /// <summary>Verifies component-wise vector subtraction.</summary>
         [Fact]
         public void SubtractionGivesComponentDifference()
         {

@@ -7,6 +7,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for resolving visual rope targets from grab objects.</summary>
     public class RopeResolverTests
     {
         private static LevelObject Obj(string xml)
@@ -14,6 +15,7 @@ namespace CtrDxEditor.Core.Tests
             return new(XElement.Parse(xml));
         }
 
+        /// <summary>Verifies that a normal grab connects to the single candy in one-part levels.</summary>
         [Fact]
         public void SingleCandyGrabBindsToCandy()
         {
@@ -26,6 +28,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Same(candy, t.Target);
         }
 
+        /// <summary>Verifies that two-part levels resolve a grab to the candy matching its part.</summary>
         [Fact]
         public void TwoPartGrabBindsByPart()
         {
@@ -39,6 +42,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Same(candyR, t.Target);
         }
 
+        /// <summary>Verifies that gun grabs do not draw a rope target.</summary>
         [Fact]
         public void GunGrabHasNoRope()
         {
@@ -49,6 +53,7 @@ namespace CtrDxEditor.Core.Tests
                 RopeResolver.Resolve(gun, [candy, gun], twoParts: false).Kind);
         }
 
+        /// <summary>Verifies that bulb-bound grabs connect to the matching numbered light bulb.</summary>
         [Fact]
         public void BindBulbGrabLinksToMatchingBulb()
         {

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for mapping atlas sprite frames into level-space bounds.</summary>
     public class SpritePlacementTests
     {
         // obj_hook_01_frame_0000: sourceSize 276x276, trim offset (78,76), frame 127x128.
@@ -16,6 +17,7 @@ namespace CtrDxEditor.Core.Tests
             SourceSize: new IntSize(276, 276),
             Rotated: false, Trimmed: true);
 
+        /// <summary>Verifies that hit bounds use the untrimmed sprite centered on object coordinates.</summary>
         [Fact]
         public void HitBoxIsUntrimmedSpriteCenteredOnXyScaledByMapscale()
         {
@@ -25,6 +27,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(154, 104, 92, 92), layout.Hit);
         }
 
+        /// <summary>Verifies that source bounds remain the original atlas pixel rectangle.</summary>
         [Fact]
         public void SourceIsTheAtlasPixelRect()
         {
@@ -32,6 +35,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new IntRect(921, 1, 127, 128), layout.Source);
         }
 
+        /// <summary>Verifies that destination bounds apply the trim origin offset.</summary>
         [Fact]
         public void DestOffsetsTheTrimmedFrameByTheTrimOrigin()
         {
@@ -44,6 +48,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(128.0 / 3.0, layout.Dest.H, precision: 9);
         }
 
+        /// <summary>Verifies that per-object scale shrinks the sprite about its center point.</summary>
         [Fact]
         public void PerObjectScaleShrinksTheSpriteAboutItsCenter()
         {

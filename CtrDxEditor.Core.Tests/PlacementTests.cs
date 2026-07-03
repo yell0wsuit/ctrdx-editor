@@ -6,8 +6,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for creating XML-backed objects from descriptors.</summary>
     public class PlacementTests
     {
+        /// <summary>Verifies that placement writes coordinates and descriptor defaults.</summary>
         [Fact]
         public void CreateObjectSetsCoordinatesAndDefaults()
         {
@@ -21,6 +23,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("-1", obj.GetAttr("timeout"));
         }
 
+        /// <summary>Verifies that attributes without defaults are omitted from new objects.</summary>
         [Fact]
         public void CreateObjectSkipsAttributesWithoutADefault()
         {

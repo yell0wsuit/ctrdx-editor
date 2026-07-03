@@ -8,8 +8,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for preserving level XML during load/save round trips.</summary>
     public class RoundTripTests
     {
+        /// <summary>Verifies that loading and saving fixture levels preserves XML semantics.</summary>
         [Theory]
         [InlineData("TestData/2_21.xml")]
         [InlineData("TestData/5_1.xml")]
@@ -27,6 +29,7 @@ namespace CtrDxEditor.Core.Tests
                 $"Round-trip changed the document for {path}.");
         }
 
+        /// <summary>Verifies that localized layer data survives round-trip serialization.</summary>
         [Fact]
         public void LocaleLayersSurviveRoundTrip()
         {

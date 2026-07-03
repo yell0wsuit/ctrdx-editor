@@ -5,10 +5,12 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for mapping game hitboxes into editor level space.</summary>
     public class HitboxTests
     {
         // scale = 3 makes s = scale/mapScale = 1, so level units == game px for clean expectations.
 
+        /// <summary>Verifies that the candy desktop hitbox is centered using its source-size frame.</summary>
         [Fact]
         public void CandyDesktopBoxCentersOnObjectUsingSourcesizeFrame()
         {
@@ -18,6 +20,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-54.5, -52, 112, 104), box);
         }
 
+        /// <summary>Verifies that the star desktop hitbox aligns with the trimmed glow frame.</summary>
         [Fact]
         public void StarDesktopBoxUsesTrimmedGlowFrame()
         {
@@ -26,6 +29,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-48, -47.5, 82, 82), box);
         }
 
+        /// <summary>Verifies that the target desktop hitbox maps to the mouth line.</summary>
         [Fact]
         public void TargetDesktopBoxIsTheMouthLine()
         {
@@ -34,6 +38,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-56, 30, 108, 2), box);
         }
 
+        /// <summary>Verifies that phone hitboxes use WP7 scaling and differ from desktop bounds.</summary>
         [Fact]
         public void PhoneBoxScalesRawValuesByWp7AndDiffersFromDesktop()
         {
@@ -43,6 +48,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-58.5, -62, 105, 105), box);
         }
 
+        /// <summary>Verifies that object coordinates translate the computed hitbox.</summary>
         [Fact]
         public void ObjectPositionTranslatesTheBox()
         {
@@ -50,6 +56,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(45.5, 148, 112, 104), box);
         }
 
+        /// <summary>Verifies that per-object scale shrinks the hitbox around the object center.</summary>
         [Fact]
         public void ObjectScaleShrinksTheBoxAboutTheObjectCenter()
         {
@@ -63,6 +70,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0.0, box.Value.Y + (box.Value.H / 2.0), precision: 9); // center y
         }
 
+        /// <summary>Verifies that unsupported elements do not produce hitboxes.</summary>
         [Theory]
         [InlineData("grab")]
         [InlineData("bubble")]

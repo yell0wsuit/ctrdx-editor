@@ -6,8 +6,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
+    /// <summary>Tests for live XML-backed level object wrappers.</summary>
     public class LevelObjectTests
     {
+        /// <summary>Verifies that setting X updates both the property and wrapped XML attribute.</summary>
         [Fact]
         public void SettingXWritesBackToTheAttribute()
         {
