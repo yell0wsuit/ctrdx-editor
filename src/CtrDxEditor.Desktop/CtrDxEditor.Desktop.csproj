@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>CtrDxEditor.Desktop</RootNamespace>
+    <AssemblyName>CtrDxEditor</AssemblyName>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DesktopPublish>true</DesktopPublish>
@@ -12,6 +13,6 @@
     <PackageReference Include="Avalonia.Desktop" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CtrDxEditor\CtrDxEditor.csproj" />
+    <ProjectReference Include="..\CtrDxEditor.Shared\CtrDxEditor.Shared.csproj" />
   </ItemGroup>
 </Project>

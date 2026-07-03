@@ -49,7 +49,7 @@ namespace CtrDxEditor.Localization
 
         private static Dictionary<string, string> ReadResource(string lang)
         {
-            Uri uri = new($"avares://CtrDxEditor/Localization/{lang}.json");
+            Uri uri = new($"avares://CtrDxEditor.Shared/Localization/{lang}.json");
             try
             {
                 if (!AssetLoader.Exists(uri))

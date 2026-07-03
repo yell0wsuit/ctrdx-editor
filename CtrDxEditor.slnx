@@ -3,5 +3,5 @@
   <Project Path="src/CtrDxEditor.Core/CtrDxEditor.Core.csproj" />
   <Project Path="src/CtrDxEditor.Desktop/CtrDxEditor.Desktop.csproj" />
   <Project Path="src/CtrDxEditor.Tests/CtrDxEditor.Tests.csproj" />
-  <Project Path="src/CtrDxEditor/CtrDxEditor.csproj" />
+  <Project Path="src/CtrDxEditor.Shared/CtrDxEditor.Shared.csproj" />
 </Solution>

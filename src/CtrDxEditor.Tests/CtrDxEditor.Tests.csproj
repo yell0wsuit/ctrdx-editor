@@ -9,6 +9,6 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CtrDxEditor\CtrDxEditor.csproj" />
+    <ProjectReference Include="..\CtrDxEditor.Shared\CtrDxEditor.Shared.csproj" />
   </ItemGroup>
 </Project>
