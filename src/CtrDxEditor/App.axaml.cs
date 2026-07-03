@@ -67,9 +67,10 @@ namespace CtrDxEditor
 
         private static void SaveContentPath(string contentPath)
         {
-            EditorSettings settings = EditorSettings.Load(ContentRoot.SettingsPath);
+            FileSettingsStore store = new(ContentRoot.SettingsPath);
+            EditorSettings settings = store.LoadAsync().GetAwaiter().GetResult();
             settings.ContentPath = contentPath;
-            settings.Save(ContentRoot.SettingsPath);
+            store.SaveAsync(settings).GetAwaiter().GetResult();
         }
     }
 }

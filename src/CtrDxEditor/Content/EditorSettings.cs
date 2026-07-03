@@ -1,44 +1,12 @@
-using System;
-using System.IO;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CtrDxEditor.Content
 {
-    /// <summary>Persisted editor settings, stored as JSON next to the executable.</summary>
+    /// <summary>Persisted editor settings.</summary>
     public sealed class EditorSettings
     {
         /// <summary>User-configured content directory path, if one has been saved.</summary>
         [JsonPropertyName("contentPath")]
         public string? ContentPath { get; set; }
-
-        /// <summary>Loads settings from <paramref name="path"/>; returns empty settings when the file is missing or unreadable.</summary>
-        public static EditorSettings Load(string path)
-        {
-            try
-            {
-                if (!File.Exists(path))
-                {
-                    return new EditorSettings();
-                }
-                string json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize(json, AppJsonContext.Default.EditorSettings) ?? new EditorSettings();
-            }
-            catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
-            {
-                return new EditorSettings();
-            }
-        }
-
-        /// <summary>Writes settings to <paramref name="path"/>, creating the parent directory when needed.</summary>
-        public void Save(string path)
-        {
-            string? dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                _ = Directory.CreateDirectory(dir);
-            }
-            File.WriteAllText(path, JsonSerializer.Serialize(this, AppJsonContext.Default.EditorSettings));
-        }
     }
 }

@@ -17,7 +17,7 @@ namespace CtrDxEditor.Content
         /// <summary>Returns the resolved content directory, or null when the user must set it up.</summary>
         public static string? TryResolve()
         {
-            EditorSettings settings = EditorSettings.Load(SettingsPath);
+            EditorSettings settings = new FileSettingsStore(SettingsPath).LoadAsync().GetAwaiter().GetResult();
             return ContentLocation.Resolve(AppContext.BaseDirectory, settings.ContentPath);
         }
     }
