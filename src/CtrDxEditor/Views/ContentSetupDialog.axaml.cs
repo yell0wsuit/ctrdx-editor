@@ -43,10 +43,7 @@ namespace CtrDxEditor.Views
             // Dismiss it first (child before parent), then close the setup dialog.
             _cancelConfirm?.Close();
 
-            if (_vm?.ResolvedContentPath is string path)
-            {
-                Close(path);
-            }
+            Close("");
         }
 
         private async void Locate_Click(object? sender, RoutedEventArgs e)
@@ -64,7 +61,7 @@ namespace CtrDxEditor.Views
                 });
             if (folders.Count > 0 && folders[0].TryGetLocalPath() is string path)
             {
-                _vm.ApplyLocatedFolder(path);
+                await _vm.ApplyLocatedFolder(path);
             }
         }
 

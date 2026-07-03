@@ -15,9 +15,9 @@ using CtrDxEditor.Localization;
 namespace CtrDxEditor.ViewModels
 {
     /// <summary>Main editor state and commands shared by the window and canvas.</summary>
-    public sealed partial class EditorViewModel : ViewModelBase
+    /// <param name="sprites">Already-preloaded sprite cache for the active content.</param>
+    public sealed partial class EditorViewModel(SpriteCache sprites) : ViewModelBase
     {
-        private readonly string _contentRoot;
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
 
         [ObservableProperty] public partial LevelDocument? Document { get; set; }
@@ -28,8 +28,8 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
         [ObservableProperty] public partial bool ShowMobileHitboxes { get; set; }
 
-        /// <summary>Sprite cache for the active content directory.</summary>
-        public SpriteCache Sprites { get; }
+        /// <summary>Sprite cache for the active content.</summary>
+        public SpriteCache Sprites { get; } = sprites;
 
         /// <summary>Palette items available for placement.</summary>
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];
@@ -42,13 +42,6 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
-
-        /// <summary>Creates an editor view model rooted at a validated content directory.</summary>
-        public EditorViewModel(string contentRoot)
-        {
-            _contentRoot = contentRoot;
-            Sprites = new SpriteCache(_contentRoot);
-        }
 
         /// <summary>Loads a level XML file into the editor.</summary>
         public void LoadLevel(string path)

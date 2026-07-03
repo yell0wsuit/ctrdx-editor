@@ -13,19 +13,16 @@ namespace CtrDxEditor.ViewModels
     /// <summary>Backs the first-run Content Setup dialog: download the asset bundle or locate an existing folder.</summary>
     public sealed partial class ContentSetupViewModel : ViewModelBase
     {
-        private readonly string _defaultContentDir;
-        private readonly Func<string, IProgress<double>, CancellationToken, Task> _download;
-        private readonly Action<string> _saveContentPath;
+        private readonly IContentInstaller _installer;
+        private readonly string _downloadContentDir;
+        private readonly Func<string, Task> _onInstalled;
         private CancellationTokenSource? _downloadCts;
 
         [ObservableProperty] public partial bool IsBusy { get; set; }
         [ObservableProperty] public partial double Progress { get; set; }
         [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
-        /// <summary>The resolved content directory once setup succeeds; null until then.</summary>
-        public string? ResolvedContentPath { get; private set; }
-
-        /// <summary>Raised once <see cref="ResolvedContentPath"/> is set, so the view can close.</summary>
+        /// <summary>Raised once content setup succeeds, so the view can close.</summary>
         public event Action? Completed;
 
         /// <summary>Command that downloads and installs the default asset bundle.</summary>
@@ -33,13 +30,13 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Creates a content setup view model.</summary>
         public ContentSetupViewModel(
-            string defaultContentDir,
-            Func<string, IProgress<double>, CancellationToken, Task> download,
-            Action<string> saveContentPath)
+            IContentInstaller installer,
+            string downloadContentDir,
+            Func<string, Task> onInstalled)
         {
-            _defaultContentDir = defaultContentDir;
-            _download = download;
-            _saveContentPath = saveContentPath;
+            _installer = installer;
+            _downloadContentDir = downloadContentDir;
+            _onInstalled = onInstalled;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.
             DownloadCommand = new AsyncRelayCommand(DownloadAsync);
         }
@@ -54,8 +51,8 @@ namespace CtrDxEditor.ViewModels
             try
             {
                 Progress<double> progress = new(p => Progress = p);
-                await _download(_defaultContentDir, progress, cts.Token);
-                Succeed(_defaultContentDir);
+                await _installer.InstallFromDownloadAsync(progress, cts.Token);
+                await CompleteAsync(_downloadContentDir);
             }
             catch (OperationCanceledException)
             {
@@ -80,20 +77,19 @@ namespace CtrDxEditor.ViewModels
         }
 
         /// <summary>Validates a user-picked folder; on success saves and completes, otherwise sets an error.</summary>
-        public void ApplyLocatedFolder(string dir)
+        public async Task ApplyLocatedFolder(string dir)
         {
             if (!ContentLocation.IsValid(dir))
             {
                 ErrorMessage = Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder");
                 return;
             }
-            Succeed(dir);
+            await CompleteAsync(dir);
         }
 
-        private void Succeed(string contentDir)
+        private async Task CompleteAsync(string contentDir)
         {
-            _saveContentPath(contentDir);
-            ResolvedContentPath = contentDir;
+            await _onInstalled(contentDir);
             Completed?.Invoke();
         }
     }

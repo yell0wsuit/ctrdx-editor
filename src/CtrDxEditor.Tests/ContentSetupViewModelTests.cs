@@ -13,6 +13,20 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests for the first-run content setup view model.</summary>
     public class ContentSetupViewModelTests
     {
+        private sealed class FakeInstaller(
+            Func<IProgress<double>?, CancellationToken, Task> download) : IContentInstaller
+        {
+            public Task InstallFromDownloadAsync(IProgress<double>? progress, CancellationToken ct)
+            {
+                return download(progress, ct);
+            }
+
+            public Task InstallFromZipAsync(Stream zipStream, CancellationToken ct)
+            {
+                return Task.CompletedTask;
+            }
+        }
+
         private static void WriteValidContent(string dir)
         {
             _ = Directory.CreateDirectory(Path.Combine(dir, "images"));
@@ -29,9 +43,9 @@ namespace CtrDxEditor.Tests
         {
             // A download that only completes when its cancellation token fires.
             ContentSetupViewModel vm = new(
+                new FakeInstaller((p, ct) => Task.Delay(Timeout.Infinite, ct)),
                 "/unused",
-                (d, p, ct) => Task.Delay(Timeout.Infinite, ct),
-                _ => { });
+                _ => Task.CompletedTask);
 
             Task run = vm.DownloadCommand.ExecuteAsync(null);
             Assert.True(vm.IsBusy);
@@ -40,13 +54,12 @@ namespace CtrDxEditor.Tests
             await run;
 
             Assert.False(vm.IsBusy);
-            Assert.Null(vm.ResolvedContentPath);
             Assert.Null(vm.ErrorMessage);
         }
 
-        /// <summary>Verifies that a successful download saves the path and raises completion.</summary>
+        /// <summary>Verifies that a successful download completes with the download destination.</summary>
         [Fact]
-        public async Task DownloadCommandSuccessSetsResolvedPathAndRaisesCompleted()
+        public async Task DownloadCommandSuccessRaisesCompletedWithDownloadPath()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-vm-").FullName;
             try
@@ -55,19 +68,21 @@ namespace CtrDxEditor.Tests
                 string? saved = null;
                 bool completed = false;
 
-                static Task Fake(string d, IProgress<double> p, CancellationToken ct)
+                Task Fake(IProgress<double>? p, CancellationToken ct)
                 {
-                    WriteValidContent(d);
-                    p.Report(1.0);
+                    WriteValidContent(dest);
+                    p?.Report(1.0);
                     return Task.CompletedTask;
                 }
 
-                ContentSetupViewModel vm = new(dest, Fake, path => saved = path);
+                ContentSetupViewModel vm = new(
+                    new FakeInstaller(Fake),
+                    dest,
+                    path => { saved = path; return Task.CompletedTask; });
                 vm.Completed += () => completed = true;
 
                 await vm.DownloadCommand.ExecuteAsync(null);
 
-                Assert.Equal(dest, vm.ResolvedContentPath);
                 Assert.Equal(dest, saved);
                 Assert.True(completed);
                 Assert.Null(vm.ErrorMessage);
@@ -79,38 +94,43 @@ namespace CtrDxEditor.Tests
         [Fact]
         public async Task DownloadCommandFailureSetsErrorAndLeavesPathNull()
         {
+            string? saved = null;
             ContentSetupViewModel vm = new(
+                new FakeInstaller((p, ct) => throw new InvalidOperationException("boom")),
                 "/unused",
-                (d, p, ct) => throw new InvalidOperationException("boom"),
-                _ => { });
+                path => { saved = path; return Task.CompletedTask; });
 
             await vm.DownloadCommand.ExecuteAsync(null);
 
-            Assert.Null(vm.ResolvedContentPath);
+            Assert.Null(saved);
             Assert.NotNull(vm.ErrorMessage);
             Assert.Contains("boom", vm.ErrorMessage);
         }
 
         /// <summary>Verifies that locating an invalid folder records an error.</summary>
         [Fact]
-        public void ApplyLocatedFolderInvalidSetsError()
+        public async Task ApplyLocatedFolderInvalidSetsError()
         {
             string dir = Directory.CreateTempSubdirectory("ctrdx-vm-").FullName;
             try
             {
-                ContentSetupViewModel vm = new("/unused", (d, p, ct) => Task.CompletedTask, _ => { });
+                string? saved = null;
+                ContentSetupViewModel vm = new(
+                    new FakeInstaller((p, ct) => Task.CompletedTask),
+                    "/unused",
+                    path => { saved = path; return Task.CompletedTask; });
 
-                vm.ApplyLocatedFolder(dir); // empty dir -> invalid
+                await vm.ApplyLocatedFolder(dir); // empty dir -> invalid
 
                 Assert.NotNull(vm.ErrorMessage);
-                Assert.Null(vm.ResolvedContentPath);
+                Assert.Null(saved);
             }
             finally { Directory.Delete(dir, recursive: true); }
         }
 
-        /// <summary>Verifies that locating a valid folder saves it and completes setup.</summary>
+        /// <summary>Verifies that locating a valid folder completes with the located folder.</summary>
         [Fact]
-        public void ApplyLocatedFolderValidSavesAndCompletes()
+        public async Task ApplyLocatedFolderValidSavesAndCompletes()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-vm-").FullName;
             try
@@ -118,11 +138,13 @@ namespace CtrDxEditor.Tests
                 string dir = Path.Combine(root, "content");
                 WriteValidContent(dir);
                 string? saved = null;
-                ContentSetupViewModel vm = new("/unused", (d, p, ct) => Task.CompletedTask, p => saved = p);
+                ContentSetupViewModel vm = new(
+                    new FakeInstaller((p, ct) => Task.CompletedTask),
+                    "/unused",
+                    path => { saved = path; return Task.CompletedTask; });
 
-                vm.ApplyLocatedFolder(dir);
+                await vm.ApplyLocatedFolder(dir);
 
-                Assert.Equal(dir, vm.ResolvedContentPath);
                 Assert.Equal(dir, saved);
                 Assert.Null(vm.ErrorMessage);
             }

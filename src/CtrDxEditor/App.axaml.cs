@@ -1,8 +1,8 @@
+using System;
 using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data;
 using Avalonia.Markup.Xaml;
 
 using CtrDxEditor.Content;
@@ -27,50 +27,49 @@ namespace CtrDxEditor
             {
                 MainWindow window = new();
                 desktop.MainWindow = window;
-
-                string? contentPath = ContentRoot.TryResolve();
-                if (contentPath is not null)
-                {
-                    window.DataContext = new EditorViewModel(contentPath);
-                }
-                else
-                {
-                    // The editor stays uninitialized (null DataContext) behind the setup
-                    // dialog until the user provides content. Run once the host window is
-                    // shown so the ReactiveDialogHost is in the visual tree.
-                    window.Opened += async (_, _) => await RunSetupAsync(window, desktop);
-                }
+                window.Opened += async (_, _) => await StartAsync(window, desktop);
             }
             base.OnFrameworkInitializationCompleted();
         }
 
-        private static async Task RunSetupAsync(
-            MainWindow window, IClassicDesktopStyleApplicationLifetime desktop)
+        private static async Task StartAsync(MainWindow window, IClassicDesktopStyleApplicationLifetime desktop)
         {
-            ContentSetupViewModel vm = new(
-                ContentRoot.DefaultContentDir,
-                ContentDownloader.DownloadAsync,
-                SaveContentPath);
+            FileSettingsStore settings = new(ContentRoot.SettingsPath);
+            string? resolved = ContentLocation.Resolve(
+                AppContext.BaseDirectory, (await settings.LoadAsync()).ContentPath);
 
-            ContentSetupDialog dialog = new() { DataContext = vm };
-            Optional<string> result = await dialog.ShowAsync();
+            if (resolved is null)
+            {
+                IContentInstaller installer = new FolderContentInstaller(ContentRoot.DefaultContentDir);
+                ContentSetupViewModel vm = new(installer, ContentRoot.DefaultContentDir, async contentPath =>
+                {
+                    await SaveContentPathAsync(settings, contentPath);
+                    await ShowEditorAsync(window, contentPath);
+                });
+                ContentSetupDialog dialog = new() { DataContext = vm };
+                _ = await dialog.ShowAsync();
+                if (window.DataContext is null)
+                {
+                    desktop.Shutdown();
+                }
+                return;
+            }
 
-            if (result.GetValueOrDefault() is string contentPath)
-            {
-                window.DataContext = new EditorViewModel(contentPath);
-            }
-            else
-            {
-                desktop.Shutdown();
-            }
+            await ShowEditorAsync(window, resolved);
         }
 
-        private static void SaveContentPath(string contentPath)
+        private static async Task ShowEditorAsync(MainWindow window, string contentRoot)
         {
-            FileSettingsStore store = new(ContentRoot.SettingsPath);
-            EditorSettings settings = store.LoadAsync().GetAwaiter().GetResult();
-            settings.ContentPath = contentPath;
-            store.SaveAsync(settings).GetAwaiter().GetResult();
+            SpriteCache sprites = new(new FolderContentStore(contentRoot));
+            await sprites.PreloadAsync();
+            window.DataContext = new EditorViewModel(sprites);
+        }
+
+        private static async Task SaveContentPathAsync(FileSettingsStore settings, string contentPath)
+        {
+            EditorSettings s = await settings.LoadAsync();
+            s.ContentPath = contentPath;
+            await settings.SaveAsync(s);
         }
     }
 }
