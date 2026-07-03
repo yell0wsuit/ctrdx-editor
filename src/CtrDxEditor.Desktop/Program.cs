@@ -2,7 +2,7 @@ using System;
 
 using Avalonia;
 
-namespace CtrDxEditor
+namespace CtrDxEditor.Desktop
 {
     internal static class Program
     {
