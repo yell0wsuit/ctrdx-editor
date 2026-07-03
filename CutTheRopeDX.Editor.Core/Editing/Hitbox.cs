@@ -31,7 +31,7 @@ namespace CutTheRopeDX.Editor.Core.Editing
         public const double Wp7ToWorldScale = 3.0;
 
         //                                 desktop bb            phone bb (pre-scale)  ref frame
-        private static readonly IReadOnlyDictionary<string, HitboxDef> Defs =
+        private static readonly Dictionary<string, HitboxDef> Defs =
             new HitboxDef[]
             {
                 new("candy", new(142, 157, 112, 104), new(46, 49, 35, 35), 393, 418),
