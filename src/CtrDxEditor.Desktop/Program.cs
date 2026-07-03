@@ -1,6 +1,10 @@
 using System;
+using System.Threading.Tasks;
 
 using Avalonia;
+
+using CtrDxEditor;
+using CtrDxEditor.Content;
 
 namespace CtrDxEditor.Desktop
 {
@@ -8,15 +12,26 @@ namespace CtrDxEditor.Desktop
     {
         /// <summary>Application entry point.</summary>
         [STAThread]
-        public static void Main(string[] args)
-        {
+        public static void Main(string[] args) =>
             _ = BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-        }
 
         /// <summary>Creates the configured Avalonia application builder.</summary>
         public static AppBuilder BuildAvaloniaApp()
         {
-            return AppBuilder.Configure<App>()
+            FileSettingsStore settings = new(ContentRoot.SettingsPath);
+            PlatformStartup startup = new()
+            {
+                Settings = settings,
+                Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir),
+                InstalledStore = () => new FolderContentStore(ContentRoot.DefaultContentDir),
+                ResolveInstalled = async () =>
+                {
+                    string? resolved = ContentLocation.Resolve(
+                        AppContext.BaseDirectory, (await settings.LoadAsync()).ContentPath);
+                    return resolved is null ? null : new FolderContentStore(resolved);
+                },
+            };
+            return AppBuilder.Configure(() => new App(startup))
                 .UsePlatformDetect()
                 .WithInterFont()
                 .LogToTrace();
