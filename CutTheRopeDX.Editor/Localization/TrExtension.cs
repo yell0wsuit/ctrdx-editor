@@ -1,3 +1,5 @@
+using System;
+
 using Avalonia.Markup.Xaml;
 
 namespace CutTheRopeDX.Editor.Localization

@@ -4,6 +4,5 @@
     <RootNamespace>CutTheRopeDX.Editor.Core</RootNamespace>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 </Project>

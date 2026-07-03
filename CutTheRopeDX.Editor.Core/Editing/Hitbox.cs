@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 using CutTheRopeDX.Editor.Core.Geometry;
 
 namespace CutTheRopeDX.Editor.Core.Editing

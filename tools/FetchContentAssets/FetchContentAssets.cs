@@ -13,9 +13,15 @@
 // a modder's local edits) are left untouched. Run with --verify to hash every
 // local file against the manifest and surface a present-but-corrupt asset.
 
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 const string AssetsUrl =
     "https://github.com/yell0wsuit/ctrdx-assets/releases/latest/download/ctrdx-assets.zip";

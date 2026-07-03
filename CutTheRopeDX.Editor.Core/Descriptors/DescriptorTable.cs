@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace CutTheRopeDX.Editor.Core.Descriptors
 {
     public sealed class DescriptorTable(IReadOnlyList<ObjectDescriptor> descriptors)

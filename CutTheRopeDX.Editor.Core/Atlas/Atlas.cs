@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace CutTheRopeDX.Editor.Core.Atlas
 {
     public sealed class Atlas(IReadOnlyList<AtlasFrame> frames)

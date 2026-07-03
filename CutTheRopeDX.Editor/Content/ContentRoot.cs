@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+
 namespace CutTheRopeDX.Editor.Content
 {
     /// <summary>Locates the repository's content/ directory by walking up from the app base dir.</summary>

@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace CutTheRopeDX.Editor.Content
 {
     public static class VisualDescriptorMap

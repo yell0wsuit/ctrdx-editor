@@ -57,10 +57,10 @@ namespace CutTheRopeDX.Editor.Core.Tests
             LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 0.71, HitboxModel.Desktop);
             double s = 0.71 / 3.0;
             _ = Assert.NotNull(box);
-            Assert.Equal(112 * s, box!.Value.W, precision: 9);
-            Assert.Equal(104 * s, box!.Value.H, precision: 9);
-            Assert.Equal(1.5 * s, box!.Value.X + (box!.Value.W / 2.0), precision: 9); // center x
-            Assert.Equal(0.0, box!.Value.Y + (box!.Value.H / 2.0), precision: 9); // center y
+            Assert.Equal(112 * s, box.Value.W, precision: 9);
+            Assert.Equal(104 * s, box.Value.H, precision: 9);
+            Assert.Equal(1.5 * s, box.Value.X + (box.Value.W / 2.0), precision: 9); // center x
+            Assert.Equal(0.0, box.Value.Y + (box.Value.H / 2.0), precision: 9); // center y
         }
 
         [Theory]

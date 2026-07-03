@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CutTheRopeDX.Editor.Content
 {
     /// <summary>One atlas frame layer of a composited object sprite, drawn back-to-front.</summary>
