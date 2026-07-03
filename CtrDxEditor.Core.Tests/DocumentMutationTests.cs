@@ -31,7 +31,7 @@ namespace CtrDxEditor.Core.Tests
             doc.Add(star);
             Assert.Equal(2, doc.Objects.Count);
 
-            doc.Remove(star);
+            LevelDocument.Remove(star);
             _ = Assert.Single(doc.Objects);
             Assert.Equal("candy", doc.Objects[0].Type);
         }

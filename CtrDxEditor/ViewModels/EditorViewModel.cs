@@ -57,7 +57,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             LevelObject removed = SelectedObject;
-            Document.Remove(removed);
+            LevelDocument.Remove(removed);
             if (Equals(LockedObject, removed))
             {
                 LockedObject = null;

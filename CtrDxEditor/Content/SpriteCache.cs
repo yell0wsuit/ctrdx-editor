@@ -37,7 +37,7 @@ namespace CtrDxEditor.Content
             return thumb;
         }
 
-        private Bitmap? BuildThumbnail(string element)
+        private RenderTargetBitmap? BuildThumbnail(string element)
         {
             ObjectSprite? sprite = GetSprite(element);
             if (sprite is null || sprite.Layers.Count == 0)

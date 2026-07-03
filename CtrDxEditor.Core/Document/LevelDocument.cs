@@ -60,7 +60,7 @@ namespace CtrDxEditor.Core.Document
             layer.Add(obj.Element);
         }
 
-        public void Remove(LevelObject obj)
+        public static void Remove(LevelObject obj)
         {
             obj.Element.Remove();
         }
