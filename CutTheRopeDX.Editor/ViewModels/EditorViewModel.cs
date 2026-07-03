@@ -4,10 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CutTheRopeDX.Editor.Content;
 using CutTheRopeDX.Editor.Core.Descriptors;
-using CutTheRopeDX.Editor.Localization;
 using CutTheRopeDX.Editor.Core.Document;
 using CutTheRopeDX.Editor.Core.Editing;
 using CutTheRopeDX.Editor.Core.Geometry;
+using CutTheRopeDX.Editor.Localization;
 
 namespace CutTheRopeDX.Editor.ViewModels
 {
@@ -21,6 +21,8 @@ namespace CutTheRopeDX.Editor.ViewModels
         [ObservableProperty] private LevelObject? _selectedObject;
         [ObservableProperty] private LevelObject? _lockedObject;
         [ObservableProperty] private bool _snapEnabled;
+        [ObservableProperty] private bool _showHitboxes = true;
+        [ObservableProperty] private bool _showMobileHitboxes;
 
         public SpriteCache Sprites { get; }
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];

@@ -32,11 +32,18 @@ namespace CutTheRopeDX.Editor.Rendering
             AvaloniaProperty.Register<LevelCanvas, LevelObject?>(
                 nameof(LockedObject), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+        public static readonly StyledProperty<bool> ShowHitboxesProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowHitboxes), defaultValue: true);
+
+        public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
+
         static LevelCanvas()
         {
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
-                SelectedObjectProperty, LockedObjectProperty);
+                SelectedObjectProperty, LockedObjectProperty,
+                ShowHitboxesProperty, ShowMobileHitboxesProperty);
         }
 
         public LevelDocument? Document { get => GetValue(DocumentProperty); set => SetValue(DocumentProperty, value); }
@@ -45,6 +52,8 @@ namespace CutTheRopeDX.Editor.Rendering
         public bool SnapEnabled { get => GetValue(SnapEnabledProperty); set => SetValue(SnapEnabledProperty, value); }
         public LevelObject? SelectedObject { get => GetValue(SelectedObjectProperty); set => SetValue(SelectedObjectProperty, value); }
         public LevelObject? LockedObject { get => GetValue(LockedObjectProperty); set => SetValue(LockedObjectProperty, value); }
+        public bool ShowHitboxes { get => GetValue(ShowHitboxesProperty); set => SetValue(ShowHitboxesProperty, value); }
+        public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
 
         public Func<string, int, int, LevelObject?>? PlaceAt { get; set; }
         public Action<LevelObject?>? ToggleLock { get; set; }
@@ -174,6 +183,25 @@ namespace CutTheRopeDX.Editor.Rendering
                 DrawObject(context, v, sprites, obj);
             }
 
+            if (ShowHitboxes || ShowMobileHitboxes)
+            {
+                foreach (LevelObject obj in objects)
+                {
+                    if (sprites.GetSprite(obj.Type) is not { } sprite)
+                    {
+                        continue;
+                    }
+                    if (ShowHitboxes)
+                    {
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, Brushes.LimeGreen);
+                    }
+                    if (ShowMobileHitboxes)
+                    {
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, Brushes.Magenta);
+                    }
+                }
+            }
+
             LevelObject? selected = SelectedObject;
             if (selected is not null)
             {
@@ -244,6 +272,24 @@ namespace CutTheRopeDX.Editor.Rendering
                 Vec2 dbr = v.LevelToScreen(new Vec2(layout.Dest.X + layout.Dest.W, layout.Dest.Y + layout.Dest.H));
                 ctx.DrawImage(layer.Bitmap, source, new Rect(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y));
             }
+        }
+
+        private static void DrawHitbox(
+            DrawingContext ctx,
+            ViewTransform v,
+            LevelObject obj,
+            double scale,
+            HitboxModel model,
+            IBrush brush)
+        {
+            if (HitboxTable.Compute(obj.Type, obj.X, obj.Y, scale, model) is not { } b)
+            {
+                return;
+            }
+            Vec2 tl = v.LevelToScreen(new Vec2(b.X, b.Y));
+            Vec2 br = v.LevelToScreen(new Vec2(b.X + b.W, b.Y + b.H));
+            Pen pen = new(brush, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
+            ctx.DrawRectangle(null, pen, new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
         }
 
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)

@@ -10,6 +10,8 @@
     "Menu.View.ZoomOut": "Zoom _Out",
     "Menu.View.ZoomFit": "Zoom to _Fit",
     "Menu.View.SnapToGrid": "Snap to grid",
+    "Menu.View.ShowHitboxes": "Show hitboxes",
+    "Menu.View.ShowMobileHitboxes": "Show mobile hitboxes",
 
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",

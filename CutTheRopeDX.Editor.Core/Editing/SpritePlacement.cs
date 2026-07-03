@@ -25,8 +25,8 @@ namespace CutTheRopeDX.Editor.Core.Editing
             double left = x - (w / 2.0);
             double top = y - (h / 2.0);
 
-            LevelBounds hit = new LevelBounds(left, top, w, h);
-            LevelBounds dest = new LevelBounds(
+            LevelBounds hit = new(left, top, w, h);
+            LevelBounds dest = new(
                 left + (frame.SpriteSource.X * s),
                 top + (frame.SpriteSource.Y * s),
                 frame.Frame.W * s,

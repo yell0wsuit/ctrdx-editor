@@ -79,6 +79,22 @@ namespace CutTheRopeDX.Editor.Views
             }
         }
 
+        private void ShowHitboxesToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ShowHitboxes = !vm.ShowHitboxes;
+            }
+        }
+
+        private void ShowMobileHitboxesToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ShowMobileHitboxes = !vm.ShowMobileHitboxes;
+            }
+        }
+
         private void ObjectList_DoubleTapped(object? sender, TappedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)
