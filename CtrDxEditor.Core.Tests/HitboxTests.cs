@@ -10,7 +10,7 @@ namespace CtrDxEditor.Core.Tests
         // scale = 3 makes s = scale/mapScale = 1, so level units == game px for clean expectations.
 
         [Fact]
-        public void Candy_desktop_box_centers_on_object_using_sourcesize_frame()
+        public void CandyDesktopBoxCentersOnObjectUsingSourcesizeFrame()
         {
             // desktop (142,157,112,104), ref (393,418):
             // center offset = (142+56-196.5, 157+52-209) = (1.5, 0); box = center - size/2.
@@ -19,7 +19,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Star_desktop_box_uses_trimmed_glow_frame()
+        public void StarDesktopBoxUsesTrimmedGlowFrame()
         {
             // desktop (70,64,82,82), ref (236,223): offset = (-7, -6.5).
             LevelBounds? box = HitboxTable.Compute("star", 0, 0, scale: 3, HitboxModel.Desktop);
@@ -27,7 +27,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Target_desktop_box_is_the_mouth_line()
+        public void TargetDesktopBoxIsTheMouthLine()
         {
             // desktop (264,350,108,2), ref (640,640): offset = (-2, 31).
             LevelBounds? box = HitboxTable.Compute("target", 0, 0, scale: 3, HitboxModel.Desktop);
@@ -35,7 +35,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Phone_box_scales_raw_values_by_wp7_and_differs_from_desktop()
+        public void PhoneBoxScalesRawValuesByWp7AndDiffersFromDesktop()
         {
             // phone (46,49,35,35)*3 = (138,147,105,105), ref (393,418):
             // offset = (138+52.5-196.5, 147+52.5-209) = (-6, -9.5).
@@ -44,14 +44,14 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Object_position_translates_the_box()
+        public void ObjectPositionTranslatesTheBox()
         {
             LevelBounds? box = HitboxTable.Compute("candy", 100, 200, scale: 3, HitboxModel.Desktop);
             Assert.Equal(new LevelBounds(45.5, 148, 112, 104), box);
         }
 
         [Fact]
-        public void Object_scale_shrinks_the_box_about_the_object_center()
+        public void ObjectScaleShrinksTheBoxAboutTheObjectCenter()
         {
             // candy scale 0.71, s = 0.71/3. Width = 112 * s; center stays near (0,0).
             LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 0.71, HitboxModel.Desktop);
@@ -67,7 +67,7 @@ namespace CtrDxEditor.Core.Tests
         [InlineData("grab")]
         [InlineData("bubble")]
         [InlineData("")]
-        public void Unsupported_elements_return_null(string element)
+        public void UnsupportedElementsReturnNull(string element)
         {
             Assert.Null(HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop));
         }

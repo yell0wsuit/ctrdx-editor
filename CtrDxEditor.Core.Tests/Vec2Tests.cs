@@ -7,7 +7,7 @@ namespace CtrDxEditor.Core.Tests
     public class Vec2Tests
     {
         [Fact]
-        public void Subtraction_gives_component_difference()
+        public void SubtractionGivesComponentDifference()
         {
             Vec2 result = new Vec2(10, 7) - new Vec2(3, 2);
 

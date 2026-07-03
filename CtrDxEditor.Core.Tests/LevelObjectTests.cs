@@ -9,7 +9,7 @@ namespace CtrDxEditor.Core.Tests
     public class LevelObjectTests
     {
         [Fact]
-        public void Setting_X_writes_back_to_the_attribute()
+        public void SettingXWritesBackToTheAttribute()
         {
             LevelObject obj = new(XElement.Parse("""<star x="10" y="20" timeout="-1" />"""))
             {

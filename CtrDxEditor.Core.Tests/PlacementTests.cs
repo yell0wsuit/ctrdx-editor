@@ -9,7 +9,7 @@ namespace CtrDxEditor.Core.Tests
     public class PlacementTests
     {
         [Fact]
-        public void CreateObject_sets_coordinates_and_defaults()
+        public void CreateObjectSetsCoordinatesAndDefaults()
         {
             ObjectDescriptor star = DescriptorTable.Default.For("star")!;
 
@@ -22,7 +22,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void CreateObject_skips_attributes_without_a_default()
+        public void CreateObjectSkipsAttributesWithoutADefault()
         {
             ObjectDescriptor grab = DescriptorTable.Default.For("grab")!;
 

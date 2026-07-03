@@ -7,7 +7,7 @@ namespace CtrDxEditor.Core.Tests
     public class DescriptorTableTests
     {
         [Fact]
-        public void Default_knows_the_four_v1_objects()
+        public void DefaultKnowsTheFourV1Objects()
         {
             DescriptorTable t = DescriptorTable.Default;
             Assert.True(t.Knows("target"));
@@ -18,7 +18,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Target_and_candy_are_singletons()
+        public void TargetAndCandyAreSingletons()
         {
             Assert.Equal(1, DescriptorTable.Default.For("target")!.MaxCount);
             Assert.Equal(1, DescriptorTable.Default.For("candy")!.MaxCount);
@@ -26,7 +26,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Star_default_timeout_is_minus_one()
+        public void StarDefaultTimeoutIsMinusOne()
         {
             AttributeSpec timeout = Assert.Single(DescriptorTable.Default.For("star")!.Attributes);
             Assert.Equal("timeout", timeout.Name);

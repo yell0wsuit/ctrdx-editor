@@ -10,7 +10,7 @@ namespace CtrDxEditor.Tests
     public class ContentDownloaderTests
     {
         [Fact]
-        public void ExtractInto_unpacks_a_valid_bundle()
+        public void ExtractIntoUnpacksAValidBundle()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-dl-").FullName;
             try

@@ -17,7 +17,7 @@ namespace CtrDxEditor.Core.Tests
             Rotated: false, Trimmed: true);
 
         [Fact]
-        public void Hit_box_is_untrimmed_sprite_centered_on_xy_scaled_by_mapscale()
+        public void HitBoxIsUntrimmedSpriteCenteredOnXyScaledByMapscale()
         {
             SpriteLayout layout = SpritePlacement.Compute(Hook, x: 200, y: 150);
 
@@ -26,14 +26,14 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Source_is_the_atlas_pixel_rect()
+        public void SourceIsTheAtlasPixelRect()
         {
             SpriteLayout layout = SpritePlacement.Compute(Hook, x: 200, y: 150);
             Assert.Equal(new IntRect(921, 1, 127, 128), layout.Source);
         }
 
         [Fact]
-        public void Dest_offsets_the_trimmed_frame_by_the_trim_origin()
+        public void DestOffsetsTheTrimmedFrameByTheTrimOrigin()
         {
             SpriteLayout layout = SpritePlacement.Compute(Hook, x: 200, y: 150);
 
@@ -45,7 +45,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Per_object_scale_shrinks_the_sprite_about_its_center()
+        public void PerObjectScaleShrinksTheSpriteAboutItsCenter()
         {
             // candy scale 0.71: hit box = 276 * 0.71 / 3, still centered on (200,150).
             SpriteLayout layout = SpritePlacement.Compute(Hook, x: 200, y: 150, scale: 0.71);

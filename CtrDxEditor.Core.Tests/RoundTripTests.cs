@@ -13,7 +13,7 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData("TestData/2_21.xml")]
         [InlineData("TestData/5_1.xml")]
-        public void Load_then_save_is_semantically_identical(string path)
+        public void LoadThenSaveIsSemanticallyIdentical(string path)
         {
             string original = File.ReadAllText(path);
             LevelDocument doc = LevelDocument.Parse(original);
@@ -28,7 +28,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Locale_layers_survive_round_trip()
+        public void LocaleLayersSurviveRoundTrip()
         {
             LevelDocument doc = LevelDocument.Parse(File.ReadAllText("TestData/5_1.xml"));
             XDocument after = XDocument.Parse(doc.Save());

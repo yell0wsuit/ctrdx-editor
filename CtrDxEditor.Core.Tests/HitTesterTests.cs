@@ -18,13 +18,13 @@ namespace CtrDxEditor.Core.Tests
         ];
 
         [Fact]
-        public void Topmost_returns_highest_index_containing_point()
+        public void TopmostReturnsHighestIndexContainingPoint()
         {
             Assert.Equal(2, HitTester.Topmost(Stack, new Vec2(15, 15)));
         }
 
         [Fact]
-        public void Cycling_past_top_selects_the_one_underneath()
+        public void CyclingPastTopSelectsTheOneUnderneath()
         {
             int next = HitTester.Topmost(Stack, new Vec2(15, 15), afterIndex: 2);
 
@@ -32,7 +32,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Cycling_wraps_back_to_top()
+        public void CyclingWrapsBackToTop()
         {
             int next = HitTester.Topmost(Stack, new Vec2(15, 15), afterIndex: 0);
 
@@ -40,7 +40,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Returns_minus_one_when_nothing_hit()
+        public void ReturnsMinusOneWhenNothingHit()
         {
             Assert.Equal(-1, HitTester.Topmost(Stack, new Vec2(500, 500)));
         }

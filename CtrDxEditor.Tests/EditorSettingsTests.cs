@@ -10,7 +10,7 @@ namespace CtrDxEditor.Tests
     public class EditorSettingsTests
     {
         [Fact]
-        public void Save_then_Load_round_trips_content_path()
+        public void SaveThenLoadRoundTripsContentPath()
         {
             string dir = Directory.CreateTempSubdirectory("ctrdx-settings-").FullName;
             try
@@ -26,7 +26,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void Load_missing_file_returns_empty_settings()
+        public void LoadMissingFileReturnsEmptySettings()
         {
             string path = Path.Combine(
                 Path.GetTempPath(), "ctrdx-missing-" + Guid.NewGuid().ToString("N"), "settings.json");

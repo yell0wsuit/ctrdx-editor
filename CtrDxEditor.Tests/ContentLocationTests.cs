@@ -22,7 +22,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void IsValid_true_for_complete_content_dir()
+        public void IsValidTrueForCompleteContentDir()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try
@@ -34,7 +34,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void IsValid_false_for_empty_dir_and_null()
+        public void IsValidFalseForEmptyDirAndNull()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try
@@ -46,7 +46,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void Resolve_prefers_valid_configured_path()
+        public void ResolvePrefersValidConfiguredPath()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try
@@ -62,7 +62,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void Resolve_falls_back_to_content_next_to_base_dir()
+        public void ResolveFallsBackToContentNextToBaseDir()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try
@@ -77,7 +77,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void Resolve_walks_up_to_ancestor_content()
+        public void ResolveWalksUpToAncestorContent()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try
@@ -94,7 +94,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void Resolve_returns_null_when_nothing_valid()
+        public void ResolveReturnsNullWhenNothingValid()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
             try

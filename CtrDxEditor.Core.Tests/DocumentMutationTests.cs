@@ -22,7 +22,7 @@ namespace CtrDxEditor.Core.Tests
     """;
 
         [Fact]
-        public void Add_then_remove_returns_to_original_count()
+        public void AddThenRemoveReturnsToOriginalCount()
         {
             LevelDocument doc = LevelDocument.Parse(Level);
             _ = Assert.Single(doc.Objects);
@@ -37,7 +37,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Added_object_appears_in_saved_xml()
+        public void AddedObjectAppearsInSavedXml()
         {
             LevelDocument doc = LevelDocument.Parse(Level);
             doc.Add(Placement.CreateObject(DescriptorTable.Default.For("star")!, 50, 60));

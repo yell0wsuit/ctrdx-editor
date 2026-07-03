@@ -23,7 +23,7 @@ namespace CtrDxEditor.Core.Tests
     """;
 
         [Fact]
-        public void Parse_reads_settings_and_objects()
+        public void ParseReadsSettingsAndObjects()
         {
             LevelDocument doc = LevelDocument.Parse(TwoPartLevel);
 

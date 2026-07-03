@@ -17,7 +17,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Target_is_at_capacity_once_one_exists()
+        public void TargetIsAtCapacityOnceOneExists()
         {
             ObjectDescriptor target = DescriptorTable.Default.For("target")!;
             IReadOnlyList<LevelObject> objects = [Obj("""<target x="1" y="2" />""")];
@@ -26,7 +26,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void Stars_are_never_at_capacity()
+        public void StarsAreNeverAtCapacity()
         {
             ObjectDescriptor star = DescriptorTable.Default.For("star")!;
             IReadOnlyList<LevelObject> objects =

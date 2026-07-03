@@ -10,7 +10,7 @@ namespace CtrDxEditor.Tests
     public class ContentManifestTests
     {
         [Fact]
-        public void Read_parses_files_section()
+        public void ReadParsesFilesSection()
         {
             string dir = Directory.CreateTempSubdirectory("ctrdx-manifest-").FullName;
             try
@@ -27,7 +27,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void MissingFiles_lists_only_absent_entries()
+        public void MissingFilesListsOnlyAbsentEntries()
         {
             string dir = Directory.CreateTempSubdirectory("ctrdx-manifest-").FullName;
             try

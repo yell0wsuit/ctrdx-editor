@@ -25,7 +25,7 @@ namespace CtrDxEditor.Core.Tests
     """;
 
         [Fact]
-        public void ParseFrames_reads_rect_trim_and_source_size()
+        public void ParseFramesReadsRectTrimAndSourceSize()
         {
             IReadOnlyList<AtlasFrame> frames = AtlasJsonLoader.ParseFrames(SampleJson);
 
@@ -39,7 +39,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void ParseFrames_on_empty_frames_returns_empty()
+        public void ParseFramesOnEmptyFramesReturnsEmpty()
         {
             Assert.Empty(AtlasJsonLoader.ParseFrames(/*lang=json,strict*/ """{ "frames": [] }"""));
         }
