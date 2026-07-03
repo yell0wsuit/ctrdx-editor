@@ -3,9 +3,6 @@
     <RootNamespace>CtrDxEditor</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AvaloniaNameGeneratorIsEnabled>false</AvaloniaNameGeneratorIsEnabled>
-    <!-- App has no public parameterless ctor by design (PlatformStartup is injected); it is
-         never loaded via the XAML runtime/previewer loader, so AVLN3001 does not apply here. -->
-    <NoWarn>$(NoWarn);AVLN3001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

@@ -18,6 +18,11 @@ namespace CtrDxEditor
     {
         private readonly PlatformStartup _startup = startup;
 
+        /// <summary>Parameterless constructor required by Avalonia's XAML runtime loader (previewer/hot reload); never used for actual app startup.</summary>
+        public App() : this(null!)
+        {
+        }
+
         /// <inheritdoc />
         public override void Initialize()
         {
