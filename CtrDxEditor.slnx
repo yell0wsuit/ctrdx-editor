@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="src/CtrDxEditor.Browser/CtrDxEditor.Browser.csproj" />
   <Project Path="src/CtrDxEditor.Core.Tests/CtrDxEditor.Core.Tests.csproj" />
   <Project Path="src/CtrDxEditor.Core/CtrDxEditor.Core.csproj" />
   <Project Path="src/CtrDxEditor.Desktop/CtrDxEditor.Desktop.csproj" />
