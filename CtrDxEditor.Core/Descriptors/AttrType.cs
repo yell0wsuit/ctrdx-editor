@@ -1,4 +1,4 @@
 namespace CtrDxEditor.Core.Descriptors
 {
-    public enum AttrType { Int, Float, Bool, Enum, Ref, String }
+    public enum AttrType { Whole, Number, Bool, Enum, Ref, Text }
 }

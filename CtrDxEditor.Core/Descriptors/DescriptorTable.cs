@@ -24,18 +24,18 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("candy", "Candy", [], MaxCount: 1),
             new ObjectDescriptor("star", "Star",
             [
-                new AttributeSpec("timeout", AttrType.Int, "-1"),
+                new AttributeSpec("timeout", AttrType.Whole, "-1"),
             ], MaxCount: int.MaxValue),
             new ObjectDescriptor("grab", "Grab",
             [
-                new AttributeSpec("length", AttrType.Int, "100"),
+                new AttributeSpec("length", AttrType.Whole, "100"),
                 new AttributeSpec("part", AttrType.Enum, null, EnumValues: ["L", "R"]),
                 new AttributeSpec("wheel", AttrType.Bool, "false"),
                 new AttributeSpec("gun", AttrType.Bool, "false"),
-                new AttributeSpec("radius", AttrType.Int, "-1"),
-                new AttributeSpec("moveLength", AttrType.Int, "-1"),
+                new AttributeSpec("radius", AttrType.Whole, "-1"),
+                new AttributeSpec("moveLength", AttrType.Whole, "-1"),
                 new AttributeSpec("moveVertical", AttrType.Bool, "false"),
-                new AttributeSpec("moveOffset", AttrType.Int, "0"),
+                new AttributeSpec("moveOffset", AttrType.Whole, "0"),
                 new AttributeSpec("spider", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
         ]);
