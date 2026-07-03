@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
+using Avalonia.Platform;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
 
@@ -20,8 +22,7 @@ namespace CtrDxEditor.Localization
 
         private static Dictionary<string, string> Load()
         {
-            string dir = Path.Combine(AppContext.BaseDirectory, "Localization");
-            Dictionary<string, string> result = ReadFile(Path.Combine(dir, "en.json"));
+            Dictionary<string, string> result = ReadResource("en");
 
             CultureInfo culture = CultureInfo.CurrentUICulture;
             // Most specific first (e.g. "pt-BR"), then the bare language ("pt"); English is the base.
@@ -32,10 +33,10 @@ namespace CtrDxEditor.Localization
                     continue;
                 }
 
-                string path = Path.Combine(dir, name + ".json");
-                if (File.Exists(path))
+                Dictionary<string, string> localized = ReadResource(name);
+                if (localized.Count > 0)
                 {
-                    foreach ((string key, string value) in ReadFile(path))
+                    foreach ((string key, string value) in localized)
                     {
                         result[key] = value;
                     }
@@ -46,15 +47,23 @@ namespace CtrDxEditor.Localization
             return result;
         }
 
-        private static Dictionary<string, string> ReadFile(string path)
+        private static Dictionary<string, string> ReadResource(string lang)
         {
-            if (!File.Exists(path))
+            Uri uri = new($"avares://CtrDxEditor/Localization/{lang}.json");
+            try
+            {
+                if (!AssetLoader.Exists(uri))
+                {
+                    return [];
+                }
+
+                using Stream stream = AssetLoader.Open(uri);
+                return JsonSerializer.Deserialize(stream, AppJsonContext.Default.DictionaryStringString) ?? [];
+            }
+            catch (InvalidOperationException)
             {
                 return [];
             }
-
-            using FileStream stream = File.OpenRead(path);
-            return JsonSerializer.Deserialize(stream, AppJsonContext.Default.DictionaryStringString) ?? [];
         }
 
         /// <summary>UI string for a key; returns the key itself when missing so gaps are visible.</summary>

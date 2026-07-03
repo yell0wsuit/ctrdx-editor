@@ -21,7 +21,7 @@
     <ProjectReference Include="..\CtrDxEditor.Core\CtrDxEditor.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Translation files ship next to the editor; Localizer reads them at startup. -->
-    <Content Include="Localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Translations are embedded as Avalonia resources so they load on every platform (incl. browser). -->
+    <AvaloniaResource Include="Localization\*.json" />
   </ItemGroup>
 </Project>
