@@ -232,9 +232,11 @@ namespace CtrDxEditor.Views
                     FileTypeFilter = [new FilePickerFileType(Localizer.Get("Dialog.FileType.LevelXml")) { Patterns = ["*.xml"] }],
                 });
 
-            if (files.Count == 1 && files[0].TryGetLocalPath() is { } path)
+            if (files.Count == 1)
             {
-                vm.LoadLevel(path);
+                await using System.IO.Stream stream = await files[0].OpenReadAsync();
+                using System.IO.StreamReader reader = new(stream);
+                vm.LoadLevelXml(await reader.ReadToEndAsync());
                 this.FindControl<LevelCanvas>("Canvas")!.FitToView();
             }
         }
@@ -255,9 +257,11 @@ namespace CtrDxEditor.Views
                     FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.LevelXml")) { Patterns = ["*.xml"] }],
                 });
 
-            if (file?.TryGetLocalPath() is { } path)
+            if (file is not null && vm.ToXml() is { } xml)
             {
-                vm.SaveTo(path);
+                await using System.IO.Stream stream = await file.OpenWriteAsync();
+                await using System.IO.StreamWriter writer = new(stream);
+                await writer.WriteAsync(xml);
             }
         }
     }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -43,10 +42,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
 
-        /// <summary>Loads a level XML file into the editor.</summary>
-        public void LoadLevel(string path)
+        /// <summary>Loads a level from its XML text into the editor.</summary>
+        public void LoadLevelXml(string xml)
         {
-            Document = LevelDocument.Load(path);
+            Document = LevelDocument.Parse(xml);
             SelectedObject = null;
             LockedObject = null;
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
@@ -133,13 +132,10 @@ namespace CtrDxEditor.ViewModels
             return obj;
         }
 
-        /// <summary>Saves the current level document to disk.</summary>
-        public void SaveTo(string path)
+        /// <summary>Serializes the current level to XML text, or null when no document is loaded.</summary>
+        public string? ToXml()
         {
-            if (Document is not null)
-            {
-                File.WriteAllText(path, Document.Save());
-            }
+            return Document?.Save();
         }
 
         partial void OnSelectedObjectChanged(LevelObject? value)
