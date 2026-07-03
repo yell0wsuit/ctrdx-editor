@@ -16,7 +16,7 @@ namespace CtrDxEditor.Tests
             try
             {
                 string path = Path.Combine(dir, ContentManifest.FileName);
-                File.WriteAllText(path, """{"files":{"images/a.png":"abc","fonts/b.ttf":"def"}}""");
+                File.WriteAllText(path, /*lang=json,strict*/ """{"files":{"images/a.png":"abc","fonts/b.ttf":"def"}}""");
 
                 IReadOnlyDictionary<string, string> manifest = ContentManifest.Read(path);
 
@@ -32,7 +32,7 @@ namespace CtrDxEditor.Tests
             string dir = Directory.CreateTempSubdirectory("ctrdx-manifest-").FullName;
             try
             {
-                Directory.CreateDirectory(Path.Combine(dir, "images"));
+                _ = Directory.CreateDirectory(Path.Combine(dir, "images"));
                 File.WriteAllText(Path.Combine(dir, "images", "present.png"), "x");
                 Dictionary<string, string> manifest = new()
                 {
@@ -42,7 +42,7 @@ namespace CtrDxEditor.Tests
 
                 IReadOnlyList<string> missing = ContentManifest.MissingFiles(dir, manifest);
 
-                Assert.Single(missing);
+                _ = Assert.Single(missing);
                 Assert.Equal("images/absent.png", missing[0]);
             }
             finally { Directory.Delete(dir, recursive: true); }

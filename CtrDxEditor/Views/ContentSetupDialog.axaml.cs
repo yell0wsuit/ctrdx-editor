@@ -114,6 +114,9 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void Quit_Click(object? sender, RoutedEventArgs e) => Close();
+        private void Quit_Click(object? sender, RoutedEventArgs e)
+        {
+            Close();
+        }
     }
 }

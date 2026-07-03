@@ -14,11 +14,12 @@ namespace CtrDxEditor.Tests
     {
         private static void WriteValidContent(string dir)
         {
-            Directory.CreateDirectory(Path.Combine(dir, "images"));
+            _ = Directory.CreateDirectory(Path.Combine(dir, "images"));
             File.WriteAllText(Path.Combine(dir, "images", "a.png"), "x");
             File.WriteAllText(
                 Path.Combine(dir, ContentManifest.FileName),
-                """{"files":{"images/a.png":"_"}}""");
+                                     /*lang=json,strict*/
+                                     """{"files":{"images/a.png":"_"}}""");
         }
 
         [Fact]
@@ -51,7 +52,7 @@ namespace CtrDxEditor.Tests
                 string? saved = null;
                 bool completed = false;
 
-                Task Fake(string d, IProgress<double> p, CancellationToken ct)
+                static Task Fake(string d, IProgress<double> p, CancellationToken ct)
                 {
                     WriteValidContent(d);
                     p.Report(1.0);

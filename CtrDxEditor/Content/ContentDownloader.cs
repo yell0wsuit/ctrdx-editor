@@ -24,7 +24,7 @@ namespace CtrDxEditor.Content
             string destContentDir, IProgress<double>? progress, CancellationToken ct)
         {
             string tmp = Path.Combine(Path.GetTempPath(), "ctrdx-assets-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tmp);
+            _ = Directory.CreateDirectory(tmp);
             try
             {
                 string zipPath = Path.Combine(tmp, "ctrdx-assets.zip");
@@ -46,7 +46,7 @@ namespace CtrDxEditor.Content
         /// <summary>Extracts a downloaded asset zip into <paramref name="destContentDir"/>, overwriting existing files.</summary>
         public static void ExtractInto(string zipPath, string destContentDir)
         {
-            Directory.CreateDirectory(destContentDir);
+            _ = Directory.CreateDirectory(destContentDir);
             ZipFile.ExtractToDirectory(zipPath, destContentDir, overwriteFiles: true);
         }
 

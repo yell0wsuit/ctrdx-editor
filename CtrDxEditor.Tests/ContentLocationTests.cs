@@ -12,11 +12,12 @@ namespace CtrDxEditor.Tests
         private static string MakeValidContent(string parent, string name)
         {
             string dir = Path.Combine(parent, name);
-            Directory.CreateDirectory(Path.Combine(dir, "images"));
+            _ = Directory.CreateDirectory(Path.Combine(dir, "images"));
             File.WriteAllText(Path.Combine(dir, "images", "a.png"), "x");
             File.WriteAllText(
                 Path.Combine(dir, ContentManifest.FileName),
-                """{"files":{"images/a.png":"_"}}""");
+                                     /*lang=json,strict*/
+                                     """{"files":{"images/a.png":"_"}}""");
             return dir;
         }
 
@@ -83,7 +84,7 @@ namespace CtrDxEditor.Tests
             {
                 string ancestorContent = MakeValidContent(root, "content");
                 string deepBase = Path.Combine(root, "a", "b", "c");
-                Directory.CreateDirectory(deepBase);
+                _ = Directory.CreateDirectory(deepBase);
 
                 string? resolved = ContentLocation.Resolve(deepBase, configuredPath: null);
 

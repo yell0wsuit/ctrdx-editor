@@ -72,7 +72,10 @@ namespace CtrDxEditor.ViewModels
         }
 
         /// <summary>Requests cancellation of an in-progress download; a no-op when nothing is downloading.</summary>
-        public void CancelDownload() => _downloadCts?.Cancel();
+        public void CancelDownload()
+        {
+            _downloadCts?.Cancel();
+        }
 
         /// <summary>Validates a user-picked folder; on success saves and completes, otherwise sets an error.</summary>
         public void ApplyLocatedFolder(string dir)

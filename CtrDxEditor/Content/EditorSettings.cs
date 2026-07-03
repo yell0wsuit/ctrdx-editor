@@ -37,7 +37,7 @@ namespace CtrDxEditor.Content
             string? dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir))
             {
-                Directory.CreateDirectory(dir);
+                _ = Directory.CreateDirectory(dir);
             }
             File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
         }
