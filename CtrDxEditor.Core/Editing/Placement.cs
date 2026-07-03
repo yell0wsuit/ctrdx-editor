@@ -6,8 +6,10 @@ using CtrDxEditor.Core.Document;
 
 namespace CtrDxEditor.Core.Editing
 {
+    /// <summary>Creates new XML-backed level objects from descriptors.</summary>
     public static class Placement
     {
+        /// <summary>Creates an object at the supplied level coordinates with descriptor defaults applied.</summary>
         public static LevelObject CreateObject(ObjectDescriptor descriptor, int x, int y)
         {
             XElement element = new(descriptor.ElementName);

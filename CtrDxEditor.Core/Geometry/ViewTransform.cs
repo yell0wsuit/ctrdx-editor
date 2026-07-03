@@ -6,13 +6,16 @@ namespace CtrDxEditor.Core.Geometry
     /// </summary>
     public readonly record struct ViewTransform(double Zoom, double PanX, double PanY)
     {
+        /// <summary>An unscaled, unpanned view transform.</summary>
         public static ViewTransform Identity { get; } = new(1.0, 0.0, 0.0);
 
+        /// <summary>Converts a level-space point to screen coordinates.</summary>
         public Vec2 LevelToScreen(Vec2 level)
         {
             return new((level.X * Zoom) + PanX, (level.Y * Zoom) + PanY);
         }
 
+        /// <summary>Converts a screen-space point to level coordinates.</summary>
         public Vec2 ScreenToLevel(Vec2 screen)
         {
             return new((screen.X - PanX) / Zoom, (screen.Y - PanY) / Zoom);

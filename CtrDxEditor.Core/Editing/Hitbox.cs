@@ -20,7 +20,14 @@ namespace CtrDxEditor.Core.Editing
         double RefHeight);
 
     /// <summary>Which physics model's bounding box to use.</summary>
-    public enum HitboxModel { Desktop, Phone }
+    public enum HitboxModel
+    {
+        /// <summary>The desktop physics bounding box.</summary>
+        Desktop,
+
+        /// <summary>The phone physics bounding box.</summary>
+        Phone,
+    }
 
     /// <summary>
     /// Maps ported game collision boxes (GameScene.BoundingBoxes.cs) into editor level space,

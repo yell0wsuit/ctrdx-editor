@@ -3,21 +3,26 @@ using System.Linq;
 
 namespace CtrDxEditor.Core.Descriptors
 {
+    /// <summary>Lookup table of editable object descriptors keyed by XML element name.</summary>
     public sealed class DescriptorTable(IReadOnlyList<ObjectDescriptor> descriptors)
     {
+        /// <summary>Descriptors keyed by their XML element name.</summary>
         public IReadOnlyDictionary<string, ObjectDescriptor> ByElement { get; } =
             descriptors.ToDictionary(d => d.ElementName);
 
+        /// <summary>Returns whether the table contains a descriptor for <paramref name="elementName"/>.</summary>
         public bool Knows(string elementName)
         {
             return ByElement.ContainsKey(elementName);
         }
 
+        /// <summary>Returns the descriptor for <paramref name="elementName"/>, or null when unknown.</summary>
         public ObjectDescriptor? For(string elementName)
         {
             return ByElement.TryGetValue(elementName, out ObjectDescriptor? d) ? d : null;
         }
 
+        /// <summary>Built-in descriptor set for the currently supported editor objects.</summary>
         public static DescriptorTable Default { get; } = new(
         [
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: 1),

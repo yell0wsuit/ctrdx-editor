@@ -8,6 +8,7 @@ namespace CtrDxEditor.Core.Atlas
     /// <summary>Parses the TexturePacker JSON-array format used under content/.</summary>
     public static class AtlasJsonLoader
     {
+        /// <summary>Parses atlas frames from a TexturePacker JSON document.</summary>
         public static IReadOnlyList<AtlasFrame> ParseFrames(string json)
         {
             using JsonDocument doc = JsonDocument.Parse(json);

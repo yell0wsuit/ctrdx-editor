@@ -20,11 +20,13 @@ namespace CtrDxEditor.Core.Document
             _doc = doc;
         }
 
+        /// <summary>Parses a level document from an XML string.</summary>
         public static LevelDocument Parse(string xml)
         {
             return new(XDocument.Parse(xml));
         }
 
+        /// <summary>Loads a level document from disk.</summary>
         public static LevelDocument Load(string path)
         {
             return new(XDocument.Load(path));
@@ -43,31 +45,40 @@ namespace CtrDxEditor.Core.Document
 
         private XElement? GameDesign => Layer("settings")?.Element("gameDesign");
 
+        /// <summary>The level grid size in map units, defaulting to 32 when absent.</summary>
         public int GridSize => ReadInt(SettingsMap, "gridSize", 32);
 
+        /// <summary>The level width in map units.</summary>
         public int Width => ReadInt(SettingsMap, "width", 0);
 
+        /// <summary>The level height in map units.</summary>
         public int Height => ReadInt(SettingsMap, "height", 0);
 
+        /// <summary>Whether the level uses the two-candy split layout.</summary>
         public bool TwoParts =>
             bool.TryParse(GameDesign?.Attribute("twoParts")?.Value, out bool v) && v;
 
+        /// <summary>The Objects layer element, or null when the document has none yet.</summary>
         public XElement? ObjectsLayer => Layer("Objects");
 
+        /// <summary>Adds an object to the Objects layer, creating the layer when needed.</summary>
         public void Add(LevelObject obj)
         {
             XElement layer = ObjectsLayer ?? CreateObjectsLayer();
             layer.Add(obj.Element);
         }
 
+        /// <summary>Removes an object from its parent XML document.</summary>
         public static void Remove(LevelObject obj)
         {
             obj.Element.Remove();
         }
 
+        /// <summary>Current editable objects in the Objects layer, in XML order.</summary>
         public IReadOnlyList<LevelObject> Objects =>
             ObjectsLayer is null ? [] : [.. ObjectsLayer.Elements().Select(e => new LevelObject(e))];
 
+        /// <summary>Serializes the level XML, preserving the original declaration when present.</summary>
         public string Save()
         {
             XDeclaration decl = _doc.Declaration ?? new XDeclaration("1.0", "utf-8", null);

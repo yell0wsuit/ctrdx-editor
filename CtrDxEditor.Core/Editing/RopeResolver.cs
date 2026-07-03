@@ -5,12 +5,26 @@ using CtrDxEditor.Core.Document;
 
 namespace CtrDxEditor.Core.Editing
 {
-    public enum RopeTargetKind { Candy, Bulb, None }
+    /// <summary>The resolved destination category for a grab rope.</summary>
+    public enum RopeTargetKind
+    {
+        /// <summary>The rope targets a candy object.</summary>
+        Candy,
 
+        /// <summary>The rope targets a light bulb object.</summary>
+        Bulb,
+
+        /// <summary>The rope has no resolved target.</summary>
+        None,
+    }
+
+    /// <summary>The resolved rope target kind and object, when one exists.</summary>
     public readonly record struct RopeTarget(RopeTargetKind Kind, LevelObject? Target);
 
+    /// <summary>Resolves grab rope targets against the objects in a level.</summary>
     public static class RopeResolver
     {
+        /// <summary>Finds the object a grab rope should visually connect to.</summary>
         public static RopeTarget Resolve(
             LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
         {

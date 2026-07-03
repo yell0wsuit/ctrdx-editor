@@ -14,8 +14,10 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public static class SpritePlacement
     {
+        /// <summary>Game world scale used by the original renderer when mapping atlas pixels to level space.</summary>
         public const double MapScale = 3.0;
 
+        /// <summary>Computes atlas source and level-space destination bounds for a sprite frame.</summary>
         public static SpriteLayout Compute(
             AtlasFrame frame, double x, double y, double scale = 1.0, double mapScale = MapScale)
         {

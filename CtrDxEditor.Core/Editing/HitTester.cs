@@ -4,6 +4,7 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
 {
+    /// <summary>Hit-testing helpers for ordered level object bounds.</summary>
     public static class HitTester
     {
         /// <summary>
