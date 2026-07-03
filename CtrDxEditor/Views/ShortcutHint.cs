@@ -10,8 +10,13 @@ namespace CtrDxEditor.Views
     {
         private static readonly string Mod = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl";
 
+        /// <summary>Localized platform shortcut text for zooming in.</summary>
         public static string ZoomIn { get; } = $"{Mod} +";
+
+        /// <summary>Localized platform shortcut text for zooming out.</summary>
         public static string ZoomOut { get; } = $"{Mod} -";
+
+        /// <summary>Localized platform shortcut text for fitting the level to the viewport.</summary>
         public static string ZoomFit { get; } = $"{Mod} 0";
     }
 }

@@ -12,8 +12,10 @@ namespace CtrDxEditor.Converters
     /// </summary>
     public sealed class LockRowEnabledConverter : IMultiValueConverter
     {
+        /// <summary>Shared converter instance for XAML bindings.</summary>
         public static readonly LockRowEnabledConverter Instance = new();
 
+        /// <inheritdoc />
         public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             if (values.Count != 2)

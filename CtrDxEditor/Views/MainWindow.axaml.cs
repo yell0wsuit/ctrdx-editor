@@ -15,11 +15,13 @@ using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Views
 {
+    /// <summary>Main editor window containing menus, palette, property panel, object list, and canvas.</summary>
     public partial class MainWindow : Window
     {
         private EditorViewModel? _mutatedSubscription;
         private readonly Action _invalidateCanvas;
 
+        /// <summary>Creates the main editor window and wires input gestures.</summary>
         public MainWindow()
         {
             AvaloniaXamlLoader.Load(this);

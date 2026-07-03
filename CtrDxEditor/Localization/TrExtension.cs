@@ -9,17 +9,21 @@ namespace CtrDxEditor.Localization
     /// </summary>
     public sealed class TrExtension : MarkupExtension
     {
+        /// <summary>Creates an empty translation extension; <see cref="Key"/> must be set separately.</summary>
         public TrExtension()
         {
         }
 
+        /// <summary>Creates a translation extension for <paramref name="key"/>.</summary>
         public TrExtension(string key)
         {
             Key = key;
         }
 
+        /// <summary>The localization key to resolve.</summary>
         public string Key { get; set; } = "";
 
+        /// <inheritdoc />
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return Localizer.Get(Key);

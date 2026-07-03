@@ -22,6 +22,7 @@ namespace CtrDxEditor.Views
         private ContentSetupViewModel? _vm;
         private TwofoldDialog? _cancelConfirm;
 
+        /// <summary>Creates the content setup dialog and wires view-model completion handling.</summary>
         public ContentSetupDialog()
         {
             AvaloniaXamlLoader.Load(this);

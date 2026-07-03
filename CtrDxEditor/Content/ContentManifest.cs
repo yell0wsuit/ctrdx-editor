@@ -7,6 +7,7 @@ namespace CtrDxEditor.Content
     /// <summary>Reads the content asset manifest (file_manifest.json) and detects missing assets.</summary>
     public static class ContentManifest
     {
+        /// <summary>The content manifest filename expected inside a content directory.</summary>
         public const string FileName = "file_manifest.json";
 
         /// <summary>Parses the manifest's { "files": { "relative/path": "sha256", ... } } section into a rel-path -> hash map.</summary>

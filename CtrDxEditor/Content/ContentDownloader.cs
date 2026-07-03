@@ -10,8 +10,11 @@ namespace CtrDxEditor.Content
     /// <summary>Downloads and extracts the binary content-asset bundle from the ctrdx-assets release.</summary>
     public static class ContentDownloader
     {
+        /// <summary>Direct URL for the latest downloadable asset bundle.</summary>
         public const string AssetsUrl =
             "https://github.com/yell0wsuit/ctrdx-assets/releases/latest/download/ctrdx-assets.zip";
+
+        /// <summary>Release page users can open when they want to download assets manually.</summary>
         public const string ReleasesPageUrl =
             "https://github.com/yell0wsuit/ctrdx-assets/releases/";
 

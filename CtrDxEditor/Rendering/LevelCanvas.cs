@@ -13,31 +13,40 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Rendering
 {
+    /// <summary>Interactive editor canvas for rendering, selecting, dragging, zooming, and placing level objects.</summary>
     public sealed class LevelCanvas : Control
     {
+        /// <summary>Avalonia property backing <see cref="Document"/>.</summary>
         public static readonly StyledProperty<LevelDocument?> DocumentProperty =
             AvaloniaProperty.Register<LevelCanvas, LevelDocument?>(nameof(Document));
 
+        /// <summary>Avalonia property backing <see cref="Sprites"/>.</summary>
         public static readonly StyledProperty<SpriteCache?> SpritesProperty =
             AvaloniaProperty.Register<LevelCanvas, SpriteCache?>(nameof(Sprites));
 
+        /// <summary>Avalonia property backing <see cref="View"/>.</summary>
         public static readonly StyledProperty<ViewTransform> ViewProperty =
             AvaloniaProperty.Register<LevelCanvas, ViewTransform>(nameof(View), ViewTransform.Identity);
 
+        /// <summary>Avalonia property backing <see cref="SnapEnabled"/>.</summary>
         public static readonly StyledProperty<bool> SnapEnabledProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(SnapEnabled));
 
+        /// <summary>Avalonia property backing <see cref="SelectedObject"/>.</summary>
         public static readonly StyledProperty<LevelObject?> SelectedObjectProperty =
             AvaloniaProperty.Register<LevelCanvas, LevelObject?>(
                 nameof(SelectedObject), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+        /// <summary>Avalonia property backing <see cref="LockedObject"/>.</summary>
         public static readonly StyledProperty<LevelObject?> LockedObjectProperty =
             AvaloniaProperty.Register<LevelCanvas, LevelObject?>(
                 nameof(LockedObject), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+        /// <summary>Avalonia property backing <see cref="ShowHitboxes"/>.</summary>
         public static readonly StyledProperty<bool> ShowHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowHitboxes), defaultValue: true);
 
+        /// <summary>Avalonia property backing <see cref="ShowMobileHitboxes"/>.</summary>
         public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
 
@@ -49,16 +58,34 @@ namespace CtrDxEditor.Rendering
                 ShowHitboxesProperty, ShowMobileHitboxesProperty);
         }
 
+        /// <summary>The loaded level document to render and edit.</summary>
         public LevelDocument? Document { get => GetValue(DocumentProperty); set => SetValue(DocumentProperty, value); }
+
+        /// <summary>Sprite cache used to render object art.</summary>
         public SpriteCache? Sprites { get => GetValue(SpritesProperty); set => SetValue(SpritesProperty, value); }
+
+        /// <summary>Current zoom and pan transform.</summary>
         public ViewTransform View { get => GetValue(ViewProperty); set => SetValue(ViewProperty, value); }
+
+        /// <summary>Whether object moves and placements snap to the level grid.</summary>
         public bool SnapEnabled { get => GetValue(SnapEnabledProperty); set => SetValue(SnapEnabledProperty, value); }
+
+        /// <summary>The currently selected object, if any.</summary>
         public LevelObject? SelectedObject { get => GetValue(SelectedObjectProperty); set => SetValue(SelectedObjectProperty, value); }
+
+        /// <summary>The object locked for exclusive interaction, if any.</summary>
         public LevelObject? LockedObject { get => GetValue(LockedObjectProperty); set => SetValue(LockedObjectProperty, value); }
+
+        /// <summary>Whether desktop hitboxes are drawn over objects.</summary>
         public bool ShowHitboxes { get => GetValue(ShowHitboxesProperty); set => SetValue(ShowHitboxesProperty, value); }
+
+        /// <summary>Whether phone hitboxes are drawn over objects.</summary>
         public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
 
+        /// <summary>Callback used to place a new object at level coordinates.</summary>
         public Func<string, int, int, LevelObject?>? PlaceAt { get; set; }
+
+        /// <summary>Callback used to toggle the locked object from canvas gestures.</summary>
         public Action<LevelObject?>? ToggleLock { get; set; }
 
         private bool _dragging;
@@ -71,6 +98,7 @@ namespace CtrDxEditor.Rendering
         private string? _ghostElement;
         private Vec2 _ghostLevel;
 
+        /// <inheritdoc />
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
             base.OnPropertyChanged(change);
@@ -126,6 +154,7 @@ namespace CtrDxEditor.Rendering
             View = new ViewTransform(newZoom, panX, panY);
         }
 
+        /// <inheritdoc />
         public override void Render(DrawingContext context)
         {
             base.Render(context);
@@ -320,6 +349,7 @@ namespace CtrDxEditor.Rendering
             return list;
         }
 
+        /// <inheritdoc />
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             base.OnPointerPressed(e);
@@ -388,6 +418,7 @@ namespace CtrDxEditor.Rendering
             e.Pointer.Capture(this);
         }
 
+        /// <inheritdoc />
         protected override void OnPointerMoved(PointerEventArgs e)
         {
             base.OnPointerMoved(e);
@@ -412,6 +443,7 @@ namespace CtrDxEditor.Rendering
             InvalidateVisual();
         }
 
+        /// <inheritdoc />
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
@@ -420,6 +452,7 @@ namespace CtrDxEditor.Rendering
             e.Pointer.Capture(null);
         }
 
+        /// <inheritdoc />
         protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
         {
             base.OnPointerWheelChanged(e);
@@ -470,6 +503,7 @@ namespace CtrDxEditor.Rendering
             InvalidateVisual();
         }
 
+        /// <summary>Drops an object at a screen-space point, snapping according to the current settings.</summary>
         public void DropElement(string element, Point screenPoint)
         {
             Vec2 levelPt = View.ScreenToLevel(new Vec2(screenPoint.X, screenPoint.Y));

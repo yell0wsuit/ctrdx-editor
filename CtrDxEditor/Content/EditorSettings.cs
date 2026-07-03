@@ -8,6 +8,7 @@ namespace CtrDxEditor.Content
     /// <summary>Persisted editor settings, stored as JSON next to the executable.</summary>
     public sealed class EditorSettings
     {
+        /// <summary>User-configured content directory path, if one has been saved.</summary>
         [JsonPropertyName("contentPath")]
         public string? ContentPath { get; set; }
 

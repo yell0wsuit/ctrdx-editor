@@ -28,8 +28,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Raised once <see cref="ResolvedContentPath"/> is set, so the view can close.</summary>
         public event Action? Completed;
 
+        /// <summary>Command that downloads and installs the default asset bundle.</summary>
         public IAsyncRelayCommand DownloadCommand { get; }
 
+        /// <summary>Creates a content setup view model.</summary>
         public ContentSetupViewModel(
             string defaultContentDir,
             Func<string, IProgress<double>, CancellationToken, Task> download,

@@ -14,6 +14,7 @@ using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
+    /// <summary>Main editor state and commands shared by the window and canvas.</summary>
     public sealed partial class EditorViewModel : ViewModelBase
     {
         private readonly string _contentRoot;
@@ -27,18 +28,29 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
         [ObservableProperty] public partial bool ShowMobileHitboxes { get; set; }
 
+        /// <summary>Sprite cache for the active content directory.</summary>
         public SpriteCache Sprites { get; }
+
+        /// <summary>Palette items available for placement.</summary>
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];
+
+        /// <summary>Attribute fields for the selected object.</summary>
         public ObservableCollection<AttributeFieldViewModel> Fields { get; } = [];
+
+        /// <summary>Objects in the current level, mirrored for list binding.</summary>
         public ObservableCollection<LevelObject> ObjectList { get; } = [];
+
+        /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
 
+        /// <summary>Creates an editor view model rooted at a validated content directory.</summary>
         public EditorViewModel(string contentRoot)
         {
             _contentRoot = contentRoot;
             Sprites = new SpriteCache(_contentRoot);
         }
 
+        /// <summary>Loads a level XML file into the editor.</summary>
         public void LoadLevel(string path)
         {
             Document = LevelDocument.Load(path);
@@ -49,6 +61,7 @@ namespace CtrDxEditor.ViewModels
             RefreshObjectList();
         }
 
+        /// <summary>Deletes the currently selected object, if one exists.</summary>
         public void DeleteSelected()
         {
             if (SelectedObject is null || Document is null)
@@ -83,6 +96,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        /// <summary>Refreshes the object list from the current document.</summary>
         public void RefreshObjectList()
         {
             ObjectList.Clear();
@@ -96,6 +110,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        /// <summary>Refreshes palette availability from descriptor cardinality and loaded objects.</summary>
         public void RefreshPalette()
         {
             IReadOnlyList<LevelObject> objs = Document?.Objects ?? [];
@@ -108,6 +123,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        /// <summary>Places a new object if the descriptor exists and capacity allows it.</summary>
         public LevelObject? PlaceObject(string element, int levelX, int levelY)
         {
             ObjectDescriptor? d = _descriptors.For(element);
@@ -124,6 +140,7 @@ namespace CtrDxEditor.ViewModels
             return obj;
         }
 
+        /// <summary>Saves the current level document to disk.</summary>
         public void SaveTo(string path)
         {
             if (Document is not null)

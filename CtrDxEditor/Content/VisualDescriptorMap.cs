@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace CtrDxEditor.Content
 {
+    /// <summary>Built-in visual descriptor lookup for supported editor object sprites.</summary>
     public static class VisualDescriptorMap
     {
         private const string CandyJson = "images/candies/obj_candy_01_new.json";
@@ -44,9 +45,11 @@ namespace CtrDxEditor.Content
             ]),
         ];
 
+        /// <summary>All visual descriptors keyed by object element name.</summary>
         public static IReadOnlyDictionary<string, VisualDescriptor> ByElement { get; } =
             All.ToDictionary(v => v.Element);
 
+        /// <summary>Returns a visual descriptor by object element name, or null when unsupported.</summary>
         public static VisualDescriptor? For(string element)
         {
             return ByElement.TryGetValue(element, out VisualDescriptor? v) ? v : null;

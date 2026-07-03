@@ -18,6 +18,7 @@ namespace CtrDxEditor.Content
     /// <summary>A fully resolved, composited object sprite: ordered layers plus per-object scale.</summary>
     public sealed record ObjectSprite(IReadOnlyList<SpriteLayerDraw> Layers, double Scale);
 
+    /// <summary>Lazily loads atlas images and frame data from the configured content root.</summary>
     public sealed class SpriteCache(string contentRoot)
     {
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
@@ -83,6 +84,7 @@ namespace CtrDxEditor.Content
             return rtb;
         }
 
+        /// <summary>Returns the resolved sprite layers for an object element, or null when unavailable.</summary>
         public ObjectSprite? GetSprite(string element)
         {
             VisualDescriptor? v = VisualDescriptorMap.For(element);
