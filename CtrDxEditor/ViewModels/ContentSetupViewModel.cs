@@ -16,6 +16,7 @@ namespace CtrDxEditor.ViewModels
         private readonly string _defaultContentDir;
         private readonly Func<string, IProgress<double>, CancellationToken, Task> _download;
         private readonly Action<string> _saveContentPath;
+        private CancellationTokenSource? _downloadCts;
 
         [ObservableProperty] private bool _isBusy;
         [ObservableProperty] private double _progress;
@@ -43,14 +44,21 @@ namespace CtrDxEditor.ViewModels
 
         private async Task DownloadAsync()
         {
+            using CancellationTokenSource cts = new();
+            _downloadCts = cts;
             IsBusy = true;
             ErrorMessage = null;
             Progress = 0;
             try
             {
                 Progress<double> progress = new(p => Progress = p);
-                await _download(_defaultContentDir, progress, CancellationToken.None);
+                await _download(_defaultContentDir, progress, cts.Token);
                 Succeed(_defaultContentDir);
+            }
+            catch (OperationCanceledException)
+            {
+                // The user cancelled; return the dialog to its initial choices.
+                Progress = 0;
             }
             catch (Exception ex)
             {
@@ -58,9 +66,13 @@ namespace CtrDxEditor.ViewModels
             }
             finally
             {
+                _downloadCts = null;
                 IsBusy = false;
             }
         }
+
+        /// <summary>Requests cancellation of an in-progress download; a no-op when nothing is downloading.</summary>
+        public void CancelDownload() => _downloadCts?.Cancel();
 
         /// <summary>Validates a user-picked folder; on success saves and completes, otherwise sets an error.</summary>
         public void ApplyLocatedFolder(string dir)

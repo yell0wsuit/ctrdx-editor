@@ -4,16 +4,21 @@
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
              x:CompileBindings="False">
   <StackPanel Margin="24" Spacing="16" Width="460">
-    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{loc:Tr Dialog.ContentSetup.Title}" />
+    <!-- Title reflects the current phase. -->
+    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
+               Text="{loc:Tr Dialog.ContentSetup.Title}" />
+    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsBusy}"
+               Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
 
     <!-- Idle: describe the choice. -->
     <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
                Text="{loc:Tr Dialog.ContentSetup.Description}" />
 
-    <!-- Busy: the description is replaced by live download progress. -->
+    <!-- Busy: the description is replaced by live download progress plus a cancel action. -->
     <StackPanel Spacing="8" IsVisible="{Binding IsBusy}">
       <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
       <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
+      <Button Content="{loc:Tr Dialog.ContentSetup.Cancel}" Click="Cancel_Click" HorizontalAlignment="Right" />
     </StackPanel>
 
     <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
@@ -24,8 +29,8 @@
                 IsVisible="{Binding !IsBusy}">
       <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
       <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
-      <Button Content="{loc:Tr Dialog.ContentSetup.Locate}" Click="Locate_Click" />
-      <Button Content="{loc:Tr Dialog.ContentSetup.Quit}" Click="Quit_Click" />
+      <Button Content="{loc:Tr Dialog.Common.Locate}" Click="Locate_Click" />
+      <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" />
     </StackPanel>
   </StackPanel>
 </UserControl>

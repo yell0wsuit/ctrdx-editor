@@ -22,6 +22,26 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
+        public async Task CancelDownload_stops_the_download_without_error()
+        {
+            // A download that only completes when its cancellation token fires.
+            ContentSetupViewModel vm = new(
+                "/unused",
+                (d, p, ct) => Task.Delay(Timeout.Infinite, ct),
+                _ => { });
+
+            Task run = vm.DownloadCommand.ExecuteAsync(null);
+            Assert.True(vm.IsBusy);
+
+            vm.CancelDownload();
+            await run;
+
+            Assert.False(vm.IsBusy);
+            Assert.Null(vm.ResolvedContentPath);
+            Assert.Null(vm.ErrorMessage);
+        }
+
+        [Fact]
         public async Task DownloadCommand_success_sets_resolved_path_and_raises_completed()
         {
             string root = Directory.CreateTempSubdirectory("ctrdx-vm-").FullName;

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
@@ -18,6 +20,7 @@ namespace CtrDxEditor.Views
     public partial class ContentSetupDialog : BaseDialog<string>
     {
         private ContentSetupViewModel? _vm;
+        private TwofoldDialog? _cancelConfirm;
 
         public ContentSetupDialog()
         {
@@ -40,6 +43,11 @@ namespace CtrDxEditor.Views
 
         private void OnCompleted()
         {
+            // A download that finishes while the cancel confirmation is still open would
+            // otherwise leave that nested dialog orphaned when the setup dialog closes.
+            // Dismiss it first (child before parent), then close the setup dialog.
+            _cancelConfirm?.Close();
+
             if (_vm?.ResolvedContentPath is string path)
             {
                 Close(path);
@@ -56,7 +64,7 @@ namespace CtrDxEditor.Views
             IReadOnlyList<IStorageFolder> folders = await top.StorageProvider.OpenFolderPickerAsync(
                 new FolderPickerOpenOptions
                 {
-                    Title = Localizer.Get("Dialog.ContentSetup.PickerTitle"),
+                    Title = Localizer.Get("Dialog.Common.PickerTitle"),
                     AllowMultiple = false,
                 });
             if (folders.Count > 0 && folders[0].TryGetLocalPath() is string path)
@@ -70,6 +78,39 @@ namespace CtrDxEditor.Views
             if (TopLevel.GetTopLevel(this) is TopLevel top)
             {
                 _ = await top.Launcher.LaunchUriAsync(new Uri(ContentDownloader.ReleasesPageUrl));
+            }
+        }
+
+        private async void Cancel_Click(object? sender, RoutedEventArgs e)
+        {
+            if (_vm is null)
+            {
+                return;
+            }
+
+            // Confirm before aborting; the download keeps running behind this nested dialog.
+            // Tracked so OnCompleted can dismiss it if the download finishes first.
+            _cancelConfirm = new TwofoldDialog
+            {
+                // TwofoldDialog defaults to a narrow 300px width with two equal columns, which
+                // clips longer button labels; widen it and tighten the button margins so they fit.
+                Width = 420,
+                ButtonMargin = new Thickness(4, 12, 4, 0),
+                Message = Localizer.Get("Dialog.ContentSetup.CancelConfirm"),
+                PositiveText = Localizer.Get("Dialog.ContentSetup.CancelConfirm.Yes"),
+                NegativeText = Localizer.Get("Dialog.ContentSetup.CancelConfirm.No"),
+            };
+            try
+            {
+                Optional<bool> confirmed = await _cancelConfirm.ShowAsync();
+                if (confirmed.GetValueOrDefault())
+                {
+                    _vm.CancelDownload();
+                }
+            }
+            finally
+            {
+                _cancelConfirm = null;
             }
         }
 
