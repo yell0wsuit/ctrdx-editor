@@ -10,6 +10,7 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests for the first-run content setup view model.</summary>
     public class ContentSetupViewModelTests
     {
         private static void WriteValidContent(string dir)
@@ -22,6 +23,7 @@ namespace CtrDxEditor.Tests
                                      """{"files":{"images/a.png":"_"}}""");
         }
 
+        /// <summary>Verifies that cancelling an active download clears busy state without an error.</summary>
         [Fact]
         public async Task CancelDownloadStopsTheDownloadWithoutError()
         {
@@ -42,6 +44,7 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.ErrorMessage);
         }
 
+        /// <summary>Verifies that a successful download saves the path and raises completion.</summary>
         [Fact]
         public async Task DownloadCommandSuccessSetsResolvedPathAndRaisesCompleted()
         {
@@ -72,6 +75,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies that a failed download reports an error and leaves setup unresolved.</summary>
         [Fact]
         public async Task DownloadCommandFailureSetsErrorAndLeavesPathNull()
         {
@@ -87,6 +91,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains("boom", vm.ErrorMessage);
         }
 
+        /// <summary>Verifies that locating an invalid folder records an error.</summary>
         [Fact]
         public void ApplyLocatedFolderInvalidSetsError()
         {
@@ -103,6 +108,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(dir, recursive: true); }
         }
 
+        /// <summary>Verifies that locating a valid folder saves it and completes setup.</summary>
         [Fact]
         public void ApplyLocatedFolderValidSavesAndCompletes()
         {

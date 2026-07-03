@@ -7,8 +7,10 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests for extracting downloaded content bundles.</summary>
     public class ContentDownloaderTests
     {
+        /// <summary>Verifies that extracting a valid bundle produces a valid content directory.</summary>
         [Fact]
         public void ExtractIntoUnpacksAValidBundle()
         {

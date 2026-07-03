@@ -6,6 +6,7 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests for resolving and validating editor content directories.</summary>
     public class ContentLocationTests
     {
         // Creates a valid content dir (manifest + the one file it lists) at parent/name.
@@ -21,6 +22,7 @@ namespace CtrDxEditor.Tests
             return dir;
         }
 
+        /// <summary>Verifies that a manifest-complete content directory is valid.</summary>
         [Fact]
         public void IsValidTrueForCompleteContentDir()
         {
@@ -33,6 +35,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies that empty and null content directories are invalid.</summary>
         [Fact]
         public void IsValidFalseForEmptyDirAndNull()
         {
@@ -45,6 +48,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies that a valid configured content path takes priority.</summary>
         [Fact]
         public void ResolvePrefersValidConfiguredPath()
         {
@@ -61,6 +65,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies fallback to a content directory next to the base directory.</summary>
         [Fact]
         public void ResolveFallsBackToContentNextToBaseDir()
         {
@@ -76,6 +81,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies fallback to an ancestor content directory.</summary>
         [Fact]
         public void ResolveWalksUpToAncestorContent()
         {
@@ -93,6 +99,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(root, recursive: true); }
         }
 
+        /// <summary>Verifies that resolution returns null when no valid content directory exists.</summary>
         [Fact]
         public void ResolveReturnsNullWhenNothingValid()
         {

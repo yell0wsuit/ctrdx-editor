@@ -7,8 +7,10 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests for loading and saving persisted editor settings.</summary>
     public class EditorSettingsTests
     {
+        /// <summary>Verifies that saving then loading preserves the configured content path.</summary>
         [Fact]
         public void SaveThenLoadRoundTripsContentPath()
         {
@@ -25,6 +27,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(dir, recursive: true); }
         }
 
+        /// <summary>Verifies that missing settings files load as empty settings.</summary>
         [Fact]
         public void LoadMissingFileReturnsEmptySettings()
         {

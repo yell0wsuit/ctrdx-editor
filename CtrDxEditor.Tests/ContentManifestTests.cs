@@ -7,8 +7,10 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests for reading content manifests and detecting missing files.</summary>
     public class ContentManifestTests
     {
+        /// <summary>Verifies that the files section is parsed into a relative-path hash map.</summary>
         [Fact]
         public void ReadParsesFilesSection()
         {
@@ -26,6 +28,7 @@ namespace CtrDxEditor.Tests
             finally { Directory.Delete(dir, recursive: true); }
         }
 
+        /// <summary>Verifies that only absent manifest entries are reported missing.</summary>
         [Fact]
         public void MissingFilesListsOnlyAbsentEntries()
         {
