@@ -10,6 +10,8 @@ namespace CtrDxEditor.Content
         private const string CandyImageBase = "images/candies/obj_candy_01_new";
         private const string HookJson = "images/obj_hook.json";
         private const string HookImageBase = "images/obj_hook";
+        private const string BubbleJson = "images/obj_bubble.json";
+        private const string BubbleImageBase = "images/obj_bubble";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -36,6 +38,19 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(HookJson, HookImageBase, "obj_hook_01_frame_0001.png"),
             ]),
 
+            // Bubble = attached quad 0 over one random attached outline, matching LoadBubble's
+            // parent quad RND_RANGE(1,3) plus child Image quad 0.
+            new("bubble",
+            [
+                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0000.png"),
+            ],
+            RandomBackLayers:
+            [
+                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0001.png"),
+                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0002.png"),
+                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0003.png"),
+            ]),
+
             // Star = glow halo (frame 0, the ImgObjStarIdleGlow quad) behind the star body. The body
             // idle loops frames 1-18 in game; frame 18 is the fullest front-on pose for a static view.
             new("star",
@@ -58,7 +73,7 @@ namespace CtrDxEditor.Content
         {
             return
             [
-                .. All.SelectMany(v => v.Layers)
+                .. All.SelectMany(v => v.Layers.Concat(v.RandomBackLayers))
                       .SelectMany(l => new[] { l.AtlasImageBasePath + imageExtension, l.AtlasJsonRelPath })
                       .Distinct(),
             ];

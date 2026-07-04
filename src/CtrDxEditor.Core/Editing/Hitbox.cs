@@ -44,6 +44,7 @@ namespace CtrDxEditor.Core.Editing
         private static readonly Dictionary<string, HitboxDef> Defs =
             new HitboxDef[]
             {
+                new("bubble", new(48, 48, 152, 152), new(0, 0, 57, 57), 250, 250),
                 new("candy", new(142, 157, 112, 104), new(46, 49, 35, 35), 393, 418),
                 new("star", new(70, 64, 82, 82), new(22, 20, 30, 30), 236, 223),
                 new("target", new(264, 350, 108, 2), new(90, 110, 25, 1), 640, 640),

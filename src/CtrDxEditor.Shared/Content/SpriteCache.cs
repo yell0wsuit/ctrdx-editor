@@ -16,8 +16,19 @@ namespace CtrDxEditor.Content
     /// <summary>One resolved layer ready to draw: its atlas bitmap and the frame within it.</summary>
     public readonly record struct SpriteLayerDraw(Bitmap Bitmap, AtlasFrame Frame);
 
-    /// <summary>A fully resolved, composited object sprite: ordered layers plus per-object scale.</summary>
-    public sealed record ObjectSprite(IReadOnlyList<SpriteLayerDraw> Layers, double Scale);
+    /// <summary>
+    /// A fully resolved, composited object sprite: ordered layers plus per-object scale.
+    /// <paramref name="Variants"/> are the resolved decorative back-layer choices (one is drawn per
+    /// placed instance, behind <paramref name="Layers"/>); empty for objects without variants.
+    /// </summary>
+    public sealed record ObjectSprite(
+        IReadOnlyList<SpriteLayerDraw> Layers,
+        double Scale,
+        IReadOnlyList<SpriteLayerDraw>? Variants = null)
+    {
+        /// <summary>Resolved decorative back-layer variants; empty when the object has none.</summary>
+        public IReadOnlyList<SpriteLayerDraw> Variants { get; init; } = Variants ?? [];
+    }
 
     /// <summary>The rope Christmas lights atlas: its bitmap and the light bulb frames.</summary>
     public sealed record ChristmasLightsArt(Bitmap Bitmap, IReadOnlyList<AtlasFrame> Frames);
@@ -44,7 +55,7 @@ namespace CtrDxEditor.Content
         {
             foreach (VisualDescriptor v in VisualDescriptorMap.ByElement.Values)
             {
-                foreach (SpriteLayer layer in v.Layers)
+                foreach (SpriteLayer layer in AllLayers(v))
                 {
                     string imagePath = layer.AtlasImageBasePath + imageExtension;
                     if (!_bitmaps.ContainsKey(imagePath))
@@ -172,7 +183,30 @@ namespace CtrDxEditor.Content
                 }
             }
 
-            return layers.Count == 0 ? null : new ObjectSprite(layers, v.Scale);
+            List<SpriteLayerDraw> variants = new(v.RandomBackLayers.Count);
+            foreach (SpriteLayer layer in v.RandomBackLayers)
+            {
+                Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
+                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.Find(layer.FrameName);
+                if (bitmap is not null && frame is not null)
+                {
+                    variants.Add(new SpriteLayerDraw(bitmap, frame));
+                }
+            }
+
+            return layers.Count == 0 ? null : new ObjectSprite(layers, v.Scale, variants);
+        }
+
+        private static IEnumerable<SpriteLayer> AllLayers(VisualDescriptor descriptor)
+        {
+            foreach (SpriteLayer layer in descriptor.Layers)
+            {
+                yield return layer;
+            }
+            foreach (SpriteLayer layer in descriptor.RandomBackLayers)
+            {
+                yield return layer;
+            }
         }
 
         private Bitmap? LoadBitmap(string relPath)

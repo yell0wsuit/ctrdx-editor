@@ -43,6 +43,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("moveOffset", AttrType.Whole, "0"),
                 new AttributeSpec("spider", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
+            new ObjectDescriptor("bubble", "Bubble", [], MaxCount: int.MaxValue),
         ]);
     }
 }

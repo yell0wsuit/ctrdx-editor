@@ -275,6 +275,10 @@ namespace CtrDxEditor.Rendering
             ObjectSprite? sprite = sprites.GetSprite(obj.Type);
             if (sprite is not null)
             {
+                if (sprite.Variants.Count > 0)
+                {
+                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
+                }
                 DrawSprite(ctx, v, sprite, obj.X, obj.Y);
             }
         }
@@ -283,12 +287,23 @@ namespace CtrDxEditor.Rendering
         {
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
-                SpriteLayout layout = SpritePlacement.Compute(layer.Frame, x, y, sprite.Scale);
-                Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
-                Vec2 dtl = v.LevelToScreen(new Vec2(layout.Dest.X, layout.Dest.Y));
-                Vec2 dbr = v.LevelToScreen(new Vec2(layout.Dest.X + layout.Dest.W, layout.Dest.Y + layout.Dest.H));
-                ctx.DrawImage(layer.Bitmap, source, new Rect(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y));
+                DrawLayer(ctx, v, layer, x, y, sprite.Scale);
             }
+        }
+
+        private static void DrawLayer(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteLayerDraw layer,
+            double x,
+            double y,
+            double scale)
+        {
+            SpriteLayout layout = SpritePlacement.Compute(layer.Frame, x, y, scale);
+            Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
+            Vec2 dtl = v.LevelToScreen(new Vec2(layout.Dest.X, layout.Dest.Y));
+            Vec2 dbr = v.LevelToScreen(new Vec2(layout.Dest.X + layout.Dest.W, layout.Dest.Y + layout.Dest.H));
+            ctx.DrawImage(layer.Bitmap, source, new Rect(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y));
         }
 
         private static void DrawHitbox(

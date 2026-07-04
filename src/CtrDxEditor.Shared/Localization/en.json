@@ -50,6 +50,7 @@
     "Object.candy": "Candy",
     "Object.star": "Star",
     "Object.grab": "Grab",
+    "Object.bubble": "Bubble",
 
     "Attr.timeout": "Timeout",
     "Attr.length": "Length",

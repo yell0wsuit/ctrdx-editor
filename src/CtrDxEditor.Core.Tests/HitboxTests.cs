@@ -70,10 +70,28 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0.0, box.Value.Y + (box.Value.H / 2.0), precision: 9); // center y
         }
 
+        /// <summary>Verifies that the bubble desktop hitbox is the game box centered on its 250px frame.</summary>
+        [Fact]
+        public void BubbleDesktopBoxCentersOnItsFlightFrame()
+        {
+            // desktop (48,48,152,152), ref (250,250): offset = (48+76-125, 48+76-125) = (-1, -1).
+            LevelBounds? box = HitboxTable.Compute("bubble", 0, 0, scale: 3, HitboxModel.Desktop);
+            Assert.Equal(new LevelBounds(-77, -77, 152, 152), box);
+        }
+
+        /// <summary>Verifies that the bubble phone hitbox scales the raw WP7 box by 3.</summary>
+        [Fact]
+        public void BubblePhoneBoxScalesRawValuesByWp7()
+        {
+            // phone (0,0,57,57)*3 = (0,0,171,171), ref (250,250): offset = (85.5-125) = (-39.5, -39.5).
+            LevelBounds? box = HitboxTable.Compute("bubble", 0, 0, scale: 3, HitboxModel.Phone);
+            Assert.Equal(new LevelBounds(-125, -125, 171, 171), box);
+        }
+
         /// <summary>Verifies that unsupported elements do not produce hitboxes.</summary>
         [Theory]
         [InlineData("grab")]
-        [InlineData("bubble")]
+        [InlineData("pump")]
         [InlineData("")]
         public void UnsupportedElementsReturnNull(string element)
         {
