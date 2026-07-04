@@ -46,11 +46,6 @@
         <ProgressBar IsIndeterminate="True" />
       </StackPanel>
 
-      <!-- Invalid-file lists (from a corrupt/tampered bundle) render as multi-line "- path" bullets. -->
-      <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
-                 Text="{Binding ErrorMessage}"
-                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
-
       <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
                   IsVisible="{Binding !IsBusy}">
         <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />

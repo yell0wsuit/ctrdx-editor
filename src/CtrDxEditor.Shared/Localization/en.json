@@ -21,6 +21,8 @@
     "Dialog.FileType.LevelXml": "Level XML",
 
     "Dialog.Common.Cancel": "Cancel",
+    "Dialog.Common.Ok": "OK",
+    "Dialog.Common.Error": "Error",
     "Dialog.Common.Yes": "Yes",
     "Dialog.Common.No": "No",
     "Dialog.Common.Quit": "Quit",

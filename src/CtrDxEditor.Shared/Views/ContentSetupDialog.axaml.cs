@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 
 using Avalonia;
@@ -32,9 +33,32 @@ namespace CtrDxEditor.Views
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
-            _vm?.Completed -= OnCompleted;
+            if (_vm is not null)
+            {
+                _vm.Completed -= OnCompleted;
+                _vm.PropertyChanged -= OnViewModelPropertyChanged;
+            }
             _vm = DataContext as ContentSetupViewModel;
-            _vm?.Completed += OnCompleted;
+            if (_vm is not null)
+            {
+                _vm.Completed += OnCompleted;
+                _vm.PropertyChanged += OnViewModelPropertyChanged;
+            }
+        }
+
+        private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // Surface errors as a nested dialog on top of the setup dialog rather than inline, so a
+            // multi-line invalid-files list never stretches or clips the setup dialog's own layout.
+            if (e.PropertyName == nameof(ContentSetupViewModel.ErrorMessage) && _vm?.ErrorMessage is { } message)
+            {
+                MessageDialog error = new()
+                {
+                    Header = Localizer.Get("Dialog.Common.Error"),
+                    Message = message,
+                };
+                _ = await error.ShowAsync();
+            }
         }
 
         private void OnCompleted()
