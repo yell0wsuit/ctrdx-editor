@@ -113,13 +113,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(late.R > early.R);
         }
 
-        /// <summary>Overstretched ropes keep the resting palette (the game's red tint is a transient physics state).</summary>
+        /// <summary>Overstretched ropes get the game's red shade boost (raw channel exceeds 1 before clamping).</summary>
         [Fact]
-        public void BuildOverstretchedKeepsRestingColors()
+        public void BuildOverstretchedTintsRed()
         {
-            List<RopeStrip> stretched = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100);
-            List<RopeStrip> resting = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400);
-            Assert.Equal(resting[0].Colors[4], stretched[0].Colors[4]);
+            // Distance 300 vs length 100: far past the 7/105 threshold; shade red *= (300/100)*2.
+            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100);
+            Assert.True(strips[0].Colors[4].R > 1);
+        }
+
+        /// <summary>A taut rope below the stretch threshold keeps the resting palette.</summary>
+        [Fact]
+        public void BuildTautButNotStretchedKeepsRestingColors()
+        {
+            // 300 apart, rope 290: taut, but only ~3.4% over rest (threshold is ~6.67%).
+            List<RopeStrip> taut = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
+            List<RopeStrip> slack = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400);
+            Assert.Equal(slack[0].Colors[4], taut[0].Colors[4]);
         }
 
         /// <summary>Coincident endpoints produce no strips (all segments degenerate).</summary>

@@ -67,13 +67,14 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>
         /// Builds the triangle strips for a rope from <paramref name="a"/> (the grab) to
         /// <paramref name="b"/> (the target) with rest length <paramref name="length"/>.
-        /// Slack ropes hang on the catenary; taut ropes run straight.
+        /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
+        /// past their rest length pick up the game's red stretch tint.
         /// </summary>
         public static List<RopeStrip> Build(Vec2 a, Vec2 b, double length)
         {
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
-            RopeDrawColors palette = RopePalette.GetDrawColors(0);
+            RopeDrawColors palette = RopePalette.GetDrawColors(0, distance, length);
 
             // The physics chain has 2 + floor(len/restLen) parts; the game's draw loop needs >= 3.
             int count = Math.Max(3, 2 + (int)(length / RestLength));
