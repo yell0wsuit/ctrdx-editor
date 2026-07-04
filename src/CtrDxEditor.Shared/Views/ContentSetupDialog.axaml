@@ -4,7 +4,7 @@
              xmlns:vm="using:CtrDxEditor.ViewModels"
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
              x:DataType="vm:ContentSetupViewModel">
-  <StackPanel Margin="24" Spacing="16" Width="460">
+  <StackPanel Margin="24" Spacing="16" Width="500">
     <!-- Title reflects the current phase. -->
     <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
                Text="{loc:Tr Dialog.ContentSetup.Title}" />
