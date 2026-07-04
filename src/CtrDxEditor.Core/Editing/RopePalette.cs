@@ -20,10 +20,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Number of available rope skins (indices 0..SkinCount-1).</summary>
         public static int SkinCount => 9;
 
-        // The desktop game's stretch trigger is segmentLength > restLength + 7, with
-        // BUNGEE_REST_LEN = 105. Applied whole-rope: stretched when distance exceeds
-        // length by 7/105.
-        private const double StretchThresholdRatio = 7.0 / 105.0;
+        // The desktop game's stretch trigger is segmentLength > restLength + 7. Applied whole-rope: stretched when distance exceeds
+        // length by 7/30.
+        private const double StretchThresholdRatio = 7.0 / 30.0;
 
         /// <summary>True only for the default brown skin (index 0).</summary>
         public static bool IsDefaultSkin(int skin)
