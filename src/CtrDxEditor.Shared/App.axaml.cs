@@ -41,9 +41,11 @@ namespace CtrDxEditor
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
             {
                 MainView view = new();
-                singleView.MainView = view;
                 // Single-view has no window "Opened"; start once attached to the visual tree.
+                // Subscribe before assigning MainView: the browser lifetime attaches the view to
+                // the visual tree synchronously inside the setter, so subscribing after would miss the event.
                 view.AttachedToVisualTree += async (_, _) => await StartAsync(view, allowQuit: false, desktop: null);
+                singleView.MainView = view;
             }
             base.OnFrameworkInitializationCompleted();
         }
