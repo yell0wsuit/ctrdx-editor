@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 
 using CtrDxEditor.Content;
@@ -140,11 +141,21 @@ namespace CtrDxEditor.Rendering
         private int _lastHitIndex = -1;
         private bool _panning;
         private Point _panLast;
+        private double _lastPinchScale = 1;
         private bool _syncingScroll;
         private bool _pendingFit;
         private bool _ghostActive;
         private string? _ghostElement;
         private Vec2 _ghostLevel;
+
+        /// <summary>Creates the canvas and enables native touch gestures.</summary>
+        public LevelCanvas()
+        {
+            GestureRecognizers.Add(new PinchGestureRecognizer());
+            AddHandler(PinchEvent, Canvas_Pinch, RoutingStrategies.Bubble);
+            AddHandler(PinchEndedEvent, Canvas_PinchEnded, RoutingStrategies.Bubble);
+            AddHandler(PointerTouchPadGestureMagnifyEvent, Canvas_TouchPadMagnify, RoutingStrategies.Bubble);
+        }
 
         /// <inheritdoc />
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -591,6 +602,27 @@ namespace CtrDxEditor.Rendering
                 }
                 ScrollBy(deltaX, deltaY);
             }
+            e.Handled = true;
+        }
+
+        private void Canvas_Pinch(object? sender, PinchEventArgs e)
+        {
+            double factor = ViewNavigation.PinchScaleToZoomFactor(_lastPinchScale, e.Scale);
+            _lastPinchScale = e.Scale;
+            ZoomBy(factor, e.ScaleOrigin);
+            e.Handled = true;
+        }
+
+        private void Canvas_PinchEnded(object? sender, PinchEndedEventArgs e)
+        {
+            _lastPinchScale = 1;
+            e.Handled = true;
+        }
+
+        private void Canvas_TouchPadMagnify(object? sender, PointerDeltaEventArgs e)
+        {
+            double delta = Math.Abs(e.Delta.Y) > double.Epsilon ? e.Delta.Y : e.Delta.X;
+            ZoomBy(ViewNavigation.MagnifyDeltaToZoomFactor(delta), e.GetPosition(this));
             e.Handled = true;
         }
 

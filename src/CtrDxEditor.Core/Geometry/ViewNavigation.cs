@@ -38,5 +38,17 @@ namespace CtrDxEditor.Core.Geometry
             double panY = contentHeight <= viewportHeight ? (viewportHeight - contentHeight) / 2 : -Math.Clamp(offsetY, 0, maxY);
             return new ViewTransform(view.Zoom, panX, panY);
         }
+
+        /// <summary>Converts cumulative pinch scale into an incremental zoom factor.</summary>
+        public static double PinchScaleToZoomFactor(double previousScale, double currentScale)
+        {
+            return previousScale <= 0 || currentScale <= 0 ? 1 : currentScale / previousScale;
+        }
+
+        /// <summary>Converts platform touchpad magnify delta into a bounded zoom factor.</summary>
+        public static double MagnifyDeltaToZoomFactor(double delta)
+        {
+            return Math.Clamp(1 + delta, 0.5, 2.0);
+        }
     }
 }

@@ -76,5 +76,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(before.X, zoomed.ScreenToLevel(anchor).X, precision: 9);
             Assert.Equal(before.Y, zoomed.ScreenToLevel(anchor).Y, precision: 9);
         }
+
+        /// <summary>Verifies that cumulative pinch scale is converted to the next incremental zoom factor.</summary>
+        [Fact]
+        public void PinchScaleToZoomFactorUsesScaleRatio()
+        {
+            Assert.Equal(1.25, ViewNavigation.PinchScaleToZoomFactor(previousScale: 1.2, currentScale: 1.5));
+        }
+
+        /// <summary>Verifies that touchpad magnify deltas are bounded before becoming zoom factors.</summary>
+        [Fact]
+        public void MagnifyDeltaToZoomFactorClampsExtremeDeltas()
+        {
+            Assert.Equal(1.1, ViewNavigation.MagnifyDeltaToZoomFactor(0.1));
+            Assert.Equal(0.5, ViewNavigation.MagnifyDeltaToZoomFactor(-10));
+            Assert.Equal(2.0, ViewNavigation.MagnifyDeltaToZoomFactor(10));
+        }
     }
 }
