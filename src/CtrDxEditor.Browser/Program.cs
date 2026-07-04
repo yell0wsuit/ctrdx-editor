@@ -8,6 +8,7 @@ using CtrDxEditor.Startup;
 [assembly: System.Runtime.Versioning.SupportedOSPlatform("browser")]
 
 await IndexedDb.ImportAsync();
+await WebCrypto.ImportAsync();
 await BuildAvaloniaApp().StartBrowserAppAsync("out");
 
 AppBuilder BuildAvaloniaApp()
