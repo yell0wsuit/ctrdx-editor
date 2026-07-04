@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 
@@ -85,6 +86,47 @@ namespace CtrDxEditor.Tests
             Dictionary<string, string> manifest = new() { ["images/absent.png"] = "anything" };
 
             IReadOnlyList<string> invalid = ContentManifest.FindInvalidFiles(manifest, _ => null);
+
+            _ = Assert.Single(invalid);
+            Assert.Equal("images/absent.png", invalid[0]);
+        }
+
+        /// <summary>Verifies the async finder reports nothing when every file's injected hash matches.</summary>
+        [Fact]
+        public async Task FindInvalidFilesAsyncReturnsEmptyWhenAllHashesMatch()
+        {
+            byte[] bytes = "PNGDATA"u8.ToArray();
+            string realHash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+            Dictionary<string, string> manifest = new() { ["images/a.png"] = realHash };
+
+            IReadOnlyList<string> invalid = await ContentManifest.FindInvalidFilesAsync(
+                manifest, _ => bytes, b => Task.FromResult(Convert.ToHexStringLower(SHA256.HashData(b))));
+
+            Assert.Empty(invalid);
+        }
+
+        /// <summary>Verifies the async finder reports a file whose injected hash does not match.</summary>
+        [Fact]
+        public async Task FindInvalidFilesAsyncReportsHashMismatch()
+        {
+            Dictionary<string, string> manifest = new() { ["images/a.png"] = "not-the-real-hash" };
+
+            IReadOnlyList<string> invalid = await ContentManifest.FindInvalidFilesAsync(
+                manifest, _ => "PNGDATA"u8.ToArray(),
+                b => Task.FromResult(Convert.ToHexStringLower(SHA256.HashData(b))));
+
+            _ = Assert.Single(invalid);
+            Assert.Equal("images/a.png", invalid[0]);
+        }
+
+        /// <summary>Verifies the async finder reports a manifest-listed file the reader can't find at all.</summary>
+        [Fact]
+        public async Task FindInvalidFilesAsyncReportsMissingFile()
+        {
+            Dictionary<string, string> manifest = new() { ["images/absent.png"] = "anything" };
+
+            IReadOnlyList<string> invalid = await ContentManifest.FindInvalidFilesAsync(
+                manifest, _ => null, b => Task.FromResult("unused"));
 
             _ = Assert.Single(invalid);
             Assert.Equal("images/absent.png", invalid[0]);

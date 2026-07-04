@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace CtrDxEditor.Content
 {
@@ -65,6 +66,36 @@ namespace CtrDxEditor.Content
             {
                 byte[]? bytes = tryReadBytes(rel);
                 if (bytes is null || !HashMatches(bytes, expectedHash))
+                {
+                    invalid.Add(rel);
+                }
+            }
+            return invalid;
+        }
+
+        /// <summary>
+        /// Async counterpart to <see cref="FindInvalidFiles"/> that hashes each file via the injected
+        /// <paramref name="hashHexAsync"/> instead of managed SHA-256. Returns the manifest-listed relative
+        /// paths that are missing (<paramref name="tryReadBytes"/> returns null) or whose lowercase-hex hash
+        /// does not match the manifest's recorded value.
+        /// </summary>
+        public static async Task<IReadOnlyList<string>> FindInvalidFilesAsync(
+            IReadOnlyDictionary<string, string> manifest,
+            Func<string, byte[]?> tryReadBytes,
+            Func<byte[], Task<string>> hashHexAsync)
+        {
+            List<string> invalid = [];
+            foreach ((string rel, string expectedHash) in manifest)
+            {
+                byte[]? bytes = tryReadBytes(rel);
+                if (bytes is null)
+                {
+                    invalid.Add(rel);
+                    continue;
+                }
+
+                string actual = await hashHexAsync(bytes);
+                if (!string.Equals(actual, expectedHash, StringComparison.OrdinalIgnoreCase))
                 {
                     invalid.Add(rel);
                 }
