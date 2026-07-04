@@ -75,7 +75,7 @@ namespace CtrDxEditor.Localization
         /// <summary>Display name for a level element, falling back to its descriptor then its raw id.</summary>
         public static string ObjectName(string elementName)
         {
-            return Strings.TryGetValue("Object." + elementName, out string? value)
+            return Strings.TryGetValue($"Object.{elementName}", out string? value)
                 ? value
                 : DescriptorTable.Default.For(elementName)?.DisplayName ?? elementName;
         }
@@ -83,7 +83,7 @@ namespace CtrDxEditor.Localization
         /// <summary>Display label for an object attribute; the raw name stays the XML key and never changes.</summary>
         public static string AttributeName(string name)
         {
-            return Strings.TryGetValue("Attr." + name, out string? value) ? value : name;
+            return Strings.TryGetValue($"Attr.{name}", out string? value) ? value : name;
         }
     }
 }

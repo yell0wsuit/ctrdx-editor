@@ -34,7 +34,7 @@ namespace CtrDxEditor.Tests
         public async Task LoadMissingFileReturnsEmptySettings()
         {
             string path = Path.Combine(
-                Path.GetTempPath(), "ctrdx-missing-" + Guid.NewGuid().ToString("N"), "settings.json");
+                Path.GetTempPath(), $"ctrdx-missing-{Guid.NewGuid():N}", "settings.json");
 
             EditorSettings loaded = await new FileSettingsStore(path).LoadAsync();
 

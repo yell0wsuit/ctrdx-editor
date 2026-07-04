@@ -31,7 +31,7 @@ namespace CtrDxEditor.Content
         public static async Task DownloadAsync(
             string destContentDir, IProgress<double>? progress, CancellationToken ct)
         {
-            string tmp = Path.Combine(Path.GetTempPath(), "ctrdx-assets-" + Guid.NewGuid().ToString("N"));
+            string tmp = Path.Combine(Path.GetTempPath(), $"ctrdx-assets-{Guid.NewGuid():N}");
             _ = Directory.CreateDirectory(tmp);
             try
             {
