@@ -19,10 +19,6 @@ namespace CtrDxEditor.Rendering
     /// </summary>
     internal static class RopeRenderer
     {
-        // The game shows rope Christmas lights only in Dec/Jan (SpecialEvents.IsXmas).
-        // Forced on while the port is verified out of season; flip to false to restore gating.
-        private const bool ForceChristmasLights = true;
-
         /// <summary>Draws all ropes for <paramref name="doc"/> into <paramref name="ctx"/>.</summary>
         /// <param name="ctx">Target drawing context.</param>
         /// <param name="v">Current level-to-screen transform.</param>
@@ -62,7 +58,7 @@ namespace CtrDxEditor.Rendering
             {
                 ctx.Custom(new RopeDrawOperation(opBounds, v, ropeStrips));
             }
-            if (ForceChristmasLights || SpecialEvents.IsXmas)
+            if (SpecialEvents.IsXmas)
             {
                 DrawChristmasLights(ctx, v, sprites, ropeLightPoints);
             }
