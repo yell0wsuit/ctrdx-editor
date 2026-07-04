@@ -88,6 +88,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback used to toggle the locked object from canvas gestures.</summary>
         public Action<LevelObject?>? ToggleLock { get; set; }
 
+        /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
+        public Action? SelectedObjectMoved { get; set; }
+
         private bool _dragging;
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
@@ -440,6 +443,7 @@ namespace CtrDxEditor.Rendering
             (int gx, int gy) = Snap(levelPt - _dragOffset);
             selected.X = gx;
             selected.Y = gy;
+            SelectedObjectMoved?.Invoke();
             InvalidateVisual();
         }
 

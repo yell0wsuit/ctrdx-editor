@@ -34,6 +34,7 @@ namespace CtrDxEditor.Views
             canvas.PlaceAt = (element, x, y) =>
                 DataContext is EditorViewModel vm ? vm.PlaceObject(element, x, y) : null;
             canvas.ToggleLock = obj => (DataContext as EditorViewModel)?.ToggleLock(obj);
+            canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
 
             // Palette placement is an internal pointer-capture drag (no OS drag-drop, so no OS drag image):
             // a click drops at center, a drag drops where it lands on the canvas, a drag off-canvas cancels.

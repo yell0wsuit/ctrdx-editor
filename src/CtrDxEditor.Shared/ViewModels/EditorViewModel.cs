@@ -138,6 +138,15 @@ namespace CtrDxEditor.ViewModels
             return Document?.Save();
         }
 
+        /// <summary>Re-reads every property field from the selected object, for canvas-driven mutations like dragging.</summary>
+        public void RefreshFieldValues()
+        {
+            foreach (AttributeFieldViewModel field in Fields)
+            {
+                field.Refresh();
+            }
+        }
+
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
             Fields.Clear();

@@ -31,5 +31,11 @@ namespace CtrDxEditor.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>Re-reads <see cref="Value"/> from the target, for when the object is mutated elsewhere (e.g. a canvas drag).</summary>
+        public void Refresh()
+        {
+            OnPropertyChanged(nameof(Value));
+        }
     }
 }
