@@ -22,6 +22,12 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial double Progress { get; set; }
         [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
+        /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
+        public bool AllowQuit { get; }
+
+        /// <summary>Whether the Download Manually button is shown (desktop opens the releases page manually).</summary>
+        public bool AllowManualDownload { get; }
+
         /// <summary>Raised once content setup succeeds, so the view can close.</summary>
         public event Action? Completed;
 
@@ -29,10 +35,13 @@ namespace CtrDxEditor.ViewModels
         public IAsyncRelayCommand DownloadCommand { get; }
 
         /// <summary>Creates a content setup view model.</summary>
-        public ContentSetupViewModel(IContentInstaller installer, Func<Task> onInstalled)
+        public ContentSetupViewModel(
+            IContentInstaller installer, Func<Task> onInstalled, bool allowQuit = true, bool allowManualDownload = true)
         {
             _installer = installer;
             _onInstalled = onInstalled;
+            AllowQuit = allowQuit;
+            AllowManualDownload = allowManualDownload;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.
             DownloadCommand = new AsyncRelayCommand(DownloadAsync);
         }

@@ -31,7 +31,7 @@
       <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
       <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
       <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
-      <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" />
+      <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
     </StackPanel>
   </StackPanel>
 </UserControl>

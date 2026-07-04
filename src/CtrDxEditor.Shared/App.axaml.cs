@@ -67,8 +67,11 @@ namespace CtrDxEditor
                 return;
             }
 
-            ContentSetupViewModel vm = new(_startup.Installer, async () =>
-                await ShowEditorAsync(root, _startup.InstalledStore()));
+            ContentSetupViewModel vm = new(
+                _startup.Installer,
+                async () => await ShowEditorAsync(root, _startup.InstalledStore()),
+                allowQuit: allowQuit,
+                allowManualDownload: allowQuit);
             ContentSetupDialog dialog = new() { DataContext = vm };
             _ = await dialog.ShowAsync();
 
