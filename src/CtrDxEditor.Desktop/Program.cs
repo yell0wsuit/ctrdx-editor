@@ -1,9 +1,7 @@
 using System;
-using System.Threading.Tasks;
 
 using Avalonia;
 
-using CtrDxEditor;
 using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
 
@@ -13,8 +11,10 @@ namespace CtrDxEditor.Desktop
     {
         /// <summary>Application entry point.</summary>
         [STAThread]
-        public static void Main(string[] args) =>
+        public static void Main(string[] args)
+        {
             _ = BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
 
         /// <summary>Creates the configured Avalonia application builder.</summary>
         public static AppBuilder BuildAvaloniaApp()
