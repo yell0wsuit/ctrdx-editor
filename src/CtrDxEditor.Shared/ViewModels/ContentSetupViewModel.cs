@@ -101,7 +101,7 @@ namespace CtrDxEditor.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"{Localizer.Get("Dialog.ContentSetup.Error.DownloadFailed")} {ex.Message}";
+                ErrorMessage = $"{Localizer.Get("Dialog.ContentSetup.Error.DownloadFailed")}\n{ex.Message}";
             }
             finally
             {
@@ -130,7 +130,7 @@ namespace CtrDxEditor.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"{Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder")} {ex.Message}";
+                ErrorMessage = $"{Localizer.Get("Dialog.ContentSetup.Error.InvalidFolder")}\n{ex.Message}";
             }
             finally
             {
