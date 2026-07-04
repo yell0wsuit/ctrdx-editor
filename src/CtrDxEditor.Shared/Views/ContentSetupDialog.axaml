@@ -8,18 +8,28 @@
     <!-- Title reflects the current phase. -->
     <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
                Text="{loc:Tr Dialog.ContentSetup.Title}" />
-    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsBusy}"
+    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsDownloading}"
                Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
+    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsInstallingZip}"
+               Text="{loc:Tr Dialog.ContentSetup.TitleInstallingZip}" />
 
     <!-- Idle: describe the choice. -->
     <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
                Text="{loc:Tr Dialog.ContentSetup.Description}" />
 
-    <!-- Busy: the description is replaced by live download progress plus a cancel action. -->
-    <StackPanel Spacing="8" IsVisible="{Binding IsBusy}">
+    <!-- Downloading: live byte-based progress plus a cancel action (the download supports cancellation). -->
+    <StackPanel Spacing="8" IsVisible="{Binding IsDownloading}">
       <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
       <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
       <Button Content="{loc:Tr Dialog.ContentSetup.Cancel}" Click="Cancel_Click" HorizontalAlignment="Right" />
+    </StackPanel>
+
+    <!-- Installing a picked zip: no byte-level progress signal and nothing cancellable, so an
+         indeterminate spinner with no Cancel button (a determinate bar or a live Cancel button
+         would both be misleading here). -->
+    <StackPanel Spacing="8" IsVisible="{Binding IsInstallingZip}">
+      <TextBlock Text="{loc:Tr Dialog.ContentSetup.InstallingZip}" />
+      <ProgressBar IsIndeterminate="True" />
     </StackPanel>
 
     <TextBlock Foreground="#E06C75" TextWrapping="Wrap"

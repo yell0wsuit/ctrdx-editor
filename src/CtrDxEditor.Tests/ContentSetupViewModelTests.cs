@@ -68,6 +68,48 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.ErrorMessage);
         }
 
+        /// <summary>Verifies IsDownloading (not IsInstallingZip) is set while a download is in progress, and clears after.</summary>
+        [Fact]
+        public async Task DownloadCommandSetsIsDownloadingWhileRunning()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(download: (p, ct) => Task.Delay(Timeout.Infinite, ct)),
+                () => Task.CompletedTask);
+
+            Task run = vm.DownloadCommand.ExecuteAsync(null);
+            Assert.True(vm.IsDownloading);
+            Assert.False(vm.IsInstallingZip);
+
+            vm.CancelDownload();
+            await run;
+
+            Assert.False(vm.IsDownloading);
+            Assert.False(vm.IsInstallingZip);
+        }
+
+        /// <summary>Verifies IsInstallingZip (not IsDownloading) is set while a picked zip is being installed, and clears after.</summary>
+        [Fact]
+        public async Task InstallFromZipAsyncSetsIsInstallingZipWhileRunning()
+        {
+            TaskCompletionSource gate = new();
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(zip: async (s, ct) => await gate.Task),
+                () => Task.CompletedTask);
+
+            using MemoryStream zip = new();
+            Task run = vm.InstallFromZipAsync(zip);
+
+            Assert.True(vm.IsBusy);
+            Assert.True(vm.IsInstallingZip);
+            Assert.False(vm.IsDownloading);
+
+            gate.SetResult();
+            await run;
+
+            Assert.False(vm.IsBusy);
+            Assert.False(vm.IsInstallingZip);
+        }
+
         /// <summary>Verifies that a successful download runs the completion callback and raises Completed.</summary>
         [Fact]
         public async Task DownloadCommandSuccessRunsOnInstalledAndRaisesCompleted()

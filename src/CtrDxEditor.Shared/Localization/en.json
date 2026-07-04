@@ -27,8 +27,10 @@
 
     "Dialog.ContentSetup.Title": "Assets required",
     "Dialog.ContentSetup.TitleDownloading": "Downloading assets",
+    "Dialog.ContentSetup.TitleInstallingZip": "Installing assets",
     "Dialog.ContentSetup.Description": "Cut the Rope: DX - Level Editor needs assets before it can open. You can download them now, or upload a zip file you already have.",
     "Dialog.ContentSetup.Downloading": "{0:P0}",
+    "Dialog.ContentSetup.InstallingZip": "Extracting the zip file…",
     "Dialog.ContentSetup.DownloadManually": "Manual download",
     "Dialog.ContentSetup.Download": "Download",
     "Dialog.ContentSetup.PickZip": "Browse zip…",

@@ -18,9 +18,19 @@ namespace CtrDxEditor.ViewModels
         private readonly Func<Task> _onInstalled;
         private CancellationTokenSource? _downloadCts;
 
-        [ObservableProperty] public partial bool IsBusy { get; set; }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsDownloading))]
+        public partial bool IsBusy { get; set; }
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsDownloading))]
+        public partial bool IsInstallingZip { get; set; }
+
         [ObservableProperty] public partial double Progress { get; set; }
         [ObservableProperty] public partial string? ErrorMessage { get; set; }
+
+        /// <summary>True while a download (as opposed to installing a picked zip) is in progress; picks which busy sub-view shows.</summary>
+        public bool IsDownloading => IsBusy && !IsInstallingZip;
 
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
@@ -51,6 +61,7 @@ namespace CtrDxEditor.ViewModels
             using CancellationTokenSource cts = new();
             _downloadCts = cts;
             IsBusy = true;
+            IsInstallingZip = false;
             ErrorMessage = null;
             Progress = 0;
             try
@@ -85,6 +96,7 @@ namespace CtrDxEditor.ViewModels
         public async Task InstallFromZipAsync(Stream zip)
         {
             IsBusy = true;
+            IsInstallingZip = true;
             ErrorMessage = null;
             try
             {
@@ -98,6 +110,7 @@ namespace CtrDxEditor.ViewModels
             finally
             {
                 IsBusy = false;
+                IsInstallingZip = false;
             }
         }
 
