@@ -34,25 +34,41 @@ export const putString = async (key, value) => {
     });
 };
 
-export const putBytes = async (key, value) => {
+// Bytes cross the JS/WASM boundary as a MemoryView, which is only valid during a synchronous
+// call — so writes and reads are each split into a synchronous copy plus an async store/fetch,
+// bridged by a module-level stash.
+let bytesStash = null;
+
+export const stashBytes = (value) => {
+    // value is a MemoryView over the WASM heap; copy it out while it is still valid.
+    bytesStash = value.slice();
+};
+
+export const putStashedBytes = async (key) => {
+    const bytes = bytesStash;
+    bytesStash = null;
     const s = await store("readwrite");
     return new Promise((res, rej) => {
-        const r = s.put(value, key);
+        const r = s.put(bytes, key);
         r.onsuccess = () => res();
         r.onerror = () => rej(r.error);
     });
 };
 
-export const getBytes = async (key) => {
+export const beginGetBytes = async (key) => {
     const s = await store("readonly");
-    return new Promise((res, rej) => {
+    bytesStash = await new Promise((res, rej) => {
         const r = s.get(key);
-        // Ignore a legacy base64 string (or any non-binary value) under this key so an old dev
-        // install falls back to setup instead of a marshalling crash.
-        r.onsuccess = () =>
-            res(r.result instanceof Uint8Array ? r.result : new Uint8Array(0));
+        r.onsuccess = () => res(r.result ?? null);
         r.onerror = () => rej(r.error);
     });
+    return bytesStash ? bytesStash.length : 0;
+};
+
+export const endGetBytes = (dest) => {
+    // dest is a MemoryView over the WASM heap sized to the stash; copy in and release.
+    dest.set(bytesStash);
+    bytesStash = null;
 };
 
 export const hasKey = async (key) => {
