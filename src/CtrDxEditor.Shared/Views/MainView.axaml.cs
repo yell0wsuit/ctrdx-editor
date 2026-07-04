@@ -214,9 +214,21 @@ namespace CtrDxEditor.Views
             }
 
             _mutatedSubscription?.ObjectMutated -= _invalidateCanvas;
+            _mutatedSubscription?.LevelLoaded -= FocusCanvasAfterLevelLoaded;
 
             _mutatedSubscription = DataContext as EditorViewModel;
-            _mutatedSubscription?.ObjectMutated += _invalidateCanvas;
+            if (_mutatedSubscription is not null)
+            {
+                _mutatedSubscription.ObjectMutated += _invalidateCanvas;
+                _mutatedSubscription.LevelLoaded += FocusCanvasAfterLevelLoaded;
+            }
+        }
+
+        private void FocusCanvasAfterLevelLoaded()
+        {
+            LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
+            canvas.FitToView();
+            _ = canvas.Focus();
         }
 
         private async void Open_Click(object? sender, RoutedEventArgs e)
@@ -239,7 +251,6 @@ namespace CtrDxEditor.Views
                 await using Stream stream = await files[0].OpenReadAsync();
                 using StreamReader reader = new(stream);
                 vm.LoadLevelXml(await reader.ReadToEndAsync());
-                this.FindControl<LevelCanvas>("Canvas")!.FitToView();
             }
         }
 

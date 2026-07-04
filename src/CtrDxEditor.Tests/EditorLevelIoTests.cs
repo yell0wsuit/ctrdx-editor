@@ -50,5 +50,24 @@ namespace CtrDxEditor.Tests
             Assert.NotNull(saved);
             Assert.Contains("width=\"100\"", saved);
         }
+
+        /// <summary>Verifies that loading XML notifies the view after the document has been replaced.</summary>
+        [Fact]
+        public void LoadLevelXmlRaisesLevelLoadedAfterDocumentIsAvailable()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            const string xml = "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"100\" height=\"80\" /></layer></map>";
+            bool raised = false;
+
+            vm.LevelLoaded += () =>
+            {
+                Assert.NotNull(vm.Document);
+                raised = true;
+            };
+
+            vm.LoadLevelXml(xml);
+
+            Assert.True(raised);
+        }
     }
 }

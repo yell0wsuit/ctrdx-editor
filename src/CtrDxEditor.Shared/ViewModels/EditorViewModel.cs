@@ -42,6 +42,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
 
+        /// <summary>Raised after a level XML document has loaded into the editor.</summary>
+        public event Action? LevelLoaded;
+
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
@@ -51,6 +54,7 @@ namespace CtrDxEditor.ViewModels
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
+            LevelLoaded?.Invoke();
         }
 
         /// <summary>Deletes the currently selected object, if one exists.</summary>
