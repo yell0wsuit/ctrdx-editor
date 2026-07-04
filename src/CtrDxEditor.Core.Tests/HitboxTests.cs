@@ -91,6 +91,7 @@ namespace CtrDxEditor.Core.Tests
         /// <summary>Verifies that unsupported elements do not produce hitboxes.</summary>
         [Theory]
         [InlineData("grab")]
+        [InlineData("gravitySwitch")]
         [InlineData("pump")]
         [InlineData("")]
         public void UnsupportedElementsReturnNull(string element)

@@ -58,6 +58,12 @@ namespace CtrDxEditor.Content
                 new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0000.png"),
                 new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0018.png"),
             ]),
+
+            // Gravity button.
+            new("gravitySwitch",
+            [
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0056.png"),
+            ]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

@@ -17,6 +17,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("star"));
             Assert.True(t.Knows("grab"));
             Assert.True(t.Knows("bubble"));
+            Assert.True(t.Knows("gravitySwitch"));
             Assert.False(t.Knows("pump"));
         }
 
@@ -27,6 +28,15 @@ namespace CtrDxEditor.Core.Tests
             ObjectDescriptor bubble = DescriptorTable.Default.For("bubble")!;
             Assert.Empty(bubble.Attributes);
             Assert.Equal(int.MaxValue, bubble.MaxCount);
+        }
+
+        /// <summary>Verifies that gravity switches are plain placeable buttons with no extra attributes.</summary>
+        [Fact]
+        public void GravitySwitchIsAttributeFree()
+        {
+            ObjectDescriptor gravitySwitch = DescriptorTable.Default.For("gravitySwitch")!;
+            Assert.Empty(gravitySwitch.Attributes);
+            Assert.Equal(int.MaxValue, gravitySwitch.MaxCount);
         }
 
         /// <summary>Verifies singleton limits for target and candy descriptors.</summary>

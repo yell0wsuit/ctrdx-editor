@@ -40,5 +40,17 @@ namespace CtrDxEditor.Tests
             Assert.Contains("images/obj_bubble.webp", required);
             Assert.Contains("images/obj_bubble.json", required);
         }
+
+        /// <summary>Verifies that gravity switches use the same static quad as the in-game toggle button.</summary>
+        [Fact]
+        public void GravitySwitchUsesObjStarIdleButtonFrame()
+        {
+            VisualDescriptor gravitySwitch = VisualDescriptorMap.For("gravitySwitch")!;
+
+            SpriteLayer layer = Assert.Single(gravitySwitch.Layers);
+            Assert.Equal("images/obj_star_idle.json", layer.AtlasJsonRelPath);
+            Assert.Equal("images/obj_star_idle", layer.AtlasImageBasePath);
+            Assert.Equal("frame_0056.png", layer.FrameName);
+        }
     }
 }

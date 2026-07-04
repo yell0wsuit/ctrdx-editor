@@ -51,6 +51,7 @@
     "Object.star": "Star",
     "Object.grab": "Grab",
     "Object.bubble": "Bubble",
+    "Object.gravitySwitch": "Gravity button",
 
     "Attr.timeout": "Timeout",
     "Attr.length": "Length",
