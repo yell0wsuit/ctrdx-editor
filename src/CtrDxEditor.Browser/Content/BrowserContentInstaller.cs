@@ -16,7 +16,8 @@ namespace CtrDxEditor.Browser.Content
         public async Task InstallFromDownloadAsync(IProgress<double>? progress, CancellationToken ct)
         {
             using HttpClient http = new();
-            byte[] bytes = await http.GetByteArrayAsync(ContentDownloader.AssetsUrl, ct);
+            // Browser HttpClient goes through fetch; progress is coarse (no reliable content-length on redirects).
+            byte[] bytes = await http.GetByteArrayAsync(ContentDownloader.WebpAssetsUrl, ct);
             progress?.Report(1.0);
             await StoreAsync(bytes);
         }

@@ -35,5 +35,14 @@ namespace CtrDxEditor.Tests
             }
             finally { Directory.Delete(root, recursive: true); }
         }
+
+        /// <summary>Verifies the browser's WebP bundle URL is distinct from the desktop's and well-formed.</summary>
+        [Fact]
+        public void WebpAssetsUrlIsDistinctFromDesktopAssetsUrl()
+        {
+            Assert.NotEqual(ContentDownloader.AssetsUrl, ContentDownloader.WebpAssetsUrl);
+            Assert.EndsWith("/webp-assets.zip", ContentDownloader.WebpAssetsUrl);
+            Assert.StartsWith("https://github.com/yell0wsuit/ctrdx-assets/releases/", ContentDownloader.WebpAssetsUrl);
+        }
     }
 }
