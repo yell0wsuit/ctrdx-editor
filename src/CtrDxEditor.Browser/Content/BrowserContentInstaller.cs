@@ -36,11 +36,11 @@ namespace CtrDxEditor.Browser.Content
 
         private async Task StoreAsync(byte[] zipBytes)
         {
-            Validate(zipBytes);
+            await ValidateAsync(zipBytes);
             await IndexedDb.PutString(IndexedDbContentStore.ZipKey, Convert.ToBase64String(zipBytes));
         }
 
-        private void Validate(byte[] zipBytes)
+        private async Task ValidateAsync(byte[] zipBytes)
         {
             using ZipArchive zip = new(new MemoryStream(zipBytes), ZipArchiveMode.Read);
             if (zip.GetEntry(ContentManifest.FileName) is not { } manifestEntry)
@@ -56,19 +56,23 @@ namespace CtrDxEditor.Browser.Content
             }
 
             IReadOnlyDictionary<string, string> manifest = ContentManifest.ParseFiles(manifestJson);
+            // Hash each entry via SubtleCrypto (off the main thread); each await yields so the UI repaints.
             List<string> invalid =
             [
-                .. ContentManifest.FindInvalidFiles(manifest, rel =>
-                {
-                    if (zip.GetEntry(rel) is not { } entry)
+                .. await ContentManifest.FindInvalidFilesAsync(
+                    manifest,
+                    rel =>
                     {
-                        return null;
-                    }
-                    using Stream s = entry.Open();
-                    using MemoryStream ms = new();
-                    s.CopyTo(ms);
-                    return ms.ToArray();
-                }),
+                        if (zip.GetEntry(rel) is not { } entry)
+                        {
+                            return null;
+                        }
+                        using Stream s = entry.Open();
+                        using MemoryStream ms = new();
+                        s.CopyTo(ms);
+                        return ms.ToArray();
+                    },
+                    WebCrypto.Sha256HexAsync),
             ];
 
             // Reject a bundle that lacks the sprite atlases this platform renders (e.g. a PNG bundle
