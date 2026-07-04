@@ -25,11 +25,12 @@ namespace CtrDxEditor.Content
 
         /// <summary>
         /// Downloads the asset bundle and extracts it into <paramref name="destContentDir"/>.
-        /// <paramref name="progress"/> receives fractional progress in [0, 1] when the server reports
-        /// a content length. Throws <see cref="InvalidDataException"/> if the result is not valid content.
+        /// <paramref name="progress"/> receives the current stage and, while downloading, fractional
+        /// progress in [0, 1] when the server reports a content length. Throws
+        /// <see cref="InvalidDataException"/> if the result is not valid content.
         /// </summary>
         public static async Task DownloadAsync(
-            string destContentDir, IProgress<double>? progress, CancellationToken ct)
+            string destContentDir, IProgress<InstallProgress>? progress, CancellationToken ct)
         {
             string tmp = Path.Combine(Path.GetTempPath(), $"ctrdx-assets-{Guid.NewGuid():N}");
             _ = Directory.CreateDirectory(tmp);
@@ -37,13 +38,22 @@ namespace CtrDxEditor.Content
             {
                 string zipPath = Path.Combine(tmp, "ctrdx-assets.zip");
                 await DownloadFileAsync(AssetsUrl, zipPath, progress, ct);
-                ExtractInto(zipPath, destContentDir);
-                IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
-                if (invalid.Count > 0)
+                // Bytes are in; the remaining extract + hash-verify has no byte-level progress, so
+                // switch the dialog to its indeterminate "verifying" state before starting it.
+                progress?.Report(new InstallProgress(InstallStage.Verifying, 0));
+                // Extraction and per-file hash verification are synchronous and CPU/IO-bound; run
+                // them on a background thread so the setup dialog's UI thread stays responsive while
+                // a large bundle is unpacked and checked.
+                await Task.Run(() =>
                 {
-                    throw new InvalidDataException(
-                        $"The downloaded asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
-                }
+                    ExtractInto(zipPath, destContentDir);
+                    IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
+                    if (invalid.Count > 0)
+                    {
+                        throw new InvalidDataException(
+                            $"The downloaded asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
+                    }
+                }, ct);
             }
             finally
             {
@@ -60,7 +70,7 @@ namespace CtrDxEditor.Content
         }
 
         private static async Task DownloadFileAsync(
-            string url, string dest, IProgress<double>? progress, CancellationToken ct)
+            string url, string dest, IProgress<InstallProgress>? progress, CancellationToken ct)
         {
             using HttpClient http = new() { Timeout = TimeSpan.FromMinutes(30) };
             // GitHub rejects requests without a User-Agent.
@@ -83,7 +93,7 @@ namespace CtrDxEditor.Content
                 readTotal += n;
                 if (total is > 0)
                 {
-                    progress?.Report((double)readTotal / total.Value);
+                    progress?.Report(new InstallProgress(InstallStage.Downloading, (double)readTotal / total.Value));
                 }
             }
         }

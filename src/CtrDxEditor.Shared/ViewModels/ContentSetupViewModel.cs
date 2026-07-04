@@ -27,11 +27,15 @@ namespace CtrDxEditor.ViewModels
         [NotifyPropertyChangedFor(nameof(IsDownloading))]
         public partial bool IsInstallingZip { get; set; }
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsDownloading))]
+        public partial bool IsVerifying { get; set; }
+
         [ObservableProperty] public partial double Progress { get; set; }
         [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
-        /// <summary>True while a download (as opposed to installing a picked zip) is in progress; picks which busy sub-view shows.</summary>
-        public bool IsDownloading => IsBusy && !IsInstallingZip;
+        /// <summary>True while bytes are transferring (determinate progress): busy, but not installing a picked zip or verifying a finished download.</summary>
+        public bool IsDownloading => IsBusy && !IsInstallingZip && !IsVerifying;
 
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
@@ -71,11 +75,22 @@ namespace CtrDxEditor.ViewModels
             _downloadCts = cts;
             IsBusy = true;
             IsInstallingZip = false;
+            IsVerifying = false;
             ErrorMessage = null;
             Progress = 0;
             try
             {
-                Progress<double> progress = new(p => Progress = p);
+                Progress<InstallProgress> progress = new(p =>
+                {
+                    if (p.Stage == InstallStage.Verifying)
+                    {
+                        IsVerifying = true;
+                    }
+                    else
+                    {
+                        Progress = p.Fraction;
+                    }
+                });
                 await _installer.InstallFromDownloadAsync(progress, cts.Token);
                 await CompleteAsync();
             }
@@ -92,6 +107,7 @@ namespace CtrDxEditor.ViewModels
             {
                 _downloadCts = null;
                 IsBusy = false;
+                IsVerifying = false;
             }
         }
 

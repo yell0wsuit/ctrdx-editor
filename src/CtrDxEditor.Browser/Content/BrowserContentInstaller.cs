@@ -15,12 +15,14 @@ namespace CtrDxEditor.Browser.Content
     public sealed class BrowserContentInstaller : IContentInstaller
     {
         /// <inheritdoc />
-        public async Task InstallFromDownloadAsync(IProgress<double>? progress, CancellationToken ct)
+        public async Task InstallFromDownloadAsync(IProgress<InstallProgress>? progress, CancellationToken ct)
         {
             using HttpClient http = new();
             // Browser HttpClient goes through fetch; progress is coarse (no reliable content-length on redirects).
             byte[] bytes = await http.GetByteArrayAsync(ContentDownloader.WebpAssetsUrl, ct);
-            progress?.Report(1.0);
+            // Bytes are in; validating and storing has no byte-level progress, so switch to the
+            // indeterminate "verifying" state before it.
+            progress?.Report(new InstallProgress(InstallStage.Verifying, 0));
             await StoreAsync(bytes);
         }
 

@@ -14,10 +14,10 @@ namespace CtrDxEditor.Tests
     public class ContentSetupViewModelTests
     {
         private sealed class FakeInstaller(
-            Func<IProgress<double>?, CancellationToken, Task>? download = null,
+            Func<IProgress<InstallProgress>?, CancellationToken, Task>? download = null,
             Func<Stream, CancellationToken, Task>? zip = null) : IContentInstaller
         {
-            public Task InstallFromDownloadAsync(IProgress<double>? progress, CancellationToken ct)
+            public Task InstallFromDownloadAsync(IProgress<InstallProgress>? progress, CancellationToken ct)
             {
                 return download is null ? Task.CompletedTask : download(progress, ct);
             }
@@ -111,6 +111,40 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.IsInstallingZip);
         }
 
+        /// <summary>Verifies the install reporting a Verifying stage flips the VM from downloading to the indeterminate verifying view, then clears.</summary>
+        [Fact]
+        public async Task DownloadReportingVerifyingStageSwitchesToVerifyingView()
+        {
+            TaskCompletionSource gate = new();
+            TaskCompletionSource verifyingSeen = new();
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(download: async (p, ct) =>
+                {
+                    p?.Report(new InstallProgress(InstallStage.Verifying, 0));
+                    await gate.Task;
+                }),
+                () => Task.CompletedTask);
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(vm.IsVerifying) && vm.IsVerifying)
+                {
+                    _ = verifyingSeen.TrySetResult();
+                }
+            };
+
+            Task run = vm.DownloadCommand.ExecuteAsync(null);
+            // Progress<T> posts its callback asynchronously; wait for the flip rather than racing it.
+            await verifyingSeen.Task;
+            Assert.True(vm.IsVerifying);
+            Assert.False(vm.IsDownloading);
+
+            gate.SetResult();
+            await run;
+
+            Assert.False(vm.IsVerifying);
+            Assert.False(vm.IsBusy);
+        }
+
         /// <summary>Verifies IsInstallingZip (not IsDownloading) is set while a picked zip is being installed, and clears after.</summary>
         [Fact]
         public async Task InstallFromZipAsyncSetsIsInstallingZipWhileRunning()
@@ -141,9 +175,9 @@ namespace CtrDxEditor.Tests
             bool installed = false;
             bool completed = false;
 
-            static Task Fake(IProgress<double>? p, CancellationToken ct)
+            static Task Fake(IProgress<InstallProgress>? p, CancellationToken ct)
             {
-                p?.Report(1.0);
+                p?.Report(new InstallProgress(InstallStage.Downloading, 1.0));
                 return Task.CompletedTask;
             }
 

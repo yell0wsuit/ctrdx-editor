@@ -11,26 +11,30 @@ namespace CtrDxEditor.Content
     public sealed class FolderContentInstaller(string destContentDir) : IContentInstaller
     {
         /// <inheritdoc />
-        public Task InstallFromDownloadAsync(IProgress<double>? progress, CancellationToken ct)
+        public Task InstallFromDownloadAsync(IProgress<InstallProgress>? progress, CancellationToken ct)
         {
             return ContentDownloader.DownloadAsync(destContentDir, progress, ct);
         }
 
         /// <inheritdoc />
-        public async Task InstallFromZipAsync(Stream zipStream, CancellationToken ct)
+        public Task InstallFromZipAsync(Stream zipStream, CancellationToken ct)
         {
-            _ = Directory.CreateDirectory(destContentDir);
-            using (ZipArchive zip = new(zipStream, ZipArchiveMode.Read, leaveOpen: true))
+            // Extraction and per-file hash verification are synchronous and CPU/IO-bound; run them
+            // on a background thread so the setup dialog's UI thread stays responsive.
+            return Task.Run(() =>
             {
-                zip.ExtractToDirectory(destContentDir, overwriteFiles: true);
-            }
-            IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
-            if (invalid.Count > 0)
-            {
-                throw new InvalidDataException(
-                    $"The provided asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
-            }
-            await Task.CompletedTask;
+                _ = Directory.CreateDirectory(destContentDir);
+                using (ZipArchive zip = new(zipStream, ZipArchiveMode.Read, leaveOpen: true))
+                {
+                    zip.ExtractToDirectory(destContentDir, overwriteFiles: true);
+                }
+                IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
+                if (invalid.Count > 0)
+                {
+                    throw new InvalidDataException(
+                        $"The provided asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
+                }
+            }, ct);
         }
     }
 }

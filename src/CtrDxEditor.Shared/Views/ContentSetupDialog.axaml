@@ -13,6 +13,8 @@
                  Text="{loc:Tr Dialog.ContentSetup.Title}" />
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsDownloading}"
                  Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
+      <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsVerifying}"
+                 Text="{loc:Tr Dialog.ContentSetup.TitleVerifying}" />
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsInstallingZip}"
                  Text="{loc:Tr Dialog.ContentSetup.TitleInstallingZip}" />
 
@@ -27,6 +29,13 @@
         <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
         <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
         <Button Content="{loc:Tr Dialog.ContentSetup.Cancel}" Click="Cancel_Click" HorizontalAlignment="Right" />
+      </StackPanel>
+
+      <!-- Verifying a finished download: extraction + hash check has no byte-level progress and is
+           past the cancellable point, so an indeterminate bar with no Cancel button. -->
+      <StackPanel Spacing="8" IsVisible="{Binding IsVerifying}">
+        <TextBlock Text="{loc:Tr Dialog.ContentSetup.Verifying}" />
+        <ProgressBar IsIndeterminate="True" />
       </StackPanel>
 
       <!-- Installing a picked zip: no byte-level progress signal and nothing cancellable, so an
