@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,9 +41,35 @@ namespace CtrDxEditor.Browser.Content
         private static void Validate(byte[] zipBytes)
         {
             using ZipArchive zip = new(new MemoryStream(zipBytes), ZipArchiveMode.Read);
-            if (zip.GetEntry(ContentManifest.FileName) is null)
+            if (zip.GetEntry(ContentManifest.FileName) is not { } manifestEntry)
             {
                 throw new InvalidDataException("The asset bundle is missing its manifest.");
+            }
+
+            string manifestJson;
+            using (Stream s = manifestEntry.Open())
+            using (StreamReader r = new(s, Encoding.UTF8))
+            {
+                manifestJson = r.ReadToEnd();
+            }
+
+            IReadOnlyDictionary<string, string> manifest = ContentManifest.ParseFiles(manifestJson);
+            IReadOnlyList<string> invalid = ContentManifest.FindInvalidFiles(manifest, rel =>
+            {
+                if (zip.GetEntry(rel) is not { } entry)
+                {
+                    return null;
+                }
+                using Stream s = entry.Open();
+                using MemoryStream ms = new();
+                s.CopyTo(ms);
+                return ms.ToArray();
+            });
+
+            if (invalid.Count > 0)
+            {
+                throw new InvalidDataException(
+                    $"The asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
             }
         }
     }

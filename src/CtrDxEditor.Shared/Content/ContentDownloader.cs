@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -37,10 +38,11 @@ namespace CtrDxEditor.Content
                 string zipPath = Path.Combine(tmp, "ctrdx-assets.zip");
                 await DownloadFileAsync(AssetsUrl, zipPath, progress, ct);
                 ExtractInto(zipPath, destContentDir);
-                if (!ContentLocation.IsValid(destContentDir))
+                IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
+                if (invalid.Count > 0)
                 {
                     throw new InvalidDataException(
-                        "The downloaded asset bundle is incomplete or corrupt.");
+                        $"The downloaded asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
                 }
             }
             finally

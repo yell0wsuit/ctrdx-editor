@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -23,9 +24,11 @@ namespace CtrDxEditor.Content
             {
                 zip.ExtractToDirectory(destContentDir, overwriteFiles: true);
             }
-            if (!ContentLocation.IsValid(destContentDir))
+            IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
+            if (invalid.Count > 0)
             {
-                throw new InvalidDataException("The provided asset bundle is incomplete or corrupt.");
+                throw new InvalidDataException(
+                    $"The provided asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
             }
             await Task.CompletedTask;
         }

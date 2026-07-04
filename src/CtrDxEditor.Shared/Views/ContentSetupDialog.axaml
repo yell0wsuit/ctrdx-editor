@@ -4,46 +4,51 @@
              xmlns:vm="using:CtrDxEditor.ViewModels"
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
              x:DataType="vm:ContentSetupViewModel">
-  <StackPanel Margin="24" Spacing="16" Width="500">
-    <!-- Title reflects the current phase. -->
-    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
-               Text="{loc:Tr Dialog.ContentSetup.Title}" />
-    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsDownloading}"
-               Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
-    <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsInstallingZip}"
-               Text="{loc:Tr Dialog.ContentSetup.TitleInstallingZip}" />
+  <!-- MaxHeight + Auto scrollbar: a long invalid-files list (see ErrorMessage below) can otherwise
+       grow the dialog taller than the window/viewport, cutting off the buttons beneath it. -->
+  <ScrollViewer MaxHeight="500" VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="16" Width="500">
+      <!-- Title reflects the current phase. -->
+      <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
+                 Text="{loc:Tr Dialog.ContentSetup.Title}" />
+      <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsDownloading}"
+                 Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
+      <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsInstallingZip}"
+                 Text="{loc:Tr Dialog.ContentSetup.TitleInstallingZip}" />
 
-    <!-- Idle: describe the choice. -->
-    <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
-               Text="{loc:Tr Dialog.ContentSetup.Description}" />
-    <TextBlock TextWrapping="Wrap" Opacity="0.7" IsVisible="{Binding ShowDownloadSizeLabel}"
-               Text="{Binding DownloadSizeLabel, StringFormat={loc:Tr Dialog.ContentSetup.DownloadSize}}" />
+      <!-- Idle: describe the choice. -->
+      <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
+                 Text="{loc:Tr Dialog.ContentSetup.Description}" />
+      <TextBlock TextWrapping="Wrap" Opacity="0.7" IsVisible="{Binding ShowDownloadSizeLabel}"
+                 Text="{Binding DownloadSizeLabel, StringFormat={loc:Tr Dialog.ContentSetup.DownloadSize}}" />
 
-    <!-- Downloading: live byte-based progress plus a cancel action (the download supports cancellation). -->
-    <StackPanel Spacing="8" IsVisible="{Binding IsDownloading}">
-      <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
-      <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
-      <Button Content="{loc:Tr Dialog.ContentSetup.Cancel}" Click="Cancel_Click" HorizontalAlignment="Right" />
+      <!-- Downloading: live byte-based progress plus a cancel action (the download supports cancellation). -->
+      <StackPanel Spacing="8" IsVisible="{Binding IsDownloading}">
+        <TextBlock Text="{Binding Progress, StringFormat={loc:Tr Dialog.ContentSetup.Downloading}}" />
+        <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
+        <Button Content="{loc:Tr Dialog.ContentSetup.Cancel}" Click="Cancel_Click" HorizontalAlignment="Right" />
+      </StackPanel>
+
+      <!-- Installing a picked zip: no byte-level progress signal and nothing cancellable, so an
+           indeterminate spinner with no Cancel button (a determinate bar or a live Cancel button
+           would both be misleading here). -->
+      <StackPanel Spacing="8" IsVisible="{Binding IsInstallingZip}">
+        <TextBlock Text="{loc:Tr Dialog.ContentSetup.InstallingZip}" />
+        <ProgressBar IsIndeterminate="True" />
+      </StackPanel>
+
+      <!-- Invalid-file lists (from a corrupt/tampered bundle) render as multi-line "- path" bullets. -->
+      <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
+                 Text="{Binding ErrorMessage}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                  IsVisible="{Binding !IsBusy}">
+        <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
+        <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
+        <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
+        <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
+      </StackPanel>
     </StackPanel>
-
-    <!-- Installing a picked zip: no byte-level progress signal and nothing cancellable, so an
-         indeterminate spinner with no Cancel button (a determinate bar or a live Cancel button
-         would both be misleading here). -->
-    <StackPanel Spacing="8" IsVisible="{Binding IsInstallingZip}">
-      <TextBlock Text="{loc:Tr Dialog.ContentSetup.InstallingZip}" />
-      <ProgressBar IsIndeterminate="True" />
-    </StackPanel>
-
-    <TextBlock Foreground="#E06C75" TextWrapping="Wrap"
-               Text="{Binding ErrorMessage}"
-               IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
-
-    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
-                IsVisible="{Binding !IsBusy}">
-      <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
-      <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
-      <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
-      <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
-    </StackPanel>
-  </StackPanel>
+  </ScrollViewer>
 </UserControl>
