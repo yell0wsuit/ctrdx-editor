@@ -14,15 +14,19 @@ namespace CtrDxEditor.Core.Editing
     /// <summary>
     /// Builds the triangle strips that draw a rope exactly like the game's
     /// <c>Bungee.DrawBungee</c> / <c>DrawAntialiasedLineContinued</c> (default skin,
-    /// alpha 1, not highlighted). Coordinates are level-space; the game's pixel
-    /// constants (half-width 5, 1-unit edge fade) scale with the view like sprite art.
+    /// alpha 1, not highlighted). Coordinates are level-space; the rope width scales
+    /// with the view like sprite art.
     /// </summary>
     public static class RopeStripBuilder
     {
-        // Desktop game constants: BUNGEE_REST_LEN, BungeeDrawSamplePoints, main strip half-width.
-        private const double RestLength = 105;
-        private const int SamplesPerSegment = 4;
-        private const double HalfWidth = 5;
+        // The game loads levels at mapScale = 3 (GameScene.Show), so its rope constants
+        // (BUNGEE_REST_LEN 105, half-width 5, 1-unit edge fade) live in XML x 3 world
+        // space. The editor draws in raw XML space, so divide them back down.
+        private const double MapScale = 3;
+        private const double RestLength = 105 / MapScale;
+        private const int SamplesPerSegment = 4; // BungeeDrawSamplePoints (dimensionless)
+        private const double HalfWidth = 5 / MapScale;
+        private const double EdgeFade = 1 / MapScale;
 
         /// <summary>
         /// Evaluates the game's <c>DrawHelper.CalcPathBezier</c>: a de Casteljau reduction
@@ -63,16 +67,15 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>
         /// Builds the triangle strips for a rope from <paramref name="a"/> (the grab) to
         /// <paramref name="b"/> (the target) with rest length <paramref name="length"/>.
-        /// Slack ropes hang on the catenary; taut/overstretched ropes run straight and
-        /// pick up the palette's red stretch tint.
+        /// Slack ropes hang on the catenary; taut ropes run straight.
         /// </summary>
         public static List<RopeStrip> Build(Vec2 a, Vec2 b, double length)
         {
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
-            RopeDrawColors palette = RopePalette.GetDrawColors(0, distance, length);
+            RopeDrawColors palette = RopePalette.GetDrawColors(0);
 
-            // The physics chain has 2 + floor(len/105) parts; the game's draw loop needs >= 3.
+            // The physics chain has 2 + floor(len/restLen) parts; the game's draw loop needs >= 3.
             int count = Math.Max(3, 2 + (int)(length / RestLength));
             Vec2[] pts = new Vec2[count];
             if (length > distance)
@@ -159,8 +162,8 @@ namespace CtrDxEditor.Core.Editing
 
         // Port of DrawAntialiasedLineContinued (non-highlighted): one 10-vertex strip per
         // segment. Cross-section: transparent at +/-halfWidth, +0.15 brightened color one
-        // unit in, base color on the centerline. Far edge overdrawn 2% to hide seams;
-        // start edges continue from the previous segment so the ribbon is seamless.
+        // edge-fade width in, base color on the centerline. Far edge overdrawn 2% to hide
+        // seams; start edges continue from the previous segment so the ribbon is seamless.
         private static RopeStrip? BuildSegmentStrip(
             Vec2 p1, Vec2 p2, double size, RopeRgba color,
             ref double lx, ref double ly, ref double rx, ref double ry)
@@ -188,10 +191,11 @@ namespace CtrDxEditor.Core.Editing
             rx = rightFar.X;
             ry = rightFar.Y;
 
-            Vec2 leftStartIn = leftStart - unit;
-            Vec2 leftFarIn = leftFarOver - unit;
-            Vec2 rightStartIn = rightStart + unit;
-            Vec2 rightFarIn = rightFarOver + unit;
+            Vec2 inset = new(unit.X * EdgeFade, unit.Y * EdgeFade);
+            Vec2 leftStartIn = leftStart - inset;
+            Vec2 leftFarIn = leftFarOver - inset;
+            Vec2 rightStartIn = rightStart + inset;
+            Vec2 rightFarIn = rightFarOver + inset;
 
             RopeRgba bright = new(color.R + 0.15, color.G + 0.15, color.B + 0.15, color.A);
             RopeRgba fade = color with { A = 0 };

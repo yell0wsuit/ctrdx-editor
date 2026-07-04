@@ -41,11 +41,10 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, mid.Y, 9); // quadratic: 0.25*0 + 0.5*100 + 0.25*0
         }
 
-        /// <summary>A taut rope (length &lt; distance, not overstretched) is straight: strip centerlines stay on the chord.</summary>
+        /// <summary>A taut rope (length &lt; distance) is straight: strip centerlines stay on the chord.</summary>
         [Fact]
         public void BuildTautRopeIsStraight()
         {
-            // 300 apart, rope 290: taut but below the 7/30 stretch threshold (290 * 1.2333 > 300).
             List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
             Assert.NotEmpty(strips);
             foreach (RopeStrip s in strips)
@@ -96,7 +95,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildAlternatesColorTracks()
         {
-            // Length 300 -> 4 constraint points -> 12 samples; batches of 3 segments.
+            // Length 300 at rest length 35 -> 10 constraint points -> 36 samples; batches of 3 segments.
             List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(200, 0), 300);
             Assert.True(strips.Count >= 4);
             RopeRgba first = strips[0].Colors[4];  // batch 1: track 2 (Shade2 ramp)
@@ -114,13 +113,13 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(late.R > early.R);
         }
 
-        /// <summary>Overstretched ropes get the game's red shade boost (raw channel exceeds 1 before clamping).</summary>
+        /// <summary>Overstretched ropes keep the resting palette (the game's red tint is a transient physics state).</summary>
         [Fact]
-        public void BuildOverstretchedTintsRed()
+        public void BuildOverstretchedKeepsRestingColors()
         {
-            // Distance 300 vs length 100: far past the 7/30 threshold; shade red *= (300/100)*2.
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100);
-            Assert.True(strips[0].Colors[4].R > 1);
+            List<RopeStrip> stretched = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100);
+            List<RopeStrip> resting = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400);
+            Assert.Equal(resting[0].Colors[4], stretched[0].Colors[4]);
         }
 
         /// <summary>Coincident endpoints produce no strips (all segments degenerate).</summary>

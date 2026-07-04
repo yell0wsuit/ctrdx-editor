@@ -11,18 +11,15 @@ namespace CtrDxEditor.Core.Editing
     public readonly record struct RopeDrawColors(RopeRgb Base1, RopeRgb Base2, RopeRgb Shade1, RopeRgb Shade2);
 
     /// <summary>
-    /// Rope skin palettes, shading, and the over-stretch red tint. A static reduction
-    /// of the game's <c>RopeColorHelper</c> for the editor (the game's highlight state
-    /// and per-alpha are not modeled; the editor has neither).
+    /// Rope skin palettes and shading. A static reduction of the game's
+    /// <c>RopeColorHelper</c> for the editor (the game's highlight state, per-alpha,
+    /// and transient stretch tint are not modeled; they are physics/interaction states
+    /// the static editor doesn't have).
     /// </summary>
     public static class RopePalette
     {
         /// <summary>Number of available rope skins (indices 0..SkinCount-1).</summary>
         public static int SkinCount => 9;
-
-        // The desktop game's stretch trigger is segmentLength > restLength + 7. Applied whole-rope: stretched when distance exceeds
-        // length by 7/30.
-        private const double StretchThresholdRatio = 7.0 / 30.0;
 
         /// <summary>True only for the default brown skin (index 0).</summary>
         public static bool IsDefaultSkin(int skin)
@@ -40,39 +37,23 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// Gets the four draw colors for a rope of the given <paramref name="skin"/>,
-        /// stretched by the ratio of <paramref name="distance"/> to <paramref name="length"/>.
-        /// Mirrors the game's <c>RopeColorHelper.GetDrawColors</c> (alpha = 1, not highlighted).
+        /// Gets the four draw colors for a rope of the given <paramref name="skin"/>.
+        /// Mirrors the game's <c>RopeColorHelper.GetDrawColors</c> at rest
+        /// (alpha = 1, not highlighted, not stretched).
         /// </summary>
-        public static RopeDrawColors GetDrawColors(int skin, double distance, double length)
+        public static RopeDrawColors GetDrawColors(int skin)
         {
             int normalizedSkin = skin is >= 0 and < 9 ? skin : 0;
             (RopeRgb primary, RopeRgb secondary) = GetSkin(normalizedSkin);
 
-            bool stretched = length > 0 && distance > length + (StretchThresholdRatio * length);
-
-            // Base colors: when stretched, custom skins draw toward the default brown
-            // palette (matches the game); the shade colors keep the skin's own palette.
-            (RopeRgb baseSrc1, RopeRgb baseSrc2) = stretched && !IsDefaultSkin(normalizedSkin)
-                ? GetSkin(0)
-                : (primary, secondary);
-
-            // Default skin (and any stretched skin) is shaded dark to bright; custom skins
-            // at rest use full brightness, so shade == base and only alternation shows.
-            double darkFactor1 = IsDefaultSkin(normalizedSkin) || stretched ? 0.4 : 1.0;
-            double darkFactor2 = IsDefaultSkin(normalizedSkin) || stretched ? 0.45 : 1.0;
+            // The default skin is shaded dark to bright; custom skins use full
+            // brightness, so shade == base and only alternation shows.
+            double darkFactor1 = IsDefaultSkin(normalizedSkin) ? 0.4 : 1.0;
+            double darkFactor2 = IsDefaultSkin(normalizedSkin) ? 0.45 : 1.0;
             RopeRgb shade1 = new(primary.R * darkFactor1, primary.G * darkFactor1, primary.B * darkFactor1);
             RopeRgb shade2 = new(secondary.R * darkFactor2, secondary.G * darkFactor2, secondary.B * darkFactor2);
 
-            if (stretched)
-            {
-                // The game reddens via the shade end: shade red *= segmentLength/restLength * 2.
-                double redScale = distance / length * 2.0;
-                shade1 = shade1 with { R = shade1.R * redScale };
-                shade2 = shade2 with { R = shade2.R * redScale };
-            }
-
-            return new RopeDrawColors(baseSrc1, baseSrc2, shade1, shade2);
+            return new RopeDrawColors(primary, secondary, shade1, shade2);
         }
 
         private static (RopeRgb Primary, RopeRgb Secondary) GetSkin(int skin)
