@@ -3,12 +3,18 @@
 
 The script writes each converted WebP next to its source PNG, then creates a
 zip containing all files under the input directory except PNG files, .DS_Store
-files, zip files, and the legacy top-level webp output folder.
+files, zip files, and the legacy top-level webp output folder. Zip entries are
+written under an "images/" prefix to match the real content-root layout (the
+script is invoked against the images/ subtree only, so relative paths would
+otherwise be missing that segment), and a file_manifest.json covering every
+entry is embedded in the zip so the bundle can be validated on its own.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 from pathlib import Path
 import zipfile
 
@@ -67,17 +73,43 @@ def convert_pngs(images_dir: Path, quality: int) -> int:
 def should_zip(path: Path, images_dir: Path) -> bool:
     if is_legacy_webp_output(path, images_dir):
         return False
+    # A stale manifest sitting in the source tree must never be copied verbatim
+    # (it would list a mix of old png hashes and be a second file_manifest.json
+    # colliding in spirit with the one this script generates).
+    if path.name == "file_manifest.json":
+        return False
     suffix = path.suffix.lower()
     return suffix != ".png" and suffix != ".zip" and path.name != ".DS_Store"
 
 
+def archive_name(path: Path, images_dir: Path) -> str:
+    """The zip entry name for a file: "images/" plus its path relative to images_dir, forward-slash separated."""
+    return "images/" + path.relative_to(images_dir).as_posix()
+
+
+def build_manifest(images_dir: Path) -> dict[str, str]:
+    files: dict[str, str] = {}
+    for file in sorted(images_dir.rglob("*")):
+        if file.is_file() and should_zip(file, images_dir):
+            files[archive_name(file, images_dir)] = hashlib.sha256(
+                file.read_bytes()
+            ).hexdigest()
+    return files
+
+
 def build_zip(images_dir: Path, zip_path: Path) -> tuple[int, int, int, int]:
+    manifest = build_manifest(images_dir)
+
     with zipfile.ZipFile(
         zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
     ) as zf:
         for file in sorted(images_dir.rglob("*")):
             if file.is_file() and should_zip(file, images_dir):
-                zf.write(file, file.relative_to(images_dir))
+                zf.write(file, archive_name(file, images_dir))
+        zf.writestr(
+            "file_manifest.json",
+            json.dumps({"files": manifest}, indent=2, sort_keys=True),
+        )
 
     with zipfile.ZipFile(zip_path) as zf:
         names = zf.namelist()
