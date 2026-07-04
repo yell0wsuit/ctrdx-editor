@@ -50,6 +50,32 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
 
+        /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
+        public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
+
+        /// <summary>Avalonia property backing <see cref="VerticalScrollMaximum"/>.</summary>
+        public static readonly StyledProperty<double> VerticalScrollMaximumProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(nameof(VerticalScrollMaximum));
+
+        /// <summary>Avalonia property backing <see cref="HorizontalScrollViewport"/>.</summary>
+        public static readonly StyledProperty<double> HorizontalScrollViewportProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollViewport));
+
+        /// <summary>Avalonia property backing <see cref="VerticalScrollViewport"/>.</summary>
+        public static readonly StyledProperty<double> VerticalScrollViewportProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(nameof(VerticalScrollViewport));
+
+        /// <summary>Avalonia property backing <see cref="HorizontalScrollValue"/>.</summary>
+        public static readonly StyledProperty<double> HorizontalScrollValueProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(
+                nameof(HorizontalScrollValue), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
+        /// <summary>Avalonia property backing <see cref="VerticalScrollValue"/>.</summary>
+        public static readonly StyledProperty<double> VerticalScrollValueProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(
+                nameof(VerticalScrollValue), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
         static LevelCanvas()
         {
             AffectsRender<LevelCanvas>(
@@ -82,6 +108,24 @@ namespace CtrDxEditor.Rendering
         /// <summary>Whether phone hitboxes are drawn over objects.</summary>
         public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
 
+        /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
+        public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }
+
+        /// <summary>Largest vertical scroll offset in screen pixels.</summary>
+        public double VerticalScrollMaximum { get => GetValue(VerticalScrollMaximumProperty); private set => SetValue(VerticalScrollMaximumProperty, value); }
+
+        /// <summary>Visible canvas width used by the horizontal scrollbar thumb.</summary>
+        public double HorizontalScrollViewport { get => GetValue(HorizontalScrollViewportProperty); private set => SetValue(HorizontalScrollViewportProperty, value); }
+
+        /// <summary>Visible canvas height used by the vertical scrollbar thumb.</summary>
+        public double VerticalScrollViewport { get => GetValue(VerticalScrollViewportProperty); private set => SetValue(VerticalScrollViewportProperty, value); }
+
+        /// <summary>Current horizontal scroll offset in screen pixels.</summary>
+        public double HorizontalScrollValue { get => GetValue(HorizontalScrollValueProperty); set => SetValue(HorizontalScrollValueProperty, value); }
+
+        /// <summary>Current vertical scroll offset in screen pixels.</summary>
+        public double VerticalScrollValue { get => GetValue(VerticalScrollValueProperty); set => SetValue(VerticalScrollValueProperty, value); }
+
         /// <summary>Callback used to place a new object at level coordinates.</summary>
         public Func<string, int, int, LevelObject?>? PlaceAt { get; set; }
 
@@ -96,6 +140,7 @@ namespace CtrDxEditor.Rendering
         private int _lastHitIndex = -1;
         private bool _panning;
         private Point _panLast;
+        private bool _syncingScroll;
         private bool _pendingFit;
         private bool _ghostActive;
         private string? _ghostElement;
@@ -113,6 +158,15 @@ namespace CtrDxEditor.Rendering
             else if (change.Property == BoundsProperty && _pendingFit)
             {
                 TryFit();
+            }
+            else if (change.Property == BoundsProperty || change.Property == ViewProperty || change.Property == DocumentProperty)
+            {
+                UpdateScrollState();
+            }
+            else if ((change.Property == HorizontalScrollValueProperty || change.Property == VerticalScrollValueProperty)
+                     && !_syncingScroll)
+            {
+                ScrollTo(HorizontalScrollValue, VerticalScrollValue);
             }
         }
 
@@ -144,17 +198,73 @@ namespace CtrDxEditor.Rendering
             double panX = (Bounds.Width - (doc.Width * zoom)) / 2;
             double panY = (Bounds.Height - (doc.Height * zoom)) / 2;
             View = new ViewTransform(zoom, panX, panY);
+            UpdateScrollState();
         }
 
         /// <summary>Zooms about the viewport center (for menu/keyboard zoom).</summary>
         public void ZoomBy(double factor)
         {
-            ViewTransform v = View;
-            double newZoom = Math.Clamp(v.Zoom * factor, 0.1, 10.0);
-            double cx = Bounds.Width / 2, cy = Bounds.Height / 2;
-            double panX = cx - ((cx - v.PanX) * (newZoom / v.Zoom));
-            double panY = cy - ((cy - v.PanY) * (newZoom / v.Zoom));
-            View = new ViewTransform(newZoom, panX, panY);
+            ZoomBy(factor, new Point(Bounds.Width / 2, Bounds.Height / 2));
+        }
+
+        /// <summary>Zooms about a screen-space point in this canvas.</summary>
+        public void ZoomBy(double factor, Point anchor)
+        {
+            View = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
+            UpdateScrollState();
+        }
+
+        /// <summary>Scrolls the level viewport by screen-space pixels.</summary>
+        public void ScrollBy(double deltaX, double deltaY)
+        {
+            ScrollTo(HorizontalScrollValue + deltaX, VerticalScrollValue + deltaY);
+        }
+
+        private void ScrollTo(double offsetX, double offsetY)
+        {
+            if (Document is not { } doc)
+            {
+                return;
+            }
+
+            View = ViewNavigation.ScrollTo(View, doc.Width, doc.Height, Bounds.Width, Bounds.Height, offsetX, offsetY);
+            UpdateScrollState();
+        }
+
+        private void UpdateScrollState()
+        {
+            LevelDocument? doc = Document;
+            double viewportWidth = Math.Max(0, Bounds.Width);
+            double viewportHeight = Math.Max(0, Bounds.Height);
+            double maxX = 0;
+            double maxY = 0;
+            double valueX = 0;
+            double valueY = 0;
+
+            if (doc is not null)
+            {
+                double contentWidth = Math.Max(0, doc.Width * View.Zoom);
+                double contentHeight = Math.Max(0, doc.Height * View.Zoom);
+                maxX = Math.Max(0, contentWidth - viewportWidth);
+                maxY = Math.Max(0, contentHeight - viewportHeight);
+                valueX = Math.Clamp(-View.PanX, 0, maxX);
+                valueY = Math.Clamp(-View.PanY, 0, maxY);
+            }
+
+            _syncingScroll = true;
+            try
+            {
+                HorizontalScrollViewport = viewportWidth;
+                VerticalScrollViewport = viewportHeight;
+                HorizontalScrollMaximum = maxX;
+                VerticalScrollMaximum = maxY;
+                HorizontalScrollValue = valueX;
+                VerticalScrollValue = valueY;
+            }
+            finally
+            {
+                _syncingScroll = false;
+            }
         }
 
         /// <inheritdoc />
@@ -366,6 +476,10 @@ namespace CtrDxEditor.Rendering
                 e.Pointer.Capture(this);
                 return;
             }
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
 
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
@@ -408,6 +522,9 @@ namespace CtrDxEditor.Rendering
             if (hit < 0)
             {
                 SelectedObject = null;
+                _panning = true;
+                _panLast = p;
+                e.Pointer.Capture(this);
                 return;
             }
 
@@ -425,7 +542,7 @@ namespace CtrDxEditor.Rendering
             if (_panning)
             {
                 Point now = e.GetPosition(this);
-                View = new ViewTransform(View.Zoom, View.PanX + (now.X - _panLast.X), View.PanY + (now.Y - _panLast.Y));
+                ScrollBy(_panLast.X - now.X, _panLast.Y - now.Y);
                 _panLast = now;
                 return;
             }
@@ -457,13 +574,24 @@ namespace CtrDxEditor.Rendering
         protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
         {
             base.OnPointerWheelChanged(e);
-            Point p = e.GetPosition(this);
-            ViewTransform v = View;
-            double factor = e.Delta.Y > 0 ? 1.1 : 1 / 1.1;
-            double newZoom = Math.Clamp(v.Zoom * factor, 0.1, 10.0);
-            double panX = p.X - ((p.X - v.PanX) * (newZoom / v.Zoom));
-            double panY = p.Y - ((p.Y - v.PanY) * (newZoom / v.Zoom));
-            View = new ViewTransform(newZoom, panX, panY);
+            const double wheelPixels = 48;
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            {
+                double factor = e.Delta.Y > 0 ? 1.1 : 1 / 1.1;
+                ZoomBy(factor, e.GetPosition(this));
+            }
+            else
+            {
+                double deltaX = e.Delta.X * -wheelPixels;
+                double deltaY = e.Delta.Y * -wheelPixels;
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(deltaX) < double.Epsilon)
+                {
+                    deltaX = deltaY;
+                    deltaY = 0;
+                }
+                ScrollBy(deltaX, deltaY);
+            }
+            e.Handled = true;
         }
 
         /// <summary>Shows a translucent preview of <paramref name="element"/> at the snapped drop position.</summary>

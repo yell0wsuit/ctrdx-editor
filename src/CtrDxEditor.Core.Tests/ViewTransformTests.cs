@@ -28,5 +28,53 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(level.X, round.X, precision: 9);
             Assert.Equal(level.Y, round.Y, precision: 9);
         }
+
+        /// <summary>Verifies that viewport scrolling clamps offsets to the scaled level content.</summary>
+        [Fact]
+        public void ScrollToClampsOffsetsToContentSize()
+        {
+            ViewTransform t = ViewNavigation.ScrollTo(
+                new ViewTransform(Zoom: 2.0, PanX: 0, PanY: 0),
+                levelWidth: 640,
+                levelHeight: 960,
+                viewportWidth: 300,
+                viewportHeight: 400,
+                offsetX: 1200,
+                offsetY: -50);
+
+            Assert.Equal(-980, t.PanX);
+            Assert.Equal(0, t.PanY);
+        }
+
+        /// <summary>Verifies that scrolling centers content on axes smaller than the viewport.</summary>
+        [Fact]
+        public void ScrollToCentersContentWhenSmallerThanViewport()
+        {
+            ViewTransform t = ViewNavigation.ScrollTo(
+                new ViewTransform(Zoom: 0.5, PanX: 0, PanY: 0),
+                levelWidth: 320,
+                levelHeight: 240,
+                viewportWidth: 400,
+                viewportHeight: 300,
+                offsetX: 100,
+                offsetY: 100);
+
+            Assert.Equal(120, t.PanX);
+            Assert.Equal(90, t.PanY);
+        }
+
+        /// <summary>Verifies that pointer-centered zoom preserves the level point under the pointer.</summary>
+        [Fact]
+        public void ZoomByKeepsAnchorLevelPointUnderPointer()
+        {
+            ViewTransform t = new(Zoom: 2.0, PanX: -40, PanY: -80);
+            Vec2 anchor = new(120, 140);
+            Vec2 before = t.ScreenToLevel(anchor);
+
+            ViewTransform zoomed = ViewNavigation.ZoomBy(t, factor: 1.25, anchor, minZoom: 0.1, maxZoom: 10.0);
+
+            Assert.Equal(before.X, zoomed.ScreenToLevel(anchor).X, precision: 9);
+            Assert.Equal(before.Y, zoomed.ScreenToLevel(anchor).Y, precision: 9);
+        }
     }
 }

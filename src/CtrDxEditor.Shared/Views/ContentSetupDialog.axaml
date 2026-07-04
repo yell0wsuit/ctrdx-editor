@@ -6,7 +6,7 @@
              x:DataType="vm:ContentSetupViewModel">
   <!-- MaxHeight + Auto scrollbar: a long invalid-files list (see ErrorMessage below) can otherwise
        grow the dialog taller than the window/viewport, cutting off the buttons beneath it. -->
-  <ScrollViewer MaxHeight="500" VerticalScrollBarVisibility="Auto">
+  <ScrollViewer MaxHeight="500" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     <StackPanel Margin="24" Spacing="16" Width="500">
       <!-- Title reflects the current phase. -->
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"

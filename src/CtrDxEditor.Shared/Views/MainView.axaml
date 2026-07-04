@@ -120,16 +120,35 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </Border>
-      <render:LevelCanvas Grid.Column="1" x:Name="Canvas" Focusable="True"
-                          ClipToBounds="True"
-                          Document="{Binding Document}"
-                          Sprites="{Binding Sprites}"
-                          View="{Binding View, Mode=TwoWay}"
-                          SnapEnabled="{Binding SnapEnabled}"
-                          ShowHitboxes="{Binding ShowHitboxes}"
-                          ShowMobileHitboxes="{Binding ShowMobileHitboxes}"
-                          SelectedObject="{Binding SelectedObject, Mode=TwoWay}"
-                          LockedObject="{Binding LockedObject, Mode=TwoWay}" />
+      <Grid Grid.Column="1" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
+        <render:LevelCanvas Grid.Row="0" Grid.Column="0" x:Name="Canvas" Focusable="True"
+                            ClipToBounds="True"
+                            Document="{Binding Document}"
+                            Sprites="{Binding Sprites}"
+                            View="{Binding View, Mode=TwoWay}"
+                            SnapEnabled="{Binding SnapEnabled}"
+                            ShowHitboxes="{Binding ShowHitboxes}"
+                            ShowMobileHitboxes="{Binding ShowMobileHitboxes}"
+                            SelectedObject="{Binding SelectedObject, Mode=TwoWay}"
+                            LockedObject="{Binding LockedObject, Mode=TwoWay}" />
+        <ScrollBar Grid.Row="0" Grid.Column="1"
+                   Orientation="Vertical"
+                   Minimum="0"
+                   Maximum="{Binding #Canvas.VerticalScrollMaximum}"
+                   Value="{Binding #Canvas.VerticalScrollValue, Mode=TwoWay}"
+                   ViewportSize="{Binding #Canvas.VerticalScrollViewport}"
+                   SmallChange="48"
+                   LargeChange="{Binding #Canvas.VerticalScrollViewport}" />
+        <ScrollBar Grid.Row="1" Grid.Column="0"
+                   Orientation="Horizontal"
+                   Minimum="0"
+                   Maximum="{Binding #Canvas.HorizontalScrollMaximum}"
+                   Value="{Binding #Canvas.HorizontalScrollValue, Mode=TwoWay}"
+                   ViewportSize="{Binding #Canvas.HorizontalScrollViewport}"
+                   SmallChange="48"
+                   LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
+        <Border Grid.Row="1" Grid.Column="1" Background="#202329" />
+      </Grid>
       <Grid Grid.Column="2" Background="#202329" RowDefinitions="Auto,2*,Auto,3*">
         <TextBlock Grid.Row="0" Text="{loc:Tr Panel.Objects}" FontWeight="Bold" Margin="8,8,8,4" />
         <ListBox Grid.Row="1" Margin="4,0,4,4" x:Name="ObjectsListBox"
