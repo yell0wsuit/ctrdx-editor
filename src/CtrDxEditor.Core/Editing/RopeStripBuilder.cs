@@ -12,6 +12,12 @@ namespace CtrDxEditor.Core.Editing
     public sealed record RopeStrip(Vec2[] Points, RopeRgba[] Colors);
 
     /// <summary>
+    /// A built rope visual: the triangle strips plus the bezier sample polyline
+    /// (the game's <c>drawPts</c>, which also anchors the Christmas lights).
+    /// </summary>
+    public sealed record RopeVisual(IReadOnlyList<RopeStrip> Strips, IReadOnlyList<Vec2> SamplePoints);
+
+    /// <summary>
     /// Builds the triangle strips that draw a rope exactly like the game's
     /// <c>Bungee.DrawBungee</c> / <c>DrawAntialiasedLineContinued</c> (default skin,
     /// alpha 1, not highlighted). Coordinates are level-space; the rope width scales
@@ -70,7 +76,7 @@ namespace CtrDxEditor.Core.Editing
         /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
         /// past their rest length pick up the game's red stretch tint.
         /// </summary>
-        public static List<RopeStrip> Build(Vec2 a, Vec2 b, double length)
+        public static RopeVisual Build(Vec2 a, Vec2 b, double length)
         {
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
@@ -99,11 +105,27 @@ namespace CtrDxEditor.Core.Editing
             return BuildStrips(pts, palette);
         }
 
+        /// <summary>
+        /// Positions of the rope's Christmas lights, ported from the game's
+        /// <c>Bungee.DrawChristmasLights</c>: every 6th bezier sample point, skipping
+        /// 4 points at each end of the rope.
+        /// </summary>
+        public static List<Vec2> ChristmasLightPoints(IReadOnlyList<Vec2> samplePoints)
+        {
+            List<Vec2> lights = [];
+            for (int i = 4; i < samplePoints.Count - 4; i += 6)
+            {
+                lights.Add(samplePoints[i]);
+            }
+            return lights;
+        }
+
         // Port of the DrawBungee sampling loop: bezier samples batched 4 points at a time,
         // alternating the two color tracks per batch while both ramp shade -> base.
-        private static List<RopeStrip> BuildStrips(Vec2[] pts, RopeDrawColors palette)
+        private static RopeVisual BuildStrips(Vec2[] pts, RopeDrawColors palette)
         {
             List<RopeStrip> strips = [];
+            List<Vec2> samples = [];
             int sampleCount = (pts.Length - 1) * SamplesPerSegment;
             double sampleStep = 1.0 / sampleCount;
 
@@ -127,7 +149,9 @@ namespace CtrDxEditor.Core.Editing
                     t = 1;
                 }
 
-                batch.Add(CalcPathBezier(pts, t));
+                Vec2 sample = CalcPathBezier(pts, t);
+                samples.Add(sample);
+                batch.Add(sample);
                 if (batch.Count >= 4 || t == 1)
                 {
                     RopeRgb c = useTrack1 ? track1 : track2;
@@ -158,7 +182,7 @@ namespace CtrDxEditor.Core.Editing
                 t += sampleStep;
             }
 
-            return strips;
+            return new RopeVisual(strips, samples);
         }
 
         // Port of DrawAntialiasedLineContinued (non-highlighted): one 10-vertex strip per

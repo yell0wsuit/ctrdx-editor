@@ -19,9 +19,15 @@ namespace CtrDxEditor.Content
     /// <summary>A fully resolved, composited object sprite: ordered layers plus per-object scale.</summary>
     public sealed record ObjectSprite(IReadOnlyList<SpriteLayerDraw> Layers, double Scale);
 
+    /// <summary>The rope Christmas lights atlas: its bitmap and the light bulb frames.</summary>
+    public sealed record ChristmasLightsArt(Bitmap Bitmap, IReadOnlyList<AtlasFrame> Frames);
+
     /// <summary>Reads sprite atlases from a preloaded platform content store.</summary>
     public sealed class SpriteCache(IContentStore store, string imageExtension = ".png")
     {
+        private const string XmasLightsJson = "images/christmas_lights.json";
+        private const string XmasLightsImageBase = "images/christmas_lights";
+
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
         private readonly Dictionary<string, Bitmap?> _thumbnails = [];
@@ -54,6 +60,37 @@ namespace CtrDxEditor.Content
                     }
                 }
             }
+
+            // Seasonal rope lights. Optional: a bundle without the atlas just renders
+            // ropes bare, so a load failure must not break the whole preload.
+            try
+            {
+                string imagePath = XmasLightsImageBase + imageExtension;
+                if (!_bitmaps.ContainsKey(imagePath))
+                {
+                    byte[] bytes = await store.ReadBytesAsync(imagePath);
+                    using MemoryStream ms = new(bytes);
+                    _bitmaps[imagePath] = new Bitmap(ms);
+                }
+                if (!_atlases.ContainsKey(XmasLightsJson))
+                {
+                    string json = await store.ReadTextAsync(XmasLightsJson);
+                    _atlases[XmasLightsJson] = new Atlas(AtlasJsonLoader.ParseFrames(json));
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>The rope Christmas lights art, or null when the bundle doesn't include it.</summary>
+        public ChristmasLightsArt? GetChristmasLights()
+        {
+            Bitmap? bitmap = LoadBitmap(XmasLightsImageBase + imageExtension);
+            Atlas? atlas = LoadAtlas(XmasLightsJson);
+            return bitmap is null || atlas is null || atlas.Frames.Count == 0
+                ? null
+                : new ChristmasLightsArt(bitmap, atlas.Frames);
         }
 
         /// <summary>A small composited preview of an object's sprite, for the palette. Cached per element.</summary>

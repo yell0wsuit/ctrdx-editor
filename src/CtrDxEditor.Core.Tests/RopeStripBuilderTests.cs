@@ -45,7 +45,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildTautRopeIsStraight()
         {
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290).Strips;
             Assert.NotEmpty(strips);
             foreach (RopeStrip s in strips)
             {
@@ -58,7 +58,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildStripStructureMatchesGame()
         {
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290).Strips;
             foreach (RopeStrip s in strips)
             {
                 Assert.Equal(10, s.Points.Length);
@@ -78,7 +78,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildSlackRopeSags()
         {
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400).Strips;
             bool sagged = false;
             foreach (RopeStrip s in strips)
             {
@@ -96,7 +96,7 @@ namespace CtrDxEditor.Core.Tests
         public void BuildAlternatesColorTracks()
         {
             // Length 300 at rest length 35 -> 10 constraint points -> 36 samples; batches of 3 segments.
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(200, 0), 300);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(200, 0), 300).Strips;
             Assert.True(strips.Count >= 4);
             RopeRgba first = strips[0].Colors[4];  // batch 1: track 2 (Shade2 ramp)
             RopeRgba fourth = strips[3].Colors[4]; // batch 2: track 1 (Shade1 ramp)
@@ -107,7 +107,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildRampsShadeToBase()
         {
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(200, 0), 300);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(200, 0), 300).Strips;
             RopeRgba early = strips[0].Colors[4];
             RopeRgba late = strips[^1].Colors[4];
             Assert.True(late.R > early.R);
@@ -118,7 +118,7 @@ namespace CtrDxEditor.Core.Tests
         public void BuildOverstretchedTintsRed()
         {
             // Distance 300 vs length 100: far past the 7/105 threshold; shade red *= (300/100)*2.
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 100).Strips;
             Assert.True(strips[0].Colors[4].R > 1);
         }
 
@@ -127,8 +127,8 @@ namespace CtrDxEditor.Core.Tests
         public void BuildTautButNotStretchedKeepsRestingColors()
         {
             // 300 apart, rope 290: taut, but only ~3.4% over rest (threshold is ~6.67%).
-            List<RopeStrip> taut = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
-            List<RopeStrip> slack = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400);
+            IReadOnlyList<RopeStrip> taut = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290).Strips;
+            IReadOnlyList<RopeStrip> slack = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 400).Strips;
             Assert.Equal(slack[0].Colors[4], taut[0].Colors[4]);
         }
 
@@ -136,8 +136,46 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BuildCoincidentEndpointsReturnsEmpty()
         {
-            List<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(50, 50), new Vec2(50, 50), 0);
+            IReadOnlyList<RopeStrip> strips = RopeStripBuilder.Build(new Vec2(50, 50), new Vec2(50, 50), 0).Strips;
             Assert.Empty(strips);
+        }
+
+        /// <summary>Build exposes the bezier polyline (the game's drawPts): one point per sample, ends pinned.</summary>
+        [Fact]
+        public void BuildExposesSamplePoints()
+        {
+            // Length 290 -> 10 constraint points -> 36 samples -> 37 polyline points (t = 0..1 inclusive).
+            RopeVisual visual = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
+            Assert.Equal(37, visual.SamplePoints.Count);
+            Assert.Equal(new Vec2(0, 0), visual.SamplePoints[0]);
+            Assert.Equal(300, visual.SamplePoints[^1].X, 6);
+        }
+
+        /// <summary>Lights sit on every 6th sample point, skipping 4 points at each end (game cadence).</summary>
+        [Fact]
+        public void ChristmasLightPointsFollowGameCadence()
+        {
+            List<Vec2> samples = [];
+            for (int i = 0; i < 37; i++)
+            {
+                samples.Add(new Vec2(i, 0));
+            }
+
+            List<Vec2> lights = RopeStripBuilder.ChristmasLightPoints(samples);
+            Assert.Equal([4.0, 10.0, 16.0, 22.0, 28.0], lights.ConvertAll(p => p.X));
+        }
+
+        /// <summary>Ropes too short for the end skips get no lights.</summary>
+        [Fact]
+        public void ChristmasLightPointsShortRopeHasNone()
+        {
+            List<Vec2> samples = [];
+            for (int i = 0; i < 8; i++)
+            {
+                samples.Add(new Vec2(i, 0));
+            }
+
+            Assert.Empty(RopeStripBuilder.ChristmasLightPoints(samples));
         }
     }
 }
