@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -193,6 +194,7 @@ namespace CtrDxEditor.Rendering
             }
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
+            List<RopeStrip> ropeStrips = [];
             foreach (LevelObject obj in objects)
             {
                 if (obj.Type != "grab")
@@ -206,11 +208,18 @@ namespace CtrDxEditor.Rendering
                     continue;
                 }
 
-                Vec2 a = v.LevelToScreen(new Vec2(obj.X, obj.Y));
-                Vec2 b = v.LevelToScreen(new Vec2(rope.Target.X, rope.Target.Y));
-                IBrush brush = rope.Kind == RopeTargetKind.Bulb ? Brushes.Khaki : Brushes.IndianRed;
-                Pen pen = new(brush, 3) { DashStyle = new DashStyle([4, 3], 0) };
-                context.DrawLine(pen, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                // The game reads the grab's length attribute for the bungee rest length;
+                // missing/0 renders as a taut straight rope.
+                double ropeLength = double.TryParse(
+                    obj.GetAttr("length"), NumberStyles.Float, CultureInfo.InvariantCulture, out double len)
+                    ? len
+                    : 0;
+                ropeStrips.AddRange(RopeStripBuilder.Build(
+                    new Vec2(obj.X, obj.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength));
+            }
+            if (ropeStrips.Count > 0)
+            {
+                context.Custom(new RopeDrawOperation(new Rect(Bounds.Size), v, ropeStrips));
             }
 
             foreach (LevelObject obj in objects)
