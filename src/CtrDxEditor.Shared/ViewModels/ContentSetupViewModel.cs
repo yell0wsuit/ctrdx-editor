@@ -20,6 +20,7 @@ namespace CtrDxEditor.ViewModels
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsDownloading))]
+        [NotifyPropertyChangedFor(nameof(ShowDownloadSizeLabel))]
         public partial bool IsBusy { get; set; }
 
         [ObservableProperty]
@@ -38,6 +39,12 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the Download Manually button is shown (desktop opens the releases page manually).</summary>
         public bool AllowManualDownload { get; }
 
+        /// <summary>Approximate size of the platform's asset bundle (e.g. "336 MB"), or empty to show nothing.</summary>
+        public string DownloadSizeLabel { get; }
+
+        /// <summary>Whether the download-size disclosure should be shown: idle, and a label was supplied.</summary>
+        public bool ShowDownloadSizeLabel => !IsBusy && !string.IsNullOrEmpty(DownloadSizeLabel);
+
         /// <summary>Raised once content setup succeeds, so the view can close.</summary>
         public event Action? Completed;
 
@@ -46,12 +53,14 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Creates a content setup view model.</summary>
         public ContentSetupViewModel(
-            IContentInstaller installer, Func<Task> onInstalled, bool allowQuit = true, bool allowManualDownload = true)
+            IContentInstaller installer, Func<Task> onInstalled,
+            bool allowQuit = true, bool allowManualDownload = true, string downloadSizeLabel = "")
         {
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
             AllowManualDownload = allowManualDownload;
+            DownloadSizeLabel = downloadSizeLabel;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.
             DownloadCommand = new AsyncRelayCommand(DownloadAsync);
         }

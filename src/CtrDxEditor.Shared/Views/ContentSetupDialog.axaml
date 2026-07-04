@@ -16,6 +16,8 @@
     <!-- Idle: describe the choice. -->
     <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
                Text="{loc:Tr Dialog.ContentSetup.Description}" />
+    <TextBlock TextWrapping="Wrap" Opacity="0.7" IsVisible="{Binding ShowDownloadSizeLabel}"
+               Text="{Binding DownloadSizeLabel, StringFormat={loc:Tr Dialog.ContentSetup.DownloadSize}}" />
 
     <!-- Downloading: live byte-based progress plus a cancel action (the download supports cancellation). -->
     <StackPanel Spacing="8" IsVisible="{Binding IsDownloading}">

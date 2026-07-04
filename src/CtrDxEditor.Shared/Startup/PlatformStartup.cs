@@ -22,5 +22,8 @@ namespace CtrDxEditor.Startup
 
         /// <summary>File extension (including the leading dot) used for sprite atlas images on this platform.</summary>
         public required string SpriteImageExtension { get; init; }
+
+        /// <summary>Approximate size of this platform's asset bundle (e.g. "336 MB"), shown next to the Download button.</summary>
+        public required string DownloadSizeLabel { get; init; }
     }
 }

@@ -49,6 +49,30 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.AllowManualDownload);
         }
 
+        /// <summary>Verifies the download-size disclosure is hidden by default (no label supplied).</summary>
+        [Fact]
+        public void ShowDownloadSizeLabelIsFalseWhenNoLabelSupplied()
+        {
+            ContentSetupViewModel vm = new(new FakeInstaller(), () => Task.CompletedTask);
+
+            Assert.False(vm.ShowDownloadSizeLabel);
+            Assert.Equal(string.Empty, vm.DownloadSizeLabel);
+        }
+
+        /// <summary>Verifies the download-size disclosure shows while idle when supplied, and hides while busy.</summary>
+        [Fact]
+        public void ShowDownloadSizeLabelReflectsSuppliedLabelAndBusyState()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask, downloadSizeLabel: "25.1 MB");
+
+            Assert.Equal("25.1 MB", vm.DownloadSizeLabel);
+            Assert.True(vm.ShowDownloadSizeLabel);
+
+            vm.IsBusy = true;
+            Assert.False(vm.ShowDownloadSizeLabel);
+        }
+
         /// <summary>Verifies that cancelling an active download clears busy state without an error.</summary>
         [Fact]
         public async Task CancelDownloadStopsTheDownloadWithoutError()
