@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -234,8 +235,8 @@ namespace CtrDxEditor.Views
 
             if (files.Count == 1)
             {
-                await using System.IO.Stream stream = await files[0].OpenReadAsync();
-                using System.IO.StreamReader reader = new(stream);
+                await using Stream stream = await files[0].OpenReadAsync();
+                using StreamReader reader = new(stream);
                 vm.LoadLevelXml(await reader.ReadToEndAsync());
                 this.FindControl<LevelCanvas>("Canvas")!.FitToView();
             }
@@ -259,8 +260,8 @@ namespace CtrDxEditor.Views
 
             if (file is not null && vm.ToXml() is { } xml)
             {
-                await using System.IO.Stream stream = await file.OpenWriteAsync();
-                await using System.IO.StreamWriter writer = new(stream);
+                await using Stream stream = await file.OpenWriteAsync();
+                await using StreamWriter writer = new(stream);
                 await writer.WriteAsync(xml);
             }
         }

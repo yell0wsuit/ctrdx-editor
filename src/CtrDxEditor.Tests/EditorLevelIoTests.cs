@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
@@ -19,7 +20,7 @@ namespace CtrDxEditor.Tests
 
             public Task<byte[]> ReadBytesAsync(string relPath)
             {
-                return Task.FromResult(System.Array.Empty<byte>());
+                return Task.FromResult(Array.Empty<byte>());
             }
 
             public Task<string> ReadTextAsync(string relPath)
