@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace CtrDxEditor.Content
 {
     /// <summary>One atlas frame layer of a composited object sprite, drawn back-to-front.</summary>
-    public sealed record SpriteLayer(string AtlasJsonRelPath, string AtlasPngRelPath, string FrameName);
+    public sealed record SpriteLayer(string AtlasJsonRelPath, string AtlasImageBasePath, string FrameName);
 
     /// <summary>
     /// Maps an object element to the ordered atlas layers that make up its sprite, plus the per-object

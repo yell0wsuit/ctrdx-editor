@@ -28,6 +28,27 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>Verifies allowQuit/allowManualDownload default to true, matching today's always-shown buttons.</summary>
+        [Fact]
+        public void AllowQuitAndAllowManualDownloadDefaultToTrue()
+        {
+            ContentSetupViewModel vm = new(new FakeInstaller(), () => Task.CompletedTask);
+
+            Assert.True(vm.AllowQuit);
+            Assert.True(vm.AllowManualDownload);
+        }
+
+        /// <summary>Verifies allowQuit/allowManualDownload can each be disabled independently (the browser's setup).</summary>
+        [Fact]
+        public void AllowQuitAndAllowManualDownloadCanBeDisabledIndependently()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask, allowQuit: false, allowManualDownload: true);
+
+            Assert.False(vm.AllowQuit);
+            Assert.True(vm.AllowManualDownload);
+        }
+
         /// <summary>Verifies that cancelling an active download clears busy state without an error.</summary>
         [Fact]
         public async Task CancelDownloadStopsTheDownloadWithoutError()

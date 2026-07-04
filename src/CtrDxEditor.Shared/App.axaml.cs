@@ -79,9 +79,9 @@ namespace CtrDxEditor
             }
         }
 
-        private static async Task ShowEditorAsync(Control root, IContentStore store)
+        private async Task ShowEditorAsync(Control root, IContentStore store)
         {
-            SpriteCache sprites = new(store);
+            SpriteCache sprites = new(store, _startup.SpriteImageExtension);
             await sprites.PreloadAsync();
             root.DataContext = new EditorViewModel(sprites);
         }

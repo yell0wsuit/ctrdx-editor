@@ -25,6 +25,7 @@ namespace CtrDxEditor.Desktop
                 Settings = settings,
                 Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir),
                 InstalledStore = () => new FolderContentStore(ContentRoot.DefaultContentDir),
+                SpriteImageExtension = ".png",
                 ResolveInstalled = async () =>
                 {
                     string? resolved = ContentLocation.Resolve(

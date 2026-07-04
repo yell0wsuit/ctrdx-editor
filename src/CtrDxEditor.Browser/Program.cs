@@ -19,6 +19,7 @@ AppBuilder BuildAvaloniaApp()
         Settings = settings,
         Installer = new BrowserContentInstaller(),
         InstalledStore = () => new IndexedDbContentStore(),
+        SpriteImageExtension = ".webp",
         ResolveInstalled = async () =>
             await contentStore.IsPopulatedAsync() ? contentStore : null,
     };

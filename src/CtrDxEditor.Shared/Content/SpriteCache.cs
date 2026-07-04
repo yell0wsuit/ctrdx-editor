@@ -20,7 +20,7 @@ namespace CtrDxEditor.Content
     public sealed record ObjectSprite(IReadOnlyList<SpriteLayerDraw> Layers, double Scale);
 
     /// <summary>Reads sprite atlases from a preloaded platform content store.</summary>
-    public sealed class SpriteCache(IContentStore store)
+    public sealed class SpriteCache(IContentStore store, string imageExtension = ".png")
     {
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
@@ -40,11 +40,12 @@ namespace CtrDxEditor.Content
             {
                 foreach (SpriteLayer layer in v.Layers)
                 {
-                    if (!_bitmaps.ContainsKey(layer.AtlasPngRelPath))
+                    string imagePath = layer.AtlasImageBasePath + imageExtension;
+                    if (!_bitmaps.ContainsKey(imagePath))
                     {
-                        byte[] png = await store.ReadBytesAsync(layer.AtlasPngRelPath);
-                        using MemoryStream ms = new(png);
-                        _bitmaps[layer.AtlasPngRelPath] = new Bitmap(ms);
+                        byte[] bytes = await store.ReadBytesAsync(imagePath);
+                        using MemoryStream ms = new(bytes);
+                        _bitmaps[imagePath] = new Bitmap(ms);
                     }
                     if (!_atlases.ContainsKey(layer.AtlasJsonRelPath))
                     {
@@ -126,7 +127,7 @@ namespace CtrDxEditor.Content
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
             foreach (SpriteLayer layer in v.Layers)
             {
-                Bitmap? bitmap = LoadBitmap(layer.AtlasPngRelPath);
+                Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
                 AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.Find(layer.FrameName);
                 if (bitmap is not null && frame is not null)
                 {

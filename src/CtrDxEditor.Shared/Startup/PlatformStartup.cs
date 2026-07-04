@@ -19,5 +19,8 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Builds a content store over freshly-installed content (used after the setup dialog succeeds).</summary>
         public required Func<IContentStore> InstalledStore { get; init; }
+
+        /// <summary>File extension (including the leading dot) used for sprite atlas images on this platform.</summary>
+        public required string SpriteImageExtension { get; init; }
     }
 }
