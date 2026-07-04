@@ -50,7 +50,7 @@ export const getBytes = async (key) => {
         // Ignore a legacy base64 string (or any non-binary value) under this key so an old dev
         // install falls back to setup instead of a marshalling crash.
         r.onsuccess = () =>
-            res(r.result instanceof Uint8Array ? r.result : null);
+            res(r.result instanceof Uint8Array ? r.result : new Uint8Array(0));
         r.onerror = () => rej(r.error);
     });
 };

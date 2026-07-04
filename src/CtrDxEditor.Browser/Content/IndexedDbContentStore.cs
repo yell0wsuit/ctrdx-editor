@@ -23,8 +23,8 @@ namespace CtrDxEditor.Browser.Content
             {
                 return _archive;
             }
-            byte[]? bytes = await IndexedDb.GetBytes(ZipKey);
-            if (bytes is null || bytes.Length == 0)
+            byte[] bytes = await IndexedDb.GetBytes(ZipKey);
+            if (bytes.Length == 0)
             {
                 return null;
             }

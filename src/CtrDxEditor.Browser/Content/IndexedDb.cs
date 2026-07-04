@@ -24,9 +24,9 @@ namespace CtrDxEditor.Browser.Content
         [JSImport("putBytes", "idb")]
         public static partial Task PutBytes(string key, byte[] value);
 
-        /// <summary>Reads a byte array from IndexedDB, or null when the key is absent or not binary.</summary>
+        /// <summary>Reads a byte array from IndexedDB, or an empty array when the key is absent or not binary.</summary>
         [JSImport("getBytes", "idb")]
-        public static partial Task<byte[]?> GetBytes(string key);
+        public static partial Task<byte[]> GetBytes(string key);
 
         /// <summary>Returns whether a key exists in IndexedDB.</summary>
         [JSImport("hasKey", "idb")]
