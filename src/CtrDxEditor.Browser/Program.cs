@@ -17,7 +17,7 @@ AppBuilder BuildAvaloniaApp()
     PlatformStartup startup = new()
     {
         Settings = settings,
-        Installer = new BrowserContentInstaller(),
+        Installer = new BrowserContentInstaller(".webp"),
         InstalledStore = () => new IndexedDbContentStore(),
         SpriteImageExtension = ".webp",
         DownloadSizeLabel = "30 MB",

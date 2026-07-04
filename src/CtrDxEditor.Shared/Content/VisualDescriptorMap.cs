@@ -49,13 +49,20 @@ namespace CtrDxEditor.Content
         public static IReadOnlyDictionary<string, VisualDescriptor> ByElement { get; } =
             All.ToDictionary(v => v.Element);
 
-        /// <summary>Distinct atlas image-base and JSON relative paths that every built-in sprite depends on.</summary>
-        public static IReadOnlyCollection<string> RequiredAssetPaths { get; } =
+        /// <summary>
+        /// The distinct relative content paths every built-in sprite needs, for a given image extension
+        /// (e.g. ".png" desktop, ".webp" browser): each layer's atlas image (base + extension) and its JSON.
+        /// Used to reject a bundle that lacks the sprites this platform actually renders.
+        /// </summary>
+        public static IReadOnlyCollection<string> RequiredFiles(string imageExtension)
+        {
+            return
             [
                 .. All.SelectMany(v => v.Layers)
-                      .SelectMany(l => new[] { l.AtlasImageBasePath, l.AtlasJsonRelPath })
+                      .SelectMany(l => new[] { l.AtlasImageBasePath + imageExtension, l.AtlasJsonRelPath })
                       .Distinct(),
             ];
+        }
 
         /// <summary>Returns a visual descriptor by object element name, or null when unsupported.</summary>
         public static VisualDescriptor? For(string element)

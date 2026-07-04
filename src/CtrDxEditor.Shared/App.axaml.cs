@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Avalonia;
@@ -61,15 +62,16 @@ namespace CtrDxEditor
             _started = true;
 
             IContentStore? installed = await _startup.ResolveInstalled();
-            if (installed is not null)
+            if (installed is not null && await TryShowEditorAsync(root, installed))
             {
-                await ShowEditorAsync(root, installed);
                 return;
             }
 
+            // Either no content is installed, or installed content passed the cheap existence check
+            // yet failed to actually load (wrong-platform bundle, corrupt atlas, ...): run setup.
             ContentSetupViewModel vm = new(
                 _startup.Installer,
-                async () => await ShowEditorAsync(root, _startup.InstalledStore()),
+                async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
                 allowQuit: allowQuit,
                 allowManualDownload: allowQuit,
                 downloadSizeLabel: _startup.DownloadSizeLabel);
@@ -83,11 +85,22 @@ namespace CtrDxEditor
             }
         }
 
-        private async Task ShowEditorAsync(Control root, IContentStore store)
+        private async Task<bool> TryShowEditorAsync(Control root, IContentStore store)
         {
-            SpriteCache sprites = new(store, _startup.SpriteImageExtension);
-            await sprites.PreloadAsync();
-            root.DataContext = new EditorViewModel(sprites);
+            try
+            {
+                SpriteCache sprites = new(store, _startup.SpriteImageExtension);
+                await sprites.PreloadAsync();
+                root.DataContext = new EditorViewModel(sprites);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Content resolved but can't be loaded; surface it and let the caller re-run setup
+                // rather than crashing the app with an unhandled exception.
+                Console.WriteLine($"[CtrDx] Installed content failed to load; falling back to setup.\n{ex}");
+                return false;
+            }
         }
     }
 }

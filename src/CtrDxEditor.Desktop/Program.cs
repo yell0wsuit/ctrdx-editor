@@ -19,13 +19,14 @@ namespace CtrDxEditor.Desktop
         /// <summary>Creates the configured Avalonia application builder.</summary>
         public static AppBuilder BuildAvaloniaApp()
         {
+            const string spriteExt = ".png";
             FileSettingsStore settings = new(ContentRoot.SettingsPath);
             PlatformStartup startup = new()
             {
                 Settings = settings,
-                Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir),
+                Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir, spriteExt),
                 InstalledStore = () => new FolderContentStore(ContentRoot.DefaultContentDir),
-                SpriteImageExtension = ".png",
+                SpriteImageExtension = spriteExt,
                 DownloadSizeLabel = "340 MB",
                 ResolveInstalled = async () =>
                 {

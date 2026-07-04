@@ -11,8 +11,8 @@ using CtrDxEditor.Content;
 
 namespace CtrDxEditor.Browser.Content
 {
-    /// <summary>Installs the content bundle into IndexedDB (download via fetch, or uploaded zip).</summary>
-    public sealed class BrowserContentInstaller : IContentInstaller
+    /// <summary>Installs the content bundle into IndexedDB (download via fetch, or uploaded zip), for the given sprite image extension (e.g. ".webp").</summary>
+    public sealed class BrowserContentInstaller(string imageExtension) : IContentInstaller
     {
         /// <inheritdoc />
         public async Task InstallFromDownloadAsync(IProgress<InstallProgress>? progress, CancellationToken ct)
@@ -34,13 +34,13 @@ namespace CtrDxEditor.Browser.Content
             await StoreAsync(ms.ToArray());
         }
 
-        private static async Task StoreAsync(byte[] zipBytes)
+        private async Task StoreAsync(byte[] zipBytes)
         {
             Validate(zipBytes);
             await IndexedDb.PutString(IndexedDbContentStore.ZipKey, Convert.ToBase64String(zipBytes));
         }
 
-        private static void Validate(byte[] zipBytes)
+        private void Validate(byte[] zipBytes)
         {
             using ZipArchive zip = new(new MemoryStream(zipBytes), ZipArchiveMode.Read);
             if (zip.GetEntry(ContentManifest.FileName) is not { } manifestEntry)
@@ -56,22 +56,35 @@ namespace CtrDxEditor.Browser.Content
             }
 
             IReadOnlyDictionary<string, string> manifest = ContentManifest.ParseFiles(manifestJson);
-            IReadOnlyList<string> invalid = ContentManifest.FindInvalidFiles(manifest, rel =>
-            {
-                if (zip.GetEntry(rel) is not { } entry)
+            List<string> invalid =
+            [
+                .. ContentManifest.FindInvalidFiles(manifest, rel =>
                 {
-                    return null;
+                    if (zip.GetEntry(rel) is not { } entry)
+                    {
+                        return null;
+                    }
+                    using Stream s = entry.Open();
+                    using MemoryStream ms = new();
+                    s.CopyTo(ms);
+                    return ms.ToArray();
+                }),
+            ];
+
+            // Reject a bundle that lacks the sprite atlases this platform renders (e.g. a PNG bundle
+            // under the WebP browser head), even when its own manifest is internally consistent.
+            foreach (string rel in VisualDescriptorMap.RequiredFiles(imageExtension))
+            {
+                if (zip.GetEntry(rel) is null && !invalid.Contains(rel))
+                {
+                    invalid.Add(rel);
                 }
-                using Stream s = entry.Open();
-                using MemoryStream ms = new();
-                s.CopyTo(ms);
-                return ms.ToArray();
-            });
+            }
 
             if (invalid.Count > 0)
             {
                 throw new InvalidDataException(
-                    $"The asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
+                    $"The asset bundle is incomplete or corrupt. Invalid files:\n{ContentManifest.SummarizeInvalidFiles(invalid)}");
             }
         }
     }

@@ -24,15 +24,20 @@ namespace CtrDxEditor.Content
             "https://github.com/yell0wsuit/ctrdx-assets/releases/";
 
         /// <summary>
-        /// Downloads the asset bundle and extracts it into <paramref name="destContentDir"/>.
-        /// <paramref name="progress"/> receives the current stage and, while downloading, fractional
-        /// progress in [0, 1] when the server reports a content length. Throws
-        /// <see cref="InvalidDataException"/> if the result is not valid content.
+        /// Downloads the asset bundle and installs it into <paramref name="destContentDir"/> for the
+        /// <paramref name="imageExtension"/> platform. <paramref name="progress"/> receives the current
+        /// stage and, while downloading, fractional progress in [0, 1] when the server reports a content
+        /// length. The install is atomic: content is extracted and validated in a sibling staging folder
+        /// and only swapped in on success, so a corrupt or wrong-platform bundle leaves
+        /// <paramref name="destContentDir"/> untouched. Throws <see cref="InvalidDataException"/> when the
+        /// downloaded bundle is not valid content for this platform.
         /// </summary>
         public static async Task DownloadAsync(
-            string destContentDir, IProgress<InstallProgress>? progress, CancellationToken ct)
+            string destContentDir, string imageExtension, IProgress<InstallProgress>? progress, CancellationToken ct)
         {
             string tmp = Path.Combine(Path.GetTempPath(), $"ctrdx-assets-{Guid.NewGuid():N}");
+            // Staging sits next to the destination (same volume) so the final swap is a rename.
+            string staging = $"{destContentDir}.staging-{Guid.NewGuid():N}";
             _ = Directory.CreateDirectory(tmp);
             try
             {
@@ -46,20 +51,42 @@ namespace CtrDxEditor.Content
                 // a large bundle is unpacked and checked.
                 await Task.Run(() =>
                 {
-                    ExtractInto(zipPath, destContentDir);
-                    IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(destContentDir);
-                    if (invalid.Count > 0)
-                    {
-                        throw new InvalidDataException(
-                            $"The downloaded asset bundle is incomplete or corrupt. Invalid files: {ContentManifest.SummarizeInvalidFiles(invalid)}");
-                    }
+                    ExtractInto(zipPath, staging);
+                    CommitStagedContent(staging, destContentDir, imageExtension);
                 }, ct);
             }
             finally
             {
                 try { Directory.Delete(tmp, recursive: true); }
                 catch (IOException) { /* best-effort cleanup */ }
+                // A successful commit renames staging away; anything left is a failed attempt to discard.
+                if (Directory.Exists(staging))
+                {
+                    try { Directory.Delete(staging, recursive: true); }
+                    catch (IOException) { /* best-effort cleanup */ }
+                }
             }
+        }
+
+        /// <summary>
+        /// Validates freshly-extracted content in <paramref name="stagingDir"/> and, if valid, atomically
+        /// replaces <paramref name="destContentDir"/> with it. Throws <see cref="InvalidDataException"/>
+        /// (leaving the destination untouched) when the staged content is incomplete, corrupt, or built
+        /// for a different platform than <paramref name="imageExtension"/>.
+        /// </summary>
+        public static void CommitStagedContent(string stagingDir, string destContentDir, string imageExtension)
+        {
+            IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(stagingDir, imageExtension);
+            if (invalid.Count > 0)
+            {
+                throw new InvalidDataException(
+                    $"The asset bundle is incomplete or corrupt. Invalid files:\n{ContentManifest.SummarizeInvalidFiles(invalid)}");
+            }
+            if (Directory.Exists(destContentDir))
+            {
+                Directory.Delete(destContentDir, recursive: true);
+            }
+            Directory.Move(stagingDir, destContentDir);
         }
 
         /// <summary>Extracts a downloaded asset zip into <paramref name="destContentDir"/>, overwriting existing files.</summary>
