@@ -19,10 +19,6 @@ namespace CtrDxEditor.Content
         public const string WebpAssetsUrl =
             "https://github.com/yell0wsuit/ctrdx-assets/releases/latest/download/webp-assets.zip";
 
-        /// <summary>Release page users can open when they want to download assets manually.</summary>
-        public const string ReleasesPageUrl =
-            "https://github.com/yell0wsuit/ctrdx-assets/releases/";
-
         /// <summary>
         /// Downloads the asset bundle and installs it into <paramref name="destContentDir"/> for the
         /// <paramref name="imageExtension"/> platform. <paramref name="progress"/> receives the current

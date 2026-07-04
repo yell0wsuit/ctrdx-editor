@@ -3,6 +3,7 @@ using Avalonia.Browser;
 
 using CtrDxEditor;
 using CtrDxEditor.Browser.Content;
+using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
 
 [assembly: System.Runtime.Versioning.SupportedOSPlatform("browser")]
@@ -22,6 +23,7 @@ AppBuilder BuildAvaloniaApp()
         InstalledStore = () => new IndexedDbContentStore(),
         SpriteImageExtension = ".webp",
         DownloadSizeLabel = "30 MB",
+        ManualDownloadUrl = ContentDownloader.WebpAssetsUrl,
         ResolveInstalled = async () =>
             await contentStore.IsPopulatedAsync() ? contentStore : null,
     };

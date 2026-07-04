@@ -25,5 +25,8 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Approximate size of this platform's asset bundle (e.g. "336 MB"), shown next to the Download button.</summary>
         public required string DownloadSizeLabel { get; init; }
+
+        /// <summary>Direct download URL for this platform's asset bundle, opened in the browser by Download Manually.</summary>
+        public required string ManualDownloadUrl { get; init; }
     }
 }

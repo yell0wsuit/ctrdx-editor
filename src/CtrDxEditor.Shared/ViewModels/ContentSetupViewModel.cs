@@ -40,8 +40,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
 
-        /// <summary>Whether the Download Manually button is shown (desktop opens the releases page manually).</summary>
+        /// <summary>Whether the Download Manually button is shown (desktop opens the bundle's direct URL in the browser).</summary>
         public bool AllowManualDownload { get; }
+
+        /// <summary>Direct download URL opened in the browser when the user clicks Download Manually.</summary>
+        public string ManualDownloadUrl { get; }
 
         /// <summary>Approximate size of the platform's asset bundle (e.g. "336 MB"), or empty to show nothing.</summary>
         public string DownloadSizeLabel { get; }
@@ -58,13 +61,15 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Creates a content setup view model.</summary>
         public ContentSetupViewModel(
             IContentInstaller installer, Func<Task> onInstalled,
-            bool allowQuit = true, bool allowManualDownload = true, string downloadSizeLabel = "")
+            bool allowQuit = true, bool allowManualDownload = true, string downloadSizeLabel = "",
+            string manualDownloadUrl = ContentDownloader.AssetsUrl)
         {
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
             AllowManualDownload = allowManualDownload;
             DownloadSizeLabel = downloadSizeLabel;
+            ManualDownloadUrl = manualDownloadUrl;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.
             DownloadCommand = new AsyncRelayCommand(DownloadAsync);
         }

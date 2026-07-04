@@ -12,7 +12,6 @@ using Avalonia.Platform.Storage;
 
 using AvaloniaDialogs.Views;
 
-using CtrDxEditor.Content;
 using CtrDxEditor.Localization;
 using CtrDxEditor.ViewModels;
 
@@ -93,9 +92,9 @@ namespace CtrDxEditor.Views
 
         private async void DownloadManually_Click(object? sender, RoutedEventArgs e)
         {
-            if (TopLevel.GetTopLevel(this) is TopLevel top)
+            if (_vm is { } vm && TopLevel.GetTopLevel(this) is TopLevel top)
             {
-                _ = await top.Launcher.LaunchUriAsync(new Uri(ContentDownloader.ReleasesPageUrl));
+                _ = await top.Launcher.LaunchUriAsync(new Uri(vm.ManualDownloadUrl));
             }
         }
 
