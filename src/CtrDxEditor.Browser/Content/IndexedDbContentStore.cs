@@ -9,10 +9,10 @@ using CtrDxEditor.Content;
 
 namespace CtrDxEditor.Browser.Content
 {
-    /// <summary>Content store backed by a zip bundle held as a base64 blob in IndexedDB.</summary>
+    /// <summary>Content store backed by a zip bundle held as bytes in IndexedDB.</summary>
     public sealed class IndexedDbContentStore : IContentStore, IDisposable
     {
-        /// <summary>IndexedDB key holding the content zip as base64.</summary>
+        /// <summary>IndexedDB key holding the content zip bytes.</summary>
         public const string ZipKey = "content.zip";
 
         private ZipArchive? _archive;
@@ -23,12 +23,11 @@ namespace CtrDxEditor.Browser.Content
             {
                 return _archive;
             }
-            string? b64 = await IndexedDb.GetString(ZipKey);
-            if (string.IsNullOrEmpty(b64))
+            byte[]? bytes = await IndexedDb.GetBytes(ZipKey);
+            if (bytes is null || bytes.Length == 0)
             {
                 return null;
             }
-            byte[] bytes = Convert.FromBase64String(b64);
             _archive = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read);
             return _archive;
         }

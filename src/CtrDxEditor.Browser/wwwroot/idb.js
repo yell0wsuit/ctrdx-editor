@@ -31,6 +31,26 @@ export async function putString(key, value) {
     });
 }
 
+export async function putBytes(key, value) {
+    const s = await store("readwrite");
+    return new Promise((res, rej) => {
+        const r = s.put(value, key);
+        r.onsuccess = () => res();
+        r.onerror = () => rej(r.error);
+    });
+}
+
+export async function getBytes(key) {
+    const s = await store("readonly");
+    return new Promise((res, rej) => {
+        const r = s.get(key);
+        // Ignore a legacy base64 string (or any non-binary value) under this key so an old dev
+        // install falls back to setup instead of a marshalling crash.
+        r.onsuccess = () => res(r.result instanceof Uint8Array ? r.result : null);
+        r.onerror = () => rej(r.error);
+    });
+}
+
 export async function hasKey(key) {
     const s = await store("readonly");
     return new Promise((res, rej) => {

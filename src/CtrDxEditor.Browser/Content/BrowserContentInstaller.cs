@@ -37,7 +37,7 @@ namespace CtrDxEditor.Browser.Content
         private async Task StoreAsync(byte[] zipBytes)
         {
             await ValidateAsync(zipBytes);
-            await IndexedDb.PutString(IndexedDbContentStore.ZipKey, Convert.ToBase64String(zipBytes));
+            await IndexedDb.PutBytes(IndexedDbContentStore.ZipKey, zipBytes);
         }
 
         private async Task ValidateAsync(byte[] zipBytes)
