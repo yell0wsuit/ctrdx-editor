@@ -105,7 +105,7 @@ namespace CtrDxEditor.Tests
         {
             string summary = ContentManifest.SummarizeInvalidFiles(["a", "b", "c", "d", "e", "f", "g"]);
 
-            Assert.Equal("- a\n- b\n- c\n- d\n- e\n- and 2 more", summary);
+            Assert.Equal("- a\n- b\n- c\n- d\n- e\n… and 2 more", summary);
         }
     }
 }

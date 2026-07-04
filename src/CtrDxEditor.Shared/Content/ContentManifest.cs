@@ -77,7 +77,7 @@ namespace CtrDxEditor.Content
         {
             const int max = 5;
             string list = string.Join("\n", invalid.Take(max).Select(f => $"- {f}"));
-            return invalid.Count > max ? $"{list}\n- and {invalid.Count - max} more" : list;
+            return invalid.Count > max ? $"{list}\n… and {invalid.Count - max} more" : list;
         }
 
         private static bool HashMatches(byte[] bytes, string expectedHash)
