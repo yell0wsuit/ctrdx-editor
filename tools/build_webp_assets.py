@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
         "--zip",
         type=Path,
         default=None,
-        help="Output zip path. Defaults to <images_dir parent>/images-webp-assets.zip.",
+        help="Output zip path. Defaults to <images_dir parent>/webp-assets.zip.",
     )
     return parser.parse_args()
 
@@ -94,7 +94,7 @@ def main() -> int:
     zip_path = (
         args.zip.expanduser().resolve()
         if args.zip is not None
-        else images_dir.parent / "images-webp-assets.zip"
+        else images_dir.parent / "webp-assets.zip"
     )
 
     if not images_dir.is_dir():
