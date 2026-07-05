@@ -16,6 +16,7 @@ namespace CtrDxEditor.ViewModels
         private readonly Func<string?> _get;
         private readonly Action<string?> _set;
         private readonly Action _onChanged;
+        private bool _isEnabled = true;
 
         /// <summary>Attribute-backed field (text, number, bool, or fixed enum).</summary>
         public AttributeFieldViewModel(LevelObject target, string name, AttrType type, string[]? enumValues, Action onChanged)
@@ -42,6 +43,17 @@ namespace CtrDxEditor.ViewModels
             _onChanged = onChanged;
         }
 
+        /// <summary>Delegate-backed simple field (bool/text/number) with no fixed option list.</summary>
+        public AttributeFieldViewModel(string name, AttrType type, Func<string?> get, Action<string?> set, Action onChanged)
+        {
+            Name = name;
+            Label = Localizer.AttributeName(name);
+            IsBool = type == AttrType.Bool;
+            _get = get;
+            _set = set;
+            _onChanged = onChanged;
+        }
+
         /// <summary>The raw attribute id / field key (never localized).</summary>
         public string Name { get; }
 
@@ -59,6 +71,13 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether this field renders as a free-form text box.</summary>
         public bool IsText => EnumOptions is null && !IsBool;
+
+        /// <summary>Whether the field's control is interactive; false greys it out.</summary>
+        public bool IsEnabled
+        {
+            get => _isEnabled;
+            set => SetProperty(ref _isEnabled, value);
+        }
 
         /// <summary>The selected option, mapped to the underlying value.</summary>
         public AttributeOptionViewModel? SelectedOption

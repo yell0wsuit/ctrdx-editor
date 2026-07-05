@@ -17,6 +17,7 @@
               </Grid.ColumnDefinitions>
               <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        IsEnabled="{Binding IsEnabled}"
                         ItemsSource="{Binding EnumOptions}"
                         SelectedItem="{Binding SelectedOption, Mode=TwoWay}" HorizontalAlignment="Stretch">
                 <ComboBox.ItemTemplate>
@@ -26,8 +27,10 @@
                 </ComboBox.ItemTemplate>
               </ComboBox>
               <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
+                        IsEnabled="{Binding IsEnabled}"
                         IsChecked="{Binding BoolValue, Mode=TwoWay}" />
               <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
+                       IsEnabled="{Binding IsEnabled}"
                        Text="{Binding Value, Mode=TwoWay}" />
             </Grid>
           </DataTemplate>
