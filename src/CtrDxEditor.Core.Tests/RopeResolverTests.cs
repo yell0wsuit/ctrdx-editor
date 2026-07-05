@@ -65,5 +65,58 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(RopeTargetKind.Bulb, t.Kind);
             Assert.Same(bulb, t.Target);
         }
+
+        /// <summary>Verifies that single-candy grabs can target a candy by candyNumber.</summary>
+        [Fact]
+        public void GrabBindsToCandyByNumber()
+        {
+            LevelObject c0 = Obj("""<candy x="10" y="10" candyNumber="0" />""");
+            LevelObject c1 = Obj("""<candy x="20" y="20" candyNumber="1" />""");
+            LevelObject grab = Obj("""<grab x="5" y="5" length="50" candyNumber="1" />""");
+
+            RopeTarget t = RopeResolver.Resolve(grab, [c0, c1, grab], twoParts: false);
+
+            Assert.Equal(RopeTargetKind.Candy, t.Kind);
+            Assert.Same(c1, t.Target);
+        }
+
+        /// <summary>Unmatched candyNumber references fall back to the primary candy.</summary>
+        [Fact]
+        public void UnmatchedCandyNumberFallsBackToPrimary()
+        {
+            LevelObject c0 = Obj("""<candy x="10" y="10" candyNumber="0" />""");
+            LevelObject grab = Obj("""<grab x="5" y="5" length="50" candyNumber="9" />""");
+
+            RopeTarget t = RopeResolver.Resolve(grab, [c0, grab], twoParts: false);
+
+            Assert.Same(c0, t.Target);
+        }
+
+        /// <summary>Unmatched bulb numbers fall back to the last light bulb in the level.</summary>
+        [Fact]
+        public void BindBulbFallsBackToLastBulbWhenNumberUnmatched()
+        {
+            LevelObject b0 = Obj("""<lightBulb x="1" y="1" bulbNumber="0" />""");
+            LevelObject b1 = Obj("""<lightBulb x="2" y="2" bulbNumber="1" />""");
+            LevelObject grab = Obj("""<grab x="5" y="5" bindBulb="true" bulbNumber="9" />""");
+
+            RopeTarget t = RopeResolver.Resolve(grab, [b0, b1, grab], twoParts: false);
+
+            Assert.Equal(RopeTargetKind.Bulb, t.Kind);
+            Assert.Same(b1, t.Target);
+        }
+
+        /// <summary>Bulb-bound grabs fall back to candy resolution when no bulbs exist.</summary>
+        [Fact]
+        public void BindBulbWithNoBulbsFallsBackToCandy()
+        {
+            LevelObject candy = Obj("""<candy x="10" y="10" candyNumber="0" />""");
+            LevelObject grab = Obj("""<grab x="5" y="5" bindBulb="true" bulbNumber="0" />""");
+
+            RopeTarget t = RopeResolver.Resolve(grab, [candy, grab], twoParts: false);
+
+            Assert.Equal(RopeTargetKind.Candy, t.Kind);
+            Assert.Same(candy, t.Target);
+        }
     }
 }
