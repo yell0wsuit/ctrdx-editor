@@ -58,6 +58,20 @@ namespace CtrDxEditor.Core.Document
         public bool TwoParts =>
             bool.TryParse(GameDesign?.Attribute("twoParts")?.Value, out bool v) && v;
 
+        /// <summary>The rope physics speed multiplier, defaulting to 1.0 when absent.</summary>
+        public float RopePhysicsSpeed => ReadFloat(GameDesign, "ropePhysicsSpeed", 1.0f);
+
+        /// <summary>The special tutorial-trigger id, defaulting to 0 when absent.</summary>
+        public int Special => ReadInt(GameDesign, "special", 0);
+
+        /// <summary>Whether the level is a night level (uses light bulbs).</summary>
+        public bool NightLevel =>
+            bool.TryParse(GameDesign?.Attribute("nightLevel")?.Value, out bool v) && v;
+
+        /// <summary>All editable level-wide settings read from the settings layer.</summary>
+        public LevelSettings Settings =>
+            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel);
+
         /// <summary>The Objects layer element, or null when the document has none yet.</summary>
         public XElement? ObjectsLayer => Layer("Objects");
 
@@ -92,6 +106,17 @@ namespace CtrDxEditor.Core.Document
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
                 out int v)
+                ? v
+                : fallback;
+        }
+
+        private static float ReadFloat(XElement? el, string attr, float fallback)
+        {
+            return float.TryParse(
+                el?.Attribute(attr)?.Value,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out float v)
                 ? v
                 : fallback;
         }
