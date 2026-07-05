@@ -216,8 +216,8 @@ namespace CtrDxEditor.ViewModels
 
             void Changed() => ObjectMutated?.Invoke();
 
-            Fields.Add(new AttributeFieldViewModel(value, "x", null, Changed));
-            Fields.Add(new AttributeFieldViewModel(value, "y", null, Changed));
+            Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed));
+            Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed));
 
             if (value.Type == "grab" && Document is not null)
             {
@@ -233,7 +233,7 @@ namespace CtrDxEditor.ViewModels
                     {
                         continue;
                     }
-                    Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.EnumValues, Changed));
+                    Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.Type, spec.EnumValues, Changed));
                 }
             }
         }

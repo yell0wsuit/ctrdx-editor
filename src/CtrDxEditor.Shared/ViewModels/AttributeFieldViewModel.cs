@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 
+using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Localization;
 
@@ -16,11 +17,12 @@ namespace CtrDxEditor.ViewModels
         private readonly Action<string?> _set;
         private readonly Action _onChanged;
 
-        /// <summary>Attribute-backed field (text, number, or fixed enum).</summary>
-        public AttributeFieldViewModel(LevelObject target, string name, string[]? enumValues, Action onChanged)
+        /// <summary>Attribute-backed field (text, number, bool, or fixed enum).</summary>
+        public AttributeFieldViewModel(LevelObject target, string name, AttrType type, string[]? enumValues, Action onChanged)
         {
             Name = name;
             Label = Localizer.AttributeName(name);
+            IsBool = type == AttrType.Bool;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
             _get = () => target.GetAttr(name);
@@ -33,6 +35,7 @@ namespace CtrDxEditor.ViewModels
         {
             Name = name;
             Label = Localizer.AttributeName(name);
+            IsBool = false;
             EnumOptions = options;
             _get = get;
             _set = set;
@@ -50,6 +53,12 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Allowed options with UI labels, or null for free-form attributes.</summary>
         public AttributeOptionViewModel[]? EnumOptions { get; }
+
+        /// <summary>Whether this field renders as a checkbox.</summary>
+        public bool IsBool { get; }
+
+        /// <summary>Whether this field renders as a free-form text box.</summary>
+        public bool IsText => EnumOptions is null && !IsBool;
 
         /// <summary>The selected option, mapped to the underlying value.</summary>
         public AttributeOptionViewModel? SelectedOption
@@ -74,7 +83,15 @@ namespace CtrDxEditor.ViewModels
                 _onChanged();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedOption));
+                OnPropertyChanged(nameof(BoolValue));
             }
+        }
+
+        /// <summary>The bool value for checkbox fields, mapped to the "true"/"false" string.</summary>
+        public bool BoolValue
+        {
+            get => Value == "true";
+            set => Value = value ? "true" : "false";
         }
 
         /// <summary>Re-reads <see cref="Value"/> from the source, for external mutations.</summary>
@@ -82,6 +99,7 @@ namespace CtrDxEditor.ViewModels
         {
             OnPropertyChanged(nameof(Value));
             OnPropertyChanged(nameof(SelectedOption));
+            OnPropertyChanged(nameof(BoolValue));
         }
 
         private static string LabelForOption(string attribute, string value)

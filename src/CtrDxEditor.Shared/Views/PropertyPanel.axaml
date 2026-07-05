@@ -25,7 +25,9 @@
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
-              <TextBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNull}}"
+              <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
+                        IsChecked="{Binding BoolValue, Mode=TwoWay}" />
+              <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                        Text="{Binding Value, Mode=TwoWay}" />
             </Grid>
           </DataTemplate>

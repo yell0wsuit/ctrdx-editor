@@ -97,6 +97,24 @@ namespace CtrDxEditor.Tests
             Assert.Equal("1", grab.GetAttr("candyNumber"));
         }
 
+        /// <summary>Grab attribute should be a checkbox in the UI.</summary>
+        [Fact]
+        public void GrabBoolAttributeSurfacesAsCheckbox()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            AttributeFieldViewModel wheel = vm.Fields.Single(f => f.Name == "wheel");
+            Assert.True(wheel.IsBool);
+            Assert.False(wheel.BoolValue);
+
+            wheel.BoolValue = true;
+            Assert.Equal("true", grab.GetAttr("wheel"));
+        }
+
         /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>
         [Fact]
         public void SelectedCandyShowsCandyNumberField()
