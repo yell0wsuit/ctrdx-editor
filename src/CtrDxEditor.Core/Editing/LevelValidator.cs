@@ -67,7 +67,49 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add("Level resolution is smaller than 320x480.");
             }
 
+            // Duplicate candy keys collide under string-identity matching.
+            List<string> candyKeys =
+            [
+                .. objects
+                .Where(o => o.Type == "candy")
+                .Select(o => o.GetAttr("candyNumber"))
+                .Where(k => k is not null)
+                .Select(k => k!.Trim())
+            ];
+            if (candyKeys.Count != candyKeys.Distinct(System.StringComparer.OrdinalIgnoreCase).Count())
+            {
+                warnings.Add("Duplicate candyNumber values found; grabs cannot tell those candies apart.");
+            }
+
+            foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
+            {
+                string? candyNumber = grab.GetAttr("candyNumber");
+                if (candyNumber is not null
+                    && !candyKeys.Any(k => string.Equals(k, candyNumber.Trim(), System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    warnings.Add($"A grab references candyNumber '{candyNumber}', which no candy has; it will bind to the primary candy.");
+                }
+
+                if (IsTrueAttr(grab, "bindBulb"))
+                {
+                    string? bulbNumber = grab.GetAttr("bulbNumber");
+                    bool anyBulbMatches = objects.Any(o =>
+                        (o.Type is "lightBulb" or "lightbulb")
+                        && bulbNumber is not null
+                        && string.Equals(o.GetAttr("bulbNumber")?.Trim(), bulbNumber.Trim(), System.StringComparison.OrdinalIgnoreCase));
+                    if (!anyBulbMatches)
+                    {
+                        warnings.Add($"A grab binds to bulbNumber '{bulbNumber}', which no light bulb has.");
+                    }
+                }
+            }
+
             return warnings;
+        }
+
+        private static bool IsTrueAttr(LevelObject obj, string name)
+        {
+            return bool.TryParse(obj.GetAttr(name), out bool b) && b;
         }
     }
 }
