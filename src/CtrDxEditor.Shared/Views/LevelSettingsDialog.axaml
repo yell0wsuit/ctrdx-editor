@@ -17,12 +17,13 @@
           </DataTemplate>
         </ComboBox.ItemTemplate>
       </ComboBox>
-      <Grid ColumnDefinitions="*,Auto,*" Margin="0,4,0,0">
+      <!-- The manual W×H inputs only appear when the "Custom…" preset is selected. -->
+      <Grid ColumnDefinitions="*,Auto,*" Margin="0,4,0,0" IsVisible="{Binding IsCustom}">
         <NumericUpDown Grid.Column="0" Minimum="320" Maximum="9999" Increment="1" FormatString="0"
-                       IsEnabled="{Binding IsCustom}" Value="{Binding CustomWidth, Mode=TwoWay}" />
+                       Value="{Binding CustomWidth, Mode=TwoWay}" />
         <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="8,0" />
         <NumericUpDown Grid.Column="2" Minimum="480" Maximum="9999" Increment="1" FormatString="0"
-                       IsEnabled="{Binding IsCustom}" Value="{Binding CustomHeight, Mode=TwoWay}" />
+                       Value="{Binding CustomHeight, Mode=TwoWay}" />
       </Grid>
     </StackPanel>
 
@@ -38,14 +39,19 @@
                      Value="{Binding Special, Mode=TwoWay}" />
     </StackPanel>
 
-    <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
-              IsChecked="{Binding TwoParts, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}"
-              ToolTip.Tip="{loc:Tr Dialog.LevelSettings.LockedTooltip}" />
-    <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
-              IsChecked="{Binding NightLevel, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}"
-              ToolTip.Tip="{loc:Tr Dialog.LevelSettings.LockedTooltip}" />
-    <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedNote}" Opacity="0.6" FontSize="12"
-               IsVisible="{Binding FlagsEditable}" TextWrapping="Wrap" />
+    <!-- The locked-note heads both checkboxes so it clearly applies to both, not just Night level. -->
+    <StackPanel Spacing="4">
+      <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
+                IsChecked="{Binding TwoParts, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}"
+                ToolTip.Tip="{loc:Tr Dialog.LevelSettings.LockedTooltip}" />
+      <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedNote}" Opacity="0.6" FontSize="12"
+                 IsVisible="{Binding FlagsEditable}" TextWrapping="Wrap" />
+      <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
+                IsChecked="{Binding NightLevel, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}"
+                ToolTip.Tip="{loc:Tr Dialog.LevelSettings.LockedTooltip}" />
+      <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedNote}" Opacity="0.6" FontSize="12"
+                 IsVisible="{Binding FlagsEditable}" TextWrapping="Wrap" />
+    </StackPanel>
 
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">
       <Button Grid.Column="1" Content="{loc:Tr Dialog.Common.Cancel}" Click="Cancel_Click" Margin="0,0,8,0" />
