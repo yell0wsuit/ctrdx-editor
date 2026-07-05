@@ -103,12 +103,10 @@ namespace CtrDxEditor.Core.Document
             layer.Add(obj.Element);
         }
 
-        /// <summary>
-        /// Writes resolution, rope physics, and special back into the settings layer.
-        /// Leaves the locked <c>twoParts</c> / <c>nightLevel</c> flags untouched.
-        /// </summary>
+        /// <summary>Writes level-wide settings back into the settings layer and adjusts candy objects when split mode changes.</summary>
         public void UpdateSettings(LevelSettings settings)
         {
+            bool wasTwoParts = TwoParts;
             XElement settingsLayer = Layer("settings") ?? CreateSettingsLayer();
             XElement map = settingsLayer.Element("map") ?? AddChild(settingsLayer, "map");
             XElement gameDesign = settingsLayer.Element("gameDesign") ?? AddChild(settingsLayer, "gameDesign");
@@ -118,7 +116,13 @@ namespace CtrDxEditor.Core.Document
             map.SetAttributeValue("height", settings.Height.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("special", settings.Special.ToString(CultureInfo.InvariantCulture));
-            // twoParts / nightLevel are locked after creation and intentionally not written here.
+            gameDesign.SetAttributeValue("twoParts", settings.TwoParts ? "true" : "false");
+            gameDesign.SetAttributeValue("nightLevel", settings.NightLevel ? "true" : "false");
+
+            if (wasTwoParts != settings.TwoParts)
+            {
+                ConvertCandyForTwoParts(settings.TwoParts, settings.Width, settings.Height);
+            }
         }
 
         /// <summary>Removes an object from its parent XML document.</summary>
@@ -179,6 +183,41 @@ namespace CtrDxEditor.Core.Document
             XElement layer = new("layer", new XAttribute("name", "Objects"));
             Root.Add(layer);
             return layer;
+        }
+
+        private void ConvertCandyForTwoParts(bool twoParts, int width, int height)
+        {
+            XElement objects = ObjectsLayer ?? CreateObjectsLayer();
+            if (twoParts)
+            {
+                XElement? candy = objects.Elements("candy").FirstOrDefault();
+                XElement? candyL = objects.Elements("candyL").FirstOrDefault();
+                if (candyL is null && candy is not null)
+                {
+                    candy.Name = "candyL";
+                    candyL = candy;
+                }
+
+                if (candyL is not null && !objects.Elements("candyR").Any())
+                {
+                    XElement candyR = new("candyR",
+                        new XAttribute("x", (width / 2).ToString(CultureInfo.InvariantCulture)),
+                        new XAttribute("y", (height / 2).ToString(CultureInfo.InvariantCulture)));
+                    objects.Add(candyR);
+                }
+            }
+            else
+            {
+                if (objects.Elements("candyL").FirstOrDefault() is XElement candyL)
+                {
+                    candyL.Name = "candy";
+                }
+
+                foreach (XElement candyR in objects.Elements("candyR").ToList())
+                {
+                    candyR.Remove();
+                }
+            }
         }
     }
 }

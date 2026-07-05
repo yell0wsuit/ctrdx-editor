@@ -63,30 +63,23 @@
       </StackPanel>
     </StackPanel>
 
-    <!-- The locked-note heads both checkboxes so it clearly applies to both, not just Night level. -->
     <StackPanel Spacing="4">
       <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
                 IsChecked="{Binding TwoParts, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
         <ToolTip.Tip>
           <StackPanel MaxWidth="260">
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.HalfCandyDescription}" TextWrapping="Wrap" />
-            <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedTooltip}" Opacity="0.7" Margin="0,4,0,0" TextWrapping="Wrap" />
           </StackPanel>
         </ToolTip.Tip>
       </CheckBox>
-      <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedNote}" Opacity="0.6" FontSize="12"
-                 IsVisible="{Binding FlagsEditable}" TextWrapping="Wrap" />
       <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
                 IsChecked="{Binding NightLevel, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
         <ToolTip.Tip>
           <StackPanel MaxWidth="260">
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.NightLevelDescription}" TextWrapping="Wrap" />
-            <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedTooltip}" Opacity="0.7" Margin="0,4,0,0" TextWrapping="Wrap" />
           </StackPanel>
         </ToolTip.Tip>
       </CheckBox>
-      <TextBlock Text="{loc:Tr Dialog.LevelSettings.LockedNote}" Opacity="0.6" FontSize="12"
-                 IsVisible="{Binding FlagsEditable}" TextWrapping="Wrap" />
     </StackPanel>
 
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">

@@ -28,8 +28,8 @@ namespace CtrDxEditor.Views
             }
             TextBlock title = this.FindControl<TextBlock>("TitleText")!;
             Button confirm = this.FindControl<Button>("ConfirmButton")!;
-            title.Text = Localizer.Get(vm.FlagsEditable ? "Dialog.LevelSettings.TitleNew" : "Dialog.LevelSettings.TitleEdit");
-            confirm.Content = Localizer.Get(vm.FlagsEditable ? "Dialog.LevelSettings.Create" : "Dialog.LevelSettings.Save");
+            title.Text = Localizer.Get(vm.IsNewMode ? "Dialog.LevelSettings.TitleNew" : "Dialog.LevelSettings.TitleEdit");
+            confirm.Content = Localizer.Get(vm.IsNewMode ? "Dialog.LevelSettings.Create" : "Dialog.LevelSettings.Save");
         }
 
         private void Confirm_Click(object? sender, RoutedEventArgs e)

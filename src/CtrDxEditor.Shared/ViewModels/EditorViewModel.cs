@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -80,6 +81,15 @@ namespace CtrDxEditor.ViewModels
             }
             Document.UpdateSettings(settings);
             RefreshPalette();
+            RefreshObjectList();
+            if (SelectedObject is not null && !Document.Objects.Contains(SelectedObject))
+            {
+                SelectedObject = null;
+            }
+            if (LockedObject is not null && !Document.Objects.Contains(LockedObject))
+            {
+                LockedObject = null;
+            }
             // Resolution may have changed; re-fit and repaint the canvas.
             LevelLoaded?.Invoke();
         }
@@ -150,7 +160,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        // Candy type follows twoParts; the light bulb only exists in night levels. When no document is
+        // Candy type follows twoParts. When no document is
         // loaded, everything is shown (disabled) so the palette isn't empty on startup.
         private static bool IsAvailableInLevel(string element, LevelDocument doc)
         {
@@ -158,7 +168,6 @@ namespace CtrDxEditor.ViewModels
             {
                 "candy" => !doc.TwoParts,
                 "candyL" or "candyR" => doc.TwoParts,
-                "lightBulb" => doc.NightLevel,
                 _ => true,
             };
         }

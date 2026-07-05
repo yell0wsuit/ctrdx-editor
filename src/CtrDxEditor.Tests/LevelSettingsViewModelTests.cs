@@ -53,12 +53,12 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void EditModePrefillsMatchingPresetAndLocksFlags()
+        public void EditModePrefillsMatchingPresetAndAllowsFlags()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
                 new LevelSettings(640, 480, 1.0f, 1, TwoParts: true, NightLevel: false));
 
-            Assert.False(vm.FlagsEditable);
+            Assert.True(vm.FlagsEditable);
             Assert.False(vm.IsCustom);
             Assert.True(vm.TwoParts);
             Assert.Equal(640, vm.ToSettings().Width);

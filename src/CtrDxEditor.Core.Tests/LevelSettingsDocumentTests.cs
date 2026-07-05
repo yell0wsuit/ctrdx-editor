@@ -68,7 +68,7 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
-        public void UpdateSettingsChangesResolutionAndSpecialButNotLockedFlags()
+        public void UpdateSettingsChangesResolutionSpecialAndFlags()
         {
             LevelDocument doc = LevelDocument.Parse(NightTwoPart); // twoParts=true, nightLevel=true
 
@@ -78,9 +78,64 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(480, doc.Height);
             Assert.Equal(2.0f, doc.RopePhysicsSpeed);
             Assert.Equal(5, doc.Special);
-            // Locked flags ignore the record's values and keep the document's originals.
-            Assert.True(doc.TwoParts);
-            Assert.True(doc.NightLevel);
+            Assert.False(doc.TwoParts);
+            Assert.False(doc.NightLevel);
+        }
+
+        [Fact]
+        public void TurningOffTwoPartsUsesCandyLAsFullCandyAndRemovesCandyR()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="320" height="480" />
+                    <gameDesign ropePhysicsSpeed="1.0" special="0" twoParts="true" nightLevel="false" />
+                </layer>
+                <layer name="Objects"><candyL x="101" y="170" /><candyR x="232" y="171" /><target x="3" y="3" /></layer>
+            </map>
+            """);
+
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.Collection(doc.Objects,
+                candy =>
+                {
+                    Assert.Equal("candy", candy.Type);
+                    Assert.Equal(101, candy.X);
+                    Assert.Equal(170, candy.Y);
+                },
+                target => Assert.Equal("target", target.Type));
+        }
+
+        [Fact]
+        public void TurningOnTwoPartsUsesCandyAsCandyLAndAddsCenteredCandyR()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="640" height="480" />
+                    <gameDesign ropePhysicsSpeed="1.0" special="0" twoParts="false" nightLevel="false" />
+                </layer>
+                <layer name="Objects"><candy x="101" y="170" /><target x="3" y="3" /></layer>
+            </map>
+            """);
+
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+
+            Assert.Collection(doc.Objects,
+                candyL =>
+                {
+                    Assert.Equal("candyL", candyL.Type);
+                    Assert.Equal(101, candyL.X);
+                    Assert.Equal(170, candyL.Y);
+                },
+                target => Assert.Equal("target", target.Type),
+                candyR =>
+                {
+                    Assert.Equal("candyR", candyR.Type);
+                    Assert.Equal(320, candyR.X);
+                    Assert.Equal(240, candyR.Y);
+                });
         }
     }
 }

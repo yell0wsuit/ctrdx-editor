@@ -45,7 +45,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void SingleCandyLevelShowsCandyNotHalves()
+        public void SingleCandyLevelShowsCandyAndBulbNotHalves()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
@@ -53,7 +53,7 @@ namespace CtrDxEditor.Tests
             Assert.True(PaletteHas(vm, "candy"));
             Assert.False(PaletteHas(vm, "candyL"));
             Assert.False(PaletteHas(vm, "candyR"));
-            Assert.False(PaletteHas(vm, "lightBulb"));
+            Assert.True(PaletteHas(vm, "lightBulb"));
         }
 
         [Fact]

@@ -78,8 +78,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the manual special-value input is active.</summary>
         public bool IsSpecialCustom => SelectedSpecial.IsCustom;
 
-        /// <summary>Whether the locked flags (Half candy / Night level) may be edited (New mode only).</summary>
-        public bool FlagsEditable { get; private init; }
+        /// <summary>Whether the dialog is creating a new level rather than editing an existing one.</summary>
+        public bool IsNewMode { get; private init; }
+
+        /// <summary>Whether the Half candy / Night level flags may be edited.</summary>
+        public bool FlagsEditable { get; private init; } = true;
 
         /// <summary>Whether the manual width/height inputs are active.</summary>
         public bool IsCustom => SelectedPreset.IsCustom;
@@ -90,9 +93,9 @@ namespace CtrDxEditor.ViewModels
             && (!IsCustom || (CustomWidth is not null && CustomHeight is not null))
             && (!IsSpecialCustom || CustomSpecial is not null);
 
-        private LevelSettingsViewModel(bool flagsEditable)
+        private LevelSettingsViewModel(bool isNewMode)
         {
-            FlagsEditable = flagsEditable;
+            IsNewMode = isNewMode;
             SelectedPreset = Presets[0];
             SelectedSpecial = SpecialOptions[0];
         }
@@ -116,19 +119,19 @@ namespace CtrDxEditor.ViewModels
         // Coalesces a nullable numeric field (empty box) to a fallback, then clamps into range.
         private static int ClampOrDefault(decimal? value, int fallback, int min, int max)
         {
-            return (int)Math.Clamp(value ?? fallback, (decimal)min, max);
+            return (int)Math.Clamp(value ?? fallback, min, max);
         }
 
         /// <summary>A dialog for creating a new level (all fields editable).</summary>
         public static LevelSettingsViewModel ForNew()
         {
-            return new LevelSettingsViewModel(flagsEditable: true);
+            return new LevelSettingsViewModel(isNewMode: true);
         }
 
-        /// <summary>A dialog for editing an existing level (locked flags disabled), prefilled from <paramref name="current"/>.</summary>
+        /// <summary>A dialog for editing an existing level, prefilled from <paramref name="current"/>.</summary>
         public static LevelSettingsViewModel ForEdit(LevelSettings current)
         {
-            LevelSettingsViewModel vm = new(flagsEditable: false)
+            LevelSettingsViewModel vm = new(isNewMode: false)
             {
                 RopePhysicsSpeed = (decimal)current.RopePhysicsSpeed,
                 TwoParts = current.TwoParts,
