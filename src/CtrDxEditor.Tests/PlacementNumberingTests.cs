@@ -41,6 +41,7 @@ namespace CtrDxEditor.Tests
             return vm;
         }
 
+        /// <summary>Placed candies receive sequential 0-based candy numbers.</summary>
         [Fact]
         public void FirstCandyGetsZeroSecondGetsOne()
         {
@@ -53,6 +54,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("1", second.GetAttr("candyNumber"));
         }
 
+        /// <summary>The first placed light bulb receives bulb number zero.</summary>
         [Fact]
         public void FirstBulbGetsZero()
         {
@@ -63,6 +65,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("0", bulb.GetAttr("bulbNumber"));
         }
 
+        /// <summary>Adding another candy backfills a legacy unnumbered primary candy.</summary>
         [Fact]
         public void UnnumberedPrimaryIsBackfilledWhenSecondCandyAdded()
         {
