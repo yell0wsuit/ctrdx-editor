@@ -6,29 +6,52 @@ using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
-    /// <summary>One selectable enum option: raw XML value plus UI label.</summary>
+    /// <summary>One selectable enum option: raw value plus UI label.</summary>
     public sealed record AttributeOptionViewModel(string Value, string Label);
 
-    /// <summary>Editable field view model for a single XML attribute on a selected object.</summary>
-    public sealed class AttributeFieldViewModel(LevelObject target, string name, string[]? enumValues, Action onChanged) : ViewModelBase
+    /// <summary>Editable field view model for a single attribute or a delegate-backed choice.</summary>
+    public sealed class AttributeFieldViewModel : ViewModelBase
     {
-        private readonly LevelObject _target = target;
-        private readonly Action _onChanged = onChanged;
+        private readonly Func<string?> _get;
+        private readonly Action<string?> _set;
+        private readonly Action _onChanged;
 
-        /// <summary>The raw attribute id, used as the XML get/set key (never localized).</summary>
-        public string Name { get; } = name;
+        /// <summary>Attribute-backed field (text, number, or fixed enum).</summary>
+        public AttributeFieldViewModel(LevelObject target, string name, string[]? enumValues, Action onChanged)
+        {
+            Name = name;
+            Label = Localizer.AttributeName(name);
+            EnumValues = enumValues;
+            EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
+            _get = () => target.GetAttr(name);
+            _set = v => target.SetAttr(name, v ?? string.Empty);
+            _onChanged = onChanged;
+        }
+
+        /// <summary>Delegate-backed choice field with dynamic options (e.g. grab "Attach to").</summary>
+        public AttributeFieldViewModel(string name, AttributeOptionViewModel[] options, Func<string?> get, Action<string?> set, Action onChanged)
+        {
+            Name = name;
+            Label = Localizer.AttributeName(name);
+            EnumOptions = options;
+            _get = get;
+            _set = set;
+            _onChanged = onChanged;
+        }
+
+        /// <summary>The raw attribute id / field key (never localized).</summary>
+        public string Name { get; }
 
         /// <summary>The localized label shown in the Properties panel.</summary>
-        public string Label { get; } = Localizer.AttributeName(name);
+        public string Label { get; }
 
-        /// <summary>Allowed values for enum attributes, or null for free-form attributes.</summary>
-        public string[]? EnumValues { get; } = enumValues;
+        /// <summary>Allowed values for fixed enum attributes, or null.</summary>
+        public string[]? EnumValues { get; }
 
-        /// <summary>Allowed enum options with UI labels, or null for free-form attributes.</summary>
-        public AttributeOptionViewModel[]? EnumOptions { get; } =
-            enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
+        /// <summary>Allowed options with UI labels, or null for free-form attributes.</summary>
+        public AttributeOptionViewModel[]? EnumOptions { get; }
 
-        /// <summary>The selected enum option, mapped to the raw XML attribute value.</summary>
+        /// <summary>The selected option, mapped to the underlying value.</summary>
         public AttributeOptionViewModel? SelectedOption
         {
             get => EnumOptions?.FirstOrDefault(o => o.Value == Value);
@@ -41,20 +64,20 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        /// <summary>The current raw XML attribute value.</summary>
+        /// <summary>The current underlying value.</summary>
         public string? Value
         {
-            get => _target.GetAttr(Name);
+            get => _get();
             set
             {
-                _target.SetAttr(Name, value ?? string.Empty);
+                _set(value);
                 _onChanged();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedOption));
             }
         }
 
-        /// <summary>Re-reads <see cref="Value"/> from the target, for when the object is mutated elsewhere (e.g. a canvas drag).</summary>
+        /// <summary>Re-reads <see cref="Value"/> from the source, for external mutations.</summary>
         public void Refresh()
         {
             OnPropertyChanged(nameof(Value));

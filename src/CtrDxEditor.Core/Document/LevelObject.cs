@@ -38,6 +38,12 @@ namespace CtrDxEditor.Core.Document
             Element.SetAttributeValue(name, value);
         }
 
+        /// <summary>Removes an XML attribute if present.</summary>
+        public void RemoveAttr(string name)
+        {
+            Element.Attribute(name)?.Remove();
+        }
+
         // Identity follows the wrapped element, so two wrappers over the same node are equal.
         // Lets a freshly re-read Objects list match a selection captured from a different read.
         /// <inheritdoc />
