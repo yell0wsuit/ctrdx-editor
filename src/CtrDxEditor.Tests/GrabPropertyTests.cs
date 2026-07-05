@@ -76,5 +76,19 @@ namespace CtrDxEditor.Tests
             Assert.Equal("R", grab.GetAttr("part"));
             Assert.Equal("R", part.Value);
         }
+
+        /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>
+        [Fact]
+        public void SelectedCandyShowsCandyNumberField()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            LevelObject candy = vm.PlaceObject("candy", 100, 120)!;
+            vm.SelectedObject = candy;
+
+            AttributeFieldViewModel field = vm.Fields.Single(f => f.Name == "candyNumber");
+            Assert.Equal("0", field.Value);
+        }
     }
 }
