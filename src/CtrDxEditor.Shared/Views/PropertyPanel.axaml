@@ -6,12 +6,16 @@
              x:DataType="vm:EditorViewModel">
   <DockPanel>
     <TextBlock DockPanel.Dock="Top" Text="{loc:Tr Panel.Properties}" FontWeight="Bold" Margin="8,8,8,4" />
-    <ScrollViewer>
-      <ItemsControl ItemsSource="{Binding Fields}" Margin="8,0,8,10">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding Fields}" Margin="8,0,8,14" Grid.IsSharedSizeScope="True">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:AttributeFieldViewModel">
-            <Grid ColumnDefinitions="100,*" Margin="0,2">
-              <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" />
+            <Grid Margin="0,2">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
+                <ColumnDefinition Width="100" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
                         ItemsSource="{Binding EnumOptions}"
                         SelectedItem="{Binding SelectedOption, Mode=TwoWay}" HorizontalAlignment="Stretch">
