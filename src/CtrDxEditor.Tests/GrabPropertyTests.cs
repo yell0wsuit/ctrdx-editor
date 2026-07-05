@@ -41,40 +41,60 @@ namespace CtrDxEditor.Tests
             return new(new SpriteCache(new EmptyStore()));
         }
 
+        /// <summary>Single-candy grabs with only one candy have no raw part or attachTo field.</summary>
         [Fact]
-        public void FullCandyGrabPropertiesHidePart()
+        public void FullCandyGrabHasNoPartOrAttachToWhenSingleCandy()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 300, 300);
 
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
             Assert.DoesNotContain(vm.Fields, f => f.Name == "part");
-            Assert.Null(grab.GetAttr("part"));
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "attachTo");
         }
 
+        /// <summary>Two-part grabs expose an attachTo choice for left and right candy halves.</summary>
         [Fact]
-        public void HalfCandyGrabDefaultsPartToLeftAndShowsPart()
+        public void HalfCandyGrabShowsAttachToLeftRight()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            _ = vm.PlaceObject("candyL", 200, 200);
+            _ = vm.PlaceObject("candyR", 300, 200);
 
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
-            AttributeFieldViewModel part = vm.Fields.Single(f => f.Name == "part");
-            Assert.Equal("L", grab.GetAttr("part"));
-            Assert.Equal("L", part.Value);
-            Assert.NotNull(part.EnumValues);
-            Assert.Equal(["L", "R"], part.EnumValues);
-            Assert.NotNull(part.EnumOptions);
-            Assert.Equal(["left", "right"], part.EnumOptions.Select(o => o.Label));
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "part");
+            AttributeFieldViewModel attach = vm.Fields.Single(f => f.Name == "attachTo");
+            Assert.Equal(["Candy (left)", "Candy (right)"], attach.EnumOptions!.Select(o => o.Label));
+            // Default part "L" (applied on placement) selects the left option.
+            Assert.Equal("Candy (left)", attach.SelectedOption!.Label);
 
-            part.SelectedOption = part.EnumOptions.Single(o => o.Label == "right");
+            attach.SelectedOption = attach.EnumOptions!.Single(o => o.Label == "Candy (right)");
 
             Assert.Equal("R", grab.GetAttr("part"));
-            Assert.Equal("R", part.Value);
+        }
+
+        /// <summary>Multi-candy grabs expose attachTo choices that write candyNumber.</summary>
+        [Fact]
+        public void MultiCandyGrabAttachToBindsByNumber()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
+            _ = vm.PlaceObject("candy", 300, 200);
+
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            AttributeFieldViewModel attach = vm.Fields.Single(f => f.Name == "attachTo");
+            attach.SelectedOption = attach.EnumOptions!.Single(o => o.Label == "Candy 1");
+
+            Assert.Equal("1", grab.GetAttr("candyNumber"));
         }
 
         /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>

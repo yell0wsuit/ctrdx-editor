@@ -231,6 +231,43 @@ namespace CtrDxEditor.ViewModels
                     Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.EnumValues, Changed));
                 }
             }
+
+            if (value.Type == "grab" && Document is not null)
+            {
+                AddGrabBindingField(value, Changed);
+            }
+        }
+
+        // The grab "Attach to" dropdown subsumes part/candyNumber/bindBulb/bulbNumber into a single
+        // choice, shown only when there is a real target choice and the grab is not a gun.
+        private void AddGrabBindingField(LevelObject grab, Action changed)
+        {
+            if (Document is null || IsTrueAttr(grab, "gun"))
+            {
+                return;
+            }
+
+            IReadOnlyList<LevelObject> objects = Document.Objects;
+            bool twoParts = Document.TwoParts;
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options(objects, twoParts);
+            if (options.Count < 2)
+            {
+                return;
+            }
+
+            AttributeOptionViewModel[] vmOptions =
+                [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];
+            Fields.Add(new AttributeFieldViewModel(
+                "attachTo",
+                vmOptions,
+                () => GrabBinding.CurrentToken(grab, Document.Objects, Document.TwoParts),
+                token => GrabBinding.Apply(grab, token ?? "primary"),
+                changed));
+        }
+
+        private static bool IsTrueAttr(LevelObject obj, string name)
+        {
+            return bool.TryParse(obj.GetAttr(name), out bool b) && b;
         }
     }
 }

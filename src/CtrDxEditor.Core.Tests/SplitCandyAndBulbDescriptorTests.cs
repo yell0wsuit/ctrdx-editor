@@ -9,6 +9,7 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Tests descriptors for the two-part candy halves and the night-level light bulb.</summary>
     public class SplitCandyAndBulbDescriptorTests
     {
+        /// <summary>Split candy halves remain singleton objects with no additional editable attributes.</summary>
         [Fact]
         public void SplitCandyHalvesAreSingletonWithNoAttributes()
         {
@@ -25,6 +26,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Empty(right.Attributes);
         }
 
+        /// <summary>Light bulbs expose litRadius and an editable bulbNumber with no load-time default.</summary>
         [Fact]
         public void LightBulbHasLitRadiusAndBulbNumber()
         {
@@ -37,7 +39,7 @@ namespace CtrDxEditor.Core.Tests
 
             AttributeSpec bulbNumber = bulb.Attributes.Single(a => a.Name == "bulbNumber");
             Assert.Equal(AttrType.Text, bulbNumber.Type);
-            Assert.Equal("first", bulbNumber.Default);
+            Assert.Null(bulbNumber.Default);
         }
     }
 }

@@ -10,6 +10,7 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Tests level-aware object default and attribute visibility rules.</summary>
     public class LevelObjectPolicyTests
     {
+        /// <summary>Two-part grabs still default their backing part attribute to left on placement.</summary>
         [Fact]
         public void HalfCandyGrabDefaultsPartToLeft()
         {
@@ -21,6 +22,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("L", grab.GetAttr("part"));
         }
 
+        /// <summary>Single-candy grabs do not receive a backing part attribute.</summary>
         [Fact]
         public void FullCandyGrabDoesNotDefaultPart()
         {
@@ -32,10 +34,11 @@ namespace CtrDxEditor.Core.Tests
             Assert.Null(grab.GetAttr("part"));
         }
 
+        /// <summary>The raw grab part attribute is hidden because attachTo subsumes it.</summary>
         [Theory]
         [InlineData(false, false)]
-        [InlineData(true, true)]
-        public void GrabPartVisibilityFollowsHalfCandyMode(bool twoParts, bool visible)
+        [InlineData(true, false)]
+        public void GrabPartVisibilityIsAlwaysHidden(bool twoParts, bool visible)
         {
             LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, twoParts, NightLevel: false));
 

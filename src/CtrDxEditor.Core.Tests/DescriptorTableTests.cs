@@ -39,12 +39,12 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(int.MaxValue, gravitySwitch.MaxCount);
         }
 
-        /// <summary>Verifies singleton limits for target and candy descriptors.</summary>
+        /// <summary>Verifies unbounded limits for multi-target and multi-candy descriptors.</summary>
         [Fact]
-        public void TargetAndCandyAreSingletons()
+        public void TargetAndCandyAreUnbounded()
         {
-            Assert.Equal(1, DescriptorTable.Default.For("target")!.MaxCount);
-            Assert.Equal(1, DescriptorTable.Default.For("candy")!.MaxCount);
+            Assert.Equal(int.MaxValue, DescriptorTable.Default.For("target")!.MaxCount);
+            Assert.Equal(int.MaxValue, DescriptorTable.Default.For("candy")!.MaxCount);
             Assert.Equal(int.MaxValue, DescriptorTable.Default.For("star")!.MaxCount);
         }
 
