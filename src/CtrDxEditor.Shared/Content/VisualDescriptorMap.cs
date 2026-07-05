@@ -12,6 +12,8 @@ namespace CtrDxEditor.Content
         private const string HookImageBase = "images/obj_hook";
         private const string BubbleJson = "images/obj_bubble.json";
         private const string BubbleImageBase = "images/obj_bubble";
+        private const string LighterJson = "images/obj_lighter.json";
+        private const string LighterImageBase = "images/obj_lighter";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -25,6 +27,20 @@ namespace CtrDxEditor.Content
 
             // Candy = wrapper bottom + body + wrapper top (all share sourceSize 393x418).
             new("candy",
+            [
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
+            ], Scale: 0.71),
+
+            // Split candy halves reuse the single-candy sprite at the same 0.71 scale the game applies.
+            new("candyL",
+            [
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
+            ], Scale: 0.71),
+            new("candyR",
             [
                 new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
                 new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
@@ -63,6 +79,13 @@ namespace CtrDxEditor.Content
             new("gravitySwitch",
             [
                 new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0056.png"),
+            ]),
+
+            // Light bulb = lantern bottle + top (the lit glow quad is omitted for a static thumbnail).
+            new("lightBulb",
+            [
+                new SpriteLayer(LighterJson, LighterImageBase, "02_bottle.png"),
+                new SpriteLayer(LighterJson, LighterImageBase, "03_top.png"),
             ]),
         ];
 
