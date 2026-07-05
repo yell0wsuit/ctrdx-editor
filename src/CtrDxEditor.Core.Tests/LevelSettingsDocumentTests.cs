@@ -46,5 +46,41 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0, doc.Special);
             Assert.False(doc.NightLevel);
         }
+
+        [Fact]
+        public void CreateNewProducesSettingsAndEmptyObjectsLayer()
+        {
+            LevelSettings s = new(640, 480, 1.0f, 0, TwoParts: true, NightLevel: true);
+
+            LevelDocument doc = LevelDocument.CreateNew(s);
+
+            Assert.Equal(32, doc.GridSize);
+            Assert.Equal(640, doc.Width);
+            Assert.Equal(480, doc.Height);
+            Assert.True(doc.TwoParts);
+            Assert.True(doc.NightLevel);
+            Assert.Empty(doc.Objects);
+            Assert.NotNull(doc.ObjectsLayer);
+
+            // Bools are serialized lowercase to match real maps.
+            Assert.Contains("twoParts=\"true\"", doc.Save());
+            Assert.Contains("nightLevel=\"true\"", doc.Save());
+        }
+
+        [Fact]
+        public void UpdateSettingsChangesResolutionAndSpecialButNotLockedFlags()
+        {
+            LevelDocument doc = LevelDocument.Parse(NightTwoPart); // twoParts=true, nightLevel=true
+
+            doc.UpdateSettings(new LevelSettings(640, 480, 2.0f, 5, TwoParts: false, NightLevel: false));
+
+            Assert.Equal(640, doc.Width);
+            Assert.Equal(480, doc.Height);
+            Assert.Equal(2.0f, doc.RopePhysicsSpeed);
+            Assert.Equal(5, doc.Special);
+            // Locked flags ignore the record's values and keep the document's originals.
+            Assert.True(doc.TwoParts);
+            Assert.True(doc.NightLevel);
+        }
     }
 }

@@ -32,6 +32,27 @@ namespace CtrDxEditor.Core.Document
             return new(XDocument.Load(path));
         }
 
+        /// <summary>Builds a fresh level document with the given settings and an empty Objects layer.</summary>
+        public static LevelDocument CreateNew(LevelSettings settings)
+        {
+            XElement settingsLayer = new("layer",
+                new XAttribute("name", "settings"),
+                new XElement("map",
+                    new XAttribute("gridSize", "32"),
+                    new XAttribute("width", settings.Width.ToString(CultureInfo.InvariantCulture)),
+                    new XAttribute("height", settings.Height.ToString(CultureInfo.InvariantCulture))),
+                new XElement("gameDesign",
+                    new XAttribute("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture)),
+                    new XAttribute("special", settings.Special.ToString(CultureInfo.InvariantCulture)),
+                    new XAttribute("twoParts", settings.TwoParts ? "true" : "false"),
+                    new XAttribute("nightLevel", settings.NightLevel ? "true" : "false")));
+            XElement objectsLayer = new("layer", new XAttribute("name", "Objects"));
+            XDocument doc = new(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement("map", settingsLayer, objectsLayer));
+            return new LevelDocument(doc);
+        }
+
         private XElement Root => _doc.Root
             ?? throw new InvalidDataException("Level XML has no root <map> element.");
 
@@ -82,6 +103,24 @@ namespace CtrDxEditor.Core.Document
             layer.Add(obj.Element);
         }
 
+        /// <summary>
+        /// Writes resolution, rope physics, and special back into the settings layer.
+        /// Leaves the locked <c>twoParts</c> / <c>nightLevel</c> flags untouched.
+        /// </summary>
+        public void UpdateSettings(LevelSettings settings)
+        {
+            XElement settingsLayer = Layer("settings") ?? CreateSettingsLayer();
+            XElement map = settingsLayer.Element("map") ?? AddChild(settingsLayer, "map");
+            XElement gameDesign = settingsLayer.Element("gameDesign") ?? AddChild(settingsLayer, "gameDesign");
+
+            map.SetAttributeValue("gridSize", "32");
+            map.SetAttributeValue("width", settings.Width.ToString(CultureInfo.InvariantCulture));
+            map.SetAttributeValue("height", settings.Height.ToString(CultureInfo.InvariantCulture));
+            gameDesign.SetAttributeValue("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture));
+            gameDesign.SetAttributeValue("special", settings.Special.ToString(CultureInfo.InvariantCulture));
+            // twoParts / nightLevel are locked after creation and intentionally not written here.
+        }
+
         /// <summary>Removes an object from its parent XML document.</summary>
         public static void Remove(LevelObject obj)
         {
@@ -119,6 +158,20 @@ namespace CtrDxEditor.Core.Document
                 out float v)
                 ? v
                 : fallback;
+        }
+
+        private XElement CreateSettingsLayer()
+        {
+            XElement layer = new("layer", new XAttribute("name", "settings"));
+            Root.AddFirst(layer);
+            return layer;
+        }
+
+        private static XElement AddChild(XElement parent, string name)
+        {
+            XElement child = new(name);
+            parent.Add(child);
+            return child;
         }
 
         private XElement CreateObjectsLayer()
