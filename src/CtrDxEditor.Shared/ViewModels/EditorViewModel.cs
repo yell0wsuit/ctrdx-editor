@@ -219,6 +219,11 @@ namespace CtrDxEditor.ViewModels
             Fields.Add(new AttributeFieldViewModel(value, "x", null, Changed));
             Fields.Add(new AttributeFieldViewModel(value, "y", null, Changed));
 
+            if (value.Type == "grab" && Document is not null)
+            {
+                AddGrabBindingField(value, Changed);
+            }
+
             ObjectDescriptor? d = _descriptors.For(value.Type);
             if (d is not null)
             {
@@ -230,11 +235,6 @@ namespace CtrDxEditor.ViewModels
                     }
                     Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.EnumValues, Changed));
                 }
-            }
-
-            if (value.Type == "grab" && Document is not null)
-            {
-                AddGrabBindingField(value, Changed);
             }
         }
 
