@@ -44,6 +44,11 @@ namespace CtrDxEditor.Tests
             return vm.Palette.Any(p => p.Element == element);
         }
 
+        private static PaletteItemViewModel PaletteItem(EditorViewModel vm, string element)
+        {
+            return vm.Palette.Single(p => p.Element == element);
+        }
+
         [Fact]
         public void SingleCandyLevelShowsCandyAndBulbNotHalves()
         {
@@ -79,6 +84,49 @@ namespace CtrDxEditor.Tests
             Assert.Equal(640, vm.Document!.Width);
             Assert.Equal(960, vm.Document!.Height);
             Assert.Equal(2, vm.Document!.Special);
+        }
+
+        [Fact]
+        public void SwitchingBackToHalfCandyLeavesCandyRPaletteEnabled()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 101, 170);
+
+            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+
+            Assert.True(PaletteItem(vm, "candyR").Enabled);
+        }
+
+        [Fact]
+        public void SwitchingBackToHalfCandyNotifiesCanvasRefresh()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 101, 170);
+            int mutations = 0;
+            vm.ObjectMutated += () => mutations++;
+
+            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+
+            Assert.Equal(1, mutations);
+            Assert.Contains(vm.Document!.Objects, o => o.Type == "candyL");
+            Assert.Contains(vm.Document.Objects, o => o.Type == "candyR");
+        }
+
+        [Fact]
+        public void PlacingExistingCandyHalfMovesIt()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            LevelObject original = vm.PlaceObject("candyR", 320, 240)!;
+
+            LevelObject? moved = vm.PlaceObject("candyR", 400, 300);
+
+            Assert.Same(original.Element, moved!.Element);
+            Assert.Equal(400, moved.X);
+            Assert.Equal(300, moved.Y);
+            Assert.True(PaletteItem(vm, "candyR").Enabled);
         }
     }
 }

@@ -33,18 +33,14 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
             ], Scale: 0.71),
 
-            // Split candy halves reuse the single-candy sprite at the same 0.71 scale the game applies.
+            // Split candy halves use the part frames from the same candy atlas at the same 0.71 scale.
             new("candyL",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_08_part_1.png"),
             ], Scale: 0.71),
             new("candyR",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_09_part_2.png"),
             ], Scale: 0.71),
 
             // Grab hook = arm + ring (share sourceSize 276x276).

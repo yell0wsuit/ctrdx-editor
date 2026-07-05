@@ -92,6 +92,7 @@ namespace CtrDxEditor.ViewModels
             }
             // Resolution may have changed; re-fit and repaint the canvas.
             LevelLoaded?.Invoke();
+            ObjectMutated?.Invoke();
         }
 
         /// <summary>Deletes the currently selected object, if one exists.</summary>
@@ -154,7 +155,7 @@ namespace CtrDxEditor.ViewModels
                 {
                     continue;
                 }
-                bool enabled = Document is not null && !Cardinality.IsAtCapacity(d, objs);
+                bool enabled = Document is not null && (!Cardinality.IsAtCapacity(d, objs) || IsMoveableSingleton(d.ElementName, Document));
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled, Sprites.GetThumbnail(d.ElementName)));
             }
@@ -172,11 +173,32 @@ namespace CtrDxEditor.ViewModels
             };
         }
 
+        private static bool IsMoveableSingleton(string element, LevelDocument doc)
+        {
+            return doc.TwoParts && element is "candyL" or "candyR";
+        }
+
         /// <summary>Places a new object if the descriptor exists and capacity allows it.</summary>
         public LevelObject? PlaceObject(string element, int levelX, int levelY)
         {
             ObjectDescriptor? d = _descriptors.For(element);
-            if (d is null || Document is null || Cardinality.IsAtCapacity(d, Document.Objects))
+            if (d is null || Document is null)
+            {
+                return null;
+            }
+
+            if (Document.Objects.FirstOrDefault(o => o.Type == element) is LevelObject existing
+                && IsMoveableSingleton(element, Document))
+            {
+                existing.X = levelX;
+                existing.Y = levelY;
+                RefreshPalette();
+                RefreshObjectList();
+                SelectedObject = existing;
+                return existing;
+            }
+
+            if (Cardinality.IsAtCapacity(d, Document.Objects))
             {
                 return null;
             }

@@ -12,14 +12,13 @@ namespace CtrDxEditor.Tests
         [Theory]
         [InlineData("candyL")]
         [InlineData("candyR")]
-        public void SplitCandyReusesCandySprite(string element)
+        public void SplitCandyUsesHalfCandySprite(string element)
         {
-            VisualDescriptor candy = VisualDescriptorMap.For("candy")!;
             VisualDescriptor half = VisualDescriptorMap.For(element)!;
 
-            Assert.Equal(candy.Scale, half.Scale);
+            Assert.Equal(0.71, half.Scale);
             Assert.Equal(
-                candy.Layers.Select(l => l.FrameName),
+                [element == "candyL" ? "frame_08_part_1.png" : "frame_09_part_2.png"],
                 half.Layers.Select(l => l.FrameName));
         }
 
