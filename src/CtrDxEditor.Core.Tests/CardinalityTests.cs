@@ -40,5 +40,21 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.False(Cardinality.IsAtCapacity(star, objects));
         }
+
+        /// <summary>Candy and target are unbounded so multi-candy / multi-Om-Nom levels are placeable.</summary>
+        [Fact]
+        public void CandyAndTargetAreNeverAtCapacity()
+        {
+            ObjectDescriptor candy = DescriptorTable.Default.For("candy")!;
+            ObjectDescriptor target = DescriptorTable.Default.For("target")!;
+            IReadOnlyList<LevelObject> objects =
+            [
+                Obj("""<candy x="1" y="1" />"""),
+                Obj("""<target x="2" y="2" />"""),
+            ];
+
+            Assert.False(Cardinality.IsAtCapacity(candy, objects));
+            Assert.False(Cardinality.IsAtCapacity(target, objects));
+        }
     }
 }
