@@ -34,6 +34,7 @@ namespace CtrDxEditor.ViewModels
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsCustom))]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
         public partial ResolutionPreset SelectedPreset { get; set; }
 
         /// <summary>
@@ -48,15 +49,29 @@ namespace CtrDxEditor.ViewModels
             new("Custom...", 0, IsCustom: true),
         ];
 
-        [ObservableProperty] public partial int CustomWidth { get; set; } = MinWidth;
-        [ObservableProperty] public partial int CustomHeight { get; set; } = MinHeight;
-        [ObservableProperty] public partial double RopePhysicsSpeed { get; set; } = 1.0;
+        // NumericUpDown.Value is decimal?, so these bind as decimal? (an exact match avoids the
+        // raw "could not convert (null)" cast errors, and an empty box is a valid null that
+        // CanConfirm rejects so the level can't be created with a blank number).
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial decimal? CustomWidth { get; set; } = MinWidth;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial decimal? CustomHeight { get; set; } = MinHeight;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial decimal? RopePhysicsSpeed { get; set; } = 1.0m;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsSpecialCustom))]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
         public partial SpecialOption SelectedSpecial { get; set; }
 
-        [ObservableProperty] public partial int CustomSpecial { get; set; }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial decimal? CustomSpecial { get; set; } = 0m;
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
 
@@ -68,6 +83,12 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether the manual width/height inputs are active.</summary>
         public bool IsCustom => SelectedPreset.IsCustom;
+
+        /// <summary>Whether every currently-required numeric field has a value (gates the confirm button).</summary>
+        public bool CanConfirm =>
+            RopePhysicsSpeed is not null
+            && (!IsCustom || (CustomWidth is not null && CustomHeight is not null))
+            && (!IsSpecialCustom || CustomSpecial is not null);
 
         private LevelSettingsViewModel(bool flagsEditable)
         {
@@ -92,6 +113,12 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        // Coalesces a nullable numeric field (empty box) to a fallback, then clamps into range.
+        private static int ClampOrDefault(decimal? value, int fallback, int min, int max)
+        {
+            return (int)Math.Clamp(value ?? fallback, (decimal)min, max);
+        }
+
         /// <summary>A dialog for creating a new level (all fields editable).</summary>
         public static LevelSettingsViewModel ForNew()
         {
@@ -103,7 +130,7 @@ namespace CtrDxEditor.ViewModels
         {
             LevelSettingsViewModel vm = new(flagsEditable: false)
             {
-                RopePhysicsSpeed = current.RopePhysicsSpeed,
+                RopePhysicsSpeed = (decimal)current.RopePhysicsSpeed,
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
                 CustomWidth = current.Width,
@@ -119,10 +146,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Builds the settings record from the current selections, clamping custom sizes.</summary>
         public LevelSettings ToSettings()
         {
-            int width = IsCustom ? Math.Clamp(CustomWidth, MinWidth, MaxDimension) : SelectedPreset.Width;
-            int height = IsCustom ? Math.Clamp(CustomHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
-            int special = IsSpecialCustom ? Math.Clamp(CustomSpecial, 0, MaxSpecial) : SelectedSpecial.Value;
-            return new LevelSettings(width, height, (float)RopePhysicsSpeed, special, TwoParts, NightLevel);
+            int width = IsCustom ? ClampOrDefault(CustomWidth, MinWidth, MinWidth, MaxDimension) : SelectedPreset.Width;
+            int height = IsCustom ? ClampOrDefault(CustomHeight, MinHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
+            int special = IsSpecialCustom ? ClampOrDefault(CustomSpecial, 0, 0, MaxSpecial) : SelectedSpecial.Value;
+            float rope = (float)(RopePhysicsSpeed ?? 1.0m);
+            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel);
         }
     }
 }

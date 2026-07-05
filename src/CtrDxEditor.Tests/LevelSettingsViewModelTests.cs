@@ -103,6 +103,35 @@ namespace CtrDxEditor.Tests
             Assert.Equal(99, vm.ToSettings().Special);
         }
 
+        /// <summary>Confirm is blocked while a required numeric field is empty, and allowed once filled.</summary>
+        [Fact]
+        public void CanConfirmRequiresVisibleNumericFields()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            Assert.True(vm.CanConfirm); // defaults are all filled
+
+            vm.RopePhysicsSpeed = null; // clearing the always-visible field blocks confirm
+            Assert.False(vm.CanConfirm);
+            vm.RopePhysicsSpeed = 1.0m;
+            Assert.True(vm.CanConfirm);
+
+            vm.SelectedPreset = vm.Presets.Single(p => p.IsCustom);
+            vm.CustomWidth = null; // an empty custom width blocks confirm
+            Assert.False(vm.CanConfirm);
+            vm.CustomWidth = 640m;
+            Assert.True(vm.CanConfirm);
+        }
+
+        /// <summary>A hidden custom field being null does not block confirm (only visible required fields count).</summary>
+        [Fact]
+        public void CanConfirmIgnoresHiddenCustomFields()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.CustomSpecial = null; // special is on None, so the custom input is hidden
+
+            Assert.True(vm.CanConfirm);
+        }
+
         /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>
         [Fact]
         public void EditModeWithUnlistedSpecialSelectsCustom()
@@ -111,7 +140,7 @@ namespace CtrDxEditor.Tests
                 new LevelSettings(320, 480, 1.0f, 3, TwoParts: false, NightLevel: false));
 
             Assert.True(vm.IsSpecialCustom);
-            Assert.Equal(3, vm.CustomSpecial);
+            Assert.Equal(3m, vm.CustomSpecial);
             Assert.Equal(3, vm.ToSettings().Special);
         }
     }

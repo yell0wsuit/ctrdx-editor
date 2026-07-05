@@ -58,6 +58,7 @@
     "Dialog.LevelSettings.RopePhysicsSpeed": "Rope physics speed",
     "Dialog.LevelSettings.Special": "Special tutorial prompt",
     "Dialog.LevelSettings.SpecialTooltip": "Staging id for the game's built-in tutorial prompts. Might have no effect in custom levels.",
+    "Dialog.LevelSettings.EnterNumber": "Enter a number",
     "Dialog.LevelSettings.HalfCandy": "Half candy",
     "Dialog.LevelSettings.NightLevel": "Night level",
     "Dialog.LevelSettings.LockedNote": "This setting cannot be changed later.",
