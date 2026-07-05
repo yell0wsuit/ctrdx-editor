@@ -87,7 +87,7 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void SwitchingBackToHalfCandyLeavesCandyRPaletteEnabled()
+        public void SwitchingBackToHalfCandyGraysOutAutoCreatedHalves()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
@@ -95,7 +95,8 @@ namespace CtrDxEditor.Tests
 
             vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
 
-            Assert.True(PaletteItem(vm, "candyR").Enabled);
+            Assert.False(PaletteItem(vm, "candyL").Enabled);
+            Assert.False(PaletteItem(vm, "candyR").Enabled);
         }
 
         [Fact]
@@ -115,18 +116,20 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void PlacingExistingCandyHalfMovesIt()
+        public void HalfCandyPaletteAllowsOneOfEachHalf()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
-            LevelObject original = vm.PlaceObject("candyR", 320, 240)!;
 
-            LevelObject? moved = vm.PlaceObject("candyR", 400, 300);
+            _ = vm.PlaceObject("candyL", 320, 240);
 
-            Assert.Same(original.Element, moved!.Element);
-            Assert.Equal(400, moved.X);
-            Assert.Equal(300, moved.Y);
+            Assert.False(PaletteItem(vm, "candyL").Enabled);
             Assert.True(PaletteItem(vm, "candyR").Enabled);
+
+            _ = vm.PlaceObject("candyR", 400, 300);
+
+            Assert.False(PaletteItem(vm, "candyL").Enabled);
+            Assert.False(PaletteItem(vm, "candyR").Enabled);
         }
     }
 }
