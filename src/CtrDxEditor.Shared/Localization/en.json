@@ -84,7 +84,9 @@
 
     "Attr.timeout": "Timeout",
     "Attr.length": "Length",
-    "Attr.part": "Part",
+    "Attr.part": "Split candy bind",
+    "Attr.part.L": "Left",
+    "Attr.part.R": "Right",
     "Attr.wheel": "Wheel",
     "Attr.gun": "Gun",
     "Attr.radius": "Radius",

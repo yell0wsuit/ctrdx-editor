@@ -183,6 +183,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             LevelObject obj = Placement.CreateObject(d, levelX, levelY);
+            LevelObjectPolicy.ApplyDefaults(obj, Document);
             Document.Add(obj);
             RefreshPalette();
             RefreshObjectList();
@@ -223,6 +224,10 @@ namespace CtrDxEditor.ViewModels
             {
                 foreach (AttributeSpec spec in d.Attributes)
                 {
+                    if (Document is not null && !LevelObjectPolicy.IsAttributeVisible(value.Type, spec.Name, Document))
+                    {
+                        continue;
+                    }
                     Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.EnumValues, Changed));
                 }
             }
