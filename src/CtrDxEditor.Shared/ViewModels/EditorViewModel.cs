@@ -45,6 +45,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Raised after a level XML document has loaded into the editor.</summary>
         public event Action? LevelLoaded;
 
+        /// <summary>The current level's editable settings, or null when no level is loaded.</summary>
+        public LevelSettings? CurrentSettings => Document?.Settings;
+
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
@@ -54,6 +57,30 @@ namespace CtrDxEditor.ViewModels
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
+            LevelLoaded?.Invoke();
+        }
+
+        /// <summary>Creates a new empty level from the given settings and loads it into the editor.</summary>
+        public void NewLevel(LevelSettings settings)
+        {
+            Document = LevelDocument.CreateNew(settings);
+            SelectedObject = null;
+            LockedObject = null;
+            RefreshPalette();
+            RefreshObjectList();
+            LevelLoaded?.Invoke();
+        }
+
+        /// <summary>Writes edited settings back into the current level and refreshes the view.</summary>
+        public void UpdateLevelSettings(LevelSettings settings)
+        {
+            if (Document is null)
+            {
+                return;
+            }
+            Document.UpdateSettings(settings);
+            RefreshPalette();
+            // Resolution may have changed; re-fit and repaint the canvas.
             LevelLoaded?.Invoke();
         }
 
@@ -113,10 +140,27 @@ namespace CtrDxEditor.ViewModels
             Palette.Clear();
             foreach (ObjectDescriptor d in _descriptors.ByElement.Values)
             {
+                if (Document is not null && !IsAvailableInLevel(d.ElementName, Document))
+                {
+                    continue;
+                }
                 bool enabled = Document is not null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled, Sprites.GetThumbnail(d.ElementName)));
             }
+        }
+
+        // Candy type follows twoParts; the light bulb only exists in night levels. When no document is
+        // loaded, everything is shown (disabled) so the palette isn't empty on startup.
+        private static bool IsAvailableInLevel(string element, LevelDocument doc)
+        {
+            return element switch
+            {
+                "candy" => !doc.TwoParts,
+                "candyL" or "candyR" => doc.TwoParts,
+                "lightBulb" => doc.NightLevel,
+                _ => true,
+            };
         }
 
         /// <summary>Places a new object if the descriptor exists and capacity allows it.</summary>
