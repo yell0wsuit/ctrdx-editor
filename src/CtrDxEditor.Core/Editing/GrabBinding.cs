@@ -38,7 +38,7 @@ namespace CtrDxEditor.Core.Editing
                 {
                     string key = candies[i].GetAttr("candyNumber") ?? "0";
                     options.Add(i == 0
-                        ? new GrabBindOption("primary", $"Candy {key} (primary)")
+                        ? new GrabBindOption("primary", $"Candy {key}")
                         : new GrabBindOption($"candy:{key}", $"Candy {key}"));
                 }
             }
