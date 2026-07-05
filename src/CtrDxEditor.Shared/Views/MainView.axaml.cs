@@ -1,15 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 
+using AvaloniaDialogs.Views;
+
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Localization;
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
@@ -231,6 +238,53 @@ namespace CtrDxEditor.Views
             _ = canvas.Focus();
         }
 
+        private async void New_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm)
+            {
+                return;
+            }
+            LevelSettingsDialog dialog = new() { DataContext = LevelSettingsViewModel.ForNew() };
+            Optional<LevelSettings> result = await dialog.ShowAsync();
+            if (result.GetValueOrDefault() is { } settings)
+            {
+                vm.NewLevel(settings);
+            }
+        }
+
+        private async void LevelSettings_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm || vm.CurrentSettings is not { } current)
+            {
+                return;
+            }
+            LevelSettingsDialog dialog = new() { DataContext = LevelSettingsViewModel.ForEdit(current) };
+            Optional<LevelSettings> result = await dialog.ShowAsync();
+            if (result.GetValueOrDefault() is { } settings)
+            {
+                vm.UpdateLevelSettings(settings);
+            }
+        }
+
+        // Shows the non-blocking validation warning; returns true when the user chooses to proceed.
+        private static async Task<bool> ConfirmValidationAsync(
+            IReadOnlyList<string> warnings, string promptKey, string proceedKey)
+        {
+            string body = Localizer.Get("Dialog.Validation.Body") + "\n\n"
+                + string.Join("\n", warnings.Select(w => "- " + w)) + "\n\n"
+                + Localizer.Get(promptKey);
+            TwofoldDialog dialog = new()
+            {
+                Width = 460,
+                ButtonMargin = new Thickness(4, 12, 4, 0),
+                Message = body,
+                PositiveText = Localizer.Get(proceedKey),
+                NegativeText = Localizer.Get("Dialog.Common.Cancel"),
+            };
+            Optional<bool> confirmed = await dialog.ShowAsync();
+            return confirmed.GetValueOrDefault();
+        }
+
         private async void Open_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm)
@@ -250,7 +304,15 @@ namespace CtrDxEditor.Views
             {
                 await using Stream stream = await files[0].OpenReadAsync();
                 using StreamReader reader = new(stream);
-                vm.LoadLevelXml(await reader.ReadToEndAsync());
+                string xml = await reader.ReadToEndAsync();
+
+                IReadOnlyList<string> warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
+                if (warnings.Count > 0
+                    && !await ConfirmValidationAsync(warnings, "Dialog.Validation.EditPrompt", "Dialog.Validation.EditProceed"))
+                {
+                    return;
+                }
+                vm.LoadLevelXml(xml);
             }
         }
 
@@ -259,6 +321,16 @@ namespace CtrDxEditor.Views
             if (DataContext is not EditorViewModel vm)
             {
                 return;
+            }
+
+            if (vm.Document is { } doc)
+            {
+                IReadOnlyList<string> warnings = LevelValidator.Validate(doc);
+                if (warnings.Count > 0
+                    && !await ConfirmValidationAsync(warnings, "Dialog.Validation.SavePrompt", "Dialog.Validation.SaveProceed"))
+                {
+                    return;
+                }
             }
 
             IStorageFile? file = await TopLevel.GetTopLevel(this)!.StorageProvider.SaveFilePickerAsync(

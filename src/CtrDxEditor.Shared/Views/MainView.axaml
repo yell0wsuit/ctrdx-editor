@@ -14,6 +14,11 @@
   <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="{loc:Tr Menu.File}">
+        <MenuItem Header="{loc:Tr Menu.File.New}" Click="New_Click">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="FilePlusOutline" />
+          </MenuItem.Icon>
+        </MenuItem>
         <MenuItem Header="{loc:Tr Menu.File.Open}" Click="Open_Click">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="FolderOpenOutline" />
@@ -22,6 +27,14 @@
         <MenuItem Header="{loc:Tr Menu.File.SaveAs}" Click="SaveAs_Click">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentSaveEdit" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="{loc:Tr Menu.Edit}">
+        <MenuItem Header="{loc:Tr Menu.Edit.LevelSettings}" Click="LevelSettings_Click"
+                  IsEnabled="{Binding Document, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="Cog" />
           </MenuItem.Icon>
         </MenuItem>
       </MenuItem>
