@@ -95,5 +95,7 @@
     "Attr.moveOffset": "Move offset",
     "Attr.spider": "Spider",
     "Attr.litRadius": "Lit radius",
-    "Attr.bulbNumber": "Bulb number"
+    "Attr.bulbNumber": "Bulb number",
+    "Attr.candyNumber": "Candy number",
+    "Attr.attachTo": "Attach to"
 }
