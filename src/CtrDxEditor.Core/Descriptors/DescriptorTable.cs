@@ -27,6 +27,8 @@ namespace CtrDxEditor.Core.Descriptors
         [
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: 1),
             new ObjectDescriptor("candy", "Candy", [], MaxCount: 1),
+            new ObjectDescriptor("candyL", "Candy (Left)", [], MaxCount: 1),
+            new ObjectDescriptor("candyR", "Candy (Right)", [], MaxCount: 1),
             new ObjectDescriptor("star", "Star",
             [
                 new AttributeSpec("timeout", AttrType.Whole, "-1"),
@@ -45,6 +47,11 @@ namespace CtrDxEditor.Core.Descriptors
             ], MaxCount: int.MaxValue),
             new ObjectDescriptor("bubble", "Bubble", [], MaxCount: int.MaxValue),
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
+            new ObjectDescriptor("lightBulb", "Light Bulb",
+            [
+                new AttributeSpec("litRadius", AttrType.Whole, "50"),
+                new AttributeSpec("bulbNumber", AttrType.Text, "first"),
+            ], MaxCount: int.MaxValue),
         ]);
     }
 }
