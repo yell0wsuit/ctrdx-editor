@@ -11,6 +11,9 @@ namespace CtrDxEditor.ViewModels
     /// <summary>One selectable level resolution; <see cref="IsCustom"/> enables the manual width/height inputs.</summary>
     public sealed record ResolutionPreset(string Label, int Width, int Height, bool IsCustom);
 
+    /// <summary>One selectable value for the special (tutorial-staging) setting: user-facing label, XML integer.</summary>
+    public sealed record SpecialOption(string Label, int Value);
+
     /// <summary>View model for the New / Level Settings dialog.</summary>
     public sealed partial class LevelSettingsViewModel : ViewModelBase
     {
@@ -32,10 +35,21 @@ namespace CtrDxEditor.ViewModels
         [NotifyPropertyChangedFor(nameof(IsCustom))]
         public partial ResolutionPreset SelectedPreset { get; set; }
 
+        /// <summary>
+        /// Selectable special values. Only 0/1 make sense for a custom level (special stages the game's
+        /// built-in tutorial prompts, which the editor can't place); other values are inert here. An
+        /// imported level carrying a different value gets it added as an extra option, so it round-trips.
+        /// </summary>
+        public ObservableCollection<SpecialOption> SpecialOptions { get; } =
+        [
+            new("None", 0),
+            new("Default", 1),
+        ];
+
         [ObservableProperty] public partial int CustomWidth { get; set; } = MinWidth;
         [ObservableProperty] public partial int CustomHeight { get; set; } = MinHeight;
         [ObservableProperty] public partial double RopePhysicsSpeed { get; set; } = 1.0;
-        [ObservableProperty] public partial int Special { get; set; }
+        [ObservableProperty] public partial SpecialOption SelectedSpecial { get; set; }
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
 
@@ -49,6 +63,20 @@ namespace CtrDxEditor.ViewModels
         {
             FlagsEditable = flagsEditable;
             SelectedPreset = Presets[0];
+            SelectedSpecial = SpecialOptions[0];
+        }
+
+        // Selects the option matching value, adding a preserve-option when an imported level uses an
+        // unlisted special value so it survives a settings edit unchanged.
+        private void SelectSpecial(int value)
+        {
+            SpecialOption? match = SpecialOptions.FirstOrDefault(o => o.Value == value);
+            if (match is null)
+            {
+                match = new SpecialOption($"Special {value}", value);
+                SpecialOptions.Add(match);
+            }
+            SelectedSpecial = match;
         }
 
         /// <summary>A dialog for creating a new level (all fields editable).</summary>
@@ -63,12 +91,12 @@ namespace CtrDxEditor.ViewModels
             LevelSettingsViewModel vm = new(flagsEditable: false)
             {
                 RopePhysicsSpeed = current.RopePhysicsSpeed,
-                Special = current.Special,
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
                 CustomWidth = current.Width,
                 CustomHeight = current.Height,
             };
+            vm.SelectSpecial(current.Special);
             ResolutionPreset? match = vm.Presets.FirstOrDefault(
                 p => !p.IsCustom && p.Width == current.Width && p.Height == current.Height);
             vm.SelectedPreset = match ?? vm.Presets.Single(p => p.IsCustom);
@@ -80,7 +108,7 @@ namespace CtrDxEditor.ViewModels
         {
             int width = IsCustom ? Math.Clamp(CustomWidth, MinWidth, MaxDimension) : SelectedPreset.Width;
             int height = IsCustom ? Math.Clamp(CustomHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
-            return new LevelSettings(width, height, (float)RopePhysicsSpeed, Special, TwoParts, NightLevel);
+            return new LevelSettings(width, height, (float)RopePhysicsSpeed, SelectedSpecial.Value, TwoParts, NightLevel);
         }
     }
 }

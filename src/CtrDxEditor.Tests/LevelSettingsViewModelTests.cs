@@ -75,5 +75,27 @@ namespace CtrDxEditor.Tests
             Assert.Equal(500, vm.ToSettings().Width);
             Assert.Equal(700, vm.ToSettings().Height);
         }
+
+        /// <summary>The special dropdown offers only None (0) and Default (1) for a normal level.</summary>
+        [Fact]
+        public void SpecialOffersNoneAndDefaultOnly()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+
+            Assert.Equal([0, 1], vm.SpecialOptions.Select(o => o.Value));
+            Assert.Equal(0, vm.ToSettings().Special); // defaults to None
+        }
+
+        /// <summary>An imported level's unlisted special value is preserved via an added option so it round-trips.</summary>
+        [Fact]
+        public void EditModePreservesUnlistedSpecialValue()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
+                new LevelSettings(320, 480, 1.0f, 3, TwoParts: false, NightLevel: false));
+
+            Assert.Contains(vm.SpecialOptions, o => o.Value == 3);
+            Assert.Equal(3, vm.SelectedSpecial.Value);
+            Assert.Equal(3, vm.ToSettings().Special);
+        }
     }
 }

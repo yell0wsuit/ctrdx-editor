@@ -34,9 +34,17 @@
     </StackPanel>
 
     <StackPanel Spacing="4">
-      <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}" />
-      <NumericUpDown Minimum="0" Maximum="99" Increment="1" FormatString="0"
-                     Value="{Binding Special, Mode=TwoWay}" />
+      <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
+                 ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}" />
+      <ComboBox ItemsSource="{Binding SpecialOptions}" SelectedItem="{Binding SelectedSpecial, Mode=TwoWay}"
+                HorizontalAlignment="Stretch"
+                ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:SpecialOption">
+            <TextBlock Text="{Binding Label}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
     </StackPanel>
 
     <!-- The locked-note heads both checkboxes so it clearly applies to both, not just Night level. -->
