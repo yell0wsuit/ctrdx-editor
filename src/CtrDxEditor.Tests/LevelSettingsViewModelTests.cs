@@ -76,25 +76,42 @@ namespace CtrDxEditor.Tests
             Assert.Equal(700, vm.ToSettings().Height);
         }
 
-        /// <summary>The special dropdown offers only None (0) and Default (1) for a normal level.</summary>
+        /// <summary>The special dropdown offers None (0), Default (1), and a Custom sentinel, defaulting to None.</summary>
         [Fact]
-        public void SpecialOffersNoneAndDefaultOnly()
+        public void SpecialOffersNoneDefaultAndCustom()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
 
-            Assert.Equal([0, 1], vm.SpecialOptions.Select(o => o.Value));
+            Assert.Equal([0, 1], vm.SpecialOptions.Where(o => !o.IsCustom).Select(o => o.Value));
+            Assert.Contains(vm.SpecialOptions, o => o.IsCustom);
+            Assert.False(vm.IsSpecialCustom);
             Assert.Equal(0, vm.ToSettings().Special); // defaults to None
         }
 
-        /// <summary>An imported level's unlisted special value is preserved via an added option so it round-trips.</summary>
+        /// <summary>Selecting Custom writes the manually entered special value (clamped to 0..99).</summary>
         [Fact]
-        public void EditModePreservesUnlistedSpecialValue()
+        public void CustomSpecialValueIsUsedAndClamped()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedSpecial = vm.SpecialOptions.Single(o => o.IsCustom);
+
+            Assert.True(vm.IsSpecialCustom);
+            vm.CustomSpecial = 7;
+            Assert.Equal(7, vm.ToSettings().Special);
+
+            vm.CustomSpecial = 500; // above the 99 cap
+            Assert.Equal(99, vm.ToSettings().Special);
+        }
+
+        /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>
+        [Fact]
+        public void EditModeWithUnlistedSpecialSelectsCustom()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
                 new LevelSettings(320, 480, 1.0f, 3, TwoParts: false, NightLevel: false));
 
-            Assert.Contains(vm.SpecialOptions, o => o.Value == 3);
-            Assert.Equal(3, vm.SelectedSpecial.Value);
+            Assert.True(vm.IsSpecialCustom);
+            Assert.Equal(3, vm.CustomSpecial);
             Assert.Equal(3, vm.ToSettings().Special);
         }
     }

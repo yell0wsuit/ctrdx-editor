@@ -45,6 +45,10 @@
           </DataTemplate>
         </ComboBox.ItemTemplate>
       </ComboBox>
+      <!-- The manual value input only appears when the "Custom…" option is selected. -->
+      <NumericUpDown Minimum="0" Maximum="99" Increment="1" FormatString="0"
+                     IsVisible="{Binding IsSpecialCustom}"
+                     Value="{Binding CustomSpecial, Mode=TwoWay}" />
     </StackPanel>
 
     <!-- The locked-note heads both checkboxes so it clearly applies to both, not just Night level. -->

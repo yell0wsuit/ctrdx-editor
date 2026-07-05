@@ -11,8 +11,8 @@ namespace CtrDxEditor.ViewModels
     /// <summary>One selectable level resolution; <see cref="IsCustom"/> enables the manual width/height inputs.</summary>
     public sealed record ResolutionPreset(string Label, int Width, int Height, bool IsCustom);
 
-    /// <summary>One selectable value for the special (tutorial-staging) setting: user-facing label, XML integer.</summary>
-    public sealed record SpecialOption(string Label, int Value);
+    /// <summary>One selectable special (tutorial-staging) value: user-facing label, XML integer. <see cref="IsCustom"/> reveals the manual input.</summary>
+    public sealed record SpecialOption(string Label, int Value, bool IsCustom = false);
 
     /// <summary>View model for the New / Level Settings dialog.</summary>
     public sealed partial class LevelSettingsViewModel : ViewModelBase
@@ -20,6 +20,7 @@ namespace CtrDxEditor.ViewModels
         private const int MinWidth = 320;
         private const int MinHeight = 480;
         private const int MaxDimension = 9999;
+        private const int MaxSpecial = 99;
 
         /// <summary>Available resolutions; the last entry is the custom sentinel.</summary>
         public ObservableCollection<ResolutionPreset> Presets { get; } =
@@ -44,14 +45,23 @@ namespace CtrDxEditor.ViewModels
         [
             new("None", 0),
             new("Default", 1),
+            new("Custom...", 0, IsCustom: true),
         ];
 
         [ObservableProperty] public partial int CustomWidth { get; set; } = MinWidth;
         [ObservableProperty] public partial int CustomHeight { get; set; } = MinHeight;
         [ObservableProperty] public partial double RopePhysicsSpeed { get; set; } = 1.0;
-        [ObservableProperty] public partial SpecialOption SelectedSpecial { get; set; }
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsSpecialCustom))]
+        public partial SpecialOption SelectedSpecial { get; set; }
+
+        [ObservableProperty] public partial int CustomSpecial { get; set; }
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
+
+        /// <summary>Whether the manual special-value input is active.</summary>
+        public bool IsSpecialCustom => SelectedSpecial.IsCustom;
 
         /// <summary>Whether the locked flags (Half candy / Night level) may be edited (New mode only).</summary>
         public bool FlagsEditable { get; private init; }
@@ -66,17 +76,20 @@ namespace CtrDxEditor.ViewModels
             SelectedSpecial = SpecialOptions[0];
         }
 
-        // Selects the option matching value, adding a preserve-option when an imported level uses an
-        // unlisted special value so it survives a settings edit unchanged.
+        // Selects the listed option matching value, or routes an unlisted value (e.g. an imported
+        // tutorial pack's special=3) through Custom so a settings edit preserves it unchanged.
         private void SelectSpecial(int value)
         {
-            SpecialOption? match = SpecialOptions.FirstOrDefault(o => o.Value == value);
-            if (match is null)
+            SpecialOption? match = SpecialOptions.FirstOrDefault(o => !o.IsCustom && o.Value == value);
+            if (match is not null)
             {
-                match = new SpecialOption($"Special {value}", value);
-                SpecialOptions.Add(match);
+                SelectedSpecial = match;
             }
-            SelectedSpecial = match;
+            else
+            {
+                CustomSpecial = value;
+                SelectedSpecial = SpecialOptions.Single(o => o.IsCustom);
+            }
         }
 
         /// <summary>A dialog for creating a new level (all fields editable).</summary>
@@ -108,7 +121,8 @@ namespace CtrDxEditor.ViewModels
         {
             int width = IsCustom ? Math.Clamp(CustomWidth, MinWidth, MaxDimension) : SelectedPreset.Width;
             int height = IsCustom ? Math.Clamp(CustomHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
-            return new LevelSettings(width, height, (float)RopePhysicsSpeed, SelectedSpecial.Value, TwoParts, NightLevel);
+            int special = IsSpecialCustom ? Math.Clamp(CustomSpecial, 0, MaxSpecial) : SelectedSpecial.Value;
+            return new LevelSettings(width, height, (float)RopePhysicsSpeed, special, TwoParts, NightLevel);
         }
     }
 }
