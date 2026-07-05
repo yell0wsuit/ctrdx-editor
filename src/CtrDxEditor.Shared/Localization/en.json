@@ -2,8 +2,12 @@
     "Window.Title": "Cut the Rope: DX - Level Editor",
 
     "Menu.File": "_File",
+    "Menu.File.New": "_New...",
     "Menu.File.Open": "_Open...",
     "Menu.File.SaveAs": "Save _As...",
+
+    "Menu.Edit": "_Edit",
+    "Menu.Edit.LevelSettings": "Level _Settings...",
 
     "Menu.View": "_View",
     "Menu.View.ZoomIn": "Zoom _In",
@@ -46,12 +50,35 @@
     "Dialog.ContentSetup.Error.DownloadFailed": "Download failed: ",
     "Dialog.ContentSetup.Error.InvalidFolder": "The selected folder is not a valid asset folder (missing file_manifest.json or listed assets).",
 
+    "Dialog.LevelSettings.TitleNew": "New level",
+    "Dialog.LevelSettings.TitleEdit": "Level settings",
+    "Dialog.LevelSettings.Resolution": "Resolution",
+    "Dialog.LevelSettings.Width": "Width",
+    "Dialog.LevelSettings.Height": "Height",
+    "Dialog.LevelSettings.RopePhysicsSpeed": "Rope physics speed",
+    "Dialog.LevelSettings.Special": "Special",
+    "Dialog.LevelSettings.HalfCandy": "Half candy",
+    "Dialog.LevelSettings.NightLevel": "Night level",
+    "Dialog.LevelSettings.LockedNote": "This setting cannot be changed later.",
+    "Dialog.LevelSettings.LockedTooltip": "Cannot be changed after creation.",
+    "Dialog.LevelSettings.Create": "Create",
+    "Dialog.LevelSettings.Save": "Save",
+
+    "Dialog.Validation.Body": "This level may not be playable:",
+    "Dialog.Validation.SavePrompt": "Save it anyway?",
+    "Dialog.Validation.SaveProceed": "Save anyway",
+    "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
+    "Dialog.Validation.EditProceed": "Edit anyway",
+
     "Object.target": "Om Nom",
     "Object.candy": "Candy",
+    "Object.candyL": "Candy (Left)",
+    "Object.candyR": "Candy (Right)",
     "Object.star": "Star",
     "Object.grab": "Grab",
     "Object.bubble": "Bubble",
     "Object.gravitySwitch": "Gravity button",
+    "Object.lightBulb": "Light bulb",
 
     "Attr.timeout": "Timeout",
     "Attr.length": "Length",
@@ -62,5 +89,7 @@
     "Attr.moveLength": "Move length",
     "Attr.moveVertical": "Move vertically",
     "Attr.moveOffset": "Move offset",
-    "Attr.spider": "Spider"
+    "Attr.spider": "Spider",
+    "Attr.litRadius": "Lit radius",
+    "Attr.bulbNumber": "Bulb number"
 }
