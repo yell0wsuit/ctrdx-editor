@@ -56,5 +56,14 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("timeout", timeout.Name);
             Assert.Equal("-1", timeout.Default);
         }
+
+        /// <summary>Verifies that grab exposes suction cup state attributes.</summary>
+        [Fact]
+        public void GrabHasSuctionCupAttributes()
+        {
+            ObjectDescriptor grab = DescriptorTable.Default.For("grab")!;
+            Assert.Contains(grab.Attributes, a => a.Name == "kickable" && a.Type == AttrType.Bool);
+            Assert.Contains(grab.Attributes, a => a.Name == "kicked" && a.Type == AttrType.Bool);
+        }
     }
 }

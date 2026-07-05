@@ -47,6 +47,8 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("moveVertical", AttrType.Bool, "false"),
                 new AttributeSpec("moveOffset", AttrType.Whole, "0"),
                 new AttributeSpec("spider", AttrType.Bool, "false"),
+                new AttributeSpec("kickable", AttrType.Bool, "false"),
+                new AttributeSpec("kicked", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
             new ObjectDescriptor("bubble", "Bubble", [], MaxCount: int.MaxValue),
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
