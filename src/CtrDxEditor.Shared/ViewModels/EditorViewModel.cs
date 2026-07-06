@@ -27,6 +27,7 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool SnapEnabled { get; set; }
         [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
         [ObservableProperty] public partial bool ShowMobileHitboxes { get; set; }
+        [ObservableProperty] public partial int ActiveRopeSkin { get; set; }
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;

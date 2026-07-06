@@ -25,7 +25,7 @@ namespace CtrDxEditor.Rendering
         /// hang from). The game reads the grab's length attribute for the bungee rest length; missing/0
         /// renders as a taut straight rope.
         /// </summary>
-        public static RopeVisual? BuildRope(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
+        public static RopeVisual? BuildRope(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts, int skin = 0)
         {
             if (grab.Type != "grab")
             {
@@ -43,7 +43,7 @@ namespace CtrDxEditor.Rendering
                 ? len
                 : 0;
             return RopeStripBuilder.Build(
-                new Vec2(grab.X, grab.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength);
+                new Vec2(grab.X, grab.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength, skin);
         }
 
         /// <summary>

@@ -76,11 +76,11 @@ namespace CtrDxEditor.Core.Editing
         /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
         /// past their rest length pick up the game's red stretch tint.
         /// </summary>
-        public static RopeVisual Build(Vec2 a, Vec2 b, double length)
+        public static RopeVisual Build(Vec2 a, Vec2 b, double length, int skin = 0)
         {
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
-            RopeDrawColors palette = RopePalette.GetDrawColors(0, distance, length);
+            RopeDrawColors palette = RopePalette.GetDrawColors(skin, distance, length);
 
             // The physics chain has 2 + floor(len/restLen) parts; the game's draw loop needs >= 3.
             int count = Math.Max(3, 2 + (int)(length / RestLength));

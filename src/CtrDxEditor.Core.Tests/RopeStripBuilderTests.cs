@@ -151,6 +151,19 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(300, visual.SamplePoints[^1].X, 6);
         }
 
+        /// <summary>A non-default skin produces different rope colors than the default skin.</summary>
+        [Fact]
+        public void BuildHonorsSkinProducesDifferentColorsThanDefault()
+        {
+            Vec2 a = new(0, 0);
+            Vec2 b = new(50, 0);
+            RopeVisual def = RopeStripBuilder.Build(a, b, 60, skin: 0);
+            RopeVisual blue = RopeStripBuilder.Build(a, b, 60, skin: 2);
+            RopeRgba defColor = def.Strips[0].Colors[0];
+            RopeRgba blueColor = blue.Strips[0].Colors[0];
+            Assert.NotEqual((defColor.R, defColor.G, defColor.B), (blueColor.R, blueColor.G, blueColor.B));
+        }
+
         /// <summary>Lights sit on every 6th sample point, skipping 4 points at each end (game cadence).</summary>
         [Fact]
         public void ChristmasLightPointsFollowGameCadence()

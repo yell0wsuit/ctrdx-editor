@@ -52,6 +52,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
 
+        /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
+        public static readonly StyledProperty<int> ActiveRopeSkinProperty =
+            AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveRopeSkin));
+
         /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
         public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
             AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
@@ -83,7 +87,7 @@ namespace CtrDxEditor.Rendering
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
-                ShowHitboxesProperty, ShowMobileHitboxesProperty);
+                ShowHitboxesProperty, ShowMobileHitboxesProperty, ActiveRopeSkinProperty);
         }
 
         /// <summary>The loaded level document to render and edit.</summary>
@@ -109,6 +113,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether phone hitboxes are drawn over objects.</summary>
         public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
+
+        /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
+        public int ActiveRopeSkin { get => GetValue(ActiveRopeSkinProperty); set => SetValue(ActiveRopeSkinProperty, value); }
 
         /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
         public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }
@@ -355,7 +362,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab")
                 {
-                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts);
+                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts, ActiveRopeSkin);
                     DrawGrab(context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds);
                     if (rope is not null)
                     {
