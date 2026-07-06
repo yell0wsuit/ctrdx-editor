@@ -93,29 +93,38 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        // Consecutive rail pieces overlap by this many screen pixels. Abutting two images at a fractional
+        // coordinate leaves a sub-pixel seam (each edge is anti-aliased against transparent), so every tile
+        // bleeds a hair into its neighbour to cover it - the same trick the game uses on the middle rail.
+        private const double Bleed = 1.0;
+
         // Draws the rail bar between local x = startX (near end) and endX (far end): the center tile is
-        // repeated to fill the span (the last tile clipped), then the two caps sit just outside each end.
+        // repeated to fill the span (the last tile clipped to fit), then the two caps sit just outside each
+        // end. Full tiles and the caps are stretched by Bleed so neighbours overlap and hide the seams.
         private static void DrawRail(
             DrawingContext ctx, SpriteLayerDraw left, SpriteLayerDraw center, SpriteLayerDraw right,
             double startX, double endX, double z)
         {
             double ch = PieceSize(center, z, horizontal: false);
             double cw = PieceSize(center, z, horizontal: true);
+            IntRect cf = center.Frame.Frame;
             for (double x = startX; x < endX - 0.01; x += cw)
             {
-                double tileW = Math.Min(cw, endX - x);
-                IntRect f = center.Frame.Frame;
-                Rect src = new(f.X, f.Y, f.W * (tileW / cw), f.H);
-                DrawFrame(ctx, center, new Rect(x, -ch / 2, tileW, ch), src);
+                double remaining = endX - x;
+                bool partial = remaining < cw;
+                double drawW = partial ? remaining : cw + Bleed;      // full tiles bleed into the next
+                double srcW = partial ? cf.W * (remaining / cw) : cf.W; // never sample past the frame
+                DrawFrame(ctx, center, new Rect(x, -ch / 2, drawW, ch), new Rect(cf.X, cf.Y, srcW, cf.H));
             }
 
+            // Caps sit outside each end and extend Bleed inward, over the center, to cover the junction seam.
             double lw = PieceSize(left, z, horizontal: true);
             double lh = PieceSize(left, z, horizontal: false);
-            DrawFrame(ctx, left, new Rect(startX - lw, -lh / 2, lw, lh));
+            DrawFrame(ctx, left, new Rect(startX - lw, -lh / 2, lw + Bleed, lh));
 
             double rw = PieceSize(right, z, horizontal: true);
             double rh = PieceSize(right, z, horizontal: false);
-            DrawFrame(ctx, right, new Rect(endX, -rh / 2, rw, rh));
+            DrawFrame(ctx, right, new Rect(endX - Bleed, -rh / 2, rw + Bleed, rh));
         }
 
         // A rail piece's on-screen size along one axis: atlas pixels mapped to level units (÷ MapScale)
