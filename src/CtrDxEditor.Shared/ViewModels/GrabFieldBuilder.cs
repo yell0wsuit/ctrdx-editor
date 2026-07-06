@@ -93,6 +93,10 @@ namespace CtrDxEditor.ViewModels
             {
                 fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, !gun));
             }
+
+            // The game hides an invisible grab (and its rope) entirely; the editor keeps it visible but
+            // pale so it stays selectable. Works for every grab type, so it is never gated.
+            fields.Add(Attr(grab, "invisible", AttrType.Bool, onChanged, true));
         }
 
         private static AttributeFieldViewModel Attr(

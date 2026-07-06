@@ -96,6 +96,7 @@
     "Attr.spider": "Spider",
     "Attr.kickable": "Suction cup",
     "Attr.kicked": "Detached",
+    "Attr.invisible": "Invisible",
     "Attr.autoCatch": "Auto rope",
     "Attr.movable": "Movable rail",
     "Attr.litRadius": "Lit radius",

@@ -446,11 +446,45 @@ namespace CtrDxEditor.Rendering
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
         }
 
+        // A pale grab is one the game hides outright (invisible="true"); the editor keeps it visible at
+        // this opacity so it stays selectable and editable rather than vanishing.
+        private const double InvisibleGrabOpacity = 0.3;
+
         // Draws a grab with its rope threaded between the hook's back and front art, matching the game's
-        // Grab.DrawBack (back art) then Grab.Draw (rope, then front art) order. A movable grab splits into
-        // its rail bar (back) and movable hook (front); every other grab splits its sprite layers by
+        // Grab.DrawBack (back art) then Grab.Draw (rope, then front art) order. An invisible grab (hidden
+        // entirely in-game) is drawn pale so it can still be selected. A movable grab splits into its rail
+        // bar (back) and movable hook (front); every other grab splits its sprite layers by
         // GrabRenderer.BackLayerCount. rope is null when the grab has nothing to hang from.
         private void DrawGrab(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            bool twoParts,
+            RopeVisual? rope,
+            int ropeSeed,
+            Rect opBounds)
+        {
+            if (IsInvisible(obj))
+            {
+                using (ctx.PushOpacity(InvisibleGrabOpacity))
+                {
+                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds);
+                }
+            }
+            else
+            {
+                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds);
+            }
+        }
+
+        private static bool IsInvisible(LevelObject obj)
+        {
+            return bool.TryParse(obj.GetAttr("invisible"), out bool b) && b;
+        }
+
+        private void DrawGrabContent(
             DrawingContext ctx,
             ViewTransform v,
             SpriteCache sprites,
