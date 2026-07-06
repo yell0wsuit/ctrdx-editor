@@ -347,7 +347,8 @@ namespace CtrDxEditor.Rendering
                 double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
                 BackgroundLayout layout = BackgroundPlacement.Compute(
                     doc.Width, doc.Height, bgSize.Height / bgSize.Width,
-                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground));
+                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
+                    SpriteCache.GetEarthBgPosition(ActiveBackground));
 
                 // Clip vertically to the level's height (full canvas width, so the wide column still
                 // shows past the level sides), keeping the background within the level's own span.
@@ -365,6 +366,22 @@ namespace CtrDxEditor.Rendering
                     if (layout.P2 is { } p2b && p2 is not null)
                     {
                         context.DrawImage(p2, new Rect(p2.Size), LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                    }
+
+                    // Cosmic box only: the earth sprite the game draws over the background (GameScene.Draw
+                    // earthAnims). Static here - the game's gravity-flip spin has no editor equivalent.
+                    // The game centers the trimmed quad directly on earthBgPosition (Image with anchor
+                    // CENTER and restoreCutTransparency off, so DrawQuad applies no trim offset), so place
+                    // the frame itself - not the untrimmed sourceSize box that SpritePlacement would use.
+                    if (layout.EarthCenter is { } ec && sprites.GetEarthArt() is { } earthArt)
+                    {
+                        IntRect ef = earthArt.Frame.Frame;
+                        double ew = ef.W / SpritePlacement.MapScale;
+                        double eh = ef.H / SpritePlacement.MapScale;
+                        context.DrawImage(
+                            earthArt.Bitmap,
+                            new Rect(ef.X, ef.Y, ef.W, ef.H),
+                            LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
                     }
                 }
             }

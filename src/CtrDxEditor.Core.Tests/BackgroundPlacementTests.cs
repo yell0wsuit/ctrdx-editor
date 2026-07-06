@@ -65,6 +65,29 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(screenW * p2Aspect, p2.H, precision: 9);
         }
 
+        /// <summary>No earth layer by default; the cosmic box supplies its position explicitly.</summary>
+        [Fact]
+        public void NoEarthWithoutPosition()
+        {
+            BackgroundLayout layout = BackgroundPlacement.Compute(
+                levelWidth: 320, levelHeight: 480, p1Aspect: P1Aspect16By9);
+
+            Assert.Null(layout.EarthCenter);
+        }
+
+        /// <summary>The earth is center-anchored at earthBgPosition ÷ MapScale, offset by the column.</summary>
+        [Fact]
+        public void EarthCenteredAtScaledPosition()
+        {
+            BackgroundLayout layout = BackgroundPlacement.Compute(
+                levelWidth: 320, levelHeight: 480, p1Aspect: P1Aspect16By9,
+                earthPosition: new Vec2(1284, 724));
+
+            Vec2 earth = Assert.NotNull(layout.EarthCenter);
+            Assert.Equal(layout.Left + (1284.0 / 3.0), earth.X, precision: 9);
+            Assert.Equal(724.0 / 3.0, earth.Y, precision: 9);
+        }
+
         /// <summary>A missing p2 (no p2Y) yields no p2 even for tall maps.</summary>
         [Fact]
         public void NoP2WhenP2YIsZero()

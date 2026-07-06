@@ -10,7 +10,9 @@ namespace CtrDxEditor.Core.Editing
     /// <param name="Width">Level-space width of the p1 column (the internal screen width).</param>
     /// <param name="TileHeight">Level-space height of one p1 tile; repeat this down from y=0.</param>
     /// <param name="P2">The secondary background's bounds, or null when the map is short or has no p2.</param>
-    public readonly record struct BackgroundLayout(double Left, double Width, double TileHeight, LevelBounds? P2);
+    /// <param name="EarthCenter">Level-space center of the earth decoration (cosmic box only), or null.</param>
+    public readonly record struct BackgroundLayout(
+        double Left, double Width, double TileHeight, LevelBounds? P2, Vec2? EarthCenter);
 
     /// <summary>
     /// Pure background placement math. The game (GameScene.Draw / GameScene.Init) draws the box
@@ -41,9 +43,13 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="p1Aspect">The decoded p1 bitmap's height ÷ width (aspect is preserved on decode).</param>
         /// <param name="p2Aspect">The decoded p2 bitmap's height ÷ width, or 0 when there is no p2.</param>
         /// <param name="p2Y">The pack's <c>boxBackgroundP2Y</c> (internal px), or 0 when there is no p2.</param>
+        /// <param name="earthPosition">
+        /// The earth decoration's center in internal pixels (the game's <c>earthBgPosition</c>, measured
+        /// from the p1 column's top-left), or null when the background has no earth layer.
+        /// </param>
         public static BackgroundLayout Compute(
             double levelWidth, double levelHeight, double p1Aspect,
-            double p2Aspect = 0.0, int p2Y = 0)
+            double p2Aspect = 0.0, int p2Y = 0, Vec2? earthPosition = null)
         {
             double width = LevelScreenWidth;
             double left = (levelWidth - width) / 2.0;
@@ -58,7 +64,13 @@ namespace CtrDxEditor.Core.Editing
                 p2 = new LevelBounds(left, p2Y / SpritePlacement.MapScale, width, width * p2Aspect);
             }
 
-            return new BackgroundLayout(left, width, tileHeight, p2);
+            // The earth is center-anchored at earthBgPosition within the p1 column's space (GameScene
+            // CreateEarthImageWithOffsetXY), so it maps to level space by ÷MapScale, offset by the column.
+            Vec2? earth = earthPosition is { } e
+                ? new Vec2(left + (e.X / SpritePlacement.MapScale), e.Y / SpritePlacement.MapScale)
+                : null;
+
+            return new BackgroundLayout(left, width, tileHeight, p2, earth);
         }
     }
 }

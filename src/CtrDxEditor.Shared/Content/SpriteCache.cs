@@ -79,6 +79,26 @@ namespace CtrDxEditor.Content
             return id >= 1 && id < BackgroundP2Y.Length ? BackgroundP2Y[id] : 0;
         }
 
+        /// <summary>
+        /// The earth decoration's center in internal pixels (the game's <c>earthBgPosition</c>) for the
+        /// given background id, or null when it has no earth layer. Only the cosmic box (bgr_08) does.
+        /// </summary>
+        public static Vec2? GetEarthBgPosition(int id)
+        {
+            return id == 8 ? new Vec2(1284, 724) : null;
+        }
+
+        /// <summary>
+        /// The earth decoration art (obj_star_idle quad 23) drawn on top of the cosmic-box background,
+        /// or null when the atlas isn't loaded. Center-anchored via <see cref="SpritePlacement"/>.
+        /// </summary>
+        public SpriteLayerDraw? GetEarthArt()
+        {
+            Bitmap? bitmap = LoadBitmap("images/obj_star_idle" + imageExtension);
+            AtlasFrame? frame = LoadAtlas("images/obj_star_idle.json")?.Find("frame_0058.png");
+            return bitmap is null || frame is null ? null : new SpriteLayerDraw(bitmap, frame);
+        }
+
         /// <summary>Creates a sprite cache for a desktop content folder.</summary>
         public SpriteCache(string contentRoot)
             : this(new FolderContentStore(contentRoot))
