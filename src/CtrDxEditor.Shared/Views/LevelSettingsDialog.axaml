@@ -5,15 +5,83 @@
              xmlns:ctrl="using:CtrDxEditor.Controls"
              x:Class="CtrDxEditor.Views.LevelSettingsDialog"
              x:DataType="vm:LevelSettingsViewModel">
-  <!-- Title and buttons stay pinned; the body scrolls so the dialog never grows past MaxHeight. -->
-  <Grid Margin="24" Width="360" MaxHeight="640" RowDefinitions="Auto,*,Auto">
-    <TextBlock x:Name="TitleText" Grid.Row="0" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <UserControl.Styles>
+    <Style Selector="RadioButton.PickerCard">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="4" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Stretch" />
+
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </ControlTemplate>
+      </Setter>
+    </Style>
+
+    <!-- Base card surface. -->
+    <Style Selector="RadioButton.PickerCard Border.card-surface">
+      <Setter Property="Background" Value="#14FFFFFF" />
+      <Setter Property="BorderBrush" Value="#22FFFFFF" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Hover state. -->
+    <Style Selector="RadioButton.PickerCard:pointerover Border.card-surface">
+      <Setter Property="Background" Value="#20FFFFFF" />
+      <Setter Property="BorderBrush" Value="#55FFFFFF" />
+    </Style>
+
+    <!-- Pressed state. -->
+    <Style Selector="RadioButton.PickerCard:pressed Border.card-surface">
+      <Setter Property="Background" Value="#28FFFFFF" />
+    </Style>
+
+    <!-- Selected state. -->
+    <Style Selector="RadioButton.PickerCard:checked Border.card-surface">
+      <Setter Property="Background" Value="#220078D7" />
+      <Setter Property="BorderBrush" Value="#FF0078D7" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <!-- Hidden by default; shown only on checked cards. -->
+    <Style Selector="RadioButton.PickerCard Border.selected-badge">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <Style Selector="RadioButton.PickerCard:checked Border.selected-badge">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+
+    <!-- Slightly brighten preview when hovering. -->
+    <Style Selector="RadioButton.PickerCard:pointerover Border.preview-frame">
+      <Setter Property="Opacity" Value="0.95" />
+    </Style>
+
+  </UserControl.Styles>
+
+  <Grid Margin="24" Width="360" MaxHeight="640" RowDefinitions="Auto,*,Auto">
+    <TextBlock x:Name="TitleText"
+               Grid.Row="0"
+               FontSize="18"
+               FontWeight="SemiBold"
+               Margin="0,0,0,12" />
+
+    <ScrollViewer Grid.Row="1"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="12">
+
         <StackPanel Spacing="4">
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.Resolution}" />
-          <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+
+          <ComboBox ItemsSource="{Binding Presets}"
+                    SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
                     HorizontalAlignment="Stretch">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:ResolutionPreset">
@@ -21,35 +89,74 @@
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
+
           <!-- The manual W×H inputs only appear when the "Custom…" preset is selected. -->
-          <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto" Margin="0,4,0,0" IsVisible="{Binding IsCustom}">
-            <NumericUpDown Grid.Row="0" Grid.Column="0" Minimum="320" Maximum="9999" Increment="1" FormatString="0"
+          <Grid ColumnDefinitions="*,Auto,*"
+                RowDefinitions="Auto,Auto"
+                Margin="0,4,0,0"
+                IsVisible="{Binding IsCustom}">
+            <NumericUpDown Grid.Row="0"
+                           Grid.Column="0"
+                           Minimum="320"
+                           Maximum="9999"
+                           Increment="1"
+                           FormatString="0"
                            Value="{Binding CustomWidth, Mode=TwoWay}" />
-            <TextBlock Grid.Row="0" Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="8,0" />
-            <NumericUpDown Grid.Row="0" Grid.Column="2" Minimum="480" Maximum="9999" Increment="1" FormatString="0"
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="1"
+                       Text="x"
+                       VerticalAlignment="Center"
+                       Margin="8,0" />
+
+            <NumericUpDown Grid.Row="0"
+                           Grid.Column="2"
+                           Minimum="480"
+                           Maximum="9999"
+                           Increment="1"
+                           FormatString="0"
                            Value="{Binding CustomHeight, Mode=TwoWay}" />
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="#E06C75" FontSize="12" Margin="0,2,0,0"
+
+            <TextBlock Grid.Row="1"
+                       Grid.Column="0"
+                       Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                       Foreground="#E06C75"
+                       FontSize="12"
+                       Margin="0,2,0,0"
                        IsVisible="{Binding CustomWidth, Converter={x:Static ObjectConverters.IsNull}}" />
-            <TextBlock Grid.Row="1" Grid.Column="2" Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="#E06C75" FontSize="12" Margin="0,2,0,0"
+
+            <TextBlock Grid.Row="1"
+                       Grid.Column="2"
+                       Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                       Foreground="#E06C75"
+                       FontSize="12"
+                       Margin="0,2,0,0"
                        IsVisible="{Binding CustomHeight, Converter={x:Static ObjectConverters.IsNull}}" />
           </Grid>
         </StackPanel>
 
         <StackPanel Spacing="4">
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}" />
+
           <!-- Negatives are permitted (DX parses them without clamping), though only positive speeds are meaningful. -->
-          <NumericUpDown Minimum="-100" Maximum="100" Increment="0.1" FormatString="0.0#"
+          <NumericUpDown Minimum="-100"
+                         Maximum="100"
+                         Increment="0.1"
+                         FormatString="0.0#"
                          Value="{Binding RopePhysicsSpeed, Mode=TwoWay}" />
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}" Foreground="#E06C75" FontSize="12"
+
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                     Foreground="#E06C75"
+                     FontSize="12"
                      IsVisible="{Binding RopePhysicsSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
         </StackPanel>
 
         <StackPanel Spacing="4">
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
                      ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}" />
-          <ComboBox ItemsSource="{Binding SpecialOptions}" SelectedItem="{Binding SelectedSpecial, Mode=TwoWay}"
+
+          <ComboBox ItemsSource="{Binding SpecialOptions}"
+                    SelectedItem="{Binding SelectedSpecial, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
                     ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}">
             <ComboBox.ItemTemplate>
@@ -58,95 +165,200 @@
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
+
           <!-- The manual value input only appears when the "Custom…" option is selected. -->
-          <StackPanel Spacing="2" IsVisible="{Binding IsSpecialCustom}">
-            <NumericUpDown Minimum="0" Maximum="99" Increment="1" FormatString="0"
+          <StackPanel Spacing="2"
+                      IsVisible="{Binding IsSpecialCustom}">
+            <NumericUpDown Minimum="0"
+                           Maximum="99"
+                           Increment="1"
+                           FormatString="0"
                            Value="{Binding CustomSpecial, Mode=TwoWay}" />
-            <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}" Foreground="#E06C75" FontSize="12"
+
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                       Foreground="#E06C75"
+                       FontSize="12"
                        IsVisible="{Binding CustomSpecial, Converter={x:Static ObjectConverters.IsNull}}" />
           </StackPanel>
         </StackPanel>
 
         <StackPanel Spacing="4">
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
-                    IsChecked="{Binding TwoParts, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
+                    IsChecked="{Binding TwoParts, Mode=TwoWay}"
+                    IsEnabled="{Binding FlagsEditable}">
             <ToolTip.Tip>
               <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.HalfCandyDescription}" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:Tr Dialog.LevelSettings.HalfCandyDescription}"
+                           TextWrapping="Wrap" />
               </StackPanel>
             </ToolTip.Tip>
           </CheckBox>
+
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
-                    IsChecked="{Binding NightLevel, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
+                    IsChecked="{Binding NightLevel, Mode=TwoWay}"
+                    IsEnabled="{Binding FlagsEditable}">
             <ToolTip.Tip>
               <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.NightLevelDescription}" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:Tr Dialog.LevelSettings.NightLevelDescription}"
+                           TextWrapping="Wrap" />
               </StackPanel>
             </ToolTip.Tip>
           </CheckBox>
+
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
-                    IsChecked="{Binding UseMobilePhysics, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
+                    IsChecked="{Binding UseMobilePhysics, Mode=TwoWay}"
+                    IsEnabled="{Binding FlagsEditable}">
             <ToolTip.Tip>
               <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}"
+                           TextWrapping="Wrap" />
               </StackPanel>
             </ToolTip.Tip>
           </CheckBox>
         </StackPanel>
 
-        <!-- Editor-decoration pickers (new-level mode only). These never touch the level XML. Each option
-             is a card: preview on top, radio button + label below, flowing into rows and columns. The
-             expanders open to full content height; the dialog body scrolls rather than growing. -->
-        <StackPanel Spacing="8" IsVisible="{Binding ShowDecoration}">
-          <Expander Header="{loc:Tr Dialog.LevelSettings.RopeColor}" IsExpanded="False"
-                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-            <ItemsControl ItemsSource="{Binding RopeSkinOptions}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <WrapPanel />
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:RopeSkinOption">
-                  <Border Width="84" Margin="3" Padding="4" CornerRadius="4" Background="#14FFFFFF">
-                    <StackPanel Spacing="4">
-                      <ctrl:RopeSwatch Width="72" Height="26" HorizontalAlignment="Center" Skin="{Binding Id}" />
-                      <RadioButton GroupName="RopeSkin" HorizontalAlignment="Center"
-                                   IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                        <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" />
-                      </RadioButton>
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+        <!-- Editor-decoration pickers, new-level mode only. -->
+        <StackPanel Spacing="8"
+                    IsVisible="{Binding ShowDecoration}">
+
+          <Expander Header="{loc:Tr Dialog.LevelSettings.RopeColor}"
+                    IsExpanded="False"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch">
+            <Border Padding="2,8,2,2">
+              <ItemsControl ItemsSource="{Binding RopeSkinOptions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RopeSkinOption">
+                    <RadioButton Classes="PickerCard"
+                                 GroupName="RopeSkin"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
+
+                      <Grid Width="96">
+                        <Border Classes="card-surface"
+                                Padding="8"
+                                CornerRadius="10">
+                          <StackPanel Spacing="7">
+
+                            <Border Classes="preview-frame"
+                                    Height="36"
+                                    CornerRadius="7"
+                                    Background="#252525"
+                                    ClipToBounds="True">
+                              <ctrl:RopeSwatch Width="76"
+                                                Height="28"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Skin="{Binding Id}" />
+                            </Border>
+
+                            <TextBlock Text="{Binding Label}"
+                                       FontSize="12"
+                                       LineHeight="14"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       MinHeight="30" />
+
+                          </StackPanel>
+                        </Border>
+
+                        <Border Classes="selected-badge"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="10"
+                                Background="#FF0078D7"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,-4,-4,0">
+                          <TextBlock Text="✓"
+                                     Foreground="White"
+                                     FontSize="12"
+                                     FontWeight="Bold"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
+                        </Border>
+                      </Grid>
+                    </RadioButton>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
           </Expander>
 
-          <Expander Header="{loc:Tr Dialog.LevelSettings.Background}" IsExpanded="False"
-                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-            <ItemsControl ItemsSource="{Binding BackgroundOptions}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <WrapPanel />
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:BackgroundOption">
-                  <Border Width="84" Margin="3" Padding="4" CornerRadius="4" Background="#14FFFFFF">
-                    <StackPanel Spacing="4">
-                      <Border Width="72" Height="48" Background="#222" ClipToBounds="True" CornerRadius="2"
-                              HorizontalAlignment="Center">
-                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
-                      </Border>
-                      <RadioButton GroupName="Background" HorizontalAlignment="Center"
-                                   IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                        <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" />
-                      </RadioButton>
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+          <Expander Header="{loc:Tr Dialog.LevelSettings.Background}"
+                    IsExpanded="False"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch">
+            <Border Padding="2,8,2,2">
+              <ItemsControl ItemsSource="{Binding BackgroundOptions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:BackgroundOption">
+                    <RadioButton Classes="PickerCard"
+                                 GroupName="Background"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
+
+                      <Grid Width="150">
+                        <Border Classes="card-surface"
+                                Padding="8"
+                                CornerRadius="10">
+                          <StackPanel Spacing="7">
+
+                            <Border Classes="preview-frame"
+                                    Height="72"
+                                    Background="#222"
+                                    ClipToBounds="True"
+                                    CornerRadius="7"
+                                    HorizontalAlignment="Stretch">
+                              <Image Source="{Binding Thumbnail}"
+                                     Stretch="UniformToFill" />
+                            </Border>
+
+                            <TextBlock Text="{Binding Label}"
+                                       FontSize="12"
+                                       LineHeight="14"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       MinHeight="30" />
+
+                          </StackPanel>
+                        </Border>
+
+                        <Border Classes="selected-badge"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="10"
+                                Background="#FF0078D7"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,-4,-4,0">
+                          <TextBlock Text="✓"
+                                     Foreground="White"
+                                     FontSize="12"
+                                     FontWeight="Bold"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
+                        </Border>
+                      </Grid>
+                    </RadioButton>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
           </Expander>
 
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberCustomizationChoice}"
@@ -155,9 +367,18 @@
       </StackPanel>
     </ScrollViewer>
 
-    <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0">
-      <Button Grid.Column="1" Content="{loc:Tr Dialog.Common.Cancel}" Click="Cancel_Click" Margin="0,0,8,0" />
-      <Button Grid.Column="2" x:Name="ConfirmButton" Click="Confirm_Click" Classes="accent"
+    <Grid Grid.Row="2"
+          ColumnDefinitions="*,Auto,Auto"
+          Margin="0,12,0,0">
+      <Button Grid.Column="1"
+              Content="{loc:Tr Dialog.Common.Cancel}"
+              Click="Cancel_Click"
+              Margin="0,0,8,0" />
+
+      <Button Grid.Column="2"
+              x:Name="ConfirmButton"
+              Click="Confirm_Click"
+              Classes="accent"
               IsEnabled="{Binding CanConfirm}" />
     </Grid>
   </Grid>
