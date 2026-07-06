@@ -244,5 +244,24 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel field = vm.Fields.Single(f => f.Name == "candyNumber");
             Assert.Equal("0", field.Value);
         }
+
+        /// <summary>Gun greys out the Attach-to control rather than removing it, avoiding a layout shift.</summary>
+        [Fact]
+        public void GunGraysOutAttachToInsteadOfHiding()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
+            _ = vm.PlaceObject("candy", 300, 200);
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.True(vm.Fields.Single(f => f.Name == "attachTo").IsEnabled);
+
+            vm.Fields.Single(f => f.Name == "gun").BoolValue = true;
+
+            Assert.Contains(vm.Fields, f => f.Name == "attachTo");
+            Assert.False(vm.Fields.Single(f => f.Name == "attachTo").IsEnabled);
+        }
     }
 }

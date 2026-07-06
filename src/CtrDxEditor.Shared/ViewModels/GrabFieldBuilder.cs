@@ -38,39 +38,36 @@ namespace CtrDxEditor.ViewModels
                 rebuild();
             }
 
-            if (!gun)
+            // Attach to stays in place but greys out for gun (a gun grab has no rope target),
+            // rather than disappearing and shifting every field below it.
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.Objects, twoParts);
+            if (options.Count >= 2)
             {
-                IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.Objects, twoParts);
-                if (options.Count >= 2)
-                {
-                    AttributeOptionViewModel[] vmOptions =
-                        [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];
-                    fields.Add(new AttributeFieldViewModel(
-                        "attachTo",
-                        vmOptions,
-                        () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
-                        token => GrabBinding.Apply(grab, token ?? "primary"),
-                        onChanged));
-                }
+                AttributeOptionViewModel[] vmOptions =
+                    [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];
+                fields.Add(new AttributeFieldViewModel(
+                    "attachTo",
+                    vmOptions,
+                    () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
+                    token => GrabBinding.Apply(grab, token ?? "primary"),
+                    onChanged)
+                { IsEnabled = !gun });
             }
 
             bool geomEnabled = !gun;
 
-            if (!autoCatch)
-            {
-                fields.Add(Attr(grab, "length", AttrType.Whole, onChanged, geomEnabled));
-            }
-
+            // The Auto-catch toggle comes first, then length XOR radius fill the same slot beneath
+            // it. Because exactly one of the two is always shown, toggling swaps the row in place
+            // without shifting the toggle or the fields below it.
             fields.Add(Synthetic(
                 "autoCatch",
                 () => autoCatch,
                 on => grab.SetAttr("radius", on ? "100" : "-1"),
                 Structural,
                 geomEnabled));
-            if (autoCatch)
-            {
-                fields.Add(Attr(grab, "radius", AttrType.Whole, onChanged, geomEnabled));
-            }
+            fields.Add(autoCatch
+                ? Attr(grab, "radius", AttrType.Whole, onChanged, geomEnabled)
+                : Attr(grab, "length", AttrType.Whole, onChanged, geomEnabled));
 
             fields.Add(Synthetic(
                 "movable",
