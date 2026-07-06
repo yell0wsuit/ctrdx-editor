@@ -81,6 +81,7 @@ namespace CtrDxEditor.Tests
             Assert.True(done.Wait(TimeSpan.FromSeconds(10)), "GetBackground deadlocked the calling thread.");
         }
 
+        /// <summary>Non-positive ids (Blank/unresolved-Random) resolve to no background bitmap.</summary>
         [Fact]
         public void GetBackgroundReturnsNullForNonPositiveIds()
         {

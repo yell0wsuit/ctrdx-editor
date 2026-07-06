@@ -9,6 +9,7 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the sprites for split candy halves and the light bulb.</summary>
     public class SplitCandyAndBulbVisualTests
     {
+        /// <summary>Each split-candy half uses the half-candy sprite at 0.71 scale with its own frame.</summary>
         [Theory]
         [InlineData("candyL")]
         [InlineData("candyR")]
@@ -22,6 +23,7 @@ namespace CtrDxEditor.Tests
                 half.Layers.Select(l => l.FrameName));
         }
 
+        /// <summary>The light bulb draws the obj_lighter bottle and top layers.</summary>
         [Fact]
         public void LightBulbUsesObjLighterBottleAndTop()
         {
@@ -33,6 +35,7 @@ namespace CtrDxEditor.Tests
             Assert.All(bulb.Layers, l => Assert.Equal("images/obj_lighter.json", l.AtlasJsonRelPath));
         }
 
+        /// <summary>The bulb's obj_lighter image and atlas are listed among the required content files.</summary>
         [Fact]
         public void RequiredFilesIncludeObjLighter()
         {
