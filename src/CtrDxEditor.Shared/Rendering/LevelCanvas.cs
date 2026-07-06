@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -56,6 +57,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<int> ActiveRopeSkinProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveRopeSkin));
 
+        /// <summary>Editor-decoration background id (0 = none, 1..7 = bgr_01..bgr_07).</summary>
+        public static readonly StyledProperty<int> ActiveBackgroundProperty =
+            AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveBackground));
+
         /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
         public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
             AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
@@ -87,7 +92,8 @@ namespace CtrDxEditor.Rendering
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
-                ShowHitboxesProperty, ShowMobileHitboxesProperty, ActiveRopeSkinProperty);
+                ShowHitboxesProperty, ShowMobileHitboxesProperty,
+                ActiveRopeSkinProperty, ActiveBackgroundProperty);
         }
 
         /// <summary>The loaded level document to render and edit.</summary>
@@ -116,6 +122,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
         public int ActiveRopeSkin { get => GetValue(ActiveRopeSkinProperty); set => SetValue(ActiveRopeSkinProperty, value); }
+
+        /// <summary>Editor-decoration background id (0 = none, 1..7 = bgr_01..bgr_07).</summary>
+        public int ActiveBackground { get => GetValue(ActiveBackgroundProperty); set => SetValue(ActiveBackgroundProperty, value); }
 
         /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
         public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }
@@ -317,6 +326,17 @@ namespace CtrDxEditor.Rendering
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
             context.DrawRectangle(null, new Pen(Brushes.DimGray, 1),
                 new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
+
+            // Editor-decoration background: drawn clipped to the level rect, under the grid.
+            Bitmap? bg = sprites.GetBackground(ActiveBackground);
+            if (bg is not null)
+            {
+                Rect levelRect = new(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+                using (context.PushClip(levelRect))
+                {
+                    context.DrawImage(bg, new Rect(bg.Size), levelRect);
+                }
+            }
 
             int grid = doc.GridSize > 0 ? doc.GridSize : 32;
             Pen gridPen = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);

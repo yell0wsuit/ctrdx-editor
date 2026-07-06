@@ -42,6 +42,7 @@ namespace CtrDxEditor.Content
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
         private readonly Dictionary<string, Bitmap?> _thumbnails = [];
+        private readonly Dictionary<int, Bitmap?> _backgrounds = [];
 
         /// <summary>Creates a sprite cache for a desktop content folder.</summary>
         public SpriteCache(string contentRoot)
@@ -102,6 +103,39 @@ namespace CtrDxEditor.Content
             return bitmap is null || atlas is null || atlas.Frames.Count == 0
                 ? null
                 : new ChristmasLightsArt(bitmap, atlas.Frames);
+        }
+
+        /// <summary>
+        /// Decodes the p1 background image for the given decoration id (1..7 = bgr_01..bgr_07),
+        /// or returns null for id &lt;= 0 (Blank/Random-unresolved) or a missing/unreadable file.
+        /// Cached for the process lifetime.
+        /// </summary>
+        public Bitmap? GetBackground(int id)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+            if (_backgrounds.TryGetValue(id, out Bitmap? cached))
+            {
+                return cached;
+            }
+
+            Bitmap? bmp = null;
+            try
+            {
+                string rel = $"images/backgrounds/bgr_{id:D2}_p1.png";
+                byte[] bytes = store.ReadBytesAsync(rel).GetAwaiter().GetResult();
+                using MemoryStream ms = new(bytes);
+                bmp = new Bitmap(ms);
+            }
+            catch (Exception ex) when (ex is IOException or FileNotFoundException or InvalidOperationException)
+            {
+                bmp = null;
+            }
+
+            _backgrounds[id] = bmp;
+            return bmp;
         }
 
         /// <summary>A small composited preview of an object's sprite, for the palette. Cached per element.</summary>
