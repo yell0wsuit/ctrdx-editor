@@ -333,6 +333,23 @@ namespace CtrDxEditor.Rendering
             // (Grab.DrawBack + Grab.Draw). Ropes with no target resolve to null and are skipped, keeping the
             // per-rope seed (for seasonal light frames) in step with the grabs that actually have a rope.
             Rect opBounds = new(Bounds.Size);
+
+            // Light-bulb lit-glow halos: an additive Skia pass under the bottles, matching the game's
+            // DrawLight-then-bottle order. Drawn once for every bulb with a positive litRadius.
+            List<(Vec2 Center, double Radius)> glowBulbs = [];
+            foreach (LevelObject o in objects)
+            {
+                if (o.Type == "lightBulb" && RadiusRing.Of(o) is { } ring)
+                {
+                    glowBulbs.Add((new Vec2(o.X, o.Y), ring.Radius));
+                }
+            }
+            if (glowBulbs.Count > 0 && sprites.GetSprite("lightBulb_glow") is { Layers.Count: >= 1 } glow)
+            {
+                SpriteLayerDraw glowLayer = glow.Layers[0];
+                context.Custom(new GlowDrawOperation(opBounds, v, glowLayer.Bitmap, glowLayer.Frame.Frame, glowBulbs));
+            }
+
             int ropeSeed = 0;
             foreach (LevelObject obj in objects)
             {
