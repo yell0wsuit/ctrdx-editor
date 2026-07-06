@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
+using Avalonia.Media;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CtrDxEditor.Content;
@@ -21,7 +23,11 @@ namespace CtrDxEditor.ViewModels
     public sealed record RopeSkinOption(int Id, string Label);
 
     /// <summary>One selectable background; Id -1 is Random, 0 is Blank (no background), 1..7 = bgr_01..bgr_07.</summary>
-    public sealed record BackgroundOption(int Id, string Label);
+    public sealed record BackgroundOption(int Id, string Label)
+    {
+        /// <summary>A preview of the background art, populated when the dialog is built; null for Blank/Random.</summary>
+        public IImage? Thumbnail { get; set; }
+    }
 
     /// <summary>View model for the New / Level Settings dialog.</summary>
     public sealed partial class LevelSettingsViewModel : ViewModelBase

@@ -65,6 +65,9 @@
     "Dialog.LevelSettings.NightLevelDescription": "Enable the usage of night level mechanic, as demonstrated in Pillow Box.",
     "Dialog.LevelSettings.MobilePhysics": "Use mobile physics",
     "Dialog.LevelSettings.MobilePhysicsDescription": "Use the mobile physics model (writes useMobilePhysics to the level's gameDesign).",
+    "Dialog.LevelSettings.RopeColor": "Rope color",
+    "Dialog.LevelSettings.Background": "Background",
+    "Dialog.LevelSettings.RememberChoice": "Remember my choice",
     "Dialog.LevelSettings.Create": "Create",
     "Dialog.LevelSettings.Save": "Save",
 

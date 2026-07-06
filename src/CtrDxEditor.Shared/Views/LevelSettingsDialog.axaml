@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:ctrl="using:CtrDxEditor.Controls"
              x:Class="CtrDxEditor.Views.LevelSettingsDialog"
              x:DataType="vm:LevelSettingsViewModel">
   <StackPanel Margin="24" Spacing="12" Width="360">
@@ -88,6 +89,44 @@
           </StackPanel>
         </ToolTip.Tip>
       </CheckBox>
+    </StackPanel>
+
+    <!-- Editor-decoration pickers (new-level mode only). These never touch the level XML. -->
+    <StackPanel Spacing="8" IsVisible="{Binding ShowDecoration}">
+      <Expander Header="{loc:Tr Dialog.LevelSettings.RopeColor}" IsExpanded="False">
+        <ListBox ItemsSource="{Binding RopeSkinOptions}"
+                 SelectedValue="{Binding SelectedRopeSkin, Mode=TwoWay}" SelectedValueBinding="{Binding Id}"
+                 MaxHeight="220">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:RopeSkinOption">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <ctrl:RopeSwatch Width="60" Height="28" Skin="{Binding Id}" />
+                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Expander>
+
+      <Expander Header="{loc:Tr Dialog.LevelSettings.Background}" IsExpanded="False">
+        <ListBox ItemsSource="{Binding BackgroundOptions}"
+                 SelectedValue="{Binding SelectedBackground, Mode=TwoWay}" SelectedValueBinding="{Binding Id}"
+                 MaxHeight="260">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:BackgroundOption">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Border Width="48" Height="32" Background="#222" ClipToBounds="True">
+                  <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                </Border>
+                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Expander>
+
+      <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberChoice}"
+                IsChecked="{Binding RememberDecoration, Mode=TwoWay}" />
     </StackPanel>
 
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">

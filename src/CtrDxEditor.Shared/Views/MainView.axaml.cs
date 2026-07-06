@@ -246,11 +246,15 @@ namespace CtrDxEditor.Views
             }
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForNew();
             dialogVm.LoadDecoration(vm.CurrentSettingsSnapshot);
+            foreach (BackgroundOption option in dialogVm.BackgroundOptions)
+            {
+                option.Thumbnail = vm.Sprites.GetBackground(option.Id);
+            }
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
-                (int ropeSkin, int background) = dialogVm.ResolveDecoration(System.Random.Shared);
+                (int ropeSkin, int background) = dialogVm.ResolveDecoration(Random.Shared);
                 vm.NewLevel(settings, ropeSkin, background);
 
                 dialogVm.WriteDecorationInto(vm.CurrentSettingsSnapshot);
