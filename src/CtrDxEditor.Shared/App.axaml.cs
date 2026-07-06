@@ -92,7 +92,10 @@ namespace CtrDxEditor
             {
                 SpriteCache sprites = new(store, _startup.SpriteImageExtension);
                 await sprites.PreloadAsync();
-                root.DataContext = new EditorViewModel(sprites);
+                EditorSettings initial = await _startup.Settings.LoadAsync();
+                EditorViewModel editor = new(sprites, _startup.Settings, initial);
+                editor.InitializeDecorationFromSettings();
+                root.DataContext = editor;
                 return true;
             }
             catch (Exception ex)

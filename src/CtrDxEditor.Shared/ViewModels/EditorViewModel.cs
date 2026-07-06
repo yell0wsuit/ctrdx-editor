@@ -16,9 +16,17 @@ namespace CtrDxEditor.ViewModels
 {
     /// <summary>Main editor state and commands shared by the window and canvas.</summary>
     /// <param name="sprites">Already-preloaded sprite cache for the active content.</param>
-    public sealed partial class EditorViewModel(SpriteCache sprites) : ViewModelBase
+    /// <param name="settings">Persisted editor settings store, or null in tests that don't exercise persistence.</param>
+    /// <param name="initial">The editor settings snapshot loaded at startup (decoration defaults, content path).</param>
+    public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
     {
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
+
+        /// <summary>Persisted editor settings store, for reading/writing decoration defaults; null when unavailable.</summary>
+        public ISettingsStore? Settings { get; } = settings;
+
+        /// <summary>The last-loaded editor settings snapshot (decoration defaults, content path).</summary>
+        public EditorSettings CurrentSettingsSnapshot { get; set; } = initial ?? new EditorSettings();
 
         [ObservableProperty] public partial LevelDocument? Document { get; set; }
         [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
@@ -63,10 +71,22 @@ namespace CtrDxEditor.ViewModels
             LevelLoaded?.Invoke();
         }
 
-        /// <summary>Creates a new empty level from the given settings and loads it into the editor.</summary>
-        public void NewLevel(LevelSettings settings)
+        /// <summary>
+        /// Restores the active editor decoration from the persisted snapshot at startup.
+        /// Random/Blank (ids &lt;= 0) fall back to the plain defaults on open.
+        /// </summary>
+        public void InitializeDecorationFromSettings()
+        {
+            ActiveRopeSkin = CurrentSettingsSnapshot.RopeSkin >= 0 ? CurrentSettingsSnapshot.RopeSkin : 0;
+            ActiveBackground = CurrentSettingsSnapshot.Background > 0 ? CurrentSettingsSnapshot.Background : 0;
+        }
+
+        /// <summary>Creates a new empty level from the given settings and applies the chosen editor decoration.</summary>
+        public void NewLevel(LevelSettings settings, int ropeSkin = 0, int background = 0)
         {
             Document = LevelDocument.CreateNew(settings);
+            ActiveRopeSkin = ropeSkin;
+            ActiveBackground = background;
             SelectedObject = null;
             LockedObject = null;
             RefreshPalette();

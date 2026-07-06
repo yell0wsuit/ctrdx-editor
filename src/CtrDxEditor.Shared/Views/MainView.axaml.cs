@@ -244,11 +244,20 @@ namespace CtrDxEditor.Views
             {
                 return;
             }
-            LevelSettingsDialog dialog = new() { DataContext = LevelSettingsViewModel.ForNew() };
+            LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForNew();
+            dialogVm.LoadDecoration(vm.CurrentSettingsSnapshot);
+            LevelSettingsDialog dialog = new() { DataContext = dialogVm };
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
-                vm.NewLevel(settings);
+                (int ropeSkin, int background) = dialogVm.ResolveDecoration(System.Random.Shared);
+                vm.NewLevel(settings, ropeSkin, background);
+
+                dialogVm.WriteDecorationInto(vm.CurrentSettingsSnapshot);
+                if (vm.Settings is { } store)
+                {
+                    await store.SaveAsync(vm.CurrentSettingsSnapshot);
+                }
             }
         }
 
