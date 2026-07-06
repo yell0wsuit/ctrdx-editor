@@ -20,6 +20,7 @@ namespace CtrDxEditor.Tests
             return new LevelObject(e);
         }
 
+        /// <summary>A grab with a positive radius resolves to its "radius" attribute; missing/non-positive does not.</summary>
         [Theory]
         [InlineData("100", 100.0)]
         [InlineData(null, null)]
@@ -35,6 +36,7 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>A light bulb with a positive litRadius resolves to its "litRadius" attribute; missing/non-positive does not.</summary>
         [Theory]
         [InlineData("50", 50.0)]
         [InlineData(null, null)]
@@ -50,6 +52,7 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>An object type with no radius ring (e.g. candy) never resolves, even if it happens to carry a radius attribute.</summary>
         [Fact]
         public void OtherTypesHaveNoRing()
         {
