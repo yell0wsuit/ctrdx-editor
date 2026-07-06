@@ -636,7 +636,8 @@ namespace CtrDxEditor.Rendering
         // ~6px screen tolerance (converted to level units by the current zoom).
         private bool OnRadiusEdge(Vec2 levelPt)
         {
-            return SelectedObject is { Type: "grab" } g && View.Zoom > 0 && GrabRadius.Of(g) is double r && GrabRadius.OnEdge(new Vec2(g.X, g.Y), r, levelPt, 6 / View.Zoom);
+            return SelectedObject is { } g && View.Zoom > 0 && RadiusRing.Of(g) is { } ring
+                && GrabRadius.OnEdge(new Vec2(g.X, g.Y), ring.Radius, levelPt, 6 / View.Zoom);
         }
 
         // What part of the selected movable grab's rail a level point is over, or None. The hit-testing
@@ -855,10 +856,10 @@ namespace CtrDxEditor.Rendering
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
-            if (_resizingRadius && SelectedObject is { } g)
+            if (_resizingRadius && SelectedObject is { } g && RadiusRing.Of(g) is { } ring)
             {
                 double r = GrabRadius.FromDrag(new Vec2(g.X, g.Y), levelPt);
-                g.SetAttr("radius", ((int)Math.Round(r)).ToString(CultureInfo.InvariantCulture));
+                g.SetAttr(ring.Attr, ((int)Math.Round(r)).ToString(CultureInfo.InvariantCulture));
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
