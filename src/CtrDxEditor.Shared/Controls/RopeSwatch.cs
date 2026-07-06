@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -7,6 +6,7 @@ using Avalonia.Media;
 
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
+using CtrDxEditor.Rendering;
 
 namespace CtrDxEditor.Controls
 {
@@ -40,50 +40,39 @@ namespace CtrDxEditor.Controls
             Vec2 a = new(0, 0);
             Vec2 b = new(50, 0);
             RopeVisual visual = RopeStripBuilder.Build(a, b, 60, Skin);
-            RopeDrawColors colors = RopePalette.GetDrawColors(Skin, 50, 60);
-
-            IReadOnlyList<Vec2> pts = visual.SamplePoints;
-            if (pts.Count < 2)
+            if (visual.Strips.Count == 0)
             {
                 return;
             }
 
-            // Map the sampled catenary points into the swatch rect (with a small margin).
+            // Draw through the exact same triangle-strip path as the editor canvas
+            // (RopeDrawOperation), so the swatch matches the in-canvas / in-game rope
+            // shading pixel-for-pixel instead of faking it with flat polylines.
+            // Fit the level-space rope into the swatch rect with a small margin.
             const double margin = 4;
-            const double spanX = 50;
-            double spanY = 1;
-            foreach (Vec2 p in pts)
+            double minX = double.MaxValue, minY = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue;
+            foreach (RopeStrip strip in visual.Strips)
             {
-                spanY = Math.Max(spanY, p.Y);
-            }
-
-            Point Map(Vec2 p)
-            {
-                return new Point(
-                    margin + (p.X / spanX * (w - (2 * margin))),
-                    margin + (p.Y / spanY * (h - (2 * margin)) * 0.6));
-            }
-
-            StreamGeometry geo = new();
-            using (StreamGeometryContext gc = geo.Open())
-            {
-                gc.BeginFigure(Map(pts[0]), false);
-                for (int i = 1; i < pts.Count; i++)
+                foreach (Vec2 p in strip.Points)
                 {
-                    gc.LineTo(Map(pts[i]));
+                    minX = Math.Min(minX, p.X);
+                    minY = Math.Min(minY, p.Y);
+                    maxX = Math.Max(maxX, p.X);
+                    maxY = Math.Max(maxY, p.Y);
                 }
             }
 
-            static Color ToColor(RopeRgb c)
-            {
-                return Color.FromRgb(
-                    (byte)(Math.Clamp(c.R, 0, 1) * 255),
-                    (byte)(Math.Clamp(c.G, 0, 1) * 255),
-                    (byte)(Math.Clamp(c.B, 0, 1) * 255));
-            }
+            double contentW = Math.Max(maxX - minX, 1e-3);
+            double contentH = Math.Max(maxY - minY, 1e-3);
+            double availW = Math.Max(w - (2 * margin), 1e-3);
+            double availH = Math.Max(h - (2 * margin), 1e-3);
+            double zoom = Math.Min(availW / contentW, availH / contentH);
+            double panX = margin + ((availW - (contentW * zoom)) / 2) - (minX * zoom);
+            double panY = margin + ((availH - (contentH * zoom)) / 2) - (minY * zoom);
 
-            context.DrawGeometry(null, new Pen(new SolidColorBrush(ToColor(colors.Base1)), 4), geo);
-            context.DrawGeometry(null, new Pen(new SolidColorBrush(ToColor(colors.Base2)), 2), geo);
+            ViewTransform view = new(zoom, panX, panY);
+            context.Custom(new RopeDrawOperation(new Rect(0, 0, w, h), view, visual.Strips));
         }
     }
 }
