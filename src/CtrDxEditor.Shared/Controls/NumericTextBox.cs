@@ -24,7 +24,7 @@ namespace CtrDxEditor.Controls
         public static readonly StyledProperty<int> MaximumProperty =
             AvaloniaProperty.Register<NumericTextBox, int>(nameof(Maximum), 9999);
 
-        // Adopt the stock TextBox theme/styles rather than looking for a NumericTextBox one.
+        /// <inheritdoc/>
         protected override Type StyleKeyOverride => typeof(TextBox);
 
         /// <summary>Smallest value the box will accept.</summary>
