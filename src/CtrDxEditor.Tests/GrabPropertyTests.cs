@@ -170,6 +170,67 @@ namespace CtrDxEditor.Tests
             Assert.Contains(vm.Fields, f => f.Name == "kicked");
         }
 
+        /// <summary>Gun mode disables hook variants and rope geometry controls.</summary>
+        [Fact]
+        public void GunDisablesHookVariantsAndRopeGeometry()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            vm.Fields.Single(f => f.Name == "gun").BoolValue = true;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "wheel").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "spider").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "kickable").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "length").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "autoCatch").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "movable").IsEnabled);
+        }
+
+        /// <summary>An active hook variant disables gun without clearing the chosen variant.</summary>
+        [Fact]
+        public void ActiveHookVariantDisablesGun()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            vm.Fields.Single(f => f.Name == "spider").BoolValue = true;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
+        }
+
+        /// <summary>Movable rail disables suction cup, matching game load behavior.</summary>
+        [Fact]
+        public void MovableRailDisablesSuctionCup()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            vm.Fields.Single(f => f.Name == "movable").BoolValue = true;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "kickable").IsEnabled);
+        }
+
+        /// <summary>Gun is not offered for split-candy levels.</summary>
+        [Fact]
+        public void GunHiddenInTwoPartsLevel()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            _ = vm.PlaceObject("candyL", 200, 200);
+            _ = vm.PlaceObject("candyR", 300, 200);
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "gun");
+        }
+
         /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>
         [Fact]
         public void SelectedCandyShowsCandyNumberField()
