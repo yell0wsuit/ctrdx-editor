@@ -46,6 +46,21 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>
+        /// How many of a grab sprite's leading layers are drawn behind the rope (the remaining layers sit
+        /// in front of it), matching the game's <c>DrawBack</c>/<c>Draw</c> split where the rope threads
+        /// between the hook's back and front art.
+        /// </summary>
+        public static int BackLayerCount(LevelObject obj)
+        {
+            return SpriteKey(obj) switch
+            {
+                "grab_gun" => 2,   // gun back + aim arrow behind the rope; the gun front cap over it
+                "grab_wheel" => 1, // wheel base behind the rope; the wheel face/arm over it
+                _ => 1,            // hook body / sticker cup behind; the clasp over the rope
+            };
+        }
+
         /// <summary>Whether this grab should render and hit-test as a movable rail.</summary>
         public static bool DrawsMovableRail(LevelObject obj)
         {
@@ -127,14 +142,14 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws a movable grab as its rail (left cap + tiled center + right cap) with the movable hook at
-        /// the rest point, matching the game's HookMovable art. Everything is laid out in a local frame
-        /// rotated onto the rail axis (0 for horizontal, 90 for a vertical rail), so the same code draws
-        /// both orientations; distances are level units scaled to screen pixels by the current zoom.
-        /// When <paramref name="hookHighlighted"/> the hook uses the highlight art (game moverDragging).
+        /// Draws a movable grab's rail (left cap + tiled center + right cap), the back half of the mover
+        /// assembly - the rope is drawn over it and under the movable hook, matching the game's
+        /// <c>moveBackground</c> (DrawBack) then rope then <c>grabMover</c> (Draw) layering. Laid out in a
+        /// local frame rotated onto the rail axis (0 for horizontal, 90 for a vertical rail) so the same
+        /// code draws both orientations; distances are level units scaled to screen pixels by the zoom.
         /// </summary>
-        public static void DrawMovableGrab(
-            DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g, bool hookHighlighted = false)
+        public static void DrawMovableRail(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g)
         {
             Vec2 hook = v.LevelToScreen(g.Hook);
             double z = v.Zoom;
@@ -147,6 +162,21 @@ namespace CtrDxEditor.Rendering
                     double endX = (g.Length - g.Offset) * z;
                     DrawRail(ctx, rail.Layers[0], rail.Layers[1], rail.Layers[2], startX, endX, z);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Draws the movable hook at the rest point, the front half of the mover assembly (over the rope).
+        /// When <paramref name="hookHighlighted"/> the hook uses the highlight art (game moverDragging).
+        /// </summary>
+        public static void DrawMovableHook(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g, bool hookHighlighted = false)
+        {
+            Vec2 hook = v.LevelToScreen(g.Hook);
+            double z = v.Zoom;
+            Matrix m = Matrix.CreateRotation(g.Vertical ? Math.PI / 2 : 0) * Matrix.CreateTranslation(hook.X, hook.Y);
+            using (ctx.PushTransform(m))
+            {
                 if (sprites.GetSprite(hookHighlighted ? "grab_movable_highlight" : "grab_movable") is { Layers.Count: >= 1 } hookSprite)
                 {
                     SpriteLayerDraw h = hookSprite.Layers[0];

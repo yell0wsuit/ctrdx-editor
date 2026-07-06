@@ -327,21 +327,27 @@ namespace CtrDxEditor.Rendering
             }
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
-            RopeRenderer.Draw(context, v, sprites, doc, new Rect(Bounds.Size));
 
+            // Ropes are interleaved per grab - each grab draws its hook's back art, then its rope, then the
+            // hook's front art - so the rope threads between the two hook layers the way the game does
+            // (Grab.DrawBack + Grab.Draw). Ropes with no target resolve to null and are skipped, keeping the
+            // per-rope seed (for seasonal light frames) in step with the grabs that actually have a rope.
+            Rect opBounds = new(Bounds.Size);
+            int ropeSeed = 0;
             foreach (LevelObject obj in objects)
             {
-                if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
+                if (obj.Type == "grab")
                 {
-                    // Highlight the hook while it's hovered or being slid, matching the game's mover art.
-                    bool active = (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
-                    GrabRenderer.DrawMovableGrab(context, v, sprites, rail, active);
-                    Vec2 anchor = GrabRenderer.SpiderOverlayAnchor(obj);
-                    DrawOverlays(context, v, sprites, obj, anchor.X, anchor.Y);
+                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts);
+                    DrawGrab(context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds);
+                    if (rope is not null)
+                    {
+                        ropeSeed++;
+                    }
                 }
                 else
                 {
-                    DrawObject(context, v, sprites, obj, objects, doc.TwoParts);
+                    DrawObject(context, v, sprites, obj);
                 }
             }
 
@@ -424,13 +430,9 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
-        private static void DrawObject(
-            DrawingContext ctx,
-            ViewTransform v,
-            SpriteCache sprites,
-            LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts)
+        // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
+        // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
+        private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
         {
             ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
             if (sprite is not null)
@@ -439,19 +441,83 @@ namespace CtrDxEditor.Rendering
                 {
                     DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
                 }
-                if (GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts) is double gunAim
-                    && sprite.Layers.Count >= 3)
-                {
-                    DrawLayer(ctx, v, sprite.Layers[0], obj.X, obj.Y, sprite.Scale);
-                    DrawLayer(ctx, v, sprite.Layers[1], obj.X, obj.Y, sprite.Scale, gunAim);
-                    DrawLayer(ctx, v, sprite.Layers[2], obj.X, obj.Y, sprite.Scale);
-                }
-                else
-                {
-                    DrawSprite(ctx, v, sprite, obj.X, obj.Y);
-                }
+                DrawSprite(ctx, v, sprite, obj.X, obj.Y);
             }
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+        }
+
+        // Draws a grab with its rope threaded between the hook's back and front art, matching the game's
+        // Grab.DrawBack (back art) then Grab.Draw (rope, then front art) order. A movable grab splits into
+        // its rail bar (back) and movable hook (front); every other grab splits its sprite layers by
+        // GrabRenderer.BackLayerCount. rope is null when the grab has nothing to hang from.
+        private void DrawGrab(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            bool twoParts,
+            RopeVisual? rope,
+            int ropeSeed,
+            Rect opBounds)
+        {
+            if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
+            {
+                // Highlight the hook while it's hovered or being slid, matching the game's mover art.
+                bool active = (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
+                GrabRenderer.DrawMovableRail(ctx, v, sprites, rail);
+                if (rope is not null)
+                {
+                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+                }
+                GrabRenderer.DrawMovableHook(ctx, v, sprites, rail, active);
+                Vec2 anchor = GrabRenderer.SpiderOverlayAnchor(obj);
+                DrawOverlays(ctx, v, sprites, obj, anchor.X, anchor.Y);
+                return;
+            }
+
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
+            if (sprite is not null)
+            {
+                if (sprite.Variants.Count > 0)
+                {
+                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
+                }
+                int back = Math.Min(GrabRenderer.BackLayerCount(obj), sprite.Layers.Count);
+                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back);
+                if (rope is not null)
+                {
+                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+                }
+                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count);
+            }
+            else if (rope is not null)
+            {
+                RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+            }
+            DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+        }
+
+        // Draws the sprite layers in [from, to), applying the gun's aim rotation to the arrow layer
+        // (index 1) when this grab previews a gun aim - the same rotation the old single-pass path used.
+        private static void DrawGrabLayers(
+            DrawingContext ctx,
+            ViewTransform v,
+            ObjectSprite sprite,
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            bool twoParts,
+            int from,
+            int to)
+        {
+            double? gunAim = sprite.Layers.Count >= 3
+                ? GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts)
+                : null;
+            for (int i = from; i < to; i++)
+            {
+                double? rotation = gunAim is double deg && i == 1 ? deg : null;
+                DrawLayer(ctx, v, sprite.Layers[i], obj.X, obj.Y, sprite.Scale, rotation);
+            }
         }
 
         private static void DrawOverlays(

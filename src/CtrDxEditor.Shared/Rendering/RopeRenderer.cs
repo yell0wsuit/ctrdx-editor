@@ -14,53 +14,58 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Rendering
 {
     /// <summary>
-    /// Draws every grab rope in a level - the game-accurate cord strips plus the
-    /// seasonal Christmas lights - as one pass under the object sprites.
+    /// Builds and draws grab ropes - the game-accurate cord strips plus the seasonal Christmas lights -
+    /// one grab at a time, so each rope can be layered between its hook's back and front art the way the
+    /// game does (<c>Grab.DrawBack</c> then <c>Grab.Draw</c>).
     /// </summary>
     internal static class RopeRenderer
     {
-        /// <summary>Draws all ropes for <paramref name="doc"/> into <paramref name="ctx"/>.</summary>
+        /// <summary>
+        /// Builds a single grab's rope visual, or null when the grab has no resolved target (nothing to
+        /// hang from). The game reads the grab's length attribute for the bungee rest length; missing/0
+        /// renders as a taut straight rope.
+        /// </summary>
+        public static RopeVisual? BuildRope(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
+        {
+            if (grab.Type != "grab")
+            {
+                return null;
+            }
+
+            RopeTarget rope = RopeResolver.Resolve(grab, objects, twoParts);
+            if (rope.Target is null)
+            {
+                return null;
+            }
+
+            double ropeLength = double.TryParse(
+                grab.GetAttr("length"), NumberStyles.Float, CultureInfo.InvariantCulture, out double len)
+                ? len
+                : 0;
+            return RopeStripBuilder.Build(
+                new Vec2(grab.X, grab.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength);
+        }
+
+        /// <summary>
+        /// Draws one grab's rope (and its seasonal Christmas lights) at the current z-position, so callers
+        /// can sandwich it between the hook's back and front layers.
+        /// </summary>
         /// <param name="ctx">Target drawing context.</param>
         /// <param name="v">Current level-to-screen transform.</param>
         /// <param name="sprites">Sprite cache holding the lights atlas.</param>
-        /// <param name="doc">The level being rendered.</param>
+        /// <param name="visual">The rope built by <see cref="BuildRope"/>.</param>
+        /// <param name="ropeSeed">Per-rope seed keeping the random light frames stable across redraws.</param>
         /// <param name="opBounds">Control bounds for the custom draw operation.</param>
-        public static void Draw(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelDocument doc, Rect opBounds)
+        public static void DrawRope(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, RopeVisual visual, int ropeSeed, Rect opBounds)
         {
-            IReadOnlyList<LevelObject> objects = doc.Objects;
-            List<RopeStrip> ropeStrips = [];
-            List<List<Vec2>> ropeLightPoints = [];
-            foreach (LevelObject obj in objects)
+            if (visual.Strips.Count > 0)
             {
-                if (obj.Type != "grab")
-                {
-                    continue;
-                }
-
-                RopeTarget rope = RopeResolver.Resolve(obj, objects, doc.TwoParts);
-                if (rope.Target is null)
-                {
-                    continue;
-                }
-
-                // The game reads the grab's length attribute for the bungee rest length;
-                // missing/0 renders as a taut straight rope.
-                double ropeLength = double.TryParse(
-                    obj.GetAttr("length"), NumberStyles.Float, CultureInfo.InvariantCulture, out double len)
-                    ? len
-                    : 0;
-                RopeVisual ropeVisual = RopeStripBuilder.Build(
-                    new Vec2(obj.X, obj.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength);
-                ropeStrips.AddRange(ropeVisual.Strips);
-                ropeLightPoints.Add(RopeStripBuilder.ChristmasLightPoints(ropeVisual.SamplePoints));
-            }
-            if (ropeStrips.Count > 0)
-            {
-                ctx.Custom(new RopeDrawOperation(opBounds, v, ropeStrips));
+                ctx.Custom(new RopeDrawOperation(opBounds, v, visual.Strips));
             }
             if (SpecialEvents.IsXmas)
             {
-                DrawChristmasLights(ctx, v, sprites, ropeLightPoints);
+                DrawChristmasLights(ctx, v, sprites, RopeStripBuilder.ChristmasLightPoints(visual.SamplePoints), ropeSeed);
             }
         }
 
@@ -72,28 +77,26 @@ namespace CtrDxEditor.Rendering
             DrawingContext ctx,
             ViewTransform v,
             SpriteCache sprites,
-            List<List<Vec2>> ropeLightPoints)
+            IReadOnlyList<Vec2> lightPoints,
+            int seed)
         {
             if (sprites.GetChristmasLights() is not { } art)
             {
                 return;
             }
 
-            for (int ropeIndex = 0; ropeIndex < ropeLightPoints.Count; ropeIndex++)
+            Random frameRandom = new(seed);
+            foreach (Vec2 p in lightPoints)
             {
-                Random frameRandom = new(ropeIndex);
-                foreach (Vec2 p in ropeLightPoints[ropeIndex])
-                {
-                    AtlasFrame frame = art.Frames[frameRandom.Next(art.Frames.Count)];
-                    double w = frame.Frame.W / SpritePlacement.MapScale;
-                    double h = frame.Frame.H / SpritePlacement.MapScale;
-                    Vec2 tl = v.LevelToScreen(new Vec2(p.X - (w / 2), p.Y - (h / 2)));
-                    Vec2 br = v.LevelToScreen(new Vec2(p.X + (w / 2), p.Y + (h / 2)));
-                    ctx.DrawImage(
-                        art.Bitmap,
-                        new Rect(frame.Frame.X, frame.Frame.Y, frame.Frame.W, frame.Frame.H),
-                        new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
-                }
+                AtlasFrame frame = art.Frames[frameRandom.Next(art.Frames.Count)];
+                double w = frame.Frame.W / SpritePlacement.MapScale;
+                double h = frame.Frame.H / SpritePlacement.MapScale;
+                Vec2 tl = v.LevelToScreen(new Vec2(p.X - (w / 2), p.Y - (h / 2)));
+                Vec2 br = v.LevelToScreen(new Vec2(p.X + (w / 2), p.Y + (h / 2)));
+                ctx.DrawImage(
+                    art.Bitmap,
+                    new Rect(frame.Frame.X, frame.Frame.Y, frame.Frame.W, frame.Frame.H),
+                    new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
             }
         }
     }
