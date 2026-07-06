@@ -67,7 +67,7 @@
     "Dialog.LevelSettings.MobilePhysicsDescription": "Use the mobile physics model (writes useMobilePhysics to the level's gameDesign).",
     "Dialog.LevelSettings.RopeColor": "Rope color",
     "Dialog.LevelSettings.Background": "Background",
-    "Dialog.LevelSettings.RememberChoice": "Remember my choice",
+    "Dialog.LevelSettings.RememberCustomizationChoice": "Remember my customization choices",
     "Dialog.LevelSettings.Create": "Create",
     "Dialog.LevelSettings.Save": "Save",
 

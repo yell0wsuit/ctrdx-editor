@@ -149,7 +149,7 @@
             </ItemsControl>
           </Expander>
 
-          <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberChoice}"
+          <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberCustomizationChoice}"
                     IsChecked="{Binding RememberDecoration, Mode=TwoWay}" />
         </StackPanel>
       </StackPanel>
