@@ -149,6 +149,9 @@ namespace CtrDxEditor.Rendering
         // Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
         // None when no rail drag is in progress. A MoveBar drag routes through _dragging instead.
         private GrabRail.Handle _railDrag;
+        // Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even
+        // before a drag begins (the game highlights the mover on interaction).
+        private bool _hookHovered;
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
         private bool _panning;
@@ -332,9 +335,9 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
                 {
-                    // Highlight the hook while it's being slid, matching the game's moverDragging art.
-                    bool sliding = _railDrag == GrabRail.Handle.SlideHook && Equals(obj, SelectedObject);
-                    GrabRenderer.DrawMovableGrab(context, v, sprites, rail, sliding);
+                    // Highlight the hook while it's hovered or being slid, matching the game's mover art.
+                    bool active = (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
+                    GrabRenderer.DrawMovableGrab(context, v, sprites, rail, active);
                 }
                 else
                 {
@@ -531,21 +534,28 @@ namespace CtrDxEditor.Rendering
             return ((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture);
         }
 
-        // The hover cursor over the selected grab: the radius ring or a horizontal rail end reads as a
-        // horizontal resize, a vertical rail end as a vertical resize, the hook as a slide (same axis
-        // arrows), and the bar as a move.
-        private Cursor HoverCursor(Vec2 levelPt)
+        // The cursor for a rail handle: a horizontal rail end/hook reads as a horizontal resize, a vertical
+        // one as a vertical resize (the hook slides along the same axis), and the bar as a move.
+        private Cursor CursorForHandle(GrabRail.Handle handle)
         {
-            return OnRadiusEdge(levelPt)
-                ? ResizeCursor
-                : HitRail(levelPt) switch
-                {
-                    GrabRail.Handle.ResizeStart or GrabRail.Handle.ResizeEnd or GrabRail.Handle.SlideHook =>
-                        SelectedObject is { } s && GrabRail.Vertical(s) ? VResizeCursor : ResizeCursor,
-                    GrabRail.Handle.MoveBar => MoveCursor,
-                    GrabRail.Handle.None => Cursor.Default,
-                    _ => Cursor.Default,
-                };
+            return handle switch
+            {
+                GrabRail.Handle.ResizeStart or GrabRail.Handle.ResizeEnd or GrabRail.Handle.SlideHook =>
+                    SelectedObject is { } s && GrabRail.Vertical(s) ? VResizeCursor : ResizeCursor,
+                GrabRail.Handle.MoveBar => MoveCursor,
+                GrabRail.Handle.None => Cursor.Default,
+                _ => Cursor.Default,
+            };
+        }
+
+        // Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.
+        private void SetHookHovered(bool hovered)
+        {
+            if (_hookHovered != hovered)
+            {
+                _hookHovered = hovered;
+                InvalidateVisual();
+            }
         }
 
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)
@@ -713,8 +723,11 @@ namespace CtrDxEditor.Rendering
 
             if (!_dragging || SelectedObject is not { } selected)
             {
-                // Reflect the affordance under the cursor so ring resize / rail edit are discoverable.
-                Cursor = HoverCursor(levelPt);
+                // Reflect the affordance under the cursor so ring resize / rail edit are discoverable, and
+                // light up the hook when it's hovered.
+                GrabRail.Handle handle = HitRail(levelPt);
+                SetHookHovered(handle == GrabRail.Handle.SlideHook);
+                Cursor = OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
             }
 
@@ -734,6 +747,13 @@ namespace CtrDxEditor.Rendering
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
             e.Pointer.Capture(null);
+        }
+
+        /// <inheritdoc />
+        protected override void OnPointerExited(PointerEventArgs e)
+        {
+            base.OnPointerExited(e);
+            SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
         }
 
         /// <inheritdoc />
