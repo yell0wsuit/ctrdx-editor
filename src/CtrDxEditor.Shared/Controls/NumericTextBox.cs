@@ -25,7 +25,7 @@ namespace CtrDxEditor.Controls
             AvaloniaProperty.Register<NumericTextBox, int>(nameof(Maximum), 9999);
 
         // Adopt the stock TextBox theme/styles rather than looking for a NumericTextBox one.
-        protected override Type StyleKeyOverride => typeof(TextBox);
+        // protected override Type StyleKeyOverride => typeof(TextBox);
 
         /// <summary>Smallest value the box will accept.</summary>
         public int Minimum { get => GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
