@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -35,7 +36,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void RequiredFilesCoverRandomBackLayerAtlases()
         {
-            System.Collections.Generic.IReadOnlyCollection<string> required =
+            IReadOnlyCollection<string> required =
                 VisualDescriptorMap.RequiredFiles(".webp");
             Assert.Contains("images/obj_bubble.webp", required);
             Assert.Contains("images/obj_bubble.json", required);

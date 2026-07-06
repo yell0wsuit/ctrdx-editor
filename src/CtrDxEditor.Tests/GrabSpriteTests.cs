@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -214,7 +215,7 @@ namespace CtrDxEditor.Tests
             MethodInfo method = grabRenderer.GetMethod(
                 "OverlaySpriteKeys",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
-            return [.. (System.Collections.Generic.IEnumerable<string>)method.Invoke(null, [obj])!];
+            return [.. (IEnumerable<string>)method.Invoke(null, [obj])!];
         }
 
         private static bool DrawsMovableRail(LevelObject obj)

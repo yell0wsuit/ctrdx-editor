@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace CtrDxEditor.Tests
 
             public Task<byte[]> ReadBytesAsync(string relPath)
             {
-                return Task.FromResult(System.Array.Empty<byte>());
+                return Task.FromResult(Array.Empty<byte>());
             }
 
             public Task<string> ReadTextAsync(string relPath)

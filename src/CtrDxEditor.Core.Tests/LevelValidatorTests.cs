@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using CtrDxEditor.Core.Document;
@@ -117,7 +118,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><candy x=\"2\" y=\"2\" candyNumber=\"0\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("duplicate", System.StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("duplicate", StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>Grabs with a candyNumber that no candy has produce a warning.</summary>
@@ -127,7 +128,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><grab x=\"3\" y=\"3\" length=\"10\" candyNumber=\"7\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("candyNumber", System.StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("candyNumber", StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>Bulb-bound grabs warn when their bulbNumber has no matching bulb.</summary>
@@ -137,7 +138,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><grab x=\"3\" y=\"3\" bindBulb=\"true\" bulbNumber=\"5\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("bulbNumber", System.StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("bulbNumber", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

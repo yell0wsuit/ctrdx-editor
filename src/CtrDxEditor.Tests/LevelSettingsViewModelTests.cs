@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -174,7 +175,7 @@ namespace CtrDxEditor.Tests
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
             vm.SelectedRopeSkin = -1;
             vm.SelectedBackground = -1;
-            (int skin, int bg) = vm.ResolveDecoration(new System.Random(1));
+            (int skin, int bg) = vm.ResolveDecoration(new Random(1));
             Assert.InRange(skin, 0, 8);
             Assert.InRange(bg, 1, 17);
         }

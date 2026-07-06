@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -104,7 +105,7 @@ namespace CtrDxEditor.Tests
                     "obj_bubble_attached_frame_0002.png",
                     "obj_bubble_attached_frame_0003.png",
                 ],
-                System.Linq.Enumerable.Select(sprite.Variants, v => v.Frame.Filename));
+                Enumerable.Select(sprite.Variants, v => v.Frame.Filename));
         }
 
         private static void SeedBubbleAtlas(SpriteCache cache)

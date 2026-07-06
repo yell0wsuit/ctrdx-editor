@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -39,7 +40,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void RequiredFilesIncludeObjLighter()
         {
-            System.Collections.Generic.IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
             Assert.Contains("images/obj_lighter.webp", required);
             Assert.Contains("images/obj_lighter.json", required);
         }

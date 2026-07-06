@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -23,7 +24,7 @@ namespace CtrDxEditor.Core.Tests
             LevelObject c0 = Obj("""<candy x="1" y="1" candyNumber="0" />""");
             LevelObject c1 = Obj("""<candy x="2" y="2" candyNumber="1" />""");
 
-            System.Collections.Generic.IReadOnlyList<GrabBindOption> options = GrabBinding.Options([c0, c1], twoParts: false);
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options([c0, c1], twoParts: false);
 
             Assert.Equal(["primary", "candy:1"], options.Select(o => o.Token));
         }
@@ -35,7 +36,7 @@ namespace CtrDxEditor.Core.Tests
             LevelObject l = Obj("""<candyL x="1" y="1" />""");
             LevelObject r = Obj("""<candyR x="2" y="2" />""");
 
-            System.Collections.Generic.IReadOnlyList<GrabBindOption> options = GrabBinding.Options([l, r], twoParts: true);
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options([l, r], twoParts: true);
 
             Assert.Equal(["part:L", "part:R"], options.Select(o => o.Token));
         }
@@ -47,7 +48,7 @@ namespace CtrDxEditor.Core.Tests
             LevelObject c0 = Obj("""<candy x="1" y="1" candyNumber="0" />""");
             LevelObject b = Obj("""<lightBulb x="3" y="3" bulbNumber="0" />""");
 
-            System.Collections.Generic.IReadOnlyList<GrabBindOption> options = GrabBinding.Options([c0, b], twoParts: false);
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options([c0, b], twoParts: false);
 
             Assert.Equal(["primary", "bulb:0"], options.Select(o => o.Token));
         }

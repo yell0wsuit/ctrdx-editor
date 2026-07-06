@@ -1,3 +1,5 @@
+using System.Runtime.Versioning;
+
 using Avalonia;
 using Avalonia.Browser;
 
@@ -6,7 +8,7 @@ using CtrDxEditor.Browser.Content;
 using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
 
-[assembly: System.Runtime.Versioning.SupportedOSPlatform("browser")]
+[assembly: SupportedOSPlatform("browser")]
 
 await IndexedDb.ImportAsync();
 await WebCrypto.ImportAsync();
