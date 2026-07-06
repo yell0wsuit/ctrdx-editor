@@ -246,10 +246,14 @@ namespace CtrDxEditor.Views
             }
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForNew();
             dialogVm.LoadDecoration(vm.CurrentSettingsSnapshot);
-            foreach (BackgroundOption option in dialogVm.BackgroundOptions)
+            // Decode the background thumbnails off the UI thread so opening the dialog never stalls.
+            await Task.Run(() =>
             {
-                option.Thumbnail = vm.Sprites.GetBackground(option.Id);
-            }
+                foreach (BackgroundOption option in dialogVm.BackgroundOptions)
+                {
+                    option.Thumbnail = vm.Sprites.GetBackground(option.Id);
+                }
+            });
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
