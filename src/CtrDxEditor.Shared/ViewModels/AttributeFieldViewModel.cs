@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 
+using CommunityToolkit.Mvvm.ComponentModel;
+
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Localization;
@@ -11,12 +13,11 @@ namespace CtrDxEditor.ViewModels
     public sealed record AttributeOptionViewModel(string Value, string Label);
 
     /// <summary>Editable field view model for a single attribute or a delegate-backed choice.</summary>
-    public sealed class AttributeFieldViewModel : ViewModelBase
+    public sealed partial class AttributeFieldViewModel : ViewModelBase
     {
         private readonly Func<string?> _get;
         private readonly Action<string?> _set;
         private readonly Action _onChanged;
-        private bool _isEnabled = true;
 
         /// <summary>Attribute-backed field (text, number, bool, or fixed enum).</summary>
         public AttributeFieldViewModel(LevelObject target, string name, AttrType type, string[]? enumValues, Action onChanged)
@@ -73,11 +74,8 @@ namespace CtrDxEditor.ViewModels
         public bool IsText => EnumOptions is null && !IsBool;
 
         /// <summary>Whether the field's control is interactive; false greys it out.</summary>
-        public bool IsEnabled
-        {
-            get => _isEnabled;
-            set => SetProperty(ref _isEnabled, value);
-        }
+        [ObservableProperty]
+        public partial bool IsEnabled { get; set; } = true;
 
         /// <summary>The selected option, mapped to the underlying value.</summary>
         public AttributeOptionViewModel? SelectedOption
