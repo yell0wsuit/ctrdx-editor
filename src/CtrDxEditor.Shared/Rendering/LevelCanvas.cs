@@ -362,7 +362,19 @@ namespace CtrDxEditor.Rendering
                         ropeSeed++;
                     }
                 }
-                else
+                else if (obj.Type != "lightBulb")
+                {
+                    DrawObject(context, v, sprites, obj);
+                }
+            }
+
+            // Light-bulb bottles draw in a pass of their own, above every rope, matching the game's
+            // order (GameScene.Draw: all bungee ropes first, then LightBulb.DrawBottleAndFirefly last).
+            // Drawing them inline would let a grab later in the object list paint its rope over an
+            // already-drawn bottle.
+            foreach (LevelObject obj in objects)
+            {
+                if (obj.Type == "lightBulb")
                 {
                     DrawObject(context, v, sprites, obj);
                 }
