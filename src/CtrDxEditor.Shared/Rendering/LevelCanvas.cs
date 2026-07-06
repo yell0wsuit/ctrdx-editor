@@ -331,7 +331,7 @@ namespace CtrDxEditor.Rendering
 
             foreach (LevelObject obj in objects)
             {
-                if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
+                if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
                 {
                     // Highlight the hook while it's hovered or being slid, matching the game's mover art.
                     bool active = (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
@@ -395,7 +395,7 @@ namespace CtrDxEditor.Rendering
         {
             // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
             // be selected by clicking anywhere along the bar.
-            if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
+            if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
             {
                 return GrabRenderer.RailBounds(rail);
             }
@@ -495,7 +495,10 @@ namespace CtrDxEditor.Rendering
         // tolerances: ~9 px for the end caps, the hook's own footprint, and the bar's half thickness.
         private GrabRail.Handle HitRail(Vec2 levelPt)
         {
-            return SelectedObject is { Type: "grab" } sel && View.Zoom > 0 && GrabRail.Of(sel) is { } g
+            return SelectedObject is { Type: "grab" } sel
+                && View.Zoom > 0
+                && GrabRenderer.DrawsMovableRail(sel)
+                && GrabRail.Of(sel) is { } g
                 ? GrabRail.HitTest(g, levelPt, endTolerance: 9 / View.Zoom, hookTolerance: 24, barThickness: 20)
                 : GrabRail.Handle.None;
         }

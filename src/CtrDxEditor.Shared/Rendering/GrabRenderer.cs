@@ -45,6 +45,16 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Whether this grab should render and hit-test as a movable rail.</summary>
+        public static bool DrawsMovableRail(LevelObject obj)
+        {
+            return obj.Type == "grab"
+                && !IsTrue(obj.GetAttr("gun"))
+                && !IsTrue(obj.GetAttr("wheel"))
+                && !IsTrue(obj.GetAttr("kickable"))
+                && GrabRail.Of(obj) is not null;
+        }
+
         private static bool IsTrue(string? value)
         {
             return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);

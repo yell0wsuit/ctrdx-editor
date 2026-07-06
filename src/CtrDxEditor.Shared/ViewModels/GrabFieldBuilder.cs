@@ -56,6 +56,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             bool geomEnabled = !gun;
+            bool railEnabled = !gun && !wheel && !kickable;
 
             // The Auto-catch toggle comes first, then length XOR radius fill the same slot beneath
             // it. Because exactly one of the two is always shown, toggling swaps the row in place
@@ -75,22 +76,22 @@ namespace CtrDxEditor.ViewModels
                 () => movable,
                 on => grab.SetAttr("moveLength", on ? "100" : "-1"),
                 Structural,
-                geomEnabled));
+                railEnabled));
             if (movable)
             {
-                fields.Add(Attr(grab, "moveVertical", AttrType.Bool, onChanged, geomEnabled));
-                fields.Add(Attr(grab, "moveLength", AttrType.Whole, onChanged, geomEnabled));
-                fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, geomEnabled));
+                fields.Add(Attr(grab, "moveVertical", AttrType.Bool, onChanged, railEnabled));
+                fields.Add(Attr(grab, "moveLength", AttrType.Whole, onChanged, railEnabled));
+                fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, railEnabled));
             }
 
-            fields.Add(Attr(grab, "wheel", AttrType.Bool, Structural, !gun));
+            fields.Add(BoolAttr(grab, "wheel", Structural, !gun, ClearMoveRail));
             if (!twoParts)
             {
-                fields.Add(Attr(grab, "gun", AttrType.Bool, Structural, !(wheel || spider || kickable)));
+                fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable), ClearMoveRail));
             }
 
             fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, !gun));
-            fields.Add(Attr(grab, "kickable", AttrType.Bool, Structural, !(gun || movable)));
+            fields.Add(BoolAttr(grab, "kickable", Structural, !(gun || movable), ClearMoveRail));
             if (kickable)
             {
                 fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, !gun));
@@ -113,6 +114,31 @@ namespace CtrDxEditor.ViewModels
                 v => set(v == "true"),
                 onChanged)
             { IsEnabled = enabled };
+        }
+
+        private static AttributeFieldViewModel BoolAttr(
+            LevelObject grab, string name, Action onChanged, bool enabled, Action<LevelObject> whenEnabled)
+        {
+            return new AttributeFieldViewModel(
+                name,
+                AttrType.Bool,
+                () => Bool(grab, name) ? "true" : "false",
+                v =>
+                {
+                    bool on = v == "true";
+                    grab.SetAttr(name, on ? "true" : "false");
+                    if (on)
+                    {
+                        whenEnabled(grab);
+                    }
+                },
+                onChanged)
+            { IsEnabled = enabled };
+        }
+
+        private static void ClearMoveRail(LevelObject grab)
+        {
+            grab.SetAttr("moveLength", "-1");
         }
 
         private static bool Bool(LevelObject grab, string name)

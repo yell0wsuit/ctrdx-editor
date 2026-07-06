@@ -217,6 +217,41 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.Fields.Single(f => f.Name == "kickable").IsEnabled);
         }
 
+        /// <summary>Wheel and gun grabs clear movable rail geometry so their sprites render in the canvas.</summary>
+        [Theory]
+        [InlineData("wheel")]
+        [InlineData("gun")]
+        public void RailBlockingVariantsClearMoveLength(string fieldName)
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            vm.Fields.Single(f => f.Name == "movable").BoolValue = true;
+            Assert.Equal("100", grab.GetAttr("moveLength"));
+
+            vm.Fields.Single(f => f.Name == fieldName).BoolValue = true;
+
+            Assert.Equal("-1", grab.GetAttr("moveLength"));
+            Assert.False(vm.Fields.Single(f => f.Name == "movable").IsEnabled);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "moveOffset");
+        }
+
+        /// <summary>Suction cup grabs disable the movable toggle so move rails cannot replace suction art.</summary>
+        [Fact]
+        public void SuctionCupDisablesMovableRail()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            vm.Fields.Single(f => f.Name == "kickable").BoolValue = true;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "movable").IsEnabled);
+        }
+
         /// <summary>Gun is not offered for split-candy levels.</summary>
         [Fact]
         public void GunHiddenInTwoPartsLevel()

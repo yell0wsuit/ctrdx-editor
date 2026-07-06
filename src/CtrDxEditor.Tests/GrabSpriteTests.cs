@@ -135,6 +135,23 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expectedKey, SpriteKey(new LevelObject(XElement.Parse(xml))));
         }
 
+        /// <summary>Conflicting hook variants suppress stale movable rail data when rendering the canvas.</summary>
+        [Theory]
+        [InlineData("""<grab x="0" y="0" moveLength="100" wheel="true" />""")]
+        [InlineData("""<grab x="0" y="0" moveLength="100" gun="true" />""")]
+        [InlineData("""<grab x="0" y="0" moveLength="100" kickable="true" />""")]
+        public void HookVariantsSuppressMovableRailRendering(string xml)
+        {
+            Assert.False(DrawsMovableRail(new LevelObject(XElement.Parse(xml))));
+        }
+
+        /// <summary>Ordinary grabs with positive moveLength still render as movable rails.</summary>
+        [Fact]
+        public void PlainMovableGrabRendersRail()
+        {
+            Assert.True(DrawsMovableRail(new LevelObject(XElement.Parse("""<grab x="0" y="0" moveLength="100" />"""))));
+        }
+
         /// <summary>Spider is dormant overlay art and does not replace the grab hook itself.</summary>
         [Theory]
         [InlineData("""<grab x="0" y="0" spider="true" radius="-1" />""", "grab")]
@@ -163,6 +180,15 @@ namespace CtrDxEditor.Tests
                 "OverlaySpriteKeys",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
             return [.. (System.Collections.Generic.IEnumerable<string>)method.Invoke(null, [obj])!];
+        }
+
+        private static bool DrawsMovableRail(LevelObject obj)
+        {
+            Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            MethodInfo method = grabRenderer.GetMethod(
+                "DrawsMovableRail",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
+            return (bool)method.Invoke(null, [obj])!;
         }
     }
 }
