@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -113,6 +114,60 @@ namespace CtrDxEditor.Tests
 
             wheel.BoolValue = true;
             Assert.Equal("true", grab.GetAttr("wheel"));
+        }
+
+        /// <summary>Auto-catch toggles radius disclosure and hides authored length.</summary>
+        [Fact]
+        public void AutoCatchToggleRevealsRadiusAndHidesLength()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.Contains(vm.Fields, f => f.Name == "length");
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "radius");
+
+            AttributeFieldViewModel autoCatch = vm.Fields.Single(f => f.Name == "autoCatch");
+            autoCatch.BoolValue = true;
+
+            Assert.True(int.Parse(grab.GetAttr("radius")!, CultureInfo.InvariantCulture) > 0);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "length");
+            Assert.Contains(vm.Fields, f => f.Name == "radius");
+        }
+
+        /// <summary>Movable rail toggles rail sub-field disclosure.</summary>
+        [Fact]
+        public void MovableToggleRevealsRailFields()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "moveOffset");
+
+            vm.Fields.Single(f => f.Name == "movable").BoolValue = true;
+
+            Assert.Contains(vm.Fields, f => f.Name == "moveVertical");
+            Assert.Contains(vm.Fields, f => f.Name == "moveLength");
+            Assert.Contains(vm.Fields, f => f.Name == "moveOffset");
+        }
+
+        /// <summary>Detached is a sub-option of suction cup.</summary>
+        [Fact]
+        public void DetachedShownOnlyWhenSuctionCupOn()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "kicked");
+
+            vm.Fields.Single(f => f.Name == "kickable").BoolValue = true;
+
+            Assert.Contains(vm.Fields, f => f.Name == "kicked");
         }
 
         /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>

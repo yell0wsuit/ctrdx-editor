@@ -208,20 +208,31 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
+            PopulateFields(value);
+        }
+
+        // Central field construction; re-invoked when a structural grab toggle changes so
+        // disclosure and gating re-evaluate.
+        private void PopulateFields(LevelObject? value)
+        {
             Fields.Clear();
             if (value is null)
             {
                 return;
             }
 
-            void Changed() => ObjectMutated?.Invoke();
+            void Changed()
+            {
+                ObjectMutated?.Invoke();
+            }
 
             Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed));
             Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed));
 
             if (value.Type == "grab" && Document is not null)
             {
-                AddGrabBindingField(value, Changed);
+                GrabFieldBuilder.Build(Fields, value, Document, Changed, () => PopulateFields(value));
+                return;
             }
 
             ObjectDescriptor? d = _descriptors.For(value.Type);
@@ -236,38 +247,6 @@ namespace CtrDxEditor.ViewModels
                     Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.Type, spec.EnumValues, Changed));
                 }
             }
-        }
-
-        // The grab "Attach to" dropdown subsumes part/candyNumber/bindBulb/bulbNumber into a single
-        // choice, shown only when there is a real target choice and the grab is not a gun.
-        private void AddGrabBindingField(LevelObject grab, Action changed)
-        {
-            if (Document is null || IsTrueAttr(grab, "gun"))
-            {
-                return;
-            }
-
-            IReadOnlyList<LevelObject> objects = Document.Objects;
-            bool twoParts = Document.TwoParts;
-            IReadOnlyList<GrabBindOption> options = GrabBinding.Options(objects, twoParts);
-            if (options.Count < 2)
-            {
-                return;
-            }
-
-            AttributeOptionViewModel[] vmOptions =
-                [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];
-            Fields.Add(new AttributeFieldViewModel(
-                "attachTo",
-                vmOptions,
-                () => GrabBinding.CurrentToken(grab, Document.Objects, Document.TwoParts),
-                token => GrabBinding.Apply(grab, token ?? "primary"),
-                changed));
-        }
-
-        private static bool IsTrueAttr(LevelObject obj, string name)
-        {
-            return bool.TryParse(obj.GetAttr(name), out bool b) && b;
         }
     }
 }

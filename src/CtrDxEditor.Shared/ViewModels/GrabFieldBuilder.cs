@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+
+using CtrDxEditor.Core.Descriptors;
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
+
+namespace CtrDxEditor.ViewModels
+{
+    /// <summary>
+    /// Builds the grab properties: the "Attach to" binding control, the rope-geometry group with
+    /// progressive Auto-catch / Movable-rail disclosure, and the hook-variant toggles. Structural
+    /// changes trigger a rebuild so disclosure and gating re-evaluate.
+    /// </summary>
+    public static class GrabFieldBuilder
+    {
+        /// <summary>Appends the grab's fields, in panel order, to <paramref name="fields"/>.</summary>
+        public static void Build(
+            IList<AttributeFieldViewModel> fields,
+            LevelObject grab,
+            LevelDocument document,
+            Action onChanged,
+            Action rebuild)
+        {
+            bool gun = Bool(grab, "gun");
+            bool wheel = Bool(grab, "wheel");
+            bool spider = Bool(grab, "spider");
+            bool kickable = Bool(grab, "kickable");
+            bool autoCatch = Int(grab, "radius") > 0;
+            bool movable = Int(grab, "moveLength") > 0;
+            bool twoParts = document.TwoParts;
+
+            void Structural()
+            {
+                onChanged();
+                rebuild();
+            }
+
+            if (!gun)
+            {
+                IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.Objects, twoParts);
+                if (options.Count >= 2)
+                {
+                    AttributeOptionViewModel[] vmOptions =
+                        [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];
+                    fields.Add(new AttributeFieldViewModel(
+                        "attachTo",
+                        vmOptions,
+                        () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
+                        token => GrabBinding.Apply(grab, token ?? "primary"),
+                        onChanged));
+                }
+            }
+
+            bool geomEnabled = !gun;
+
+            if (!autoCatch)
+            {
+                fields.Add(Attr(grab, "length", AttrType.Whole, onChanged, geomEnabled));
+            }
+
+            fields.Add(Synthetic(
+                "autoCatch",
+                () => autoCatch,
+                on => grab.SetAttr("radius", on ? "100" : "-1"),
+                Structural,
+                geomEnabled));
+            if (autoCatch)
+            {
+                fields.Add(Attr(grab, "radius", AttrType.Whole, onChanged, geomEnabled));
+            }
+
+            fields.Add(Synthetic(
+                "movable",
+                () => movable,
+                on => grab.SetAttr("moveLength", on ? "100" : "-1"),
+                Structural,
+                geomEnabled));
+            if (movable)
+            {
+                fields.Add(Attr(grab, "moveVertical", AttrType.Bool, onChanged, geomEnabled));
+                fields.Add(Attr(grab, "moveLength", AttrType.Whole, onChanged, geomEnabled));
+                fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, geomEnabled));
+            }
+
+            fields.Add(Attr(grab, "wheel", AttrType.Bool, Structural, !gun));
+            if (!twoParts)
+            {
+                fields.Add(Attr(grab, "gun", AttrType.Bool, Structural, !(wheel || spider || kickable)));
+            }
+
+            fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, !gun));
+            fields.Add(Attr(grab, "kickable", AttrType.Bool, Structural, !(gun || movable)));
+            if (kickable)
+            {
+                fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, !gun));
+            }
+        }
+
+        private static AttributeFieldViewModel Attr(
+            LevelObject grab, string name, AttrType type, Action onChanged, bool enabled)
+        {
+            return new AttributeFieldViewModel(grab, name, type, null, onChanged) { IsEnabled = enabled };
+        }
+
+        private static AttributeFieldViewModel Synthetic(
+            string name, Func<bool> get, Action<bool> set, Action onChanged, bool enabled)
+        {
+            return new AttributeFieldViewModel(
+                name,
+                AttrType.Bool,
+                () => get() ? "true" : "false",
+                v => set(v == "true"),
+                onChanged)
+            { IsEnabled = enabled };
+        }
+
+        private static bool Bool(LevelObject grab, string name)
+        {
+            return bool.TryParse(grab.GetAttr(name), out bool b) && b;
+        }
+
+        private static int Int(LevelObject grab, string name)
+        {
+            return int.TryParse(grab.GetAttr(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)
+                ? v
+                : 0;
+        }
+    }
+}
