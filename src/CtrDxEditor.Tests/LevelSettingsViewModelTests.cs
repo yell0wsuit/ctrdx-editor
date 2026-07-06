@@ -11,6 +11,7 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the settings-dialog view model: presets, custom clamping, and mode.</summary>
     public class LevelSettingsViewModelTests
     {
+        /// <summary>New mode starts on the first preset (320×480) with flags editable and default settings.</summary>
         [Fact]
         public void NewModeDefaultsToFirstPresetAndEditableFlags()
         {
@@ -25,6 +26,7 @@ namespace CtrDxEditor.Tests
             Assert.False(s.TwoParts);
         }
 
+        /// <summary>Choosing a resolution preset applies its width and height.</summary>
         [Fact]
         public void SelectingPresetSetsResolution()
         {
@@ -36,6 +38,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(960, s.Height);
         }
 
+        /// <summary>Custom width and height are clamped to the allowed bounds.</summary>
         [Fact]
         public void CustomResolutionIsClampedToBounds()
         {
@@ -53,6 +56,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(480, vm.ToSettings().Height);
         }
 
+        /// <summary>Edit mode selects the preset matching the level's size and keeps flags editable.</summary>
         [Fact]
         public void EditModePrefillsMatchingPresetAndAllowsFlags()
         {
@@ -66,6 +70,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(480, vm.ToSettings().Height);
         }
 
+        /// <summary>Edit mode falls back to Custom when the level's size matches no preset.</summary>
         [Fact]
         public void EditModeWithNonPresetResolutionSelectsCustom()
         {
@@ -133,6 +138,7 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.CanConfirm);
         }
 
+        /// <summary>The mobile-physics flag flows into the produced settings.</summary>
         [Fact]
         public void ToSettingsIncludesMobilePhysics()
         {
@@ -141,6 +147,7 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.ToSettings().UseMobilePhysics);
         }
 
+        /// <summary>Edit mode prefills the mobile-physics flag from the current level.</summary>
         [Fact]
         public void ForEditPrefillsMobilePhysics()
         {
@@ -149,6 +156,7 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.UseMobilePhysics);
         }
 
+        /// <summary>LoadDecoration prefills the rope skin, background, and remember flag.</summary>
         [Fact]
         public void LoadDecorationPrefillsSelections()
         {
@@ -159,6 +167,7 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.RememberDecoration);
         }
 
+        /// <summary>ResolveDecoration turns Random (-1) selections into concrete rope/background ids.</summary>
         [Fact]
         public void ResolveDecorationTurnsRandomIntoConcreteIds()
         {
@@ -170,6 +179,7 @@ namespace CtrDxEditor.Tests
             Assert.InRange(bg, 1, 17);
         }
 
+        /// <summary>When remembering, the raw selections (including Random) are written into settings.</summary>
         [Fact]
         public void WriteDecorationIntoRememberedSavesRawSelections()
         {
@@ -184,6 +194,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(5, settings.Background);
         }
 
+        /// <summary>When not remembering, saved ids are left untouched and only the remember flag clears.</summary>
         [Fact]
         public void WriteDecorationIntoNotRememberedLeavesIdsUntouched()
         {
@@ -198,6 +209,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(3, settings.Background);
         }
 
+        /// <summary>Decoration options show only when creating a level, not when editing one.</summary>
         [Fact]
         public void ShowDecorationTrueForNewFalseForEdit()
         {
@@ -205,6 +217,7 @@ namespace CtrDxEditor.Tests
             Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowDecoration);
         }
 
+        /// <summary>Background options run Blank first, then all 17 box backgrounds, then Random last.</summary>
         [Fact]
         public void BackgroundOptionsCoverBlankAllSeventeenAndRandom()
         {
@@ -218,6 +231,7 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>Setting the selected id marks the matching option and clears the others.</summary>
         [Fact]
         public void SelectingIdMarksMatchingOptionAndClearsOthers()
         {
@@ -227,6 +241,7 @@ namespace CtrDxEditor.Tests
             Assert.All(vm.RopeSkinOptions.Where(o => o.Id != 3), o => Assert.False(o.IsSelected));
         }
 
+        /// <summary>Checking an option's IsSelected updates the selected id and clears the others.</summary>
         [Fact]
         public void CheckingAnOptionUpdatesTheSelectedId()
         {
