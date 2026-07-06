@@ -25,6 +25,7 @@ namespace CtrDxEditor.ViewModels
             Name = name;
             Label = Localizer.AttributeName(name);
             IsBool = type == AttrType.Bool;
+            IsNumeric = type is AttrType.Whole or AttrType.Number;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
             _get = () => target.GetAttr(name);
@@ -50,6 +51,7 @@ namespace CtrDxEditor.ViewModels
             Name = name;
             Label = Localizer.AttributeName(name);
             IsBool = type == AttrType.Bool;
+            IsNumeric = type is AttrType.Whole or AttrType.Number;
             _get = get;
             _set = set;
             _onChanged = onChanged;
@@ -70,8 +72,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this field renders as a checkbox.</summary>
         public bool IsBool { get; }
 
+        /// <summary>Whether this field renders as a whole-number-only box (x, y, length, radius, ...).</summary>
+        public bool IsNumeric { get; }
+
         /// <summary>Whether this field renders as a free-form text box.</summary>
-        public bool IsText => EnumOptions is null && !IsBool;
+        public bool IsText => EnumOptions is null && !IsBool && !IsNumeric;
 
         /// <summary>Whether the field's control is interactive; false greys it out.</summary>
         [ObservableProperty]

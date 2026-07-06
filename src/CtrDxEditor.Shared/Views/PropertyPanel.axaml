@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:CtrDxEditor.ViewModels"
+             xmlns:ctl="using:CtrDxEditor.Controls"
              xmlns:loc="using:CtrDxEditor.Localization"
              x:Class="CtrDxEditor.Views.PropertyPanel"
              x:DataType="vm:EditorViewModel">
@@ -29,6 +30,9 @@
               <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
                         IsEnabled="{Binding IsEnabled}"
                         IsChecked="{Binding BoolValue, Mode=TwoWay}" />
+              <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
+                       IsEnabled="{Binding IsEnabled}"
+                       Text="{Binding Value, Mode=TwoWay}" />
               <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                        IsEnabled="{Binding IsEnabled}"
                        Text="{Binding Value, Mode=TwoWay}" />
