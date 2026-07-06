@@ -332,24 +332,26 @@ namespace CtrDxEditor.Rendering
             ViewTransform v = View;
             Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
-            context.DrawRectangle(null, new Pen(Brushes.DimGray, 1),
-                new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
 
-            // Editor-decoration background: drawn clipped to the level rect, under the grid. The game
-            // (GameScene.Draw) scales the p1 texture to the internal screen width, centers it on the
-            // map, and repeats it vertically only - never stretching it to the map. A p2 overlay is
-            // drawn once for maps taller than one screen. BackgroundPlacement mirrors that math.
+            // Editor-decoration background, drawn as the bottom layer so the level border and grid sit
+            // on top of it. The p1 column keeps its game width and aspect (GameScene.Draw scales it to
+            // the internal screen width) and stays centered on the map, so it extends past the level
+            // rect sideways rather than being cropped to it - but it's bounded to the level's own height
+            // (clipped top/bottom) so it doesn't repeat off into empty canvas. Horizontally it's a
+            // single column: the game repeats the background vertically only, never sideways. A p2
+            // overlay is drawn once for maps taller than one screen. BackgroundPlacement mirrors that.
             Bitmap? bg = sprites.GetBackground(ActiveBackground);
             if (bg is not null && bg.Size is { Width: > 0, Height: > 0 } bgSize)
             {
-                Rect levelRect = new(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
                 Bitmap? p2 = sprites.GetBackgroundP2(ActiveBackground);
                 double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
                 BackgroundLayout layout = BackgroundPlacement.Compute(
                     doc.Width, doc.Height, bgSize.Height / bgSize.Width,
                     p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground));
 
-                using (context.PushClip(levelRect))
+                // Clip vertically to the level's height (full canvas width, so the wide column still
+                // shows past the level sides), keeping the background within the level's own span.
+                using (context.PushClip(new Rect(0, tl.Y, Bounds.Width, br.Y - tl.Y)))
                 {
                     if (layout.TileHeight > 0.5)
                     {
@@ -366,6 +368,9 @@ namespace CtrDxEditor.Rendering
                     }
                 }
             }
+
+            context.DrawRectangle(null, new Pen(Brushes.DimGray, 1),
+                new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
 
             int grid = doc.GridSize > 0 ? doc.GridSize : 32;
             Pen gridPen = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
