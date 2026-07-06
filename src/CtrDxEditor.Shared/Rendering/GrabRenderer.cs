@@ -122,22 +122,26 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws the auto-catch radius as an orange dashed ring (distinct from the blue/red selection box)
-        /// around every auto-catch grab, so its reach stays visible without selecting it; it disappears
-        /// only when auto-catch is turned off. The game draws this circle blue and solid in-play; here it
-        /// is purely an editor guide, resized by dragging the selected grab's ring edge.
+        /// Draws each object's resizable radius as a dashed ring: orange for a grab's auto-catch reach,
+        /// gold for a light bulb's lit radius. The ring stays visible without selecting the object and
+        /// disappears only when the radius is turned off (non-positive). It is an editor guide — the game
+        /// draws the grab circle blue in-play and the bulb reach as a soft glow; here the ring marks the
+        /// draggable edge, resized by dragging the selected object's ring.
         /// </summary>
         public static void DrawRadiusRings(DrawingContext ctx, ViewTransform v, IReadOnlyList<LevelObject> objects)
         {
-            Pen radiusPen = new(Brushes.Orange, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
+            Pen grabPen = new(Brushes.Orange, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
+            Pen bulbPen = new(Brushes.Gold, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
             foreach (LevelObject obj in objects)
             {
-                if (obj.Type == "grab" && GrabRadius.Of(obj) is double rr)
+                if (RadiusRing.Of(obj) is not { } ring)
                 {
-                    Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
-                    double screenR = rr * v.Zoom;
-                    ctx.DrawEllipse(null, radiusPen, new Point(c.X, c.Y), screenR, screenR);
+                    continue;
                 }
+                Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+                double screenR = ring.Radius * v.Zoom;
+                Pen pen = obj.Type == "lightBulb" ? bulbPen : grabPen;
+                ctx.DrawEllipse(null, pen, new Point(c.X, c.Y), screenR, screenR);
             }
         }
 
