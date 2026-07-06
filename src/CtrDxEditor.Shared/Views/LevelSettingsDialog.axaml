@@ -221,6 +221,16 @@
         <StackPanel Spacing="8"
                     IsVisible="{Binding ShowDecoration}">
 
+          <Border Height="1"
+                  Background="#22FFFFFF"
+                  Margin="0,8,0,4" />
+
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.CustomizationOptions}"
+                      FontSize="16"
+                      FontWeight="SemiBold"
+                      Opacity="0.9"
+                      Margin="0,0,0,2" />
+
           <Expander Header="{loc:Tr Dialog.LevelSettings.RopeColor}"
                     IsExpanded="False"
                     HorizontalAlignment="Stretch"
