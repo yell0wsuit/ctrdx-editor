@@ -15,6 +15,7 @@ using Avalonia.VisualTree;
 
 using AvaloniaDialogs.Views;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Localization;
@@ -246,15 +247,9 @@ namespace CtrDxEditor.Views
             }
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForNew();
             dialogVm.LoadDecoration(vm.CurrentSettingsSnapshot);
-            // Decode the background thumbnails off the UI thread so opening the dialog never stalls.
-            await Task.Run(() =>
-            {
-                foreach (BackgroundOption option in dialogVm.BackgroundOptions)
-                {
-                    option.Thumbnail = vm.Sprites.GetBackground(option.Id);
-                }
-            });
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
+            // Fill in the background thumbnails progressively off the UI thread; the dialog opens at once.
+            _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
@@ -266,6 +261,21 @@ namespace CtrDxEditor.Views
                 {
                     await store.SaveAsync(vm.CurrentSettingsSnapshot);
                 }
+            }
+        }
+
+        // Decodes each background's picker thumbnail on a background thread and assigns it back on the
+        // UI thread (this runs in the UI SynchronizationContext), so the cards fill in as they load.
+        private static async Task LoadBackgroundThumbnailsAsync(LevelSettingsViewModel dialogVm, SpriteCache sprites)
+        {
+            foreach (BackgroundOption option in dialogVm.BackgroundOptions)
+            {
+                if (option.Id <= 0)
+                {
+                    continue;
+                }
+                int id = option.Id;
+                option.Thumbnail = await Task.Run(() => sprites.GetBackgroundThumbnail(id));
             }
         }
 

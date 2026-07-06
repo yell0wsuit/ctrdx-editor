@@ -46,6 +46,7 @@ namespace CtrDxEditor.Content
         // Concurrent so the UI-thread canvas render and an off-thread thumbnail preload can both
         // resolve backgrounds without racing the cache.
         private readonly ConcurrentDictionary<int, Bitmap?> _backgrounds = new();
+        private readonly ConcurrentDictionary<int, Bitmap?> _backgroundThumbnails = new();
 
         /// <summary>Creates a sprite cache for a desktop content folder.</summary>
         public SpriteCache(string contentRoot)
@@ -108,28 +109,45 @@ namespace CtrDxEditor.Content
                 : new ChristmasLightsArt(bitmap, atlas.Frames);
         }
 
-        /// <summary>Decode width for editor-decoration backgrounds; the full p1 art (~2560px) is far
-        /// larger than needed for a decorative backdrop, so downscaling keeps memory in check.</summary>
+        /// <summary>Decode width for the canvas background; the full p1 art (~2560px) is far larger than
+        /// needed for a decorative backdrop, so downscaling keeps memory in check.</summary>
         private const int BackgroundDecodeWidth = 1280;
 
+        /// <summary>Decode width for the dialog's background thumbnails - small, since many are held at once.</summary>
+        private const int BackgroundThumbnailWidth = 192;
+
         /// <summary>
-        /// Decodes the p1 background image for the given decoration id (1..7 = bgr_01..bgr_07),
-        /// downscaled and cached for the process lifetime. Returns null for id &lt;= 0
+        /// Decodes the p1 background image for the given decoration id (1..17 = bgr_01..bgr_17) at
+        /// canvas resolution, cached for the process lifetime. Returns null for id &lt;= 0
         /// (Blank/Random-unresolved) or a missing/unreadable file.
         /// </summary>
-        /// <remarks>
-        /// The <see cref="IContentStore"/> read is dispatched through <c>Task.Run</c> so the
-        /// awaited continuation never marshals back to a UI SynchronizationContext. Calling this
-        /// synchronously from the UI thread (canvas render, dialog build) therefore blocks only on the
-        /// file read/decode rather than deadlocking against its own continuation.
-        /// </remarks>
         public Bitmap? GetBackground(int id)
+        {
+            return LoadBackground(id, BackgroundDecodeWidth, _backgrounds);
+        }
+
+        /// <summary>
+        /// Decodes a small thumbnail of the p1 background for the New Level dialog's picker, cached
+        /// separately from the full-size canvas bitmaps. Returns null for id &lt;= 0 or a missing file.
+        /// </summary>
+        public Bitmap? GetBackgroundThumbnail(int id)
+        {
+            return LoadBackground(id, BackgroundThumbnailWidth, _backgroundThumbnails);
+        }
+
+        /// <remarks>
+        /// The <see cref="IContentStore"/> read is dispatched through <c>Task.Run</c> so the awaited
+        /// continuation never marshals back to a UI SynchronizationContext. Calling this synchronously
+        /// from the UI thread therefore blocks only on the file read/decode rather than deadlocking
+        /// against its own continuation.
+        /// </remarks>
+        private Bitmap? LoadBackground(int id, int decodeWidth, ConcurrentDictionary<int, Bitmap?> cache)
         {
             if (id <= 0)
             {
                 return null;
             }
-            if (_backgrounds.TryGetValue(id, out Bitmap? cached))
+            if (cache.TryGetValue(id, out Bitmap? cached))
             {
                 return cached;
             }
@@ -140,14 +158,14 @@ namespace CtrDxEditor.Content
                 string rel = $"images/backgrounds/bgr_{id:D2}_p1.png";
                 byte[] bytes = Task.Run(() => store.ReadBytesAsync(rel)).GetAwaiter().GetResult();
                 using MemoryStream ms = new(bytes);
-                bmp = Bitmap.DecodeToWidth(ms, BackgroundDecodeWidth);
+                bmp = Bitmap.DecodeToWidth(ms, decodeWidth);
             }
             catch (Exception ex) when (ex is IOException or FileNotFoundException or InvalidOperationException)
             {
                 bmp = null;
             }
 
-            _backgrounds[id] = bmp;
+            cache[id] = bmp;
             return bmp;
         }
 

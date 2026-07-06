@@ -91,38 +91,60 @@
       </CheckBox>
     </StackPanel>
 
-    <!-- Editor-decoration pickers (new-level mode only). These never touch the level XML. -->
+    <!-- Editor-decoration pickers (new-level mode only). These never touch the level XML. Each option
+         is a card: preview on top, radio button + label below, flowing into rows and columns. -->
     <StackPanel Spacing="8" IsVisible="{Binding ShowDecoration}">
       <Expander Header="{loc:Tr Dialog.LevelSettings.RopeColor}" IsExpanded="False">
-        <ListBox ItemsSource="{Binding RopeSkinOptions}"
-                 SelectedValue="{Binding SelectedRopeSkin, Mode=TwoWay}" SelectedValueBinding="{Binding Id}"
-                 MaxHeight="220">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:RopeSkinOption">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <ctrl:RopeSwatch Width="60" Height="28" Skin="{Binding Id}" />
-                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
+        <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding RopeSkinOptions}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RopeSkinOption">
+                <Border Width="84" Margin="3" Padding="4" CornerRadius="4" Background="#14FFFFFF">
+                  <StackPanel Spacing="4">
+                    <ctrl:RopeSwatch Width="72" Height="26" HorizontalAlignment="Center" Skin="{Binding Id}" />
+                    <RadioButton GroupName="RopeSkin" HorizontalAlignment="Center"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                      <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" />
+                    </RadioButton>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
       </Expander>
 
       <Expander Header="{loc:Tr Dialog.LevelSettings.Background}" IsExpanded="False">
-        <ListBox ItemsSource="{Binding BackgroundOptions}"
-                 SelectedValue="{Binding SelectedBackground, Mode=TwoWay}" SelectedValueBinding="{Binding Id}"
-                 MaxHeight="260">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:BackgroundOption">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <Border Width="48" Height="32" Background="#222" ClipToBounds="True">
-                  <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+        <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding BackgroundOptions}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:BackgroundOption">
+                <Border Width="84" Margin="3" Padding="4" CornerRadius="4" Background="#14FFFFFF">
+                  <StackPanel Spacing="4">
+                    <Border Width="72" Height="48" Background="#222" ClipToBounds="True" CornerRadius="2"
+                            HorizontalAlignment="Center">
+                      <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                    </Border>
+                    <RadioButton GroupName="Background" HorizontalAlignment="Center"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                      <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" />
+                    </RadioButton>
+                  </StackPanel>
                 </Border>
-                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
       </Expander>
 
       <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberChoice}"

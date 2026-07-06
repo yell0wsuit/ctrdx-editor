@@ -167,7 +167,7 @@ namespace CtrDxEditor.Tests
             vm.SelectedBackground = -1;
             (int skin, int bg) = vm.ResolveDecoration(new System.Random(1));
             Assert.InRange(skin, 0, 8);
-            Assert.InRange(bg, 1, 7);
+            Assert.InRange(bg, 1, 17);
         }
 
         [Fact]
@@ -203,6 +203,37 @@ namespace CtrDxEditor.Tests
         {
             Assert.True(LevelSettingsViewModel.ForNew().ShowDecoration);
             Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowDecoration);
+        }
+
+        [Fact]
+        public void BackgroundOptionsCoverBlankAllSeventeenAndRandom()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            int[] ids = [.. vm.BackgroundOptions.Select(o => o.Id)];
+            Assert.Equal(0, ids[0]);          // Blank first
+            Assert.Equal(-1, ids[^1]);        // Random last
+            for (int i = 1; i <= 17; i++)
+            {
+                Assert.Contains(i, ids);       // every box background
+            }
+        }
+
+        [Fact]
+        public void SelectingIdMarksMatchingOptionAndClearsOthers()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedRopeSkin = 3;
+            Assert.True(vm.RopeSkinOptions.Single(o => o.Id == 3).IsSelected);
+            Assert.All(vm.RopeSkinOptions.Where(o => o.Id != 3), o => Assert.False(o.IsSelected));
+        }
+
+        [Fact]
+        public void CheckingAnOptionUpdatesTheSelectedId()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.BackgroundOptions.Single(o => o.Id == 6).IsSelected = true;
+            Assert.Equal(6, vm.SelectedBackground);
+            Assert.All(vm.BackgroundOptions.Where(o => o.Id != 6), o => Assert.False(o.IsSelected));
         }
 
         /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>

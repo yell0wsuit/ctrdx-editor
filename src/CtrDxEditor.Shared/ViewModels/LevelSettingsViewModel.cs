@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 
 using Avalonia.Media;
@@ -19,14 +20,33 @@ namespace CtrDxEditor.ViewModels
     /// <summary>One selectable special (tutorial-staging) value: user-facing label, XML integer. <see cref="IsCustom"/> reveals the manual input.</summary>
     public sealed record SpecialOption(string Label, int Value, bool IsCustom = false);
 
-    /// <summary>One selectable rope skin; Id -1 is the Random sentinel.</summary>
-    public sealed record RopeSkinOption(int Id, string Label);
-
-    /// <summary>One selectable background; Id -1 is Random, 0 is Blank (no background), 1..7 = bgr_01..bgr_07.</summary>
-    public sealed record BackgroundOption(int Id, string Label)
+    /// <summary>One selectable rope skin; Id -1 is the Random sentinel, 0 is Default, 1..8 are skins.</summary>
+    public sealed partial class RopeSkinOption(int id, string label) : ObservableObject
     {
-        /// <summary>A preview of the background art, populated when the dialog is built; null for Blank/Random.</summary>
-        public IImage? Thumbnail { get; set; }
+        /// <summary>Rope skin id: -1 = Random, else 0..8 (0 = Default).</summary>
+        public int Id { get; } = id;
+
+        /// <summary>Display label shown under the swatch.</summary>
+        public string Label { get; } = label;
+
+        /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
+        [ObservableProperty] public partial bool IsSelected { get; set; }
+    }
+
+    /// <summary>One selectable background; Id -1 is Random, 0 is Blank (no background), 1..17 = bgr_01..bgr_17.</summary>
+    public sealed partial class BackgroundOption(int id, string label) : ObservableObject
+    {
+        /// <summary>Background id: -1 = Random, 0 = Blank, else 1..17.</summary>
+        public int Id { get; } = id;
+
+        /// <summary>Display label shown under the thumbnail.</summary>
+        public string Label { get; } = label;
+
+        /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
+        [ObservableProperty] public partial bool IsSelected { get; set; }
+
+        /// <summary>Preview of the background art, loaded lazily after the dialog opens; null for Blank/Random.</summary>
+        [ObservableProperty] public partial IImage? Thumbnail { get; set; }
     }
 
     /// <summary>View model for the New / Level Settings dialog.</summary>
@@ -91,10 +111,13 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool NightLevel { get; set; }
         [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
 
+        /// <summary>Highest background id (bgr_01..bgr_17); ids map to the game's box backgrounds.</summary>
+        private const int BackgroundCount = 17;
+
         /// <summary>Rope skin choices: default + 8 skins + Random.</summary>
         public IReadOnlyList<RopeSkinOption> RopeSkinOptions { get; } = BuildRopeSkinOptions();
 
-        /// <summary>Background choices: Blank + bgr_01..bgr_07 + Random.</summary>
+        /// <summary>Background choices: Blank + bgr_01..bgr_17 (the game's box backgrounds) + Random.</summary>
         public IReadOnlyList<BackgroundOption> BackgroundOptions { get; } =
         [
             new(0, "Blank"),
@@ -105,6 +128,16 @@ namespace CtrDxEditor.ViewModels
             new(5, "Valentine's Box"),
             new(6, "Toy Box"),
             new(7, "Gift Box"),
+            new(8, "Cosmic Box"),
+            new(9, "Toolbox"),
+            new(10, "Buzz Box"),
+            new(11, "DJ Box"),
+            new(12, "Spooky Box"),
+            new(13, "Steam Box"),
+            new(14, "Lantern Box"),
+            new(15, "Cheese Box"),
+            new(16, "Pillow Box"),
+            new(17, "Mechanical"),
             new(-1, "Random"),
         ];
 
@@ -114,6 +147,10 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Decoration options are only offered when creating a new level.</summary>
         public bool ShowDecoration => IsNewMode;
+
+        // Guards the two-way mirror between the Selected* ids and each option's IsSelected flag so a
+        // change on one side doesn't recurse back through the other.
+        private bool _syncingSelection;
 
         /// <summary>Whether the manual special-value input is active.</summary>
         public bool IsSpecialCustom => SelectedSpecial.IsCustom;
@@ -138,6 +175,74 @@ namespace CtrDxEditor.ViewModels
             IsNewMode = isNewMode;
             SelectedPreset = Presets[0];
             SelectedSpecial = SpecialOptions[0];
+
+            // Mirror a radio-button click (option.IsSelected) back into the Selected* id.
+            foreach (RopeSkinOption option in RopeSkinOptions)
+            {
+                option.PropertyChanged += OnRopeOptionChanged;
+            }
+            foreach (BackgroundOption option in BackgroundOptions)
+            {
+                option.PropertyChanged += OnBackgroundOptionChanged;
+            }
+
+            // Reflect the initial ids (Default rope / Blank background) in the option flags.
+            SyncRopeOptions(SelectedRopeSkin);
+            SyncBackgroundOptions(SelectedBackground);
+        }
+
+        private void OnRopeOptionChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (_syncingSelection || e.PropertyName != nameof(RopeSkinOption.IsSelected))
+            {
+                return;
+            }
+            if (sender is RopeSkinOption { IsSelected: true } option)
+            {
+                SelectedRopeSkin = option.Id;
+            }
+        }
+
+        private void OnBackgroundOptionChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (_syncingSelection || e.PropertyName != nameof(BackgroundOption.IsSelected))
+            {
+                return;
+            }
+            if (sender is BackgroundOption { IsSelected: true } option)
+            {
+                SelectedBackground = option.Id;
+            }
+        }
+
+        partial void OnSelectedRopeSkinChanged(int value)
+        {
+            SyncRopeOptions(value);
+        }
+
+        partial void OnSelectedBackgroundChanged(int value)
+        {
+            SyncBackgroundOptions(value);
+        }
+
+        private void SyncRopeOptions(int value)
+        {
+            _syncingSelection = true;
+            foreach (RopeSkinOption option in RopeSkinOptions)
+            {
+                option.IsSelected = option.Id == value;
+            }
+            _syncingSelection = false;
+        }
+
+        private void SyncBackgroundOptions(int value)
+        {
+            _syncingSelection = true;
+            foreach (BackgroundOption option in BackgroundOptions)
+            {
+                option.IsSelected = option.Id == value;
+            }
+            _syncingSelection = false;
         }
 
         // Selects the listed option matching value, or routes an unlisted value (e.g. an imported
@@ -222,8 +327,8 @@ namespace CtrDxEditor.ViewModels
             int skin = SelectedRopeSkin >= 0 ? SelectedRopeSkin : rng.Next(0, RopePalette.SkinCount);
             int bg = SelectedBackground switch
             {
-                -1 => rng.Next(1, 8),    // 1..7
-                _ => SelectedBackground, // 0 (Blank) or 1..7 as chosen
+                -1 => rng.Next(1, BackgroundCount + 1), // 1..17
+                _ => SelectedBackground,                // 0 (Blank) or 1..17 as chosen
             };
             return (skin, bg);
         }
