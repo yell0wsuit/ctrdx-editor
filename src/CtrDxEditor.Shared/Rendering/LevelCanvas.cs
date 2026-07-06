@@ -433,6 +433,13 @@ namespace CtrDxEditor.Rendering
                 }
                 DrawSprite(ctx, v, sprite, obj.X, obj.Y);
             }
+            foreach (string overlayKey in GrabRenderer.OverlaySpriteKeys(obj))
+            {
+                if (sprites.GetSprite(overlayKey) is { } overlay)
+                {
+                    DrawSprite(ctx, v, overlay, obj.X, obj.Y);
+                }
+            }
         }
 
         private static void DrawSprite(DrawingContext ctx, ViewTransform v, ObjectSprite sprite, double x, double y)

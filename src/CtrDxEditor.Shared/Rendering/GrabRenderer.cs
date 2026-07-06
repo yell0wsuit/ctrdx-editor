@@ -20,11 +20,34 @@ namespace CtrDxEditor.Rendering
     {
         /// <summary>
         /// The sprite element to render an object with. Auto-catch grabs use the auto-hook art (game
-        /// HookAuto quads 4/5); every other object uses its element sprite directly.
+        /// HookAuto quads 4/5); hook variants use their matching game art; every other object uses its
+        /// element sprite directly.
         /// </summary>
         public static string SpriteKey(LevelObject obj)
         {
-            return obj.Type == "grab" && GrabRadius.Of(obj) is not null ? "grab_auto" : obj.Type;
+            return obj.Type switch
+            {
+                not "grab" => obj.Type,
+                _ when IsTrue(obj.GetAttr("gun")) => "grab_gun",
+                _ when IsTrue(obj.GetAttr("kickable")) =>
+                    IsTrue(obj.GetAttr("kicked")) ? "grab_suction_kicked" : "grab_suction",
+                _ when IsTrue(obj.GetAttr("wheel")) => "grab_wheel",
+                _ => GrabRadius.Of(obj) is not null ? "grab_auto" : obj.Type,
+            };
+        }
+
+        /// <summary>Extra sprite elements drawn over the base grab, without changing selection geometry.</summary>
+        public static IEnumerable<string> OverlaySpriteKeys(LevelObject obj)
+        {
+            if (obj.Type == "grab" && IsTrue(obj.GetAttr("spider")))
+            {
+                yield return "grab_spider";
+            }
+        }
+
+        private static bool IsTrue(string? value)
+        {
+            return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
