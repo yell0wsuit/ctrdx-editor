@@ -158,6 +158,13 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(LighterJson, LighterImageBase, "02_bottle.png"),
                 new SpriteLayer(LighterJson, LighterImageBase, "03_top.png"),
             ]),
+
+            // Lit-glow halo quad, drawn additively under the bottle at 1.5x litRadius by GlowDrawOperation.
+            // A separate element so it is never composited into the static bulb thumbnail or selection bounds.
+            new("lightBulb_glow",
+            [
+                new SpriteLayer(LighterJson, LighterImageBase, "01_light.png"),
+            ]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

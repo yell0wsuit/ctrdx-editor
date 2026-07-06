@@ -52,5 +52,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal("images/obj_star_idle", layer.AtlasImageBasePath);
             Assert.Equal("frame_0056.png", layer.FrameName);
         }
+
+        /// <summary>The additive lit-glow halo is registered as its own quad, separate from the bulb sprite.</summary>
+        [Fact]
+        public void LightBulbGlowUsesLightQuad()
+        {
+            VisualDescriptor glow = VisualDescriptorMap.For("lightBulb_glow")!;
+
+            SpriteLayer layer = Assert.Single(glow.Layers);
+            Assert.Equal("images/obj_lighter.json", layer.AtlasJsonRelPath);
+            Assert.Equal("images/obj_lighter", layer.AtlasImageBasePath);
+            Assert.Equal("01_light.png", layer.FrameName);
+        }
     }
 }
