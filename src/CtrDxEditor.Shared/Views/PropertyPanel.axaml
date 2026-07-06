@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:ctl="using:CtrDxEditor.Controls"
+             xmlns:conv="using:CtrDxEditor.Converters"
              xmlns:loc="using:CtrDxEditor.Localization"
              x:Class="CtrDxEditor.Views.PropertyPanel"
              x:DataType="vm:EditorViewModel">
@@ -11,7 +12,8 @@
       <ItemsControl ItemsSource="{Binding Fields}" Margin="8,0,8,14" Grid.IsSharedSizeScope="True">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:AttributeFieldViewModel">
-            <Grid Margin="0,2">
+            <Grid Margin="0,2"
+                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
                 <ColumnDefinition Width="100" />
@@ -19,6 +21,7 @@
               <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
                         IsEnabled="{Binding IsEnabled}"
+                        Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                         ItemsSource="{Binding EnumOptions}"
                         SelectedItem="{Binding SelectedOption, Mode=TwoWay}" HorizontalAlignment="Stretch">
                 <ComboBox.ItemTemplate>
@@ -29,13 +32,16 @@
               </ComboBox>
               <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
                         IsEnabled="{Binding IsEnabled}"
+                        Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                         IsChecked="{Binding BoolValue, Mode=TwoWay}" />
               <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
                        IsEnabled="{Binding IsEnabled}"
+                       Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                        Minimum="{Binding NumericMinimum}"
                        Text="{Binding Value, Mode=TwoWay}" />
               <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                        IsEnabled="{Binding IsEnabled}"
+                       Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                        Text="{Binding Value, Mode=TwoWay}" />
             </Grid>
           </DataTemplate>
