@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -13,24 +14,24 @@ namespace CtrDxEditor.Tests
     {
         private sealed class EmptyStore : IContentStore
         {
-            public System.Threading.Tasks.Task<bool> ExistsAsync(string relPath)
+            public Task<bool> ExistsAsync(string relPath)
             {
-                return System.Threading.Tasks.Task.FromResult(false);
+                return Task.FromResult(false);
             }
 
-            public System.Threading.Tasks.Task<byte[]> ReadBytesAsync(string relPath)
+            public Task<byte[]> ReadBytesAsync(string relPath)
             {
-                return System.Threading.Tasks.Task.FromResult(System.Array.Empty<byte>());
+                return Task.FromResult(System.Array.Empty<byte>());
             }
 
-            public System.Threading.Tasks.Task<string> ReadTextAsync(string relPath)
+            public Task<string> ReadTextAsync(string relPath)
             {
-                return System.Threading.Tasks.Task.FromResult("");
+                return Task.FromResult("");
             }
 
-            public System.Threading.Tasks.Task<bool> IsPopulatedAsync()
+            public Task<bool> IsPopulatedAsync()
             {
-                return System.Threading.Tasks.Task.FromResult(false);
+                return Task.FromResult(false);
             }
         }
 
@@ -49,6 +50,7 @@ namespace CtrDxEditor.Tests
             return vm.Palette.Single(p => p.Element == element);
         }
 
+        /// <summary>A single-candy level offers whole candy and the bulb, but not the split-candy halves.</summary>
         [Fact]
         public void SingleCandyLevelShowsCandyAndBulbNotHalves()
         {
@@ -61,6 +63,7 @@ namespace CtrDxEditor.Tests
             Assert.True(PaletteHas(vm, "lightBulb"));
         }
 
+        /// <summary>A two-part night level offers the split-candy halves and the bulb, but not whole candy.</summary>
         [Fact]
         public void TwoPartNightLevelShowsHalvesAndBulbNotCandy()
         {
@@ -73,6 +76,7 @@ namespace CtrDxEditor.Tests
             Assert.True(PaletteHas(vm, "lightBulb"));
         }
 
+        /// <summary>Updating level settings rewrites the document's resolution and special value.</summary>
         [Fact]
         public void UpdateLevelSettingsWritesResolution()
         {
@@ -86,6 +90,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(2, vm.Document!.Special);
         }
 
+        /// <summary>Turning on two-part mode auto-creates the halves, so their palette items gray out.</summary>
         [Fact]
         public void SwitchingBackToHalfCandyGraysOutAutoCreatedHalves()
         {
@@ -99,6 +104,7 @@ namespace CtrDxEditor.Tests
             Assert.False(PaletteItem(vm, "candyR").Enabled);
         }
 
+        /// <summary>Auto-creating the halves raises one mutation and adds candyL/candyR to the document.</summary>
         [Fact]
         public void SwitchingBackToHalfCandyNotifiesCanvasRefresh()
         {
@@ -115,6 +121,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains(vm.Document.Objects, o => o.Type == "candyR");
         }
 
+        /// <summary>The half-candy palette allows exactly one of each half; placing one disables it.</summary>
         [Fact]
         public void HalfCandyPaletteAllowsOneOfEachHalf()
         {

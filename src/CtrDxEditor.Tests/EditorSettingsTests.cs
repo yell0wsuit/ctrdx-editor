@@ -28,6 +28,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Editor", Assert.IsType<Dictionary<string, string>>(strings)["Window.Title"]);
         }
 
+        /// <summary>The decoration fields (remember flag, rope skin, background) survive a JSON round-trip.</summary>
         [Fact]
         public void RoundTripsDecorationFields()
         {
