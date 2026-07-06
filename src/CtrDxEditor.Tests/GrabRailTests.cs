@@ -84,6 +84,28 @@ namespace CtrDxEditor.Tests
             Assert.Equal(30, GrabRail.ResizeEnd(g, new Vec2(150, 50)));    // can't shrink past the hook (offset 30)
         }
 
+        /// <summary>Hit-testing routes the ends, hook, and bar; empty space misses.</summary>
+        [Fact]
+        public void HitTestClassifiesRailParts()
+        {
+            GrabRail.Geometry g = GrabRail.Of(Grab(200, 50, "100", "30", false))!.Value; // start 170, hook 200, end 270
+
+            Assert.Equal(GrabRail.Handle.ResizeStart, GrabRail.HitTest(g, new Vec2(170, 50), 5, 10, 12));
+            Assert.Equal(GrabRail.Handle.ResizeEnd, GrabRail.HitTest(g, new Vec2(270, 50), 5, 10, 12));
+            Assert.Equal(GrabRail.Handle.SlideHook, GrabRail.HitTest(g, new Vec2(200, 50), 5, 10, 12));
+            Assert.Equal(GrabRail.Handle.MoveBar, GrabRail.HitTest(g, new Vec2(240, 55), 5, 10, 12));
+            Assert.Equal(GrabRail.Handle.None, GrabRail.HitTest(g, new Vec2(240, 200), 5, 10, 12));
+        }
+
+        /// <summary>When the hook sits on an end, sliding wins over resizing that end.</summary>
+        [Fact]
+        public void HitTestPrefersHookWhenItSitsOnAnEnd()
+        {
+            GrabRail.Geometry g = GrabRail.Of(Grab(200, 50, "100", "0", false))!.Value; // hook == start (200,50)
+
+            Assert.Equal(GrabRail.Handle.SlideHook, GrabRail.HitTest(g, new Vec2(200, 50), 5, 10, 12));
+        }
+
         /// <summary>Dragging the near end changes both offset and length; offset never goes negative.</summary>
         [Fact]
         public void ResizeStartMovesOffsetAndLength()

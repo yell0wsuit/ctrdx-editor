@@ -146,9 +146,9 @@ namespace CtrDxEditor.Rendering
 
         private bool _dragging;
         private bool _resizingRadius;
-        // Movable-rail drag state: sliding the hook along the rail, or dragging an end cap to resize.
-        private bool _slidingHook;
-        private int _resizingRail; // 0 = none, 1 = start (near) cap, 2 = end (far) cap
+        // Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
+        // None when no rail drag is in progress. A MoveBar drag routes through _dragging instead.
+        private GrabRail.Handle _railDrag;
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
         private bool _panning;
@@ -480,41 +480,14 @@ namespace CtrDxEditor.Rendering
             return SelectedObject is { Type: "grab" } g && View.Zoom > 0 && GrabRadius.Of(g) is double r && GrabRadius.OnEdge(new Vec2(g.X, g.Y), r, levelPt, 6 / View.Zoom);
         }
 
-        // What part of the selected movable grab's rail a level point is over. End caps take priority (they
-        // are small targets) unless the hook sits on that end, where sliding wins; then the hook (slide);
-        // then the bar itself (move the whole grab). End tolerance is ~9 screen px; the hook uses its own
-        // footprint and the bar its thickness.
-        private enum RailHit { None, ResizeStart, ResizeEnd, SlideHook, MoveBar }
-
-        private RailHit HitRail(Vec2 levelPt)
+        // What part of the selected movable grab's rail a level point is over, or None. The hit-testing
+        // itself lives in GrabRail; here we only supply the selected grab's geometry and the screen-derived
+        // tolerances: ~9 px for the end caps, the hook's own footprint, and the bar's half thickness.
+        private GrabRail.Handle HitRail(Vec2 levelPt)
         {
-            if (SelectedObject is not { Type: "grab" } sel || View.Zoom <= 0 || GrabRail.Of(sel) is not { } g)
-            {
-                return RailHit.None;
-            }
-
-            double endTol = 9 / View.Zoom;
-            const double hookTol = 24; // level units ~ half the movable hook art
-            bool onHook = GrabRadius.Distance(levelPt, g.Hook) <= hookTol;
-            if (!onHook && GrabRadius.Distance(levelPt, g.Start) <= endTol)
-            {
-                return RailHit.ResizeStart;
-            }
-            if (!onHook && GrabRadius.Distance(levelPt, g.End) <= endTol)
-            {
-                return RailHit.ResizeEnd;
-            }
-            if (onHook)
-            {
-                return RailHit.SlideHook;
-            }
-
-            const double halfThick = 20;
-            double along = g.Vertical ? levelPt.Y : levelPt.X;
-            double perp = g.Vertical ? Math.Abs(levelPt.X - g.Hook.X) : Math.Abs(levelPt.Y - g.Hook.Y);
-            double lo = Math.Min(g.Vertical ? g.Start.Y : g.Start.X, g.Vertical ? g.End.Y : g.End.X);
-            double hi = Math.Max(g.Vertical ? g.Start.Y : g.Start.X, g.Vertical ? g.End.Y : g.End.X);
-            return perp <= halfThick && along >= lo && along <= hi ? RailHit.MoveBar : RailHit.None;
+            return SelectedObject is { Type: "grab" } sel && View.Zoom > 0 && GrabRail.Of(sel) is { } g
+                ? GrabRail.HitTest(g, levelPt, endTolerance: 9 / View.Zoom, hookTolerance: 24, barThickness: 20)
+                : GrabRail.Handle.None;
         }
 
         // Applies the active rail drag to the grab: sliding moves the hook (object x/y) and its offset
@@ -522,28 +495,32 @@ namespace CtrDxEditor.Rendering
         // end). All constrained by GrabRail so the hook never leaves the rail.
         private void ApplyRailDrag(LevelObject grab, GrabRail.Geometry g, Vec2 levelPt)
         {
-            if (_slidingHook)
+            switch (_railDrag)
             {
-                (double hookAxis, double offset) = GrabRail.SlideHook(g, levelPt);
-                if (g.Vertical)
-                {
-                    grab.Y = (int)Math.Round(hookAxis);
-                }
-                else
-                {
-                    grab.X = (int)Math.Round(hookAxis);
-                }
-                grab.SetAttr("moveOffset", Whole(offset));
-            }
-            else if (_resizingRail == 2)
-            {
-                grab.SetAttr("moveLength", Whole(GrabRail.ResizeEnd(g, levelPt)));
-            }
-            else
-            {
-                (double offset, double length) = GrabRail.ResizeStart(g, levelPt);
-                grab.SetAttr("moveOffset", Whole(offset));
-                grab.SetAttr("moveLength", Whole(length));
+                case GrabRail.Handle.SlideHook:
+                    (double hookAxis, double offset) = GrabRail.SlideHook(g, levelPt);
+                    if (g.Vertical)
+                    {
+                        grab.Y = (int)Math.Round(hookAxis);
+                    }
+                    else
+                    {
+                        grab.X = (int)Math.Round(hookAxis);
+                    }
+                    grab.SetAttr("moveOffset", Whole(offset));
+                    break;
+                case GrabRail.Handle.ResizeEnd:
+                    grab.SetAttr("moveLength", Whole(GrabRail.ResizeEnd(g, levelPt)));
+                    break;
+                case GrabRail.Handle.ResizeStart:
+                    (double offA, double length) = GrabRail.ResizeStart(g, levelPt);
+                    grab.SetAttr("moveOffset", Whole(offA));
+                    grab.SetAttr("moveLength", Whole(length));
+                    break;
+                case GrabRail.Handle.MoveBar:
+                case GrabRail.Handle.None:
+                default:
+                    break;
             }
         }
 
@@ -561,10 +538,10 @@ namespace CtrDxEditor.Rendering
                 ? ResizeCursor
                 : HitRail(levelPt) switch
                 {
-                    RailHit.ResizeStart or RailHit.ResizeEnd or RailHit.SlideHook =>
+                    GrabRail.Handle.ResizeStart or GrabRail.Handle.ResizeEnd or GrabRail.Handle.SlideHook =>
                         SelectedObject is { } s && GrabRail.Vertical(s) ? VResizeCursor : ResizeCursor,
-                    RailHit.MoveBar => MoveCursor,
-                    RailHit.None => Cursor.Default,
+                    GrabRail.Handle.MoveBar => MoveCursor,
+                    GrabRail.Handle.None => Cursor.Default,
                     _ => Cursor.Default,
                 };
         }
@@ -630,26 +607,21 @@ namespace CtrDxEditor.Rendering
 
             // Grabbing the selected movable grab's rail: an end cap resizes, the hook slides, the bar moves
             // the whole grab. Takes priority over hit-testing so the rail wins over anything beneath it.
-            switch (HitRail(levelPt))
+            GrabRail.Handle handle = HitRail(levelPt);
+            switch (handle)
             {
-                case RailHit.ResizeStart:
-                    _resizingRail = 1;
+                case GrabRail.Handle.ResizeStart:
+                case GrabRail.Handle.ResizeEnd:
+                case GrabRail.Handle.SlideHook:
+                    _railDrag = handle;
                     e.Pointer.Capture(this);
                     return;
-                case RailHit.ResizeEnd:
-                    _resizingRail = 2;
-                    e.Pointer.Capture(this);
-                    return;
-                case RailHit.SlideHook:
-                    _slidingHook = true;
-                    e.Pointer.Capture(this);
-                    return;
-                case RailHit.MoveBar:
+                case GrabRail.Handle.MoveBar:
                     _dragOffset = levelPt - new Vec2(SelectedObject!.X, SelectedObject.Y);
                     _dragging = true;
                     e.Pointer.Capture(this);
                     return;
-                case RailHit.None:
+                case GrabRail.Handle.None:
                 default:
                     break;
             }
@@ -722,7 +694,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if ((_slidingHook || _resizingRail != 0) && SelectedObject is { } rg && GrabRail.Of(rg) is { } rail)
+            if (_railDrag != GrabRail.Handle.None && SelectedObject is { } rg && GrabRail.Of(rg) is { } rail)
             {
                 ApplyRailDrag(rg, rail, levelPt);
                 SelectedObjectMoved?.Invoke();
@@ -758,8 +730,7 @@ namespace CtrDxEditor.Rendering
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
-            _slidingHook = false;
-            _resizingRail = 0;
+            _railDrag = GrabRail.Handle.None;
             e.Pointer.Capture(null);
         }
 

@@ -47,6 +47,53 @@ namespace CtrDxEditor.Core.Editing
         public readonly record struct Geometry(
             Vec2 Start, Vec2 End, Vec2 Hook, bool Vertical, double Length, double Offset);
 
+        /// <summary>What part of a rail a point is over, so the canvas can route a drag.</summary>
+        public enum Handle
+        {
+            /// <summary>Nothing interactive under the point.</summary>
+            None,
+
+            /// <summary>The near (start) cap: dragging resizes from that end.</summary>
+            ResizeStart,
+
+            /// <summary>The far (end) cap: dragging resizes the length.</summary>
+            ResizeEnd,
+
+            /// <summary>The hook: dragging slides it along the rail.</summary>
+            SlideHook,
+
+            /// <summary>The rail bar: dragging moves the whole grab.</summary>
+            MoveBar,
+        }
+
+        /// <summary>
+        /// Classifies what part of the rail <paramref name="point"/> is over. The end caps win (they are
+        /// small targets) unless the hook sits on that end, where sliding wins; then the hook; then the bar
+        /// itself. Tolerances are in level units, so the caller converts screen pixels via the zoom.
+        /// </summary>
+        public static Handle HitTest(Geometry g, Vec2 point, double endTolerance, double hookTolerance, double barThickness)
+        {
+            bool onHook = Distance(point, g.Hook) <= hookTolerance;
+            if (!onHook && Distance(point, g.Start) <= endTolerance)
+            {
+                return Handle.ResizeStart;
+            }
+            if (!onHook && Distance(point, g.End) <= endTolerance)
+            {
+                return Handle.ResizeEnd;
+            }
+            if (onHook)
+            {
+                return Handle.SlideHook;
+            }
+
+            double along = Axis(point, g.Vertical);
+            double perp = Math.Abs(g.Vertical ? point.X - g.Hook.X : point.Y - g.Hook.Y);
+            double lo = Math.Min(Axis(g.Start, g.Vertical), Axis(g.End, g.Vertical));
+            double hi = Math.Max(Axis(g.Start, g.Vertical), Axis(g.End, g.Vertical));
+            return perp <= barThickness && along >= lo && along <= hi ? Handle.MoveBar : Handle.None;
+        }
+
         /// <summary>Resolves the rail geometry for a movable grab, or null when it is a fixed hook.</summary>
         public static Geometry? Of(LevelObject grab)
         {
@@ -103,6 +150,11 @@ namespace CtrDxEditor.Core.Editing
         private static double Axis(Vec2 p, bool vertical)
         {
             return vertical ? p.Y : p.X;
+        }
+
+        private static double Distance(Vec2 a, Vec2 b)
+        {
+            return GrabRadius.Distance(a, b);
         }
 
         private static double Read(LevelObject grab, string name)
