@@ -1,5 +1,6 @@
 using System.Linq;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
@@ -146,6 +147,62 @@ namespace CtrDxEditor.Tests
             LevelSettings current = new(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true);
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(current);
             Assert.True(vm.UseMobilePhysics);
+        }
+
+        [Fact]
+        public void LoadDecorationPrefillsSelections()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.LoadDecoration(new EditorSettings { RememberDecoration = true, RopeSkin = 3, Background = 4 });
+            Assert.Equal(3, vm.SelectedRopeSkin);
+            Assert.Equal(4, vm.SelectedBackground);
+            Assert.True(vm.RememberDecoration);
+        }
+
+        [Fact]
+        public void ResolveDecorationTurnsRandomIntoConcreteIds()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedRopeSkin = -1;
+            vm.SelectedBackground = -1;
+            (int skin, int bg) = vm.ResolveDecoration(new System.Random(1));
+            Assert.InRange(skin, 0, 8);
+            Assert.InRange(bg, 1, 7);
+        }
+
+        [Fact]
+        public void WriteDecorationIntoRememberedSavesRawSelections()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedRopeSkin = -1;
+            vm.SelectedBackground = 5;
+            vm.RememberDecoration = true;
+            EditorSettings settings = new() { RopeSkin = 0, Background = 1 };
+            vm.WriteDecorationInto(settings);
+            Assert.True(settings.RememberDecoration);
+            Assert.Equal(-1, settings.RopeSkin);
+            Assert.Equal(5, settings.Background);
+        }
+
+        [Fact]
+        public void WriteDecorationIntoNotRememberedLeavesIdsUntouched()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedRopeSkin = 7;
+            vm.SelectedBackground = 6;
+            vm.RememberDecoration = false;
+            EditorSettings settings = new() { RememberDecoration = true, RopeSkin = 2, Background = 3 };
+            vm.WriteDecorationInto(settings);
+            Assert.False(settings.RememberDecoration);
+            Assert.Equal(2, settings.RopeSkin);
+            Assert.Equal(3, settings.Background);
+        }
+
+        [Fact]
+        public void ShowDecorationTrueForNewFalseForEdit()
+        {
+            Assert.True(LevelSettingsViewModel.ForNew().ShowDecoration);
+            Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowDecoration);
         }
 
         /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>
