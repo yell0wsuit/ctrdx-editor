@@ -176,6 +176,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -195,6 +196,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -225,6 +227,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -252,9 +255,9 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.Fields.Single(f => f.Name == "movable").IsEnabled);
         }
 
-        /// <summary>Gun is not offered for split-candy levels.</summary>
+        /// <summary>Gun can still be authored in split-candy levels; only aim animation is gated.</summary>
         [Fact]
-        public void GunHiddenInTwoPartsLevel()
+        public void GunEnabledInTwoPartsLevel()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
@@ -263,7 +266,46 @@ namespace CtrDxEditor.Tests
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
-            Assert.DoesNotContain(vm.Fields, f => f.Name == "gun");
+            Assert.True(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
+        }
+
+        /// <summary>Gun targeting follows DX's single-primary-candy path, so one full candy enables it.</summary>
+        [Fact]
+        public void SingleFullCandyEnablesGunTargeting()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.True(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
+        }
+
+        /// <summary>Gun can be authored before placing candy; aim movement activates once one full candy exists.</summary>
+        [Fact]
+        public void EmptyFullCandyLevelEnablesGunAuthoring()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.True(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
+        }
+
+        /// <summary>Gun can still be authored in multi-candy levels; only aim animation is gated.</summary>
+        [Fact]
+        public void MultiCandyEnablesGunAuthoring()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("candy", 200, 200);
+            _ = vm.PlaceObject("candy", 300, 200);
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.True(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
         }
 
         /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>
@@ -321,8 +363,9 @@ namespace CtrDxEditor.Tests
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
-            _ = vm.PlaceObject("candy", 300, 200);
+            _ = vm.PlaceObject("lightBulb", 300, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            grab.SetAttr("bindBulb", "true");
             vm.SelectedObject = grab;
 
             Assert.True(vm.Fields.Single(f => f.Name == "attachTo").IsEnabled);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Media;
@@ -53,6 +54,28 @@ namespace CtrDxEditor.Rendering
                 && !IsTrue(obj.GetAttr("wheel"))
                 && !IsTrue(obj.GetAttr("kickable"))
                 && GrabRail.Of(obj) is not null;
+        }
+
+        /// <summary>
+        /// Rotation for the gun arrow preview. DX updates gunArrow.rotation from grab position to star.pos,
+        /// where star is the primary full candy, so the editor only previews this in single-full-candy levels.
+        /// </summary>
+        public static double? GunAimRotationDegrees(
+            LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
+        {
+            if (grab.Type != "grab" || !IsTrue(grab.GetAttr("gun")) || twoParts)
+            {
+                return null;
+            }
+
+            List<LevelObject> candies = [.. objects.Where(o => o.Type == "candy")];
+            if (candies.Count != 1)
+            {
+                return null;
+            }
+
+            LevelObject candy = candies[0];
+            return Math.Atan2(grab.Y - candy.Y, grab.X - candy.X) * 180.0 / Math.PI;
         }
 
         private static bool IsTrue(string? value)

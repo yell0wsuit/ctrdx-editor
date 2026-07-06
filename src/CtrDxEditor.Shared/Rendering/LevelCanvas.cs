@@ -339,7 +339,7 @@ namespace CtrDxEditor.Rendering
                 }
                 else
                 {
-                    DrawObject(context, v, sprites, obj);
+                    DrawObject(context, v, sprites, obj, objects, doc.TwoParts);
                 }
             }
 
@@ -422,7 +422,13 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
-        private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
+        private static void DrawObject(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            bool twoParts)
         {
             ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
             if (sprite is not null)
@@ -431,7 +437,17 @@ namespace CtrDxEditor.Rendering
                 {
                     DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
                 }
-                DrawSprite(ctx, v, sprite, obj.X, obj.Y);
+                if (GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts) is double gunAim
+                    && sprite.Layers.Count >= 3)
+                {
+                    DrawLayer(ctx, v, sprite.Layers[0], obj.X, obj.Y, sprite.Scale);
+                    DrawLayer(ctx, v, sprite.Layers[1], obj.X, obj.Y, sprite.Scale, gunAim);
+                    DrawLayer(ctx, v, sprite.Layers[2], obj.X, obj.Y, sprite.Scale);
+                }
+                else
+                {
+                    DrawSprite(ctx, v, sprite, obj.X, obj.Y);
+                }
             }
             foreach (string overlayKey in GrabRenderer.OverlaySpriteKeys(obj))
             {
@@ -456,13 +472,29 @@ namespace CtrDxEditor.Rendering
             SpriteLayerDraw layer,
             double x,
             double y,
-            double scale)
+            double scale,
+            double? rotationDegrees = null)
         {
             SpriteLayout layout = SpritePlacement.Compute(layer.Frame, x, y, scale);
             Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
             Vec2 dtl = v.LevelToScreen(new Vec2(layout.Dest.X, layout.Dest.Y));
             Vec2 dbr = v.LevelToScreen(new Vec2(layout.Dest.X + layout.Dest.W, layout.Dest.Y + layout.Dest.H));
-            ctx.DrawImage(layer.Bitmap, source, new Rect(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y));
+            Rect dest = new(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y);
+            if (rotationDegrees is double degrees)
+            {
+                Vec2 center = v.LevelToScreen(new Vec2(x, y));
+                Matrix m = Matrix.CreateTranslation(-center.X, -center.Y)
+                    * Matrix.CreateRotation(degrees * Math.PI / 180.0)
+                    * Matrix.CreateTranslation(center.X, center.Y);
+                using (ctx.PushTransform(m))
+                {
+                    ctx.DrawImage(layer.Bitmap, source, dest);
+                }
+            }
+            else
+            {
+                ctx.DrawImage(layer.Bitmap, source, dest);
+            }
         }
 
         private static void DrawHitbox(

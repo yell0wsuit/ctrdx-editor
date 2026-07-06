@@ -152,6 +152,28 @@ namespace CtrDxEditor.Tests
             Assert.True(DrawsMovableRail(new LevelObject(XElement.Parse("""<grab x="0" y="0" moveLength="100" />"""))));
         }
 
+        /// <summary>Gun aim rotates around the gun toward the primary full candy, matching DX's star path.</summary>
+        [Fact]
+        public void GunAimRotationTargetsSingleFullCandy()
+        {
+            LevelObject candy = new(XElement.Parse("""<candy x="100" y="200" />"""));
+            LevelObject grab = new(XElement.Parse("""<grab x="200" y="200" gun="true" />"""));
+
+            Assert.Equal(0, GunAimRotationDegrees(grab, [candy, grab], twoParts: false));
+        }
+
+        /// <summary>Half-candy and multi-candy levels do not get gun aim targeting movement.</summary>
+        [Theory]
+        [InlineData(true, """<candy x="300" y="400" />""", """<grab x="0" y="0" gun="true" />""")]
+        [InlineData(false, """<candy x="300" y="400" />""", """<candy x="350" y="400" />""", """<grab x="0" y="0" gun="true" />""")]
+        public void GunAimRotationDisabledWhenDxCannotTargetPrimaryCandy(bool twoParts, params string[] xml)
+        {
+            LevelObject[] objects = [.. xml.Select(x => new LevelObject(XElement.Parse(x)))];
+            LevelObject grab = objects.Single(o => o.Type == "grab");
+
+            Assert.Null(GunAimRotationDegrees(grab, objects, twoParts));
+        }
+
         /// <summary>Spider is dormant overlay art and does not replace the grab hook itself.</summary>
         [Theory]
         [InlineData("""<grab x="0" y="0" spider="true" radius="-1" />""", "grab")]
@@ -189,6 +211,15 @@ namespace CtrDxEditor.Tests
                 "DrawsMovableRail",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
             return (bool)method.Invoke(null, [obj])!;
+        }
+
+        private static double? GunAimRotationDegrees(LevelObject grab, LevelObject[] objects, bool twoParts)
+        {
+            Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            MethodInfo method = grabRenderer.GetMethod(
+                "GunAimRotationDegrees",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
+            return (double?)method.Invoke(null, [grab, objects, twoParts]);
         }
     }
 }

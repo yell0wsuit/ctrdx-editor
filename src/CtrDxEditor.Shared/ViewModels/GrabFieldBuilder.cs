@@ -85,10 +85,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             fields.Add(BoolAttr(grab, "wheel", Structural, !gun, ClearMoveRail));
-            if (!twoParts)
-            {
-                fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable), ClearMoveRail));
-            }
+            fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable), ClearMoveRail));
 
             fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, !gun));
             fields.Add(BoolAttr(grab, "kickable", Structural, !(gun || movable), ClearMoveRail));
