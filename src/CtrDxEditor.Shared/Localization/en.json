@@ -30,6 +30,7 @@
     "Dialog.Common.Yes": "Yes",
     "Dialog.Common.No": "No",
     "Dialog.Common.Quit": "Quit",
+    "Dialog.Common.Random": "Random",
 
     "Dialog.ContentSetup.Title": "Assets required",
     "Dialog.ContentSetup.TitleDownloading": "Downloading assets",
@@ -69,6 +70,29 @@
     "Dialog.LevelSettings.RopeColor": "Rope color",
     "Dialog.LevelSettings.Background": "Background",
     "Dialog.LevelSettings.RememberCustomizationChoice": "Remember my customization choices",
+
+    "Dialog.LevelSettings.RopeSkin.Default": "Default",
+    "Dialog.LevelSettings.RopeSkin.Skin": "Rope",
+
+    "Dialog.LevelSettings.Background.Blank": "Blank",
+    "Dialog.LevelSettings.Background.Bgr01": "Cardboard Box",
+    "Dialog.LevelSettings.Background.Bgr02": "Fabric Box",
+    "Dialog.LevelSettings.Background.Bgr03": "Foil Box",
+    "Dialog.LevelSettings.Background.Bgr04": "Magic Box",
+    "Dialog.LevelSettings.Background.Bgr05": "Valentine's Box",
+    "Dialog.LevelSettings.Background.Bgr06": "Toy Box",
+    "Dialog.LevelSettings.Background.Bgr07": "Gift Box",
+    "Dialog.LevelSettings.Background.Bgr08": "Cosmic Box",
+    "Dialog.LevelSettings.Background.Bgr09": "Toolbox",
+    "Dialog.LevelSettings.Background.Bgr10": "Buzz Box",
+    "Dialog.LevelSettings.Background.Bgr11": "DJ Box",
+    "Dialog.LevelSettings.Background.Bgr12": "Spooky Box",
+    "Dialog.LevelSettings.Background.Bgr13": "Steam Box",
+    "Dialog.LevelSettings.Background.Bgr14": "Lantern Box",
+    "Dialog.LevelSettings.Background.Bgr15": "Cheese Box",
+    "Dialog.LevelSettings.Background.Bgr16": "Pillow Box",
+    "Dialog.LevelSettings.Background.Bgr17": "Mechanical",
+
     "Dialog.LevelSettings.Create": "Create",
     "Dialog.LevelSettings.Save": "Save",
 

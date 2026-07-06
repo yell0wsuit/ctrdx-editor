@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
@@ -118,28 +119,7 @@ namespace CtrDxEditor.ViewModels
         public IReadOnlyList<RopeSkinOption> RopeSkinOptions { get; } = BuildRopeSkinOptions();
 
         /// <summary>Background choices: Blank + bgr_01..bgr_17 (the game's box backgrounds) + Random.</summary>
-        public IReadOnlyList<BackgroundOption> BackgroundOptions { get; } =
-        [
-            new(0, "Blank"),
-            new(1, "Cardboard Box"),
-            new(2, "Fabric Box"),
-            new(3, "Foil Box"),
-            new(4, "Magic Box"),
-            new(5, "Valentine's Box"),
-            new(6, "Toy Box"),
-            new(7, "Gift Box"),
-            new(8, "Cosmic Box"),
-            new(9, "Toolbox"),
-            new(10, "Buzz Box"),
-            new(11, "DJ Box"),
-            new(12, "Spooky Box"),
-            new(13, "Steam Box"),
-            new(14, "Lantern Box"),
-            new(15, "Cheese Box"),
-            new(16, "Pillow Box"),
-            new(17, "Mechanical"),
-            new(-1, "Random"),
-        ];
+        public IReadOnlyList<BackgroundOption> BackgroundOptions { get; } = BuildBackgroundOptions();
 
         [ObservableProperty] public partial int SelectedRopeSkin { get; set; }
         [ObservableProperty] public partial int SelectedBackground { get; set; }
@@ -304,12 +284,24 @@ namespace CtrDxEditor.ViewModels
 
         private static RopeSkinOption[] BuildRopeSkinOptions()
         {
-            List<RopeSkinOption> list = [new(0, "Default")];
+            List<RopeSkinOption> list = [new(0, Localizer.Get("Dialog.LevelSettings.RopeSkin.Default"))];
             for (int i = 1; i < RopePalette.SkinCount; i++)
             {
-                list.Add(new RopeSkinOption(i, $"Rope {i + 1}"));
+                list.Add(new RopeSkinOption(i, $"{Localizer.Get("Dialog.LevelSettings.RopeSkin.Skin")} {i + 1}"));
             }
-            list.Add(new RopeSkinOption(-1, "Random"));
+            list.Add(new RopeSkinOption(-1, Localizer.Get("Dialog.Common.Random")));
+            return [.. list];
+        }
+
+        /// <summary>Blank + bgr_01..bgr_17 (the game's box backgrounds) + Random, labelled from localization.</summary>
+        private static BackgroundOption[] BuildBackgroundOptions()
+        {
+            List<BackgroundOption> list = [new(0, Localizer.Get("Dialog.LevelSettings.Background.Blank"))];
+            for (int i = 1; i <= BackgroundCount; i++)
+            {
+                list.Add(new BackgroundOption(i, Localizer.Get($"Dialog.LevelSettings.Background.Bgr{i:D2}")));
+            }
+            list.Add(new BackgroundOption(-1, Localizer.Get("Dialog.Common.Random")));
             return [.. list];
         }
 
