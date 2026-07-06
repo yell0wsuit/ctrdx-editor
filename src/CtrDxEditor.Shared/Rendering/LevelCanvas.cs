@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -136,7 +137,11 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
+        // Hovering / dragging the auto-catch radius ring uses a horizontal-resize cursor (col-resize).
+        private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
+
         private bool _dragging;
+        private bool _resizingRadius;
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
         private bool _panning;
@@ -321,6 +326,21 @@ namespace CtrDxEditor.Rendering
                 DrawObject(context, v, sprites, obj);
             }
 
+            // Auto-catch radius: an orange dashed ring (distinct from the blue/red selection box) around
+            // every auto-catch grab, so its reach stays visible without selecting it; it disappears only
+            // when auto-catch is turned off. Drag the selected grab's ring edge to resize. The game draws
+            // this circle blue and solid in-play; here it is purely an editor guide.
+            Pen radiusPen = new(Brushes.Orange, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
+            foreach (LevelObject obj in objects)
+            {
+                if (obj.Type == "grab" && GrabRadius.Of(obj) is double rr)
+                {
+                    Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+                    double screenR = rr * v.Zoom;
+                    context.DrawEllipse(null, radiusPen, new Point(c.X, c.Y), screenR, screenR);
+                }
+            }
+
             if (ShowHitboxes || ShowMobileHitboxes)
             {
                 foreach (LevelObject obj in objects)
@@ -369,7 +389,7 @@ namespace CtrDxEditor.Rendering
         // untrimmed sourceSize box (which is much larger than what the player sees).
         private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj)
         {
-            ObjectSprite? sprite = sprites.GetSprite(obj.Type);
+            ObjectSprite? sprite = sprites.GetSprite(SpriteKey(obj));
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
@@ -391,9 +411,16 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
+        // Auto-catch grabs render with the auto-hook art (game HookAuto quads 4/5); every other object
+        // uses its element sprite directly.
+        private static string SpriteKey(LevelObject obj)
+        {
+            return obj.Type == "grab" && GrabRadius.Of(obj) is not null ? "grab_auto" : obj.Type;
+        }
+
         private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
         {
-            ObjectSprite? sprite = sprites.GetSprite(obj.Type);
+            ObjectSprite? sprite = sprites.GetSprite(SpriteKey(obj));
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)
@@ -445,6 +472,13 @@ namespace CtrDxEditor.Rendering
             ctx.DrawRectangle(null, pen, new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
         }
 
+        // Whether a level-space point sits on the selected grab's auto-catch radius ring, within a
+        // ~6px screen tolerance (converted to level units by the current zoom).
+        private bool OnRadiusEdge(Vec2 levelPt)
+        {
+            return SelectedObject is { Type: "grab" } g && View.Zoom > 0 && GrabRadius.Of(g) is double r && GrabRadius.OnEdge(new Vec2(g.X, g.Y), r, levelPt, 6 / View.Zoom);
+        }
+
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)
         {
             for (int i = 0; i < objects.Count; i++)
@@ -494,6 +528,16 @@ namespace CtrDxEditor.Rendering
 
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
+
+            // Grabbing the auto-catch ring resizes the radius; it takes priority over object hit-testing
+            // (the ring can sit over other objects) but not over a middle-button pan.
+            if (OnRadiusEdge(levelPt))
+            {
+                _resizingRadius = true;
+                e.Pointer.Capture(this);
+                return;
+            }
+
             List<LevelBounds> bounds = BuildHitBounds(doc);
 
             // Double-click toggles the lock. ClickCount keeps climbing (3, 4, ...) while clicking in the
@@ -550,21 +594,32 @@ namespace CtrDxEditor.Rendering
         protected override void OnPointerMoved(PointerEventArgs e)
         {
             base.OnPointerMoved(e);
+            Point p = e.GetPosition(this);
+            Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
+
+            if (_resizingRadius && SelectedObject is { } g)
+            {
+                double r = GrabRadius.FromDrag(new Vec2(g.X, g.Y), levelPt);
+                g.SetAttr("radius", ((int)Math.Round(r)).ToString(CultureInfo.InvariantCulture));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_panning)
             {
-                Point now = e.GetPosition(this);
-                ScrollBy(_panLast.X - now.X, _panLast.Y - now.Y);
-                _panLast = now;
+                ScrollBy(_panLast.X - p.X, _panLast.Y - p.Y);
+                _panLast = p;
                 return;
             }
 
             if (!_dragging || SelectedObject is not { } selected)
             {
+                // Point at the ring so the resize affordance is discoverable on hover.
+                Cursor = OnRadiusEdge(levelPt) ? ResizeCursor : Cursor.Default;
                 return;
             }
 
-            Point p = e.GetPosition(this);
-            Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
             (int gx, int gy) = Snap(levelPt - _dragOffset);
             selected.X = gx;
             selected.Y = gy;
@@ -578,6 +633,7 @@ namespace CtrDxEditor.Rendering
             base.OnPointerReleased(e);
             _dragging = false;
             _panning = false;
+            _resizingRadius = false;
             e.Pointer.Capture(null);
         }
 

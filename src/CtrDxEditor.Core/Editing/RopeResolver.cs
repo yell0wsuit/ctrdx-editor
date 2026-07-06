@@ -29,7 +29,10 @@ namespace CtrDxEditor.Core.Editing
         public static RopeTarget Resolve(
             LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
         {
-            if (IsTrue(grab.GetAttr("gun")))
+            // The game builds the bungee only when radius == -1 && !gun (LoadGrabs). A gun grab, or an
+            // auto-catch grab (positive radius), has no authored rope - it binds candy at runtime - so
+            // the candy/bulb binding block is skipped and nothing is drawn.
+            if (IsTrue(grab.GetAttr("gun")) || GrabRadius.Of(grab) is not null)
             {
                 return new RopeTarget(RopeTargetKind.None, null);
             }

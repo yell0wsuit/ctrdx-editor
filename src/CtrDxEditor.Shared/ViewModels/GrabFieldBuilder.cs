@@ -38,8 +38,9 @@ namespace CtrDxEditor.ViewModels
                 rebuild();
             }
 
-            // Attach to stays in place but greys out for gun (a gun grab has no rope target),
-            // rather than disappearing and shifting every field below it.
+            // Attach to stays in place but greys out when the grab has no authored rope - a gun grab, or
+            // an auto-catch grab (which binds candy at runtime) - rather than disappearing and shifting
+            // every field below it. Mirrors LoadGrabs, which skips the binding block unless radius == -1.
             IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.Objects, twoParts);
             if (options.Count >= 2)
             {
@@ -51,7 +52,7 @@ namespace CtrDxEditor.ViewModels
                     () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
                     token => GrabBinding.Apply(grab, token ?? "primary"),
                     onChanged)
-                { IsEnabled = !gun });
+                { IsEnabled = !gun && !autoCatch });
             }
 
             bool geomEnabled = !gun;

@@ -50,6 +50,14 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(HookJson, HookImageBase, "obj_hook_01_frame_0001.png"),
             ]),
 
+            // Auto-catch grab = the auto-hook art (game HookAuto quads 4/5, back + front), used in place
+            // of the fixed hook when radius is positive. Not a placeable element; picked by grab state.
+            new("grab_auto",
+            [
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_auto_frame_0000.png"),
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_auto_frame_0001.png"),
+            ]),
+
             // Bubble = attached quad 0 over one random attached outline, matching LoadBubble's
             // parent quad RND_RANGE(1,3) plus child Image quad 0.
             new("bubble",
