@@ -46,7 +46,38 @@ namespace CtrDxEditor.Content
         // Concurrent so the UI-thread canvas render and an off-thread thumbnail preload can both
         // resolve backgrounds without racing the cache.
         private readonly ConcurrentDictionary<int, Bitmap?> _backgrounds = new();
+        private readonly ConcurrentDictionary<int, Bitmap?> _backgroundsP2 = new();
         private readonly ConcurrentDictionary<int, Bitmap?> _backgroundThumbnails = new();
+
+        /// <summary>
+        /// Per-background secondary (p2) layer Y offset in internal pixels, from the game's pack config
+        /// (<c>boxBackgroundP2Y</c> in ctroriginal_packs.json). Index is the background id (1..17);
+        /// only bgr_01..bgr_11 ship a p2 layer, so ids 12..17 are 0 (no p2).
+        /// </summary>
+        private static readonly int[] BackgroundP2Y =
+        [
+            0,     // (id 0 unused)
+            1120,  // bgr_01
+            1044,  // bgr_02
+            945,   // bgr_03
+            960,   // bgr_04
+            780,   // bgr_05
+            951,   // bgr_06
+            1102,  // bgr_07
+            1118,  // bgr_08
+            975,   // bgr_09
+            991,   // bgr_10
+            802,   // bgr_11
+        ];
+
+        /// <summary>
+        /// The secondary background's Y offset in internal pixels for the given id, or 0 when the
+        /// background has no p2 layer (ids &lt;= 0 or 12..17).
+        /// </summary>
+        public static int GetBackgroundP2Y(int id)
+        {
+            return id >= 1 && id < BackgroundP2Y.Length ? BackgroundP2Y[id] : 0;
+        }
 
         /// <summary>Creates a sprite cache for a desktop content folder.</summary>
         public SpriteCache(string contentRoot)
@@ -127,6 +158,16 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>
+        /// Decodes the secondary (p2) background image for the given decoration id, or null when the
+        /// background has no p2 layer (see <see cref="GetBackgroundP2Y"/>). p2 is a full-width overlay
+        /// the game draws once, near the bottom of tall levels.
+        /// </summary>
+        public Bitmap? GetBackgroundP2(int id)
+        {
+            return GetBackgroundP2Y(id) <= 0 ? null : LoadBackground(id, BackgroundDecodeWidth, _backgroundsP2, "_p2");
+        }
+
+        /// <summary>
         /// Decodes a small thumbnail of the p1 background for the New Level dialog's picker, cached
         /// separately from the full-size canvas bitmaps. Returns null for id &lt;= 0 or a missing file.
         /// </summary>
@@ -141,7 +182,7 @@ namespace CtrDxEditor.Content
         /// from the UI thread therefore blocks only on the file read/decode rather than deadlocking
         /// against its own continuation.
         /// </remarks>
-        private Bitmap? LoadBackground(int id, int decodeWidth, ConcurrentDictionary<int, Bitmap?> cache)
+        private Bitmap? LoadBackground(int id, int decodeWidth, ConcurrentDictionary<int, Bitmap?> cache, string suffix = "_p1")
         {
             if (id <= 0)
             {
@@ -155,7 +196,7 @@ namespace CtrDxEditor.Content
             Bitmap? bmp = null;
             try
             {
-                string rel = $"images/backgrounds/bgr_{id:D2}_p1.png";
+                string rel = $"images/backgrounds/bgr_{id:D2}{suffix}.png";
                 byte[] bytes = Task.Run(() => store.ReadBytesAsync(rel)).GetAwaiter().GetResult();
                 using MemoryStream ms = new(bytes);
                 bmp = Bitmap.DecodeToWidth(ms, decodeWidth);

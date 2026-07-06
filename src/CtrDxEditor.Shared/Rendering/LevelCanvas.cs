@@ -307,6 +307,14 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Maps a level-space rectangle (x, y, w, h) to its axis-aligned screen rectangle.</summary>
+        private static Rect LevelRectToScreen(ViewTransform v, double x, double y, double w, double h)
+        {
+            Vec2 tl = v.LevelToScreen(new Vec2(x, y));
+            Vec2 br = v.LevelToScreen(new Vec2(x + w, y + h));
+            return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+        }
+
         /// <inheritdoc />
         public override void Render(DrawingContext context)
         {
@@ -327,14 +335,35 @@ namespace CtrDxEditor.Rendering
             context.DrawRectangle(null, new Pen(Brushes.DimGray, 1),
                 new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
 
-            // Editor-decoration background: drawn clipped to the level rect, under the grid.
+            // Editor-decoration background: drawn clipped to the level rect, under the grid. The game
+            // (GameScene.Draw) scales the p1 texture to the internal screen width, centers it on the
+            // map, and repeats it vertically only - never stretching it to the map. A p2 overlay is
+            // drawn once for maps taller than one screen. BackgroundPlacement mirrors that math.
             Bitmap? bg = sprites.GetBackground(ActiveBackground);
-            if (bg is not null)
+            if (bg is not null && bg.Size is { Width: > 0, Height: > 0 } bgSize)
             {
                 Rect levelRect = new(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+                Bitmap? p2 = sprites.GetBackgroundP2(ActiveBackground);
+                double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
+                BackgroundLayout layout = BackgroundPlacement.Compute(
+                    doc.Width, doc.Height, bgSize.Height / bgSize.Width,
+                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground));
+
                 using (context.PushClip(levelRect))
                 {
-                    context.DrawImage(bg, new Rect(bg.Size), levelRect);
+                    if (layout.TileHeight > 0.5)
+                    {
+                        Rect bgSrc = new(bgSize);
+                        for (double ty = 0; ty < doc.Height; ty += layout.TileHeight)
+                        {
+                            context.DrawImage(bg, bgSrc, LevelRectToScreen(v, layout.Left, ty, layout.Width, layout.TileHeight));
+                        }
+                    }
+
+                    if (layout.P2 is { } p2b && p2 is not null)
+                    {
+                        context.DrawImage(p2, new Rect(p2.Size), LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                    }
                 }
             }
 
