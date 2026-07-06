@@ -32,6 +32,7 @@
                         IsChecked="{Binding BoolValue, Mode=TwoWay}" />
               <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
                        IsEnabled="{Binding IsEnabled}"
+                       Minimum="{Binding NumericMinimum}"
                        Text="{Binding Value, Mode=TwoWay}" />
               <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                        IsEnabled="{Binding IsEnabled}"

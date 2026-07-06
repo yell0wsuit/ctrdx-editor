@@ -245,6 +245,22 @@ namespace CtrDxEditor.Tests
             Assert.Equal("0", field.Value);
         }
 
+        /// <summary>Length and radius are magnitudes: their numeric box refuses negatives; x/y still allow them.</summary>
+        [Fact]
+        public void LengthAndRadiusForbidNegativesButCoordsAllow()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
+            vm.SelectedObject = grab;
+
+            Assert.Equal(0, vm.Fields.Single(f => f.Name == "length").NumericMinimum);
+            Assert.Equal(-9999, vm.Fields.Single(f => f.Name == "x").NumericMinimum);
+
+            vm.Fields.Single(f => f.Name == "autoCatch").BoolValue = true;
+            Assert.Equal(0, vm.Fields.Single(f => f.Name == "radius").NumericMinimum);
+        }
+
         /// <summary>Auto-catch greys out Attach-to: an auto-catch grab binds candy at runtime, not by number.</summary>
         [Fact]
         public void AutoCatchGraysOutAttachTo()

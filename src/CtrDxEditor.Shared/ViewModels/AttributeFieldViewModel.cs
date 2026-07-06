@@ -75,6 +75,17 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this field renders as a whole-number-only box (x, y, length, radius, ...).</summary>
         public bool IsNumeric { get; }
 
+        /// <summary>
+        /// Smallest value a numeric field accepts. Lengths and radii are magnitudes and cannot go
+        /// negative in game; coordinates and sentinel fields (e.g. timeout = -1) can, so they keep the
+        /// default lower bound.
+        /// </summary>
+        public int NumericMinimum => Name switch
+        {
+            "length" or "radius" or "moveLength" or "litRadius" => 0,
+            _ => -9999,
+        };
+
         /// <summary>Whether this field renders as a free-form text box.</summary>
         public bool IsText => EnumOptions is null && !IsBool && !IsNumeric;
 
