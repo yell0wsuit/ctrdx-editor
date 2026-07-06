@@ -84,8 +84,8 @@ namespace CtrDxEditor.ViewModels
                 fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, railEnabled));
             }
 
-            fields.Add(BoolAttr(grab, "wheel", Structural, !gun, ClearMoveRail));
-            fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable), ClearMoveRail));
+            fields.Add(BoolAttr(grab, "wheel", Structural, !(gun || movable), ClearMoveRail));
+            fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable || movable), ClearMoveRail));
 
             fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, !gun));
             fields.Add(BoolAttr(grab, "kickable", Structural, !(gun || movable), ClearMoveRail));

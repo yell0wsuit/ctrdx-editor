@@ -205,9 +205,9 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
         }
 
-        /// <summary>Movable rail disables suction cup, matching game load behavior.</summary>
+        /// <summary>Movable rail disables hook variants that cannot coexist with rail art.</summary>
         [Fact]
-        public void MovableRailDisablesSuctionCup()
+        public void MovableRailDisablesRailBlockingVariants()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
@@ -216,6 +216,8 @@ namespace CtrDxEditor.Tests
 
             vm.Fields.Single(f => f.Name == "movable").BoolValue = true;
 
+            Assert.False(vm.Fields.Single(f => f.Name == "wheel").IsEnabled);
+            Assert.False(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
             Assert.False(vm.Fields.Single(f => f.Name == "kickable").IsEnabled);
         }
 

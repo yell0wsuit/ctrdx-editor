@@ -56,6 +56,14 @@ namespace CtrDxEditor.Rendering
                 && GrabRail.Of(obj) is not null;
         }
 
+        /// <summary>Anchor for dormant spider art; movable grabs use the visible movable hook position.</summary>
+        public static Vec2 SpiderOverlayAnchor(LevelObject obj)
+        {
+            return DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail
+                ? rail.Hook
+                : new Vec2(obj.X, obj.Y);
+        }
+
         /// <summary>
         /// Rotation for the gun arrow preview. DX updates gunArrow.rotation from grab position to star.pos,
         /// where star is the primary full candy, so the editor only previews this in single-full-candy levels.

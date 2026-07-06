@@ -336,6 +336,8 @@ namespace CtrDxEditor.Rendering
                     // Highlight the hook while it's hovered or being slid, matching the game's mover art.
                     bool active = (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
                     GrabRenderer.DrawMovableGrab(context, v, sprites, rail, active);
+                    Vec2 anchor = GrabRenderer.SpiderOverlayAnchor(obj);
+                    DrawOverlays(context, v, sprites, obj, anchor.X, anchor.Y);
                 }
                 else
                 {
@@ -449,11 +451,22 @@ namespace CtrDxEditor.Rendering
                     DrawSprite(ctx, v, sprite, obj.X, obj.Y);
                 }
             }
+            DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+        }
+
+        private static void DrawOverlays(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            double x,
+            double y)
+        {
             foreach (string overlayKey in GrabRenderer.OverlaySpriteKeys(obj))
             {
                 if (sprites.GetSprite(overlayKey) is { } overlay)
                 {
-                    DrawSprite(ctx, v, overlay, obj.X, obj.Y);
+                    DrawSprite(ctx, v, overlay, x, y);
                 }
             }
         }

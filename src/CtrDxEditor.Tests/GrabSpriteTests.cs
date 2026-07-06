@@ -186,6 +186,19 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["grab_spider"], OverlaySpriteKeys(obj));
         }
 
+        /// <summary>Movable spider grabs still place the dormant spider on the visible movable hook.</summary>
+        [Fact]
+        public void MovableSpiderOverlayAnchorsToMovableHook()
+        {
+            LevelObject obj = new(XElement.Parse("""<grab x="120" y="140" spider="true" moveLength="100" moveOffset="30" />"""));
+
+            (double X, double Y) anchor = SpiderOverlayAnchor(obj);
+
+            Assert.Equal((120, 140), anchor);
+            Assert.Equal(["grab_spider"], OverlaySpriteKeys(obj));
+            Assert.True(DrawsMovableRail(obj));
+        }
+
         private static string SpriteKey(LevelObject obj)
         {
             Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
@@ -211,6 +224,18 @@ namespace CtrDxEditor.Tests
                 "DrawsMovableRail",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
             return (bool)method.Invoke(null, [obj])!;
+        }
+
+        private static (double X, double Y) SpiderOverlayAnchor(LevelObject obj)
+        {
+            Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            MethodInfo method = grabRenderer.GetMethod(
+                "SpiderOverlayAnchor",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
+            object anchor = method.Invoke(null, [obj])!;
+            PropertyInfo x = anchor.GetType().GetProperty("X")!;
+            PropertyInfo y = anchor.GetType().GetProperty("Y")!;
+            return ((double)x.GetValue(anchor)!, (double)y.GetValue(anchor)!);
         }
 
         private static double? GunAimRotationDegrees(LevelObject grab, LevelObject[] objects, bool twoParts)
