@@ -27,5 +27,21 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("Editor", Assert.IsType<Dictionary<string, string>>(strings)["Window.Title"]);
         }
+
+        [Fact]
+        public void RoundTripsDecorationFields()
+        {
+            EditorSettings settings = new()
+            {
+                RememberDecoration = true,
+                RopeSkin = 2,
+                Background = 5,
+            };
+            string json = JsonSerializer.Serialize(settings, AppJsonContext.Default.EditorSettings);
+            EditorSettings back = JsonSerializer.Deserialize(json, AppJsonContext.Default.EditorSettings)!;
+            Assert.True(back.RememberDecoration);
+            Assert.Equal(2, back.RopeSkin);
+            Assert.Equal(5, back.Background);
+        }
     }
 }
