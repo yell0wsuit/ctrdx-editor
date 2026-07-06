@@ -19,7 +19,7 @@ namespace CtrDxEditor.Rendering
     /// Vertices are level-space; the view transform is applied on the Skia canvas
     /// so rope width zooms with the art.
     /// </summary>
-    internal sealed class RopeDrawOperation(Rect bounds, ViewTransform view, IReadOnlyList<RopeStrip> strips)
+    internal sealed class RopeDrawOperation(Rect bounds, ViewTransform view, IReadOnlyList<RopeStrip> strips, double opacity = 1.0)
         : ICustomDrawOperation
     {
         /// <inheritdoc />
@@ -63,7 +63,7 @@ namespace CtrDxEditor.Rendering
                 for (int i = 0; i < points.Length; i++)
                 {
                     points[i] = new SKPoint((float)strip.Points[i].X, (float)strip.Points[i].Y);
-                    colors[i] = ToSKColor(strip.Colors[i]);
+                    colors[i] = ToSKColor(strip.Colors[i], opacity);
                 }
                 using SKVertices vertices = SKVertices.CreateCopy(SKVertexMode.TriangleStrip, points, colors);
                 // Dst keeps the interpolated vertex colors (the paint contributes nothing).
@@ -72,13 +72,15 @@ namespace CtrDxEditor.Rendering
             canvas.RestoreToCount(save);
         }
 
-        private static SKColor ToSKColor(RopeRgba c)
+        // opacity fades the whole rope uniformly: Avalonia's PushOpacity does not reach a custom draw
+        // operation, so an invisible grab's rope has to be dimmed here at the vertex alpha instead.
+        private static SKColor ToSKColor(RopeRgba c, double opacity)
         {
             return new SKColor(
                 (byte)Math.Clamp(c.R * 255, 0, 255),
                 (byte)Math.Clamp(c.G * 255, 0, 255),
                 (byte)Math.Clamp(c.B * 255, 0, 255),
-                (byte)Math.Clamp(c.A * 255, 0, 255));
+                (byte)Math.Clamp(c.A * opacity * 255, 0, 255));
         }
     }
 }

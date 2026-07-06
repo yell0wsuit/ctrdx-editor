@@ -56,12 +56,15 @@ namespace CtrDxEditor.Rendering
         /// <param name="visual">The rope built by <see cref="BuildRope"/>.</param>
         /// <param name="ropeSeed">Per-rope seed keeping the random light frames stable across redraws.</param>
         /// <param name="opBounds">Control bounds for the custom draw operation.</param>
+        /// <param name="opacity">Rope alpha multiplier; below 1 for an invisible grab drawn pale. The
+        /// rope's Skia custom draw op is not reached by the caller's PushOpacity, so it is dimmed here.</param>
         public static void DrawRope(
-            DrawingContext ctx, ViewTransform v, SpriteCache sprites, RopeVisual visual, int ropeSeed, Rect opBounds)
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, RopeVisual visual, int ropeSeed, Rect opBounds,
+            double opacity = 1.0)
         {
             if (visual.Strips.Count > 0)
             {
-                ctx.Custom(new RopeDrawOperation(opBounds, v, visual.Strips));
+                ctx.Custom(new RopeDrawOperation(opBounds, v, visual.Strips, opacity));
             }
             if (SpecialEvents.IsXmas)
             {

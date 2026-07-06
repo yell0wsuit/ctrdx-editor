@@ -466,16 +466,19 @@ namespace CtrDxEditor.Rendering
             int ropeSeed,
             Rect opBounds)
         {
-            if (IsInvisible(obj))
+            // The hook art and Christmas lights are DrawImage calls that PushOpacity fades; the rope is a
+            // Skia custom draw op that PushOpacity does not reach, so its alpha is passed through explicitly.
+            double opacity = IsInvisible(obj) ? InvisibleGrabOpacity : 1.0;
+            if (opacity < 1.0)
             {
-                using (ctx.PushOpacity(InvisibleGrabOpacity))
+                using (ctx.PushOpacity(opacity))
                 {
-                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds);
+                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity);
                 }
             }
             else
             {
-                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds);
+                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity);
             }
         }
 
@@ -493,7 +496,8 @@ namespace CtrDxEditor.Rendering
             bool twoParts,
             RopeVisual? rope,
             int ropeSeed,
-            Rect opBounds)
+            Rect opBounds,
+            double ropeOpacity)
         {
             if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
             {
@@ -502,7 +506,7 @@ namespace CtrDxEditor.Rendering
                 GrabRenderer.DrawMovableRail(ctx, v, sprites, rail);
                 if (rope is not null)
                 {
-                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
                 GrabRenderer.DrawMovableHook(ctx, v, sprites, rail, active);
                 Vec2 anchor = GrabRenderer.SpiderOverlayAnchor(obj);
@@ -521,13 +525,13 @@ namespace CtrDxEditor.Rendering
                 DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back);
                 if (rope is not null)
                 {
-                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+                    RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
                 DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count);
             }
             else if (rope is not null)
             {
-                RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds);
+                RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
             }
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
         }
