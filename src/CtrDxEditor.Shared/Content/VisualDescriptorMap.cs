@@ -58,6 +58,23 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(HookJson, HookImageBase, "obj_hook_auto_frame_0001.png"),
             ]),
 
+            // Movable-rail pieces (game HookMovable quads 6/8/7 = left cap, center tile, right cap). The
+            // canvas assembles these into a rail of arbitrary length; they are never drawn centered like a
+            // normal sprite, so the layer order here is left, center, right for the renderer to index.
+            new("grab_rail",
+            [
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0000.png"),
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0002.png"),
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0001.png"),
+            ]),
+
+            // Movable-rail hook (game HookMovable quad 10), drawn at the hook rest point in place of the
+            // fixed hook when moveLength > 0. Not placeable; picked by grab state.
+            new("grab_movable",
+            [
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0004.png"),
+            ]),
+
             // Bubble = attached quad 0 over one random attached outline, matching LoadBubble's
             // parent quad RND_RANGE(1,3) plus child Image quad 0.
             new("bubble",

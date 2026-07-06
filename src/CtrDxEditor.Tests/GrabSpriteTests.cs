@@ -31,5 +31,29 @@ namespace CtrDxEditor.Tests
                 grabAuto.Layers.Select(l => l.FrameName));
             Assert.All(grabAuto.Layers, l => Assert.Equal("images/obj_hook.json", l.AtlasJsonRelPath));
         }
+
+        /// <summary>The rail is assembled from the movable left cap, center tile, and right cap, in that order.</summary>
+        [Fact]
+        public void MovableRailUsesCapAndTileFrames()
+        {
+            VisualDescriptor rail = VisualDescriptorMap.For("grab_rail")!;
+
+            Assert.Equal(
+                [
+                    "obj_hook_movable_frame_0000.png", // left cap
+                    "obj_hook_movable_frame_0002.png", // center tile
+                    "obj_hook_movable_frame_0001.png", // right cap
+                ],
+                rail.Layers.Select(l => l.FrameName));
+        }
+
+        /// <summary>The movable hook uses the movable hook frame (game HookMovable quad 10).</summary>
+        [Fact]
+        public void MovableGrabUsesMovableHookFrame()
+        {
+            VisualDescriptor movable = VisualDescriptorMap.For("grab_movable")!;
+
+            Assert.Equal(["obj_hook_movable_frame_0004.png"], movable.Layers.Select(l => l.FrameName));
+        }
     }
 }

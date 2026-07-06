@@ -137,11 +137,18 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
-        // Hovering / dragging the auto-catch radius ring uses a horizontal-resize cursor (col-resize).
+        // Hovering / dragging the auto-catch radius ring, or a horizontal rail end, uses a horizontal-
+        // resize cursor (col-resize); a vertical rail end uses the vertical one, and the rail bar uses a
+        // move cursor.
         private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
+        private static readonly Cursor VResizeCursor = new(StandardCursorType.SizeNorthSouth);
+        private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
 
         private bool _dragging;
         private bool _resizingRadius;
+        // Movable-rail drag state: sliding the hook along the rail, or dragging an end cap to resize.
+        private bool _slidingHook;
+        private int _resizingRail; // 0 = none, 1 = start (near) cap, 2 = end (far) cap
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
         private bool _panning;
@@ -323,7 +330,14 @@ namespace CtrDxEditor.Rendering
 
             foreach (LevelObject obj in objects)
             {
-                DrawObject(context, v, sprites, obj);
+                if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
+                {
+                    DrawMovableGrab(context, v, sprites, rail);
+                }
+                else
+                {
+                    DrawObject(context, v, sprites, obj);
+                }
             }
 
             // Auto-catch radius: an orange dashed ring (distinct from the blue/red selection box) around
@@ -389,6 +403,13 @@ namespace CtrDxEditor.Rendering
         // untrimmed sourceSize box (which is much larger than what the player sees).
         private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj)
         {
+            // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
+            // be selected by clicking anywhere along the bar.
+            if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
+            {
+                return RailBounds(rail);
+            }
+
             ObjectSprite? sprite = sprites.GetSprite(SpriteKey(obj));
             if (sprite is null || sprite.Layers.Count == 0)
             {
@@ -416,6 +437,19 @@ namespace CtrDxEditor.Rendering
         private static string SpriteKey(LevelObject obj)
         {
             return obj.Type == "grab" && GrabRadius.Of(obj) is not null ? "grab_auto" : obj.Type;
+        }
+
+        // Level-space box around a whole movable rail: the axis span (start..end) grown by a cap overhang
+        // at each end and half the hook/bar width to each side, so the marquee clears the art.
+        private static LevelBounds RailBounds(GrabRail.Geometry g)
+        {
+            const double cap = 28;  // end-cap overhang in level units
+            const double half = 26; // half the movable hook / rail thickness
+            double minX = Math.Min(g.Start.X, g.End.X) - (g.Vertical ? half : cap);
+            double maxX = Math.Max(g.Start.X, g.End.X) + (g.Vertical ? half : cap);
+            double minY = Math.Min(g.Start.Y, g.End.Y) - (g.Vertical ? cap : half);
+            double maxY = Math.Max(g.Start.Y, g.End.Y) + (g.Vertical ? cap : half);
+            return new LevelBounds(minX, minY, maxX - minX, maxY - minY);
         }
 
         private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
@@ -454,6 +488,72 @@ namespace CtrDxEditor.Rendering
             ctx.DrawImage(layer.Bitmap, source, new Rect(dtl.X, dtl.Y, dbr.X - dtl.X, dbr.Y - dtl.Y));
         }
 
+        // A movable grab renders as its rail (left cap + tiled center + right cap) with the movable hook
+        // at the rest point, matching the game's HookMovable art. Everything is laid out in a local frame
+        // rotated onto the rail axis (0 for horizontal, 90 for a vertical rail), so the same code draws
+        // both orientations; distances are level units scaled to screen pixels by the current zoom.
+        private static void DrawMovableGrab(DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g)
+        {
+            Vec2 hook = v.LevelToScreen(g.Hook);
+            double z = v.Zoom;
+            Matrix m = Matrix.CreateRotation(g.Vertical ? Math.PI / 2 : 0) * Matrix.CreateTranslation(hook.X, hook.Y);
+            using (ctx.PushTransform(m))
+            {
+                if (sprites.GetSprite("grab_rail") is { Layers.Count: >= 3 } rail)
+                {
+                    double startX = -g.Offset * z;
+                    double endX = (g.Length - g.Offset) * z;
+                    DrawRail(ctx, rail.Layers[0], rail.Layers[1], rail.Layers[2], startX, endX, z);
+                }
+                if (sprites.GetSprite("grab_movable") is { Layers.Count: >= 1 } hookSprite)
+                {
+                    SpriteLayerDraw h = hookSprite.Layers[0];
+                    double w = PieceSize(h, z, horizontal: true);
+                    double ht = PieceSize(h, z, horizontal: false);
+                    DrawFrame(ctx, h, new Rect(-w / 2, -ht / 2, w, ht));
+                }
+            }
+        }
+
+        // Draws the rail bar between local x = startX (near end) and endX (far end): the center tile is
+        // repeated to fill the span (the last tile clipped), then the two caps sit just outside each end.
+        private static void DrawRail(
+            DrawingContext ctx, SpriteLayerDraw left, SpriteLayerDraw center, SpriteLayerDraw right,
+            double startX, double endX, double z)
+        {
+            double ch = PieceSize(center, z, horizontal: false);
+            double cw = PieceSize(center, z, horizontal: true);
+            for (double x = startX; x < endX - 0.01; x += cw)
+            {
+                double tileW = Math.Min(cw, endX - x);
+                IntRect f = center.Frame.Frame;
+                Rect src = new(f.X, f.Y, f.W * (tileW / cw), f.H);
+                DrawFrame(ctx, center, new Rect(x, -ch / 2, tileW, ch), src);
+            }
+
+            double lw = PieceSize(left, z, horizontal: true);
+            double lh = PieceSize(left, z, horizontal: false);
+            DrawFrame(ctx, left, new Rect(startX - lw, -lh / 2, lw, lh));
+
+            double rw = PieceSize(right, z, horizontal: true);
+            double rh = PieceSize(right, z, horizontal: false);
+            DrawFrame(ctx, right, new Rect(endX, -rh / 2, rw, rh));
+        }
+
+        // A rail piece's on-screen size along one axis: atlas pixels mapped to level units (÷ MapScale)
+        // then to screen (× zoom), matching how every other sprite is scaled.
+        private static double PieceSize(SpriteLayerDraw layer, double z, bool horizontal)
+        {
+            int px = horizontal ? layer.Frame.Frame.W : layer.Frame.Frame.H;
+            return px / SpritePlacement.MapScale * z;
+        }
+
+        private static void DrawFrame(DrawingContext ctx, SpriteLayerDraw layer, Rect dest, Rect? source = null)
+        {
+            IntRect f = layer.Frame.Frame;
+            ctx.DrawImage(layer.Bitmap, source ?? new Rect(f.X, f.Y, f.W, f.H), dest);
+        }
+
         private static void DrawHitbox(
             DrawingContext ctx,
             ViewTransform v,
@@ -477,6 +577,95 @@ namespace CtrDxEditor.Rendering
         private bool OnRadiusEdge(Vec2 levelPt)
         {
             return SelectedObject is { Type: "grab" } g && View.Zoom > 0 && GrabRadius.Of(g) is double r && GrabRadius.OnEdge(new Vec2(g.X, g.Y), r, levelPt, 6 / View.Zoom);
+        }
+
+        // What part of the selected movable grab's rail a level point is over. End caps take priority (they
+        // are small targets) unless the hook sits on that end, where sliding wins; then the hook (slide);
+        // then the bar itself (move the whole grab). End tolerance is ~9 screen px; the hook uses its own
+        // footprint and the bar its thickness.
+        private enum RailHit { None, ResizeStart, ResizeEnd, SlideHook, MoveBar }
+
+        private RailHit HitRail(Vec2 levelPt)
+        {
+            if (SelectedObject is not { Type: "grab" } sel || View.Zoom <= 0 || GrabRail.Of(sel) is not { } g)
+            {
+                return RailHit.None;
+            }
+
+            double endTol = 9 / View.Zoom;
+            const double hookTol = 24; // level units ~ half the movable hook art
+            bool onHook = GrabRadius.Distance(levelPt, g.Hook) <= hookTol;
+            if (!onHook && GrabRadius.Distance(levelPt, g.Start) <= endTol)
+            {
+                return RailHit.ResizeStart;
+            }
+            if (!onHook && GrabRadius.Distance(levelPt, g.End) <= endTol)
+            {
+                return RailHit.ResizeEnd;
+            }
+            if (onHook)
+            {
+                return RailHit.SlideHook;
+            }
+
+            const double halfThick = 20;
+            double along = g.Vertical ? levelPt.Y : levelPt.X;
+            double perp = g.Vertical ? Math.Abs(levelPt.X - g.Hook.X) : Math.Abs(levelPt.Y - g.Hook.Y);
+            double lo = Math.Min(g.Vertical ? g.Start.Y : g.Start.X, g.Vertical ? g.End.Y : g.End.X);
+            double hi = Math.Max(g.Vertical ? g.Start.Y : g.Start.X, g.Vertical ? g.End.Y : g.End.X);
+            return perp <= halfThick && along >= lo && along <= hi ? RailHit.MoveBar : RailHit.None;
+        }
+
+        // Applies the active rail drag to the grab: sliding moves the hook (object x/y) and its offset
+        // together so the rail stays put; resizing an end rewrites moveLength (and moveOffset for the near
+        // end). All constrained by GrabRail so the hook never leaves the rail.
+        private void ApplyRailDrag(LevelObject grab, GrabRail.Geometry g, Vec2 levelPt)
+        {
+            if (_slidingHook)
+            {
+                (double hookAxis, double offset) = GrabRail.SlideHook(g, levelPt);
+                if (g.Vertical)
+                {
+                    grab.Y = (int)Math.Round(hookAxis);
+                }
+                else
+                {
+                    grab.X = (int)Math.Round(hookAxis);
+                }
+                grab.SetAttr("moveOffset", Whole(offset));
+            }
+            else if (_resizingRail == 2)
+            {
+                grab.SetAttr("moveLength", Whole(GrabRail.ResizeEnd(g, levelPt)));
+            }
+            else
+            {
+                (double offset, double length) = GrabRail.ResizeStart(g, levelPt);
+                grab.SetAttr("moveOffset", Whole(offset));
+                grab.SetAttr("moveLength", Whole(length));
+            }
+        }
+
+        private static string Whole(double value)
+        {
+            return ((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture);
+        }
+
+        // The hover cursor over the selected grab: the radius ring or a horizontal rail end reads as a
+        // horizontal resize, a vertical rail end as a vertical resize, the hook as a slide (same axis
+        // arrows), and the bar as a move.
+        private Cursor HoverCursor(Vec2 levelPt)
+        {
+            return OnRadiusEdge(levelPt)
+                ? ResizeCursor
+                : HitRail(levelPt) switch
+                {
+                    RailHit.ResizeStart or RailHit.ResizeEnd or RailHit.SlideHook =>
+                        SelectedObject is { } s && GrabRail.Vertical(s) ? VResizeCursor : ResizeCursor,
+                    RailHit.MoveBar => MoveCursor,
+                    RailHit.None => Cursor.Default,
+                    _ => Cursor.Default,
+                };
         }
 
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)
@@ -536,6 +725,32 @@ namespace CtrDxEditor.Rendering
                 _resizingRadius = true;
                 e.Pointer.Capture(this);
                 return;
+            }
+
+            // Grabbing the selected movable grab's rail: an end cap resizes, the hook slides, the bar moves
+            // the whole grab. Takes priority over hit-testing so the rail wins over anything beneath it.
+            switch (HitRail(levelPt))
+            {
+                case RailHit.ResizeStart:
+                    _resizingRail = 1;
+                    e.Pointer.Capture(this);
+                    return;
+                case RailHit.ResizeEnd:
+                    _resizingRail = 2;
+                    e.Pointer.Capture(this);
+                    return;
+                case RailHit.SlideHook:
+                    _slidingHook = true;
+                    e.Pointer.Capture(this);
+                    return;
+                case RailHit.MoveBar:
+                    _dragOffset = levelPt - new Vec2(SelectedObject!.X, SelectedObject.Y);
+                    _dragging = true;
+                    e.Pointer.Capture(this);
+                    return;
+                case RailHit.None:
+                default:
+                    break;
             }
 
             List<LevelBounds> bounds = BuildHitBounds(doc);
@@ -606,6 +821,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if ((_slidingHook || _resizingRail != 0) && SelectedObject is { } rg && GrabRail.Of(rg) is { } rail)
+            {
+                ApplyRailDrag(rg, rail, levelPt);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_panning)
             {
                 ScrollBy(_panLast.X - p.X, _panLast.Y - p.Y);
@@ -615,8 +838,8 @@ namespace CtrDxEditor.Rendering
 
             if (!_dragging || SelectedObject is not { } selected)
             {
-                // Point at the ring so the resize affordance is discoverable on hover.
-                Cursor = OnRadiusEdge(levelPt) ? ResizeCursor : Cursor.Default;
+                // Reflect the affordance under the cursor so ring resize / rail edit are discoverable.
+                Cursor = HoverCursor(levelPt);
                 return;
             }
 
@@ -634,6 +857,8 @@ namespace CtrDxEditor.Rendering
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
+            _slidingHook = false;
+            _resizingRail = 0;
             e.Pointer.Capture(null);
         }
 

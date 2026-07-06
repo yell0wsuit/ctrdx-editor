@@ -82,7 +82,7 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public int NumericMinimum => Name switch
         {
-            "length" or "radius" or "moveLength" or "litRadius" => 0,
+            "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" => 0,
             _ => -9999,
         };
 
