@@ -63,6 +63,8 @@
     "Dialog.LevelSettings.NightLevel": "Night level",
     "Dialog.LevelSettings.HalfCandyDescription": "Enable the usage of split candy mechanic, as demonstrated in Valentine's Box.",
     "Dialog.LevelSettings.NightLevelDescription": "Enable the usage of night level mechanic, as demonstrated in Pillow Box.",
+    "Dialog.LevelSettings.MobilePhysics": "Use mobile physics",
+    "Dialog.LevelSettings.MobilePhysicsDescription": "Use the original WP7 mobile physics model (writes useMobilePhysics to the level's gameDesign).",
     "Dialog.LevelSettings.Create": "Create",
     "Dialog.LevelSettings.Save": "Save",
 

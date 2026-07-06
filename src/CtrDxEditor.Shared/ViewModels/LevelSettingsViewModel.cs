@@ -74,6 +74,7 @@ namespace CtrDxEditor.ViewModels
         public partial decimal? CustomSpecial { get; set; } = 0m;
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
+        [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
 
         /// <summary>Whether the manual special-value input is active.</summary>
         public bool IsSpecialCustom => SelectedSpecial.IsCustom;
@@ -136,6 +137,7 @@ namespace CtrDxEditor.ViewModels
                 RopePhysicsSpeed = (decimal)current.RopePhysicsSpeed,
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
+                UseMobilePhysics = current.UseMobilePhysics,
                 CustomWidth = current.Width,
                 CustomHeight = current.Height,
             };
@@ -153,7 +155,7 @@ namespace CtrDxEditor.ViewModels
             int height = IsCustom ? ClampOrDefault(CustomHeight, MinHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
             int special = IsSpecialCustom ? ClampOrDefault(CustomSpecial, 0, 0, MaxSpecial) : SelectedSpecial.Value;
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
-            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel);
+            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics);
         }
     }
 }

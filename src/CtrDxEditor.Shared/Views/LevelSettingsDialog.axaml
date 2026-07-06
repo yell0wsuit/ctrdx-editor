@@ -80,6 +80,14 @@
           </StackPanel>
         </ToolTip.Tip>
       </CheckBox>
+      <CheckBox Content="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
+                IsChecked="{Binding UseMobilePhysics, Mode=TwoWay}" IsEnabled="{Binding FlagsEditable}">
+        <ToolTip.Tip>
+          <StackPanel MaxWidth="260">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}" TextWrapping="Wrap" />
+          </StackPanel>
+        </ToolTip.Tip>
+      </CheckBox>
     </StackPanel>
 
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">

@@ -132,6 +132,22 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.CanConfirm);
         }
 
+        [Fact]
+        public void ToSettingsIncludesMobilePhysics()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.UseMobilePhysics = true;
+            Assert.True(vm.ToSettings().UseMobilePhysics);
+        }
+
+        [Fact]
+        public void ForEditPrefillsMobilePhysics()
+        {
+            LevelSettings current = new(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true);
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(current);
+            Assert.True(vm.UseMobilePhysics);
+        }
+
         /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>
         [Fact]
         public void EditModeWithUnlistedSpecialSelectsCustom()
