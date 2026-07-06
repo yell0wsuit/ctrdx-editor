@@ -67,8 +67,10 @@ namespace CtrDxEditor.Rendering
         /// the rest point, matching the game's HookMovable art. Everything is laid out in a local frame
         /// rotated onto the rail axis (0 for horizontal, 90 for a vertical rail), so the same code draws
         /// both orientations; distances are level units scaled to screen pixels by the current zoom.
+        /// When <paramref name="hookHighlighted"/> the hook uses the highlight art (game moverDragging).
         /// </summary>
-        public static void DrawMovableGrab(DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g)
+        public static void DrawMovableGrab(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, GrabRail.Geometry g, bool hookHighlighted = false)
         {
             Vec2 hook = v.LevelToScreen(g.Hook);
             double z = v.Zoom;
@@ -81,7 +83,7 @@ namespace CtrDxEditor.Rendering
                     double endX = (g.Length - g.Offset) * z;
                     DrawRail(ctx, rail.Layers[0], rail.Layers[1], rail.Layers[2], startX, endX, z);
                 }
-                if (sprites.GetSprite("grab_movable") is { Layers.Count: >= 1 } hookSprite)
+                if (sprites.GetSprite(hookHighlighted ? "grab_movable_highlight" : "grab_movable") is { Layers.Count: >= 1 } hookSprite)
                 {
                     SpriteLayerDraw h = hookSprite.Layers[0];
                     double w = PieceSize(h, z, horizontal: true);

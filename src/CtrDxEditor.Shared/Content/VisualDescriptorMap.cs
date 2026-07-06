@@ -75,6 +75,13 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0004.png"),
             ]),
 
+            // Highlighted movable-rail hook (game HookMovable quad 9), shown in place of grab_movable while
+            // the mover is being dragged (game moverDragging != -1). Not placeable; picked by grab state.
+            new("grab_movable_highlight",
+            [
+                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0003.png"),
+            ]),
+
             // Bubble = attached quad 0 over one random attached outline, matching LoadBubble's
             // parent quad RND_RANGE(1,3) plus child Image quad 0.
             new("bubble",

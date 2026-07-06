@@ -332,7 +332,9 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab" && GrabRail.Of(obj) is { } rail)
                 {
-                    GrabRenderer.DrawMovableGrab(context, v, sprites, rail);
+                    // Highlight the hook while it's being slid, matching the game's moverDragging art.
+                    bool sliding = _railDrag == GrabRail.Handle.SlideHook && Equals(obj, SelectedObject);
+                    GrabRenderer.DrawMovableGrab(context, v, sprites, rail, sliding);
                 }
                 else
                 {

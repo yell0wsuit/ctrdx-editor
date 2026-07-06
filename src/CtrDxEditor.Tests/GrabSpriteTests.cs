@@ -55,5 +55,14 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(["obj_hook_movable_frame_0004.png"], movable.Layers.Select(l => l.FrameName));
         }
+
+        /// <summary>The dragged movable hook uses the highlight frame (game HookMovable quad 9).</summary>
+        [Fact]
+        public void MovableGrabHighlightUsesHighlightFrame()
+        {
+            VisualDescriptor highlight = VisualDescriptorMap.For("grab_movable_highlight")!;
+
+            Assert.Equal(["obj_hook_movable_frame_0003.png"], highlight.Layers.Select(l => l.FrameName));
+        }
     }
 }
