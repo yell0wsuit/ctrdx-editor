@@ -77,7 +77,7 @@
     "Object.candyL": "Candy (Left)",
     "Object.candyR": "Candy (Right)",
     "Object.star": "Star",
-    "Object.grab": "Grab",
+    "Object.grab": "Rope hook",
     "Object.bubble": "Bubble",
     "Object.gravitySwitch": "Gravity button",
     "Object.lightBulb": "Light bulb",
