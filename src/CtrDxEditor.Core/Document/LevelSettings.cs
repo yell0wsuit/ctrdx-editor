@@ -7,5 +7,6 @@ namespace CtrDxEditor.Core.Document
         float RopePhysicsSpeed,
         int Special,
         bool TwoParts,
-        bool NightLevel);
+        bool NightLevel,
+        bool UseMobilePhysics = false);
 }

@@ -35,17 +35,23 @@ namespace CtrDxEditor.Core.Document
         /// <summary>Builds a fresh level document with the given settings and an empty Objects layer.</summary>
         public static LevelDocument CreateNew(LevelSettings settings)
         {
+            XElement gameDesignEl = new("gameDesign",
+                new XAttribute("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("special", settings.Special.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("twoParts", settings.TwoParts ? "true" : "false"),
+                new XAttribute("nightLevel", settings.NightLevel ? "true" : "false"));
+            if (settings.UseMobilePhysics)
+            {
+                gameDesignEl.SetAttributeValue("useMobilePhysics", "true");
+            }
+
             XElement settingsLayer = new("layer",
                 new XAttribute("name", "settings"),
                 new XElement("map",
                     new XAttribute("gridSize", "32"),
                     new XAttribute("width", settings.Width.ToString(CultureInfo.InvariantCulture)),
                     new XAttribute("height", settings.Height.ToString(CultureInfo.InvariantCulture))),
-                new XElement("gameDesign",
-                    new XAttribute("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture)),
-                    new XAttribute("special", settings.Special.ToString(CultureInfo.InvariantCulture)),
-                    new XAttribute("twoParts", settings.TwoParts ? "true" : "false"),
-                    new XAttribute("nightLevel", settings.NightLevel ? "true" : "false")));
+                gameDesignEl);
             XElement objectsLayer = new("layer", new XAttribute("name", "Objects"));
             XDocument doc = new(
                 new XDeclaration("1.0", "utf-8", null),
@@ -89,9 +95,13 @@ namespace CtrDxEditor.Core.Document
         public bool NightLevel =>
             bool.TryParse(GameDesign?.Attribute("nightLevel")?.Value, out bool v) && v;
 
+        /// <summary>Whether the level requests the mobile (WP7) physics model.</summary>
+        public bool UseMobilePhysics =>
+            bool.TryParse(GameDesign?.Attribute("useMobilePhysics")?.Value, out bool v) && v;
+
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
-            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel);
+            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics);
 
         /// <summary>The Objects layer element, or null when the document has none yet.</summary>
         public XElement? ObjectsLayer => Layer("Objects");
@@ -118,6 +128,14 @@ namespace CtrDxEditor.Core.Document
             gameDesign.SetAttributeValue("special", settings.Special.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("twoParts", settings.TwoParts ? "true" : "false");
             gameDesign.SetAttributeValue("nightLevel", settings.NightLevel ? "true" : "false");
+            if (settings.UseMobilePhysics)
+            {
+                gameDesign.SetAttributeValue("useMobilePhysics", "true");
+            }
+            else
+            {
+                gameDesign.Attribute("useMobilePhysics")?.Remove();
+            }
 
             if (wasTwoParts != settings.TwoParts)
             {

@@ -108,6 +108,36 @@ namespace CtrDxEditor.Core.Tests
         }
 
         [Fact]
+        public void CreateNewWithMobilePhysicsWritesAttribute()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(
+                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
+            Assert.True(doc.UseMobilePhysics);
+            Assert.Contains("useMobilePhysics=\"true\"", doc.Save());
+        }
+
+        [Fact]
+        public void CreateNewWithoutMobilePhysicsOmitsAttribute()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(
+                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: false));
+            Assert.False(doc.UseMobilePhysics);
+            Assert.DoesNotContain("useMobilePhysics", doc.Save());
+        }
+
+        [Fact]
+        public void UpdateSettingsTogglesMobilePhysicsBothWays()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(
+                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: false));
+            Assert.False(doc.UseMobilePhysics);
+            Assert.DoesNotContain("useMobilePhysics", doc.Save());
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
+            Assert.True(doc.UseMobilePhysics);
+        }
+
+        [Fact]
         public void TurningOnTwoPartsUsesCandyAsCandyLAndAddsCenteredCandyR()
         {
             LevelDocument doc = LevelDocument.Parse("""
