@@ -137,12 +137,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
-        // Hovering / dragging the auto-catch radius ring, or a horizontal rail end, uses a horizontal-
-        // resize cursor (col-resize); a vertical rail end uses the vertical one, and the rail bar uses a
-        // move cursor.
+        // Hovering / dragging the auto-catch radius ring, or a horizontal rail end/hook, uses a horizontal-
+        // resize cursor (col-resize); a vertical rail end/hook uses the vertical one.
         private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
         private static readonly Cursor VResizeCursor = new(StandardCursorType.SizeNorthSouth);
-        private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
 
         private bool _dragging;
         private bool _resizingRadius;
@@ -535,14 +533,15 @@ namespace CtrDxEditor.Rendering
         }
 
         // The cursor for a rail handle: a horizontal rail end/hook reads as a horizontal resize, a vertical
-        // one as a vertical resize (the hook slides along the same axis), and the bar as a move.
+        // one as a vertical resize (the hook slides along the same axis). The bar keeps the default arrow -
+        // it is still draggable to move the whole grab, but a move cursor over the whole rail is noisy.
         private Cursor CursorForHandle(GrabRail.Handle handle)
         {
             return handle switch
             {
                 GrabRail.Handle.ResizeStart or GrabRail.Handle.ResizeEnd or GrabRail.Handle.SlideHook =>
                     SelectedObject is { } s && GrabRail.Vertical(s) ? VResizeCursor : ResizeCursor,
-                GrabRail.Handle.MoveBar => MoveCursor,
+                GrabRail.Handle.MoveBar => Cursor.Default,
                 GrabRail.Handle.None => Cursor.Default,
                 _ => Cursor.Default,
             };
@@ -746,6 +745,8 @@ namespace CtrDxEditor.Rendering
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
+            // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
+            SetHookHovered(false);
             e.Pointer.Capture(null);
         }
 
