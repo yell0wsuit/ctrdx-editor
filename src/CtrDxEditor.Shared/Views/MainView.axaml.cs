@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -31,6 +32,7 @@ namespace CtrDxEditor.Views
         private EditorViewModel? _mutatedSubscription;
         private readonly Action _invalidateCanvas;
         private IStorageFile? _currentLevelFile;
+        private WindowNotificationManager? _notifications;
 
         /// <summary>Creates the main editor view and wires input gestures.</summary>
         public MainView()
@@ -529,11 +531,38 @@ namespace CtrDxEditor.Views
                     FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.Png")) { Patterns = ["*.png"] }],
                 });
 
-            if (file is not null)
+            if (file is null)
             {
-                await using Stream stream = await file.OpenWriteAsync();
+                return;
+            }
+
+            await using (Stream stream = await file.OpenWriteAsync())
+            {
                 bitmap.Save(stream);
             }
+
+            // Confirm the save with a toast showing where it landed (a full local path on desktop, the
+            // download name in the browser where paths are not exposed).
+            string location = file.TryGetLocalPath() ?? file.Name;
+            Notifications()?.Show(new Notification(
+                Localizer.Get("Notification.Screenshot.Title"),
+                location,
+                NotificationType.Success));
+        }
+
+        // The toast host, created lazily against the current TopLevel and reused. Null only before the
+        // view is attached to a window, which cannot happen from a menu click.
+        private WindowNotificationManager? Notifications()
+        {
+            if (_notifications is null && TopLevel.GetTopLevel(this) is { } top)
+            {
+                _notifications = new WindowNotificationManager(top)
+                {
+                    Position = NotificationPosition.BottomRight,
+                    MaxItems = 3,
+                };
+            }
+            return _notifications;
         }
 
         private async Task SaveAsAsync(EditorViewModel vm)

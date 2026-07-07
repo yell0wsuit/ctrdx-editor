@@ -185,6 +185,15 @@ namespace CtrDxEditor.Rendering
         private static Cursor ResizeCursor => LazyResizeCursor.Value;
         private static Cursor VResizeCursor => LazyVResizeCursor.Value;
 
+        // Game-accurate grab auto-catch ring for screenshots: a dashed blue circle matching the game's
+        // Grab.DrawGrabCircle (RGBA 0.2/0.5/0.9, drawn as alternating segments). The on-canvas ring keeps
+        // the themed orange editor guide; this fixed color is only baked into the exported image.
+        private static readonly Pen ScreenshotGrabRadiusPen =
+            new(new SolidColorBrush(Color.FromArgb(255, 51, 128, 230)), 3.0)
+            {
+                DashStyle = new DashStyle([4, 3], 0),
+            };
+
         private bool _dragging;
         private bool _resizingRadius;
         // Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
@@ -414,7 +423,7 @@ namespace CtrDxEditor.Rendering
             }
 
             ViewTransform v = View;
-            DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true);
+            DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true, grabRadiusPen: null);
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
 
@@ -463,15 +472,18 @@ namespace CtrDxEditor.Rendering
 
         // Draws the level itself - background decoration, optional border+grid, light-bulb glow, and all
         // objects/grabs in the game's z-order - into the given surface. Interactive chrome (selection,
-        // radius rings, hitboxes, ghost) is NOT drawn here; Render layers that on top. drawGrid gates the
-        // editor-only border and grid so a clean screenshot can omit them.
+        // hitboxes, ghost) is NOT drawn here; Render layers that on top. drawGrid gates the editor-only
+        // border and grid so a clean screenshot can omit them. grabRadiusPen, when set, bakes the grab
+        // auto-catch rings into the image with that pen (the screenshot's game-blue ring); Render passes
+        // null and draws its own themed rings in the chrome pass instead.
         private void DrawLevelContent(
             DrawingContext context,
             ViewTransform v,
             Size renderSize,
             LevelDocument doc,
             SpriteCache sprites,
-            bool drawGrid)
+            bool drawGrid,
+            Pen? grabRadiusPen)
         {
             Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
@@ -571,6 +583,11 @@ namespace CtrDxEditor.Rendering
                     DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
                 }
             }
+
+            if (grabRadiusPen is not null)
+            {
+                GrabRenderer.DrawGrabRadiusRings(context, v, objects, grabRadiusPen);
+            }
         }
 
         /// <summary>
@@ -593,7 +610,7 @@ namespace CtrDxEditor.Rendering
             using (DrawingContext ctx = rtb.CreateDrawingContext())
             {
                 ctx.FillRectangle(Brushes.Black, new Rect(renderSize));
-                DrawLevelContent(ctx, frame.View, renderSize, doc, sprites, drawGrid: false);
+                DrawLevelContent(ctx, frame.View, renderSize, doc, sprites, drawGrid: false, grabRadiusPen: ScreenshotGrabRadiusPen);
             }
             return rtb;
         }

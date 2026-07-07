@@ -31,6 +31,7 @@
     "Dialog.FileType.LevelXml": "Level XML",
     "Dialog.Screenshot.Title": "Save level screenshot",
     "Dialog.FileType.Png": "PNG image",
+    "Notification.Screenshot.Title": "Screenshot saved",
 
     "Dialog.Common.Cancel": "Cancel",
     "Dialog.Common.Ok": "OK",
