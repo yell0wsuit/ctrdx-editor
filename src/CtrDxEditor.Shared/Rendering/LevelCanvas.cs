@@ -1073,6 +1073,28 @@ namespace CtrDxEditor.Rendering
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
+            EndPointerGesture();
+            e.Pointer.Capture(null);
+        }
+
+        /// <inheritdoc />
+        protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+        {
+            base.OnPointerCaptureLost(e);
+            EndPointerGesture();
+        }
+
+        private void EndPointerGesture()
+        {
+            // Capture loss (including the release path's own Capture(null)) can fire with nothing in
+            // progress; skip the resets and completion callback unless a gesture is actually active.
+            bool gestureActive = _dragging || _panning || _resizingRadius
+                || _railDrag != GrabRail.Handle.None || _hookHovered;
+            if (!gestureActive)
+            {
+                return;
+            }
+
             bool editedDocument = _dragging || _resizingRadius || _railDrag != GrabRail.Handle.None;
             _dragging = false;
             _panning = false;
@@ -1084,7 +1106,6 @@ namespace CtrDxEditor.Rendering
             }
             // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
             SetHookHovered(false);
-            e.Pointer.Capture(null);
         }
 
         /// <inheritdoc />

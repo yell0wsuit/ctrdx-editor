@@ -20,6 +20,7 @@ namespace CtrDxEditor.ViewModels
     /// <param name="initial">The editor settings snapshot loaded at startup (decoration defaults, content path).</param>
     public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
     {
+        private const int UndoHistoryLimit = 100;
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
@@ -405,6 +406,11 @@ namespace CtrDxEditor.ViewModels
             }
 
             _undoStack.Add(state);
+            if (_undoStack.Count > UndoHistoryLimit)
+            {
+                _undoStack.RemoveAt(0);
+            }
+
             _redoStack.Clear();
             NotifyHistoryChanged();
         }

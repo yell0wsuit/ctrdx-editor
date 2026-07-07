@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -143,6 +144,30 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(100, vm.Document.Objects[0].X);
             Assert.Equal(100, vm.Document.Objects[0].Y);
+        }
+
+        /// <summary>Verifies the undo stack keeps only the most recent snapshots.</summary>
+        [Fact]
+        public void UndoHistoryIsCapped()
+        {
+            const int historyLimit = 100;
+            EditorViewModel vm = CreateLoadedViewModel();
+            vm.SelectedObject = vm.Document!.Objects[0];
+            AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
+
+            for (int i = 0; i < historyLimit + 5; i++)
+            {
+                xField.Value = (200 + i).ToString(CultureInfo.InvariantCulture);
+            }
+
+            int undoCount = 0;
+            while (vm.CanUndo)
+            {
+                vm.Undo();
+                undoCount++;
+            }
+
+            Assert.Equal(historyLimit, undoCount);
         }
 
         private static EditorViewModel CreateLoadedViewModel()
