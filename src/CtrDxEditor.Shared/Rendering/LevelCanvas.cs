@@ -633,7 +633,8 @@ namespace CtrDxEditor.Rendering
 
             // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
             // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin, omNomSupport);
+            // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.RenderSpriteKey(obj), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
@@ -759,7 +760,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.RenderSpriteKey(obj));
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)

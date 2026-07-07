@@ -37,6 +37,20 @@ namespace CtrDxEditor.Rendering
             };
         }
 
+        /// <summary>
+        /// The sprite element to actually draw and bound this grab with. Identical to <see cref="SpriteKey"/>
+        /// except the plain fixed hook randomly renders one of two quad pairs — "grab" (Hook01 quads 0/1) or
+        /// "grab_02" (Hook02 quads 2/3) — mirroring the game's <c>RandomHookBaseQuad</c>. The choice is rolled
+        /// once per placed instance and stable thereafter (repaints/drags never flicker; a reload re-rolls),
+        /// exactly like the bubble outline variant. <see cref="SpriteKey"/> stays the pure art-category
+        /// resolver so gun/wheel/suction/auto/movable art is unaffected.
+        /// </summary>
+        public static string RenderSpriteKey(LevelObject obj)
+        {
+            string key = SpriteKey(obj);
+            return key == "grab" && SpriteVariantPicker.Pick(obj.Element, 2) == 1 ? "grab_02" : key;
+        }
+
         /// <summary>Extra sprite elements drawn over the base grab, without changing selection geometry.</summary>
         public static IEnumerable<string> OverlaySpriteKeys(LevelObject obj)
         {

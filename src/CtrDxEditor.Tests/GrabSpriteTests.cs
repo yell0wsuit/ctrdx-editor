@@ -24,6 +24,56 @@ namespace CtrDxEditor.Tests
             Assert.Equal([0, 1], grab.Layers.Select(l => l.Quad));
         }
 
+        /// <summary>The second fixed-hook pair uses the alternate hook frames (game Hook02 quads 2/3).</summary>
+        [Fact]
+        public void SecondFixedGrabUsesAlternateHookFrames()
+        {
+            VisualDescriptor grab02 = VisualDescriptorMap.For("grab_02")!;
+
+            Assert.Equal([2, 3], grab02.Layers.Select(l => l.Quad));
+            Assert.All(grab02.Layers, l => Assert.Equal("images/obj_hook.json", l.AtlasJsonRelPath));
+        }
+
+        /// <summary>
+        /// A plain fixed hook renders as one of the two random quad pairs (game RandomHookBaseQuad: 0/1 or
+        /// 2/3), and the roll is stable for the object's lifetime so repaints never flicker.
+        /// </summary>
+        [Fact]
+        public void PlainHookRendersOneRandomPairStablePerInstance()
+        {
+            LevelObject obj = new(XElement.Parse("""<grab x="0" y="0" radius="-1" />"""));
+
+            string first = RenderSpriteKey(obj);
+
+            Assert.True(first is "grab" or "grab_02");
+            Assert.All(Enumerable.Range(0, 20), _ => Assert.Equal(first, RenderSpriteKey(obj)));
+        }
+
+        /// <summary>Every non-plain grab keeps its dedicated art; the random pair only applies to the fixed hook.</summary>
+        [Theory]
+        [InlineData("""<grab x="0" y="0" wheel="true" />""", "grab_wheel")]
+        [InlineData("""<grab x="0" y="0" gun="true" />""", "grab_gun")]
+        [InlineData("""<grab x="0" y="0" kickable="true" kicked="false" />""", "grab_suction")]
+        [InlineData("""<grab x="0" y="0" kickable="true" kicked="true" />""", "grab_suction_kicked")]
+        [InlineData("""<grab x="0" y="0" radius="65" />""", "grab_auto")]
+        public void VariantHooksNeverRollToSecondPair(string xml, string expectedKey)
+        {
+            Assert.Equal(expectedKey, RenderSpriteKey(new LevelObject(XElement.Parse(xml))));
+        }
+
+        /// <summary>Across many placed hooks both random pairs appear, mirroring the game's per-load roll.</summary>
+        [Fact]
+        public void PlainHooksVaryBetweenBothPairs()
+        {
+            string[] keys =
+            [
+                .. Enumerable.Range(0, 100)
+                    .Select(_ => RenderSpriteKey(new LevelObject(XElement.Parse("""<grab x="0" y="0" radius="-1" />"""))))
+            ];
+
+            Assert.True(keys.Distinct().Count() > 1);
+        }
+
         /// <summary>The auto-catch grab uses the auto-hook frames (game HookAuto quads 4/5).</summary>
         [Fact]
         public void AutoCatchGrabUsesAutoHookFrames()
@@ -183,6 +233,15 @@ namespace CtrDxEditor.Tests
             Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
             MethodInfo method = grabRenderer.GetMethod(
                 "SpriteKey",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
+            return (string)method.Invoke(null, [obj])!;
+        }
+
+        private static string RenderSpriteKey(LevelObject obj)
+        {
+            Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            MethodInfo method = grabRenderer.GetMethod(
+                "RenderSpriteKey",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
             return (string)method.Invoke(null, [obj])!;
         }

@@ -53,11 +53,22 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(CandyJson, CandyImageBase, 9),
             ], Scale: 0.71),
 
-            // Grab hook = arm + ring (share sourceSize 276x276).
+            // Grab hook = arm + ring (share sourceSize 276x276). Two interchangeable pairs exist: the game's
+            // RandomHookBaseQuad rolls base 0 or 2 per placed hook and draws back=base, front=base+1. This is
+            // the Hook01 pair (quads 0/1); "grab_02" is the Hook02 pair (quads 2/3). GrabRenderer.RenderSpriteKey
+            // picks one per instance; the palette thumbnail and ghost preview always use this default pair.
             new("grab",
             [
                 new SpriteLayer(HookJson, HookImageBase, 0),
                 new SpriteLayer(HookJson, HookImageBase, 1),
+            ]),
+
+            // Second fixed-hook pair (game Hook02 quads 2/3), the alternate RandomHookBaseQuad roll. Same
+            // 276x276 art as "grab"; picked per placed instance by GrabRenderer.RenderSpriteKey.
+            new("grab_02",
+            [
+                new SpriteLayer(HookJson, HookImageBase, 2),
+                new SpriteLayer(HookJson, HookImageBase, 3),
             ]),
 
             // Wheel grab = regulated hook wheel art. The game draws the base wheel first, then the
