@@ -39,6 +39,7 @@ namespace CtrDxEditor.Content
     {
         private const string XmasLightsJson = "images/christmas_lights.json";
         private const string XmasLightsImageBase = "images/christmas_lights";
+        private const int EarthArtQuad = 23;
 
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
@@ -99,7 +100,7 @@ namespace CtrDxEditor.Content
         public SpriteLayerDraw? GetEarthArt()
         {
             Bitmap? bitmap = LoadBitmap("images/obj_star_idle" + imageExtension);
-            AtlasFrame? frame = LoadAtlas("images/obj_star_idle.json")?.Find("frame_0058.png");
+            AtlasFrame? frame = LoadAtlas("images/obj_star_idle.json")?.At(EarthArtQuad);
             return bitmap is null || frame is null ? null : new SpriteLayerDraw(bitmap, frame);
         }
 

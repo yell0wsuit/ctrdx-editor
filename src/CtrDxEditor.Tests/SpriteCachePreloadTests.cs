@@ -130,6 +130,18 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["z9"], candyR.Layers.Select(l => l.Frame.Filename));
         }
 
+        /// <summary>The cosmic background earth decoration is game quad 23, not a filename lookup.</summary>
+        [Fact]
+        public void GetEarthArtResolvesObjStarIdleByQuadIndex()
+        {
+            SpriteCache cache = new(new FakeStore());
+            SeedEarthAtlas(cache);
+
+            SpriteLayerDraw art = Assert.IsType<SpriteLayerDraw>(cache.GetEarthArt());
+
+            Assert.Equal("quad-23-earth", art.Frame.Filename);
+        }
+
         /// <summary>
         /// The target's platform (back) layer is drawn from the selected char_supports frame
         /// (frame_00NN.png), while the character (front) layer stays fixed at char_animations frame_0000.
@@ -175,6 +187,21 @@ namespace CtrDxEditor.Tests
             SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
             {
                 [CandySkins.JsonPath(0)] = new Atlas(frames),
+            });
+        }
+
+        private static void SeedEarthAtlas(SpriteCache cache)
+        {
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/obj_star_idle.png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/obj_star_idle.json"] = new Atlas(
+                    [.. Enumerable.Range(0, 24).Select(i => Frame(i == 23 ? "quad-23-earth" : $"z{i}")),
+                     Frame("frame_0058.png")]),
             });
         }
 
