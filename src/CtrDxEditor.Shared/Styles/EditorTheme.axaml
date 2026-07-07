@@ -296,14 +296,13 @@
       <Color x:Key="EditorColor.CanvasBorder">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.CanvasGrid">#28314158</Color>  <!-- slate-700 @ ~16% -->
 
-      <!-- Editor overlay indicators (dashed). AA (~5-6:1) vs the slate-50 canvas backdrop;
-           700 shades kept over stricter AAA so the hues stay tellable apart. -->
-      <Color x:Key="EditorColor.OverlayGrabRadius">#CA3500</Color>     <!-- orange-700, 4.99 -->
-      <Color x:Key="EditorColor.OverlayBulbRadius">#BB4D00</Color>     <!-- amber-700, 4.81 -->
-      <Color x:Key="EditorColor.OverlayHitboxDesktop">#497D00</Color>  <!-- lime-700, 4.76 -->
-      <Color x:Key="EditorColor.OverlayHitboxPhone">#A800B7</Color>    <!-- fuchsia-700, 5.99 -->
-      <Color x:Key="EditorColor.OverlayObjectLocked">#C10007</Color>   <!-- red-700, 6.14 -->
-      <Color x:Key="EditorColor.OverlayObjectSelected">#0069A8</Color> <!-- sky-700, 5.60 -->
+      <!-- Editor overlay indicators (dashed) -->
+      <Color x:Key="EditorColor.OverlayGrabRadius">#CA3500</Color>     <!-- orange-700 -->
+      <Color x:Key="EditorColor.OverlayBulbRadius">#BB4D00</Color>     <!-- amber-700 -->
+      <Color x:Key="EditorColor.OverlayHitboxDesktop">#497D00</Color>  <!-- lime-700 -->
+      <Color x:Key="EditorColor.OverlayHitboxPhone">#A800B7</Color>    <!-- fuchsia-700 -->
+      <Color x:Key="EditorColor.OverlayObjectLocked">#C10007</Color>   <!-- red-700 -->
+      <Color x:Key="EditorColor.OverlayObjectSelected">#0069A8</Color> <!-- sky-700 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Light tints so the dark row text stays readable. -->
