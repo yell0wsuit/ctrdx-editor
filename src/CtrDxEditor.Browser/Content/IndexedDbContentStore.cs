@@ -58,6 +58,34 @@ namespace CtrDxEditor.Browser.Content
         }
 
         /// <inheritdoc />
+        public byte[] ReadBytes(string relPath)
+        {
+            using Stream s = Entry(LoadedArchive(), relPath).Open();
+            using MemoryStream ms = new();
+            s.CopyTo(ms);
+            return ms.ToArray();
+        }
+
+        /// <inheritdoc />
+        public string ReadText(string relPath)
+        {
+            using Stream s = Entry(LoadedArchive(), relPath).Open();
+            using StreamReader r = new(s, Encoding.UTF8);
+            return r.ReadToEnd();
+        }
+
+        /// <summary>
+        /// The zip archive, which the async reads load into memory once during preload. Synchronous reads
+        /// cannot themselves await the IndexedDB fetch, so they require it to already be resident; on the
+        /// single-threaded browser it always is by the time on-demand sprites are requested.
+        /// </summary>
+        private ZipArchive LoadedArchive()
+        {
+            return _archive
+                ?? throw new InvalidOperationException("Content archive not loaded; an async read must run first.");
+        }
+
+        /// <inheritdoc />
         public async Task<bool> IsPopulatedAsync()
         {
             ZipArchive? zip = await ArchiveAsync();

@@ -36,6 +36,94 @@ namespace CtrDxEditor.Tests
             {
                 return Task.FromResult(true);
             }
+
+            public byte[] ReadBytes(string relPath)
+            {
+                return [];
+            }
+
+            public string ReadText(string relPath)
+            {
+                return "";
+            }
+        }
+
+        // Records which read API the cache used. Its async reads never complete synchronously (they
+        // model the WebAssembly single thread, where blocking on an async read deadlocks); only the
+        // synchronous reads return, so a passing assertion proves the cache took the safe sync path.
+        private sealed class RecordingStore : IContentStore
+        {
+            public bool AsyncBytesCalled;
+            public bool SyncBytesCalled;
+            public bool SyncTextCalled;
+
+            public Task<bool> ExistsAsync(string relPath)
+            {
+                return Task.FromResult(true);
+            }
+
+            public async Task<byte[]> ReadBytesAsync(string relPath)
+            {
+                AsyncBytesCalled = true;
+                await Task.Yield();
+                return [];
+            }
+
+            public Task<string> ReadTextAsync(string relPath)
+            {
+                return Task.FromResult("");
+            }
+
+            public Task<bool> IsPopulatedAsync()
+            {
+                return Task.FromResult(true);
+            }
+
+            public byte[] ReadBytes(string relPath)
+            {
+                SyncBytesCalled = true;
+                return [];
+            }
+
+            public string ReadText(string relPath)
+            {
+                SyncTextCalled = true;
+                return "[]";
+            }
+        }
+
+        /// <summary>
+        /// Regression: on-demand background loads must use the store's synchronous read, not sync-over-async.
+        /// On single-threaded WebAssembly there is no worker thread, so <c>Task.Run(...).GetResult()</c>
+        /// deadlocks the sole UI thread (froze the app when a New Level background/thumbnail was resolved).
+        /// </summary>
+        [Fact]
+        public void GetBackgroundUsesSynchronousStoreRead()
+        {
+            RecordingStore store = new();
+            SpriteCache cache = new(store);
+
+            _ = cache.GetBackground(1);
+
+            Assert.True(store.SyncBytesCalled, "GetBackground must read background bytes synchronously.");
+            Assert.False(store.AsyncBytesCalled, "GetBackground must not block on an async read (deadlocks on WASM).");
+        }
+
+        /// <summary>
+        /// Regression: on-demand candy-skin loads must use the store's synchronous reads, not sync-over-async,
+        /// for the same WebAssembly single-thread reason as <see cref="GetBackgroundUsesSynchronousStoreRead"/>.
+        /// </summary>
+        [Fact]
+        public void GetCandySpriteUsesSynchronousStoreReads()
+        {
+            RecordingStore store = new();
+            SpriteCache cache = new(store);
+
+            _ = cache.GetSprite("candy", candySkin: 1);
+
+            Assert.True(store.SyncBytesCalled, "Loading a candy skin's atlas image must read bytes synchronously.");
+            Assert.True(store.SyncTextCalled, "Loading a candy skin's atlas table must read text synchronously.");
+            Assert.False(store.AsyncBytesCalled, "Candy-skin loads must not block on an async read (deadlocks on WASM).");
         }
 
         // A single-threaded context whose posted continuations are never pumped: reproduces the

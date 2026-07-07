@@ -201,10 +201,9 @@ namespace CtrDxEditor.Content
         }
 
         /// <remarks>
-        /// The <see cref="IContentStore"/> read is dispatched through <c>Task.Run</c> so the awaited
-        /// continuation never marshals back to a UI SynchronizationContext. Calling this synchronously
-        /// from the UI thread therefore blocks only on the file read/decode rather than deadlocking
-        /// against its own continuation.
+        /// Reads the image through the store's synchronous API. On single-threaded WebAssembly there is no
+        /// worker thread, so a sync-over-async read (blocking on <c>ReadBytesAsync</c>) deadlocks the sole
+        /// UI thread; the store instead serves the bytes from the archive it already loaded during preload.
         /// </remarks>
         private Bitmap? LoadBackground(int id, int decodeWidth, ConcurrentDictionary<int, Bitmap?> cache, string suffix = "_p1")
         {
@@ -221,7 +220,7 @@ namespace CtrDxEditor.Content
             try
             {
                 string rel = $"images/backgrounds/bgr_{id:D2}{suffix}.png";
-                byte[] bytes = Task.Run(() => store.ReadBytesAsync(rel)).GetAwaiter().GetResult();
+                byte[] bytes = store.ReadBytes(rel);
                 using MemoryStream ms = new(bytes);
                 bmp = Bitmap.DecodeToWidth(ms, decodeWidth);
             }
@@ -395,8 +394,7 @@ namespace CtrDxEditor.Content
         {
             try
             {
-                byte[] bytes = Task.Run(() => store.ReadBytesAsync(CandySkins.ResourceBase(skin) + imageExtension))
-                    .GetAwaiter().GetResult();
+                byte[] bytes = store.ReadBytes(CandySkins.ResourceBase(skin) + imageExtension);
                 using MemoryStream ms = new(bytes);
                 return new Bitmap(ms);
             }
@@ -410,7 +408,7 @@ namespace CtrDxEditor.Content
         {
             try
             {
-                string json = Task.Run(() => store.ReadTextAsync(CandySkins.JsonPath(skin))).GetAwaiter().GetResult();
+                string json = store.ReadText(CandySkins.JsonPath(skin));
                 return new Atlas(AtlasJsonLoader.ParseFrames(json));
             }
             catch (Exception ex) when (ex is IOException or FileNotFoundException or InvalidOperationException)

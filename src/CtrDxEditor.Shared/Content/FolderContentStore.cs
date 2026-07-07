@@ -31,6 +31,18 @@ namespace CtrDxEditor.Content
         }
 
         /// <inheritdoc />
+        public byte[] ReadBytes(string relPath)
+        {
+            return File.ReadAllBytes(Full(relPath));
+        }
+
+        /// <inheritdoc />
+        public string ReadText(string relPath)
+        {
+            return File.ReadAllText(Full(relPath));
+        }
+
+        /// <inheritdoc />
         public async Task<bool> IsPopulatedAsync()
         {
             string manifestPath = Full(ContentManifest.FileName);
