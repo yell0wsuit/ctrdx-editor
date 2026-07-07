@@ -296,6 +296,15 @@
       <Color x:Key="EditorColor.CanvasBorder">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.CanvasGrid">#28314158</Color>  <!-- slate-700 @ ~16% -->
 
+      <!-- Editor overlay indicators (dashed). AA (~5-6:1) vs the slate-50 canvas backdrop;
+           700 shades kept over stricter AAA so the hues stay tellable apart. -->
+      <Color x:Key="EditorColor.OverlayGrabRadius">#CA3500</Color>     <!-- orange-700, 4.99 -->
+      <Color x:Key="EditorColor.OverlayBulbRadius">#BB4D00</Color>     <!-- amber-700, 4.81 -->
+      <Color x:Key="EditorColor.OverlayHitboxDesktop">#497D00</Color>  <!-- lime-700, 4.76 -->
+      <Color x:Key="EditorColor.OverlayHitboxPhone">#A800B7</Color>    <!-- fuchsia-700, 5.99 -->
+      <Color x:Key="EditorColor.OverlayObjectLocked">#C10007</Color>   <!-- red-700, 6.14 -->
+      <Color x:Key="EditorColor.OverlayObjectSelected">#0069A8</Color> <!-- sky-700, 5.60 -->
+
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Light tints so the dark row text stays readable. -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#BEDBFF" />     <!-- blue-200, selected -->
@@ -325,6 +334,14 @@
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
       <Color x:Key="EditorColor.CanvasBorder">#45556C</Color>  <!-- slate-600 -->
       <Color x:Key="EditorColor.CanvasGrid">#28CAD5E2</Color>  <!-- slate-300 @ ~16% -->
+
+      <!-- Editor overlay indicators (dashed). AAA (>=7:1) vs the slate-900 canvas backdrop. -->
+      <Color x:Key="EditorColor.OverlayGrabRadius">#FF8904</Color>     <!-- orange-400, 7.50 -->
+      <Color x:Key="EditorColor.OverlayBulbRadius">#FE9A00</Color>     <!-- amber-500, 8.35 -->
+      <Color x:Key="EditorColor.OverlayHitboxDesktop">#7CCF00</Color>  <!-- lime-500, 9.15 -->
+      <Color x:Key="EditorColor.OverlayHitboxPhone">#F4A8FF</Color>    <!-- fuchsia-300, 10.10 -->
+      <Color x:Key="EditorColor.OverlayObjectLocked">#FFA2A2</Color>   <!-- red-300, 9.29 -->
+      <Color x:Key="EditorColor.OverlayObjectSelected">#00BCFF</Color> <!-- sky-400, 8.18 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Deep blues so the light row text stays readable. -->

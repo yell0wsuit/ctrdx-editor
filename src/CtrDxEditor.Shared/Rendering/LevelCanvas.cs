@@ -202,6 +202,14 @@ namespace CtrDxEditor.Rendering
             DashStyle = new DashStyle([4, 4], 0),
         };
 
+        // Dashed overlay-indicator pens, resolved from the theme (fallbacks match the pre-theming literals).
+        private Pen _grabRadiusPen = OverlayPen(Brushes.Orange, 1.5);
+        private Pen _bulbRadiusPen = OverlayPen(Brushes.Gold, 1.5);
+        private Pen _hitboxDesktopPen = OverlayPen(Brushes.LimeGreen, 1.5);
+        private Pen _hitboxPhonePen = OverlayPen(Brushes.Magenta, 1.5);
+        private Pen _objectLockedPen = OverlayPen(Brushes.Red, 2);
+        private Pen _objectSelectedPen = OverlayPen(Brushes.DeepSkyBlue, 1.5);
+
         /// <summary>Creates the canvas and enables native touch gestures.</summary>
         public LevelCanvas()
         {
@@ -242,6 +250,25 @@ namespace CtrDxEditor.Rendering
             {
                 DashStyle = new DashStyle([4, 4], 0),
             };
+
+            _grabRadiusPen = OverlayPen(ThemeColor("EditorColor.OverlayGrabRadius", Colors.Orange), 1.5);
+            _bulbRadiusPen = OverlayPen(ThemeColor("EditorColor.OverlayBulbRadius", Colors.Gold), 1.5);
+            _hitboxDesktopPen = OverlayPen(ThemeColor("EditorColor.OverlayHitboxDesktop", Colors.LimeGreen), 1.5);
+            _hitboxPhonePen = OverlayPen(ThemeColor("EditorColor.OverlayHitboxPhone", Colors.Magenta), 1.5);
+            _objectLockedPen = OverlayPen(ThemeColor("EditorColor.OverlayObjectLocked", Colors.Red), 2);
+            _objectSelectedPen = OverlayPen(ThemeColor("EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
+        }
+
+        /// <summary>Builds a dashed overlay pen with the shared editor dash pattern.</summary>
+        private static Pen OverlayPen(IBrush brush, double thickness)
+        {
+            return new Pen(brush, thickness) { DashStyle = new DashStyle([4, 3], 0) };
+        }
+
+        /// <summary>Builds a dashed overlay pen from a solid color.</summary>
+        private static Pen OverlayPen(Color color, double thickness)
+        {
+            return OverlayPen(new SolidColorBrush(color), thickness);
         }
 
         /// <inheritdoc />
@@ -515,7 +542,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            GrabRenderer.DrawRadiusRings(context, v, objects);
+            GrabRenderer.DrawRadiusRings(context, v, objects, _grabRadiusPen, _bulbRadiusPen);
 
             if (ShowHitboxes || ShowMobileHitboxes)
             {
@@ -527,11 +554,11 @@ namespace CtrDxEditor.Rendering
                     }
                     if (ShowHitboxes)
                     {
-                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, Brushes.LimeGreen);
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _hitboxDesktopPen);
                     }
                     if (ShowMobileHitboxes)
                     {
-                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, Brushes.Magenta);
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _hitboxPhonePen);
                     }
                 }
             }
@@ -543,9 +570,7 @@ namespace CtrDxEditor.Rendering
                 Vec2 stl = v.LevelToScreen(new Vec2(sb.X, sb.Y));
                 Vec2 sbr = v.LevelToScreen(new Vec2(sb.X + sb.W, sb.Y + sb.H));
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
-                Pen pen = Equals(LockedObject, selected)
-                    ? new Pen(Brushes.Red, 2) { DashStyle = new DashStyle([4, 3], 0) }
-                    : new Pen(Brushes.DeepSkyBlue, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
+                Pen pen = Equals(LockedObject, selected) ? _objectLockedPen : _objectSelectedPen;
                 context.DrawRectangle(null, pen, new Rect(stl.X, stl.Y, sbr.X - stl.X, sbr.Y - stl.Y));
             }
 
@@ -806,7 +831,7 @@ namespace CtrDxEditor.Rendering
             LevelObject obj,
             double scale,
             HitboxModel model,
-            IBrush brush)
+            Pen pen)
         {
             if (HitboxTable.Compute(obj.Type, obj.X, obj.Y, scale, model) is not { } b)
             {
@@ -814,7 +839,6 @@ namespace CtrDxEditor.Rendering
             }
             Vec2 tl = v.LevelToScreen(new Vec2(b.X, b.Y));
             Vec2 br = v.LevelToScreen(new Vec2(b.X + b.W, b.Y + b.H));
-            Pen pen = new(brush, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
             ctx.DrawRectangle(null, pen, new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
         }
 

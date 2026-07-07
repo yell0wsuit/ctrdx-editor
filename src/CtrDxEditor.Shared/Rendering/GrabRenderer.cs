@@ -128,10 +128,8 @@ namespace CtrDxEditor.Rendering
         /// draws the grab circle blue in-play and the bulb reach as a soft glow; here the ring marks the
         /// draggable edge, resized by dragging the selected object's ring.
         /// </summary>
-        public static void DrawRadiusRings(DrawingContext ctx, ViewTransform v, IReadOnlyList<LevelObject> objects)
+        public static void DrawRadiusRings(DrawingContext ctx, ViewTransform v, IReadOnlyList<LevelObject> objects, Pen grabPen, Pen bulbPen)
         {
-            Pen grabPen = new(Brushes.Orange, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
-            Pen bulbPen = new(Brushes.Gold, 1.5) { DashStyle = new DashStyle([4, 3], 0) };
             foreach (LevelObject obj in objects)
             {
                 if (RadiusRing.Of(obj) is not { } ring)
