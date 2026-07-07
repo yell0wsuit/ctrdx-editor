@@ -1,0 +1,25 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    App-wide control styles that layer on top of FluentTheme.
+    Interactive states target the button's template part (PART_ContentPresenter)
+    so FluentTheme's own :pointerover/:pressed setters don't override the color.
+  -->
+
+  <!-- Destructive action button. -->
+  <Style Selector="Button.danger /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.Danger}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.DangerHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.DangerHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.DangerPressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.DangerPressed}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+</Styles>

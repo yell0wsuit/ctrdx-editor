@@ -27,26 +27,26 @@
 
     <!-- Base card surface. -->
     <Style Selector="RadioButton.PickerCard Border.card-surface">
-      <Setter Property="Background" Value="#14FFFFFF" />
-      <Setter Property="BorderBrush" Value="#22FFFFFF" />
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.Card}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Surface.Divider}" />
       <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <!-- Hover state. -->
     <Style Selector="RadioButton.PickerCard:pointerover Border.card-surface">
-      <Setter Property="Background" Value="#20FFFFFF" />
-      <Setter Property="BorderBrush" Value="#55FFFFFF" />
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardHover}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Primary}" />
     </Style>
 
     <!-- Pressed state. -->
     <Style Selector="RadioButton.PickerCard:pressed Border.card-surface">
-      <Setter Property="Background" Value="#28FFFFFF" />
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardPressed}" />
     </Style>
 
     <!-- Selected state. -->
     <Style Selector="RadioButton.PickerCard:checked Border.card-surface">
-      <Setter Property="Background" Value="#220078D7" />
-      <Setter Property="BorderBrush" Value="#FF0078D7" />
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Primary}" />
       <Setter Property="BorderThickness" Value="2" />
     </Style>
 
@@ -121,7 +121,7 @@
             <TextBlock Grid.Row="1"
                        Grid.Column="0"
                        Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="#E06C75"
+                       Foreground="{DynamicResource EditorBrush.Danger}"
                        FontSize="12"
                        Margin="0,2,0,0"
                        IsVisible="{Binding CustomWidth, Converter={x:Static ObjectConverters.IsNull}}" />
@@ -129,7 +129,7 @@
             <TextBlock Grid.Row="1"
                        Grid.Column="2"
                        Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="#E06C75"
+                       Foreground="{DynamicResource EditorBrush.Danger}"
                        FontSize="12"
                        Margin="0,2,0,0"
                        IsVisible="{Binding CustomHeight, Converter={x:Static ObjectConverters.IsNull}}" />
@@ -147,7 +147,7 @@
                          Value="{Binding RopePhysicsSpeed, Mode=TwoWay}" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                     Foreground="#E06C75"
+                     Foreground="{DynamicResource EditorBrush.Danger}"
                      FontSize="12"
                      IsVisible="{Binding RopePhysicsSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
         </StackPanel>
@@ -177,7 +177,7 @@
                            Value="{Binding CustomSpecial, Mode=TwoWay}" />
 
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="#E06C75"
+                       Foreground="{DynamicResource EditorBrush.Danger}"
                        FontSize="12"
                        IsVisible="{Binding CustomSpecial, Converter={x:Static ObjectConverters.IsNull}}" />
           </StackPanel>
@@ -222,7 +222,7 @@
         <StackPanel Spacing="8">
 
           <Border Height="1"
-                  Background="#22FFFFFF"
+                  Background="{DynamicResource EditorBrush.Surface.Divider}"
                   Margin="0,8,0,4" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.CustomizationOptions}"
@@ -258,7 +258,7 @@
                             <Border Classes="preview-frame"
                                     Height="36"
                                     CornerRadius="7"
-                                    Background="#252525"
+                                    Background="{DynamicResource EditorBrush.Surface.Preview}"
                                     ClipToBounds="True">
                               <Panel>
                                 <ctrl:RopeSwatch Width="76"
@@ -270,7 +270,7 @@
                                 <icons:MaterialIcon Kind="DiceMultiple"
                                                     Width="24"
                                                     Height="24"
-                                                    Foreground="#B0B0B0"
+                                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
                                                     IsVisible="{Binding IsRandom}" />
@@ -293,12 +293,12 @@
                                 Width="20"
                                 Height="20"
                                 CornerRadius="10"
-                                Background="#FF0078D7"
+                                Background="{DynamicResource EditorBrush.Primary}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"
                                 Margin="0,-4,-4,0">
                           <TextBlock Text="✓"
-                                     Foreground="White"
+                                     Foreground="{DynamicResource EditorBrush.OnPrimary}"
                                      FontSize="12"
                                      FontWeight="Bold"
                                      HorizontalAlignment="Center"
@@ -338,7 +338,7 @@
 
                             <Border Classes="preview-frame"
                                     Height="72"
-                                    Background="#222"
+                                    Background="{DynamicResource EditorBrush.Surface.Preview}"
                                     ClipToBounds="True"
                                     CornerRadius="7"
                                     HorizontalAlignment="Stretch">
@@ -349,7 +349,7 @@
                                 <icons:MaterialIcon Kind="DiceMultiple"
                                                     Width="32"
                                                     Height="32"
-                                                    Foreground="#B0B0B0"
+                                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
                                                     IsVisible="{Binding IsRandom}" />
@@ -372,12 +372,12 @@
                                 Width="20"
                                 Height="20"
                                 CornerRadius="10"
-                                Background="#FF0078D7"
+                                Background="{DynamicResource EditorBrush.Primary}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"
                                 Margin="0,-4,-4,0">
                           <TextBlock Text="✓"
-                                     Foreground="White"
+                                     Foreground="{DynamicResource EditorBrush.OnPrimary}"
                                      FontSize="12"
                                      FontWeight="Bold"
                                      HorizontalAlignment="Center"
@@ -418,7 +418,7 @@
                             <Border Classes="preview-frame"
                                     Height="60"
                                     CornerRadius="7"
-                                    Background="#252525"
+                                    Background="{DynamicResource EditorBrush.Surface.Preview}"
                                     ClipToBounds="True">
                               <Panel>
                                 <Image Source="{Binding Thumbnail}"
@@ -428,7 +428,7 @@
                                 <icons:MaterialIcon Kind="DiceMultiple"
                                                     Width="28"
                                                     Height="28"
-                                                    Foreground="#B0B0B0"
+                                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
                                                     IsVisible="{Binding IsRandom}" />
@@ -451,12 +451,12 @@
                                 Width="20"
                                 Height="20"
                                 CornerRadius="10"
-                                Background="#FF0078D7"
+                                Background="{DynamicResource EditorBrush.Primary}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"
                                 Margin="0,-4,-4,0">
                           <TextBlock Text="✓"
-                                     Foreground="White"
+                                     Foreground="{DynamicResource EditorBrush.OnPrimary}"
                                      FontSize="12"
                                      FontWeight="Bold"
                                      HorizontalAlignment="Center"
@@ -497,7 +497,7 @@
                             <Border Classes="preview-frame"
                                     Height="60"
                                     CornerRadius="7"
-                                    Background="#252525"
+                                    Background="{DynamicResource EditorBrush.Surface.Preview}"
                                     ClipToBounds="True">
                               <Panel>
                                 <Image Source="{Binding Thumbnail}"
@@ -507,7 +507,7 @@
                                 <icons:MaterialIcon Kind="DiceMultiple"
                                                     Width="28"
                                                     Height="28"
-                                                    Foreground="#B0B0B0"
+                                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
                                                     IsVisible="{Binding IsRandom}" />
@@ -530,12 +530,12 @@
                                 Width="20"
                                 Height="20"
                                 CornerRadius="10"
-                                Background="#FF0078D7"
+                                Background="{DynamicResource EditorBrush.Primary}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"
                                 Margin="0,-4,-4,0">
                           <TextBlock Text="✓"
-                                     Foreground="White"
+                                     Foreground="{DynamicResource EditorBrush.OnPrimary}"
                                      FontSize="12"
                                      FontWeight="Bold"
                                      HorizontalAlignment="Center"
