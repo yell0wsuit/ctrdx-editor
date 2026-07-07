@@ -337,7 +337,7 @@
 
       <!-- Editor overlay indicators (dashed). AAA (>=7:1) vs the slate-900 canvas backdrop. -->
       <Color x:Key="EditorColor.OverlayGrabRadius">#FF8904</Color>     <!-- orange-400, 7.50 -->
-      <Color x:Key="EditorColor.OverlayBulbRadius">#FE9A00</Color>     <!-- amber-500, 8.35 -->
+      <Color x:Key="EditorColor.OverlayBulbRadius">#FDC700</Color>     <!-- yellow-400, 12.98 -->
       <Color x:Key="EditorColor.OverlayHitboxDesktop">#7CCF00</Color>  <!-- lime-500, 9.15 -->
       <Color x:Key="EditorColor.OverlayHitboxPhone">#F4A8FF</Color>    <!-- fuchsia-300, 10.10 -->
       <Color x:Key="EditorColor.OverlayObjectLocked">#FFA2A2</Color>   <!-- red-300, 9.29 -->
