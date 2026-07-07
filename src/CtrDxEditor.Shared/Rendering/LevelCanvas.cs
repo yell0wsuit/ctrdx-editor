@@ -243,14 +243,24 @@ namespace CtrDxEditor.Rendering
             base.OnPropertyChanged(change);
             if (change.Property == DocumentProperty)
             {
-                _pendingFit = true;
-                TryFit(); // fits immediately if already laid out (later loads); else waits for Bounds.
+                // Auto-fit only when the level's dimensions change (a fresh load, a new level, or a
+                // resolution change). An undo/redo restore swaps in a re-parsed same-sized document,
+                // and refitting it would throw away the user's current zoom and pan.
+                LevelDocument? oldDoc = change.GetOldValue<LevelDocument?>();
+                LevelDocument? newDoc = change.GetNewValue<LevelDocument?>();
+                if (newDoc is not null
+                    && (oldDoc is null || oldDoc.Width != newDoc.Width || oldDoc.Height != newDoc.Height))
+                {
+                    _pendingFit = true;
+                    TryFit(); // fits immediately if already laid out (later loads); else waits for Bounds.
+                }
+                UpdateScrollState();
             }
             else if (change.Property == BoundsProperty && _pendingFit)
             {
                 TryFit();
             }
-            else if (change.Property == BoundsProperty || change.Property == ViewProperty || change.Property == DocumentProperty)
+            else if (change.Property == BoundsProperty || change.Property == ViewProperty)
             {
                 UpdateScrollState();
             }
