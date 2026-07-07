@@ -177,8 +177,13 @@ namespace CtrDxEditor.Rendering
 
         // Hovering / dragging the auto-catch radius ring, or a horizontal rail end/hook, uses a horizontal-
         // resize cursor (col-resize); a vertical rail end/hook uses the vertical one.
-        private static Cursor ResizeCursor => new(StandardCursorType.SizeWestEast);
-        private static Cursor VResizeCursor => new(StandardCursorType.SizeNorthSouth);
+        // Cached, but created lazily rather than in the static constructor: eager creation would touch
+        // Avalonia's cursor factory at type load, which throws in the headless test host. Lazy .Value
+        // still allocates each cursor only once, so pointer-move hit-testing doesn't churn instances.
+        private static readonly Lazy<Cursor> LazyResizeCursor = new(() => new Cursor(StandardCursorType.SizeWestEast));
+        private static readonly Lazy<Cursor> LazyVResizeCursor = new(() => new Cursor(StandardCursorType.SizeNorthSouth));
+        private static Cursor ResizeCursor => LazyResizeCursor.Value;
+        private static Cursor VResizeCursor => LazyVResizeCursor.Value;
 
         private bool _dragging;
         private bool _resizingRadius;

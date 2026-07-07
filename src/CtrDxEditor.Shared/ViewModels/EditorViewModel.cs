@@ -423,7 +423,8 @@ namespace CtrDxEditor.ViewModels
             RefreshObjectList();
             SelectedObject = ObjectAt(state.SelectedIndex);
             LockedObject = ObjectAt(state.LockedIndex);
-            LevelLoaded?.Invoke();
+            // A restore repaints in place; it must not refit/refocus the canvas the way opening a
+            // level does (LevelLoaded), or every undo/redo would throw away the user's zoom and pan.
             ObjectMutated?.Invoke();
         }
 
