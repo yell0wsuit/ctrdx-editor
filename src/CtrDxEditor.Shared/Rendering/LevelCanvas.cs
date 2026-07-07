@@ -177,8 +177,8 @@ namespace CtrDxEditor.Rendering
 
         // Hovering / dragging the auto-catch radius ring, or a horizontal rail end/hook, uses a horizontal-
         // resize cursor (col-resize); a vertical rail end/hook uses the vertical one.
-        private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
-        private static readonly Cursor VResizeCursor = new(StandardCursorType.SizeNorthSouth);
+        private static Cursor ResizeCursor => new(StandardCursorType.SizeWestEast);
+        private static Cursor VResizeCursor => new(StandardCursorType.SizeNorthSouth);
 
         private bool _dragging;
         private bool _resizingRadius;
@@ -1157,11 +1157,11 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Adds an object at the level's center (for single-click placement from the palette).</summary>
-        public void AddAtCenter(string element)
+        public bool AddAtCenter(string element)
         {
             if (Document is not { } doc)
             {
-                return;
+                return false;
             }
 
             LevelObject? placed = PlaceAt?.Invoke(element, doc.Width / 2, doc.Height / 2);
@@ -1170,10 +1170,11 @@ namespace CtrDxEditor.Rendering
                 SelectedObject = placed;
             }
             InvalidateVisual();
+            return placed is not null;
         }
 
         /// <summary>Drops an object at a screen-space point, snapping according to the current settings.</summary>
-        public void DropElement(string element, Point screenPoint)
+        public bool DropElement(string element, Point screenPoint)
         {
             Vec2 levelPt = View.ScreenToLevel(new Vec2(screenPoint.X, screenPoint.Y));
             (int gx, int gy) = Snap(levelPt);
@@ -1183,6 +1184,7 @@ namespace CtrDxEditor.Rendering
                 SelectedObject = placed;
             }
             InvalidateVisual();
+            return placed is not null;
         }
 
         private (int X, int Y) Snap(Vec2 levelPt)

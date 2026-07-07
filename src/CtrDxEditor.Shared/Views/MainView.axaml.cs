@@ -237,14 +237,20 @@ namespace CtrDxEditor.Views
                 canvas.HideGhost();
                 if (!_paletteDragging)
                 {
-                    canvas.AddAtCenter(element); // a click: drop at the level center
+                    if (canvas.AddAtCenter(element)) // a click: drop at the level center
+                    {
+                        _ = canvas.Focus();
+                    }
                 }
                 else
                 {
                     Point onCanvas = e.GetPosition(canvas);
                     if (new Rect(canvas.Bounds.Size).Contains(onCanvas))
                     {
-                        canvas.DropElement(element, onCanvas); // dragged onto the canvas
+                        if (canvas.DropElement(element, onCanvas)) // dragged onto the canvas
+                        {
+                            _ = canvas.Focus();
+                        }
                     }
                     // dragged but released off-canvas: cancel
                 }
