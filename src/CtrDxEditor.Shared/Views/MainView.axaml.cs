@@ -127,6 +127,15 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void Delete_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.DeleteSelected();
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+            }
+        }
+
         private void SnapToggle_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)

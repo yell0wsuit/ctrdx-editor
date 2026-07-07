@@ -67,6 +67,18 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
+        <MenuItem Click="Delete_Click"
+                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="DeleteOutline" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Delete}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Delete}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
         <Separator />
         <MenuItem Header="{loc:Tr Menu.Edit.LevelSettings}" Click="LevelSettings_Click"
                   IsEnabled="{Binding Document, Converter={x:Static ObjectConverters.IsNotNull}}">

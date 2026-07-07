@@ -24,5 +24,8 @@ namespace CtrDxEditor.Views
 
         /// <summary>Localized platform shortcut text for redo.</summary>
         public static string Redo { get; } = OperatingSystem.IsMacOS() ? $"{Mod} Shift Z" : $"{Mod} Y";
+
+        /// <summary>Localized platform shortcut text for deleting the selected object.</summary>
+        public static string Delete { get; } = "Delete";
     }
 }
