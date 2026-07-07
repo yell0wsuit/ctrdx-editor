@@ -121,7 +121,7 @@
             <TextBlock Grid.Row="1"
                        Grid.Column="0"
                        Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="{DynamicResource EditorBrush.Danger}"
+                       Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
                        Margin="0,2,0,0"
                        IsVisible="{Binding CustomWidth, Converter={x:Static ObjectConverters.IsNull}}" />
@@ -129,7 +129,7 @@
             <TextBlock Grid.Row="1"
                        Grid.Column="2"
                        Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="{DynamicResource EditorBrush.Danger}"
+                       Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
                        Margin="0,2,0,0"
                        IsVisible="{Binding CustomHeight, Converter={x:Static ObjectConverters.IsNull}}" />
@@ -147,7 +147,7 @@
                          Value="{Binding RopePhysicsSpeed, Mode=TwoWay}" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                     Foreground="{DynamicResource EditorBrush.Danger}"
+                     Foreground="{DynamicResource EditorBrush.DangerText}"
                      FontSize="12"
                      IsVisible="{Binding RopePhysicsSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
         </StackPanel>
@@ -177,7 +177,7 @@
                            Value="{Binding CustomSpecial, Mode=TwoWay}" />
 
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
-                       Foreground="{DynamicResource EditorBrush.Danger}"
+                       Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
                        IsVisible="{Binding CustomSpecial, Converter={x:Static ObjectConverters.IsNull}}" />
           </StackPanel>

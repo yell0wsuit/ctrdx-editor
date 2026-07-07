@@ -170,7 +170,8 @@
       <Color x:Key="EditorColor.Danger">#DC3545</Color>
       <Color x:Key="EditorColor.DangerHover">#B02A37</Color>
       <Color x:Key="EditorColor.DangerPressed">#842029</Color>
-      <Color x:Key="EditorColor.Warning">#FFC107</Color>
+      <Color x:Key="EditorColor.DangerText">#DC3545</Color>
+      <Color x:Key="EditorColor.Warning">#997404</Color>
       <Color x:Key="EditorColor.SurfacePanel">#F8F9FA</Color>
       <Color x:Key="EditorColor.SurfaceDivider">#DEE2E6</Color>
       <Color x:Key="EditorColor.SurfaceCard">#FFFFFF</Color>
@@ -178,7 +179,7 @@
       <Color x:Key="EditorColor.SurfaceCardPressed">#DEE2E6</Color>
       <Color x:Key="EditorColor.SurfacePreview">#E9ECEF</Color>
       <Color x:Key="EditorColor.TextSubtle">#6C757D</Color>
-      <Color x:Key="EditorColor.TextDisabled">#ADB5BD</Color>
+      <Color x:Key="EditorColor.TextDisabled">#8A9199</Color>
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Dark">
@@ -188,6 +189,7 @@
       <Color x:Key="EditorColor.Danger">#DC3545</Color>
       <Color x:Key="EditorColor.DangerHover">#E35D6A</Color>
       <Color x:Key="EditorColor.DangerPressed">#B02A37</Color>
+      <Color x:Key="EditorColor.DangerText">#E35D6A</Color>
       <Color x:Key="EditorColor.Warning">#FFC107</Color>
       <Color x:Key="EditorColor.SurfacePanel">#212529</Color>
       <Color x:Key="EditorColor.SurfaceDivider">#495057</Color>
@@ -204,6 +206,7 @@
   <SolidColorBrush x:Key="EditorBrush.PrimaryLow" Color="{DynamicResource EditorColor.PrimaryLow}" />
   <SolidColorBrush x:Key="EditorBrush.OnPrimary" Color="{DynamicResource EditorColor.OnPrimary}" />
   <SolidColorBrush x:Key="EditorBrush.Danger" Color="{DynamicResource EditorColor.Danger}" />
+  <SolidColorBrush x:Key="EditorBrush.DangerText" Color="{DynamicResource EditorColor.DangerText}" />
   <SolidColorBrush x:Key="EditorBrush.DangerHover" Color="{DynamicResource EditorColor.DangerHover}" />
   <SolidColorBrush x:Key="EditorBrush.DangerPressed" Color="{DynamicResource EditorColor.DangerPressed}" />
   <SolidColorBrush x:Key="EditorBrush.Warning" Color="{DynamicResource EditorColor.Warning}" />
