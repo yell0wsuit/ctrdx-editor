@@ -178,6 +178,7 @@
       <Color x:Key="EditorColor.SurfaceCardPressed">#DEE2E6</Color>
       <Color x:Key="EditorColor.SurfacePreview">#E9ECEF</Color>
       <Color x:Key="EditorColor.TextSubtle">#6C757D</Color>
+      <Color x:Key="EditorColor.TextDisabled">#ADB5BD</Color>
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Dark">
@@ -195,6 +196,7 @@
       <Color x:Key="EditorColor.SurfaceCardPressed">#6C757D</Color>
       <Color x:Key="EditorColor.SurfacePreview">#343A40</Color>
       <Color x:Key="EditorColor.TextSubtle">#ADB5BD</Color>
+      <Color x:Key="EditorColor.TextDisabled">#6C757D</Color>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 
@@ -212,4 +214,15 @@
   <SolidColorBrush x:Key="EditorBrush.Surface.CardPressed" Color="{DynamicResource EditorColor.SurfaceCardPressed}" />
   <SolidColorBrush x:Key="EditorBrush.Surface.Preview" Color="{DynamicResource EditorColor.SurfacePreview}" />
   <SolidColorBrush x:Key="EditorBrush.Text.Subtle" Color="{DynamicResource EditorColor.TextSubtle}" />
+  <SolidColorBrush x:Key="EditorBrush.Text.Disabled" Color="{DynamicResource EditorColor.TextDisabled}" />
+
+  <!--
+    Override FluentTheme's own CheckBox disabled-foreground keys so disabled
+    checkbox text uses our themed disabled color. These sit in Application.Resources
+    and therefore take precedence over the FluentTheme defaults regardless of the
+    per-state selector specificity Fluent applies internally.
+  -->
+  <SolidColorBrush x:Key="CheckBoxForegroundUncheckedDisabled" Color="{DynamicResource EditorColor.TextDisabled}" />
+  <SolidColorBrush x:Key="CheckBoxForegroundCheckedDisabled" Color="{DynamicResource EditorColor.TextDisabled}" />
+  <SolidColorBrush x:Key="CheckBoxForegroundIndeterminateDisabled" Color="{DynamicResource EditorColor.TextDisabled}" />
 </ResourceDictionary>
