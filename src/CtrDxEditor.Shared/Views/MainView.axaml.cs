@@ -251,11 +251,12 @@ namespace CtrDxEditor.Views
             // Fill in the background/candy thumbnails progressively off the UI thread; the dialog opens at once.
             _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
             _ = LoadCandyThumbnailsAsync(dialogVm, vm.Sprites);
+            LoadSupportThumbnails(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
-                (int ropeSkin, int background, int candySkin) = dialogVm.ResolveDecoration(Random.Shared);
-                vm.NewLevel(settings, ropeSkin, background, candySkin);
+                (int ropeSkin, int background, int candySkin, int omNomSupport) = dialogVm.ResolveDecoration(Random.Shared);
+                vm.NewLevel(settings, ropeSkin, background, candySkin, omNomSupport);
 
                 dialogVm.WriteDecorationInto(vm.CurrentSettingsSnapshot);
                 if (vm.Settings is { } store)
@@ -296,6 +297,20 @@ namespace CtrDxEditor.Views
             }
         }
 
+        // Composites each sitting-platform preview (Om Nom on the platform). char_supports is already
+        // preloaded, so these are cheap UI-thread composites - no off-thread decode needed. Random has none.
+        private static void LoadSupportThumbnails(LevelSettingsViewModel dialogVm, SpriteCache sprites)
+        {
+            foreach (OmNomSupportOption option in dialogVm.OmNomSupportOptions)
+            {
+                if (option.Id < 0)
+                {
+                    continue;
+                }
+                option.Thumbnail = sprites.GetThumbnail("target", 0, option.Id);
+            }
+        }
+
         private async void LevelSettings_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm || vm.CurrentSettings is not { } current)
@@ -303,21 +318,23 @@ namespace CtrDxEditor.Views
                 return;
             }
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForEdit(
-                current, vm.ActiveRopeSkin, vm.ActiveBackground, vm.ActiveCandySkin);
+                current, vm.ActiveRopeSkin, vm.ActiveBackground, vm.ActiveCandySkin, vm.ActiveOmNomSupport);
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
-            // Fill in the background/candy thumbnails progressively off the UI thread; the dialog opens at once.
+            // Fill in the background/candy/platform thumbnails progressively off the UI thread; the dialog opens at once.
             _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
             _ = LoadCandyThumbnailsAsync(dialogVm, vm.Sprites);
+            LoadSupportThumbnails(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
                 vm.UpdateLevelSettings(settings);
                 // Apply the chosen decoration to the live editor (Random resolves to a concrete id);
                 // the canvas repaints via LevelCanvas's affectsRender on these properties.
-                (int ropeSkin, int background, int candySkin) = dialogVm.ResolveDecoration(Random.Shared);
+                (int ropeSkin, int background, int candySkin, int omNomSupport) = dialogVm.ResolveDecoration(Random.Shared);
                 vm.ActiveRopeSkin = ropeSkin;
                 vm.ActiveBackground = background;
                 vm.ActiveCandySkin = candySkin;
+                vm.ActiveOmNomSupport = omNomSupport;
             }
         }
 

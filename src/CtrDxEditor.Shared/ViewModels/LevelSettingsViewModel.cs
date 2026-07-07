@@ -75,6 +75,25 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial IImage? Thumbnail { get; set; }
     }
 
+    /// <summary>One selectable Om Nom sitting platform; Id -1 is Random, 0..16 = Platform 1..17.</summary>
+    public sealed partial class OmNomSupportOption(int id, string label) : ObservableObject
+    {
+        /// <summary>Platform index: -1 = Random, else 0..16 (0 = default platform).</summary>
+        public int Id { get; } = id;
+
+        /// <summary>Display label shown under the thumbnail.</summary>
+        public string Label { get; } = label;
+
+        /// <summary>Whether this is the Random option; its card shows a dice icon rather than a preview.</summary>
+        public bool IsRandom => Id < 0;
+
+        /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
+        [ObservableProperty] public partial bool IsSelected { get; set; }
+
+        /// <summary>Preview of Om Nom on the platform, loaded lazily after the dialog opens; null for Random.</summary>
+        [ObservableProperty] public partial IImage? Thumbnail { get; set; }
+    }
+
     /// <summary>View model for the New / Level Settings dialog.</summary>
     public sealed partial class LevelSettingsViewModel : ViewModelBase
     {
@@ -149,9 +168,13 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Candy skin choices: Candy 1..52 (the game's candy skins) + Random.</summary>
         public IReadOnlyList<CandySkinOption> CandySkinOptions { get; } = BuildCandySkinOptions();
 
+        /// <summary>Om Nom sitting platform choices: Platform 1..17 + Random.</summary>
+        public IReadOnlyList<OmNomSupportOption> OmNomSupportOptions { get; } = BuildOmNomSupportOptions();
+
         [ObservableProperty] public partial int SelectedRopeSkin { get; set; }
         [ObservableProperty] public partial int SelectedBackground { get; set; }
         [ObservableProperty] public partial int SelectedCandySkin { get; set; }
+        [ObservableProperty] public partial int SelectedOmNomSupport { get; set; }
         [ObservableProperty] public partial bool RememberDecoration { get; set; }
 
         /// <summary>The "remember as default" checkbox is only meaningful when creating a new level.</summary>
@@ -198,11 +221,16 @@ namespace CtrDxEditor.ViewModels
             {
                 option.PropertyChanged += OnCandyOptionChanged;
             }
+            foreach (OmNomSupportOption option in OmNomSupportOptions)
+            {
+                option.PropertyChanged += OnOmNomSupportOptionChanged;
+            }
 
-            // Reflect the initial ids (Default rope / Blank background / Candy 1) in the option flags.
+            // Reflect the initial ids (Default rope / Blank background / Candy 1 / Platform 1) in the flags.
             SyncRopeOptions(SelectedRopeSkin);
             SyncBackgroundOptions(SelectedBackground);
             SyncCandyOptions(SelectedCandySkin);
+            SyncOmNomSupportOptions(SelectedOmNomSupport);
         }
 
         private void OnRopeOptionChanged(object? sender, PropertyChangedEventArgs e)
@@ -256,6 +284,23 @@ namespace CtrDxEditor.ViewModels
             SyncCandyOptions(value);
         }
 
+        private void OnOmNomSupportOptionChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (_syncingSelection || e.PropertyName != nameof(OmNomSupportOption.IsSelected))
+            {
+                return;
+            }
+            if (sender is OmNomSupportOption { IsSelected: true } option)
+            {
+                SelectedOmNomSupport = option.Id;
+            }
+        }
+
+        partial void OnSelectedOmNomSupportChanged(int value)
+        {
+            SyncOmNomSupportOptions(value);
+        }
+
         private void SyncRopeOptions(int value)
         {
             _syncingSelection = true;
@@ -280,6 +325,16 @@ namespace CtrDxEditor.ViewModels
         {
             _syncingSelection = true;
             foreach (CandySkinOption option in CandySkinOptions)
+            {
+                option.IsSelected = option.Id == value;
+            }
+            _syncingSelection = false;
+        }
+
+        private void SyncOmNomSupportOptions(int value)
+        {
+            _syncingSelection = true;
+            foreach (OmNomSupportOption option in OmNomSupportOptions)
             {
                 option.IsSelected = option.Id == value;
             }
@@ -319,7 +374,7 @@ namespace CtrDxEditor.ViewModels
         /// pickers seed from the editor's live <paramref name="ropeSkin"/>/<paramref name="background"/>/<paramref name="candySkin"/>.
         /// </summary>
         public static LevelSettingsViewModel ForEdit(
-            LevelSettings current, int ropeSkin = 0, int background = 0, int candySkin = 0)
+            LevelSettings current, int ropeSkin = 0, int background = 0, int candySkin = 0, int omNomSupport = 0)
         {
             LevelSettingsViewModel vm = new(isNewMode: false)
             {
@@ -332,6 +387,7 @@ namespace CtrDxEditor.ViewModels
                 SelectedRopeSkin = ropeSkin,
                 SelectedBackground = background,
                 SelectedCandySkin = candySkin,
+                SelectedOmNomSupport = omNomSupport,
             };
             vm.SelectSpecial(current.Special);
             ResolutionPreset? match = vm.Presets.FirstOrDefault(
@@ -385,17 +441,30 @@ namespace CtrDxEditor.ViewModels
             return [.. list];
         }
 
+        /// <summary>Platform 1..17 (the game's char_supports frames, ids 0..16) + Random, labelled from localization.</summary>
+        private static OmNomSupportOption[] BuildOmNomSupportOptions()
+        {
+            List<OmNomSupportOption> list = [];
+            for (int i = 0; i < OmNomSupports.Count; i++)
+            {
+                list.Add(new OmNomSupportOption(i, $"{Localizer.Get("Dialog.LevelSettings.OmNomSupport.Platform")} {i + 1}"));
+            }
+            list.Add(new OmNomSupportOption(-1, Localizer.Get("Dialog.Common.Random")));
+            return [.. list];
+        }
+
         /// <summary>Prefills the decoration selections from persisted settings.</summary>
         public void LoadDecoration(EditorSettings settings)
         {
             SelectedRopeSkin = settings.RopeSkin;
             SelectedBackground = settings.Background;
             SelectedCandySkin = settings.CandySkin;
+            SelectedOmNomSupport = settings.OmNomSupport;
             RememberDecoration = settings.RememberDecoration;
         }
 
         /// <summary>Resolves Random (-1) selections into concrete ids for the level being created.</summary>
-        public (int RopeSkin, int Background, int CandySkin) ResolveDecoration(Random rng)
+        public (int RopeSkin, int Background, int CandySkin, int OmNomSupport) ResolveDecoration(Random rng)
         {
             int skin = SelectedRopeSkin >= 0 ? SelectedRopeSkin : rng.Next(0, RopePalette.SkinCount);
             int bg = SelectedBackground switch
@@ -404,7 +473,8 @@ namespace CtrDxEditor.ViewModels
                 _ => SelectedBackground,                // 0 (Blank) or 1..17 as chosen
             };
             int candy = SelectedCandySkin >= 0 ? SelectedCandySkin : rng.Next(0, CandySkins.Count);
-            return (skin, bg, candy);
+            int support = SelectedOmNomSupport >= 0 ? SelectedOmNomSupport : rng.Next(0, OmNomSupports.Count);
+            return (skin, bg, candy, support);
         }
 
         /// <summary>
@@ -419,6 +489,7 @@ namespace CtrDxEditor.ViewModels
                 settings.RopeSkin = SelectedRopeSkin;
                 settings.Background = SelectedBackground;
                 settings.CandySkin = SelectedCandySkin;
+                settings.OmNomSupport = SelectedOmNomSupport;
             }
         }
     }

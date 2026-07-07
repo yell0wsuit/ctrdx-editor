@@ -130,6 +130,41 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["z9"], candyR.Layers.Select(l => l.Frame.Filename));
         }
 
+        /// <summary>
+        /// The target's platform (back) layer is drawn from the selected char_supports frame
+        /// (frame_00NN.png), while the character (front) layer stays fixed at char_animations frame_0000.
+        /// </summary>
+        [Theory]
+        [InlineData(0, "frame_0000.png")]
+        [InlineData(3, "frame_0003.png")]
+        [InlineData(16, "frame_0016.png")]
+        public void GetSpriteResolvesTargetPlatformFromSupportFrame(int support, string expectedSupportFrame)
+        {
+            SpriteCache cache = new(new FakeStore());
+            SeedTargetAtlases(cache);
+
+            ObjectSprite target = Assert.IsType<ObjectSprite>(cache.GetSprite("target", candySkin: 0, omNomSupport: support));
+
+            // Layer 0 = platform (char_supports, follows the support), layer 1 = character (fixed).
+            Assert.Equal(expectedSupportFrame, target.Layers[0].Frame.Filename);
+            Assert.Equal("frame_0000.png", target.Layers[1].Frame.Filename);
+        }
+
+        private static void SeedTargetAtlases(SpriteCache cache)
+        {
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/char_supports.png"] = bitmap,
+                ["images/char_animations.png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/char_supports.json"] = new Atlas([.. Enumerable.Range(0, 17).Select(i => Frame($"frame_{i:D4}.png"))]),
+                ["images/char_animations.json"] = new Atlas([Frame("frame_0000.png")]),
+            });
+        }
+
         private static void SeedDefaultCandyAtlas(SpriteCache cache, IReadOnlyList<AtlasFrame> frames)
         {
             Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));

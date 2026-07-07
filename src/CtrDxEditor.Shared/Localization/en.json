@@ -70,12 +70,14 @@
     "Dialog.LevelSettings.RopeColor": "Rope color",
     "Dialog.LevelSettings.Background": "Background",
     "Dialog.LevelSettings.CandySkin": "Candy skin",
+    "Dialog.LevelSettings.OmNomSupport": "Om Nom platform",
     "Dialog.LevelSettings.RememberCustomizationChoice": "Remember my customization choices",
 
     "Dialog.LevelSettings.RopeSkin.Default": "Default",
     "Dialog.LevelSettings.RopeSkin.Skin": "Rope",
 
     "Dialog.LevelSettings.CandySkin.Candy": "Candy",
+    "Dialog.LevelSettings.OmNomSupport.Platform": "Platform",
 
     "Dialog.LevelSettings.Background.Blank": "Blank",
     "Dialog.LevelSettings.Background.Bgr01": "Cardboard Box",

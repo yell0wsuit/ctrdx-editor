@@ -162,14 +162,15 @@ namespace CtrDxEditor.Tests
         public void LoadDecorationPrefillsSelections()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
-            vm.LoadDecoration(new EditorSettings { RememberDecoration = true, RopeSkin = 3, Background = 4, CandySkin = 6 });
+            vm.LoadDecoration(new EditorSettings { RememberDecoration = true, RopeSkin = 3, Background = 4, CandySkin = 6, OmNomSupport = 10 });
             Assert.Equal(3, vm.SelectedRopeSkin);
             Assert.Equal(4, vm.SelectedBackground);
             Assert.Equal(6, vm.SelectedCandySkin);
+            Assert.Equal(10, vm.SelectedOmNomSupport);
             Assert.True(vm.RememberDecoration);
         }
 
-        /// <summary>ResolveDecoration turns Random (-1) selections into concrete rope/background/candy ids.</summary>
+        /// <summary>ResolveDecoration turns Random (-1) selections into concrete rope/background/candy/platform ids.</summary>
         [Fact]
         public void ResolveDecorationTurnsRandomIntoConcreteIds()
         {
@@ -177,10 +178,12 @@ namespace CtrDxEditor.Tests
             vm.SelectedRopeSkin = -1;
             vm.SelectedBackground = -1;
             vm.SelectedCandySkin = -1;
-            (int skin, int bg, int candy) = vm.ResolveDecoration(new Random(1));
+            vm.SelectedOmNomSupport = -1;
+            (int skin, int bg, int candy, int support) = vm.ResolveDecoration(new Random(1));
             Assert.InRange(skin, 0, 8);
             Assert.InRange(bg, 1, 17);
             Assert.InRange(candy, 0, 51);
+            Assert.InRange(support, 0, 16);
         }
 
         /// <summary>When remembering, the raw selections (including Random) are written into settings.</summary>
@@ -191,13 +194,15 @@ namespace CtrDxEditor.Tests
             vm.SelectedRopeSkin = -1;
             vm.SelectedBackground = 5;
             vm.SelectedCandySkin = -1;
+            vm.SelectedOmNomSupport = -1;
             vm.RememberDecoration = true;
-            EditorSettings settings = new() { RopeSkin = 0, Background = 1, CandySkin = 2 };
+            EditorSettings settings = new() { RopeSkin = 0, Background = 1, CandySkin = 2, OmNomSupport = 3 };
             vm.WriteDecorationInto(settings);
             Assert.True(settings.RememberDecoration);
             Assert.Equal(-1, settings.RopeSkin);
             Assert.Equal(5, settings.Background);
             Assert.Equal(-1, settings.CandySkin);
+            Assert.Equal(-1, settings.OmNomSupport);
         }
 
         /// <summary>When not remembering, saved ids are left untouched and only the remember flag clears.</summary>
@@ -208,13 +213,15 @@ namespace CtrDxEditor.Tests
             vm.SelectedRopeSkin = 7;
             vm.SelectedBackground = 6;
             vm.SelectedCandySkin = 8;
+            vm.SelectedOmNomSupport = 9;
             vm.RememberDecoration = false;
-            EditorSettings settings = new() { RememberDecoration = true, RopeSkin = 2, Background = 3, CandySkin = 4 };
+            EditorSettings settings = new() { RememberDecoration = true, RopeSkin = 2, Background = 3, CandySkin = 4, OmNomSupport = 5 };
             vm.WriteDecorationInto(settings);
             Assert.False(settings.RememberDecoration);
             Assert.Equal(2, settings.RopeSkin);
             Assert.Equal(3, settings.Background);
             Assert.Equal(4, settings.CandySkin);
+            Assert.Equal(5, settings.OmNomSupport);
         }
 
         /// <summary>The remember-as-default checkbox shows only when creating a level, not when editing.</summary>
@@ -225,15 +232,16 @@ namespace CtrDxEditor.Tests
             Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowRememberDecoration);
         }
 
-        /// <summary>Edit mode seeds the decoration pickers from the editor's live rope/background/candy ids.</summary>
+        /// <summary>Edit mode seeds the decoration pickers from the editor's live rope/background/candy/platform ids.</summary>
         [Fact]
         public void ForEditPrefillsDecoration()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(320, 480, 1f, 0, false, false), ropeSkin: 5, background: 7, candySkin: 9);
+                new LevelSettings(320, 480, 1f, 0, false, false), ropeSkin: 5, background: 7, candySkin: 9, omNomSupport: 11);
             Assert.Equal(5, vm.SelectedRopeSkin);
             Assert.Equal(7, vm.SelectedBackground);
             Assert.Equal(9, vm.SelectedCandySkin);
+            Assert.Equal(11, vm.SelectedOmNomSupport);
         }
 
         /// <summary>Candy options run Candy 1 (id 0) first, all 52 skins, then Random last.</summary>
@@ -247,6 +255,20 @@ namespace CtrDxEditor.Tests
             for (int i = 0; i < 52; i++)
             {
                 Assert.Contains(i, ids);        // every candy skin 0..51
+            }
+        }
+
+        /// <summary>Platform options run Platform 1 (id 0) first, all 17 platforms, then Random last.</summary>
+        [Fact]
+        public void OmNomSupportOptionsCoverAllSeventeenAndRandom()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            int[] ids = [.. vm.OmNomSupportOptions.Select(o => o.Id)];
+            Assert.Equal(0, ids[0]);           // Platform 1 first
+            Assert.Equal(-1, ids[^1]);         // Random last
+            for (int i = 0; i < 17; i++)
+            {
+                Assert.Contains(i, ids);        // every platform 0..16
             }
         }
 

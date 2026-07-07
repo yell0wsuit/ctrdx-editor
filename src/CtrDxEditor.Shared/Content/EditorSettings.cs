@@ -24,5 +24,9 @@ namespace CtrDxEditor.Content
         /// <summary>Remembered candy skin index: 0 = Candy 1 (default), 1..51 = Candy 2..52, -1 = Random.</summary>
         [JsonPropertyName("candySkin")]
         public int CandySkin { get; set; }
+
+        /// <summary>Remembered Om Nom sitting platform: 0 = Platform 1 (default), 1..16 = Platform 2..17, -1 = Random.</summary>
+        [JsonPropertyName("omNomSupport")]
+        public int OmNomSupport { get; set; }
     }
 }

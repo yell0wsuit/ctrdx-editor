@@ -239,15 +239,15 @@ namespace CtrDxEditor.Content
         /// Cached per (element, candy skin). <paramref name="candySkin"/> only affects candy elements.
         /// Call on the UI thread; warm non-default candy skins first with <see cref="PreloadCandySkin"/>.
         /// </summary>
-        public Bitmap? GetThumbnail(string element, int candySkin = 0)
+        public Bitmap? GetThumbnail(string element, int candySkin = 0, int omNomSupport = 0)
         {
-            string key = candySkin == 0 ? element : $"{element}#{candySkin}";
+            string key = candySkin == 0 && omNomSupport == 0 ? element : $"{element}#c{candySkin}#s{omNomSupport}";
             if (_thumbnails.TryGetValue(key, out Bitmap? cached))
             {
                 return cached;
             }
 
-            Bitmap? thumb = BuildThumbnail(element, candySkin);
+            Bitmap? thumb = BuildThumbnail(element, candySkin, omNomSupport);
             _thumbnails[key] = thumb;
             return thumb;
         }
@@ -256,9 +256,9 @@ namespace CtrDxEditor.Content
         /// below this a frame is a placeholder that would only distort the crop bounds.</summary>
         private const int MinThumbnailFrameSide = 8;
 
-        private RenderTargetBitmap? BuildThumbnail(string element, int candySkin)
+        private RenderTargetBitmap? BuildThumbnail(string element, int candySkin, int omNomSupport)
         {
-            ObjectSprite? sprite = GetSprite(element, candySkin);
+            ObjectSprite? sprite = GetSprite(element, candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return null;
@@ -318,12 +318,16 @@ namespace CtrDxEditor.Content
             return rtb;
         }
 
+        /// <summary>Atlas holding Om Nom's sitting platforms (the target's back layer), one per frame.</summary>
+        private const string SupportsAtlasJson = "images/char_supports.json";
+
         /// <summary>
         /// Returns the resolved sprite layers for an object element, or null when unavailable. For candy
         /// elements the layers are drawn from the given <paramref name="candySkin"/>'s atlas (resolved by
-        /// quad index); the parameter is ignored for every other element.
+        /// quad index); for the target, the platform layer is drawn from <paramref name="omNomSupport"/>'s
+        /// frame of the char_supports atlas. Both parameters are ignored for every other element.
         /// </summary>
-        public ObjectSprite? GetSprite(string element, int candySkin = 0)
+        public ObjectSprite? GetSprite(string element, int candySkin = 0, int omNomSupport = 0)
         {
             VisualDescriptor? v = VisualDescriptorMap.For(element);
             if (v is null)
@@ -334,6 +338,7 @@ namespace CtrDxEditor.Content
             // Candy frames are addressed by quad index against the active skin's atlas; everything else
             // resolves against its own preloaded atlas by frame name (or quad, if the layer specifies one).
             bool isCandy = element is "candy" or "candyL" or "candyR";
+            bool isTarget = element == "target";
             (Bitmap? candyBitmap, Atlas? candyAtlas) = isCandy ? LoadCandySkin(candySkin) : (null, null);
 
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
@@ -341,7 +346,10 @@ namespace CtrDxEditor.Content
             {
                 Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(layer.AtlasImageBasePath + imageExtension);
                 Atlas? atlas = isCandy ? candyAtlas : LoadAtlas(layer.AtlasJsonRelPath);
-                AtlasFrame? frame = ResolveFrame(atlas, layer);
+                // The target's platform is whichever char_supports frame the active support selects.
+                AtlasFrame? frame = isTarget && omNomSupport > 0 && layer.AtlasJsonRelPath == SupportsAtlasJson
+                    ? atlas?.Find(OmNomSupports.FrameName(omNomSupport))
+                    : ResolveFrame(atlas, layer);
                 if (bitmap is not null && frame is not null)
                 {
                     layers.Add(new SpriteLayerDraw(bitmap, frame));

@@ -65,6 +65,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<int> ActiveCandySkinProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveCandySkin));
 
+        /// <summary>Editor-decoration Om Nom sitting platform index applied to the target (0 = default).</summary>
+        public static readonly StyledProperty<int> ActiveOmNomSupportProperty =
+            AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveOmNomSupport));
+
         /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
         public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
             AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
@@ -97,7 +101,8 @@ namespace CtrDxEditor.Rendering
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
                 ShowHitboxesProperty, ShowMobileHitboxesProperty,
-                ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty);
+                ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty,
+                ActiveOmNomSupportProperty);
         }
 
         /// <summary>The loaded level document to render and edit.</summary>
@@ -132,6 +137,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Editor-decoration candy skin index applied to candy sprites (0 = default candy).</summary>
         public int ActiveCandySkin { get => GetValue(ActiveCandySkinProperty); set => SetValue(ActiveCandySkinProperty, value); }
+
+        /// <summary>Editor-decoration Om Nom sitting platform index applied to the target (0 = default).</summary>
+        public int ActiveOmNomSupport { get => GetValue(ActiveOmNomSupportProperty); set => SetValue(ActiveOmNomSupportProperty, value); }
 
         /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
         public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }
@@ -449,7 +457,7 @@ namespace CtrDxEditor.Rendering
                 }
                 else if (obj.Type != "lightBulb")
                 {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
                 }
             }
 
@@ -461,7 +469,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "lightBulb")
                 {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
                 }
             }
 
@@ -489,7 +497,7 @@ namespace CtrDxEditor.Rendering
             LevelObject? selected = SelectedObject;
             if (selected is not null)
             {
-                LevelBounds sb = SelectionBounds(sprites, selected);
+                LevelBounds sb = SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport);
                 Vec2 stl = v.LevelToScreen(new Vec2(sb.X, sb.Y));
                 Vec2 sbr = v.LevelToScreen(new Vec2(sb.X + sb.W, sb.Y + sb.H));
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
@@ -501,7 +509,7 @@ namespace CtrDxEditor.Rendering
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
             if (_ghostActive && _ghostElement is { } ghostElement
-                && sprites.GetSprite(ghostElement, ActiveCandySkin) is { } ghostSprite)
+                && sprites.GetSprite(ghostElement, ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
             {
                 using (context.PushOpacity(0.7))
                 {
@@ -513,7 +521,7 @@ namespace CtrDxEditor.Rendering
         // Selection marquee: the trimmed (visible) sprite bounds — the union of every layer's drawn
         // region — grown 25% so the dashed box sits a little outside the art rather than hugging the
         // untrimmed sourceSize box (which is much larger than what the player sees).
-        private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj)
+        private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport)
         {
             // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
             // be selected by clicking anywhere along the bar.
@@ -522,7 +530,9 @@ namespace CtrDxEditor.Rendering
                 return GrabRenderer.RailBounds(rail);
             }
 
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
+            // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
+            // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
@@ -546,9 +556,10 @@ namespace CtrDxEditor.Rendering
 
         // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
         // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
-        private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin)
+        private static void DrawObject(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport)
         {
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin);
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin, omNomSupport);
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)
@@ -851,7 +862,7 @@ namespace CtrDxEditor.Rendering
             {
                 list.Add(Sprites is null
                     ? new LevelBounds(o.X - 8, o.Y - 8, 16, 16)
-                    : SelectionBounds(Sprites, o));
+                    : SelectionBounds(Sprites, o, ActiveCandySkin, ActiveOmNomSupport));
             }
             return list;
         }
