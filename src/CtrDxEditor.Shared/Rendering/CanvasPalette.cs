@@ -1,0 +1,84 @@
+using Avalonia.Controls;
+using Avalonia.Media;
+
+namespace CtrDxEditor.Rendering
+{
+    /// <summary>
+    /// The editor-chrome brushes and pens for <see cref="LevelCanvas"/>, resolved from the active theme.
+    /// Kept out of the canvas so it holds only interaction/drawing logic; the palette is re-resolved once
+    /// per theme change via <see cref="Refresh"/>, never during <see cref="LevelCanvas.Render"/>.
+    /// The initial values are the pre-theming literals, used until the first <see cref="Refresh"/> and as
+    /// fallbacks if a resource key is ever missing.
+    /// </summary>
+    internal sealed class CanvasPalette
+    {
+        /// <summary>Solid backdrop filling the canvas behind the level.</summary>
+        public IBrush Background { get; private set; } = new SolidColorBrush(Color.FromRgb(40, 44, 52));
+
+        /// <summary>Outline of the level rectangle.</summary>
+        public Pen LevelBorder { get; private set; } = new(new SolidColorBrush(Colors.DimGray), 1);
+
+        /// <summary>Dashed grid lines inside the level rectangle.</summary>
+        public Pen Grid { get; private set; } = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1)
+        {
+            DashStyle = new DashStyle([4, 4], 0),
+        };
+
+        /// <summary>A grab's auto-catch radius ring.</summary>
+        public Pen GrabRadius { get; private set; } = OverlayPen(Brushes.Orange, 1.5);
+
+        /// <summary>A light bulb's lit-radius ring.</summary>
+        public Pen BulbRadius { get; private set; } = OverlayPen(Brushes.Gold, 1.5);
+
+        /// <summary>Desktop hitbox overlay.</summary>
+        public Pen HitboxDesktop { get; private set; } = OverlayPen(Brushes.LimeGreen, 1.5);
+
+        /// <summary>Phone hitbox overlay.</summary>
+        public Pen HitboxPhone { get; private set; } = OverlayPen(Brushes.Magenta, 1.5);
+
+        /// <summary>Selection marquee for the locked object.</summary>
+        public Pen ObjectLocked { get; private set; } = OverlayPen(Brushes.Red, 2);
+
+        /// <summary>Selection marquee for an unlocked object.</summary>
+        public Pen ObjectSelected { get; private set; } = OverlayPen(Brushes.DeepSkyBlue, 1.5);
+
+        /// <summary>Re-resolves every brush and pen for <paramref name="host"/>'s active theme variant.</summary>
+        public void Refresh(Control host)
+        {
+            Background = new SolidColorBrush(ThemeColor(host, "EditorColor.SurfacePanel", Color.FromRgb(40, 44, 52)));
+            LevelBorder = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.CanvasBorder", Colors.DimGray)), 1);
+            Grid = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.CanvasGrid", Color.FromArgb(40, 255, 255, 255))), 1)
+            {
+                DashStyle = new DashStyle([4, 4], 0),
+            };
+
+            GrabRadius = OverlayPen(ThemeColor(host, "EditorColor.OverlayGrabRadius", Colors.Orange), 1.5);
+            BulbRadius = OverlayPen(ThemeColor(host, "EditorColor.OverlayBulbRadius", Colors.Gold), 1.5);
+            HitboxDesktop = OverlayPen(ThemeColor(host, "EditorColor.OverlayHitboxDesktop", Colors.LimeGreen), 1.5);
+            HitboxPhone = OverlayPen(ThemeColor(host, "EditorColor.OverlayHitboxPhone", Colors.Magenta), 1.5);
+            ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
+            ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
+        }
+
+        /// <summary>Resolves a themed <see cref="Color"/> resource for the host's active theme variant,
+        /// falling back to <paramref name="fallback"/> when the key is missing.</summary>
+        private static Color ThemeColor(Control host, string key, Color fallback)
+        {
+            return host.TryFindResource(key, host.ActualThemeVariant, out object? value) && value is Color color
+                ? color
+                : fallback;
+        }
+
+        /// <summary>Builds a dashed overlay pen with the shared editor dash pattern.</summary>
+        private static Pen OverlayPen(IBrush brush, double thickness)
+        {
+            return new Pen(brush, thickness) { DashStyle = new DashStyle([4, 3], 0) };
+        }
+
+        /// <summary>Builds a dashed overlay pen from a solid color.</summary>
+        private static Pen OverlayPen(Color color, double thickness)
+        {
+            return OverlayPen(new SolidColorBrush(color), thickness);
+        }
+    }
+}

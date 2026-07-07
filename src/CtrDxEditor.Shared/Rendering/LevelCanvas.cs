@@ -194,21 +194,7 @@ namespace CtrDxEditor.Rendering
         private Vec2 _ghostLevel;
 
         // Editor-chrome brushes/pens resolved from the theme once per theme change, not per Render.
-        // Fallbacks match the pre-theming literals in case a resource key is ever missing.
-        private IBrush _canvasBackgroundBrush = new SolidColorBrush(Color.FromRgb(40, 44, 52));
-        private Pen _levelBorderPen = new(new SolidColorBrush(Colors.DimGray), 1);
-        private Pen _gridPen = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1)
-        {
-            DashStyle = new DashStyle([4, 4], 0),
-        };
-
-        // Dashed overlay-indicator pens, resolved from the theme (fallbacks match the pre-theming literals).
-        private Pen _grabRadiusPen = OverlayPen(Brushes.Orange, 1.5);
-        private Pen _bulbRadiusPen = OverlayPen(Brushes.Gold, 1.5);
-        private Pen _hitboxDesktopPen = OverlayPen(Brushes.LimeGreen, 1.5);
-        private Pen _hitboxPhonePen = OverlayPen(Brushes.Magenta, 1.5);
-        private Pen _objectLockedPen = OverlayPen(Brushes.Red, 2);
-        private Pen _objectSelectedPen = OverlayPen(Brushes.DeepSkyBlue, 1.5);
+        private readonly CanvasPalette _palette = new();
 
         /// <summary>Creates the canvas and enables native touch gestures.</summary>
         public LevelCanvas()
@@ -223,7 +209,7 @@ namespace CtrDxEditor.Rendering
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
-            RefreshThemeColors();
+            _palette.Refresh(this);
             ActualThemeVariantChanged += OnActualThemeVariantChanged;
         }
 
@@ -236,39 +222,8 @@ namespace CtrDxEditor.Rendering
 
         private void OnActualThemeVariantChanged(object? sender, EventArgs e)
         {
-            RefreshThemeColors();
+            _palette.Refresh(this);
             InvalidateVisual();
-        }
-
-        /// <summary>Re-resolves the cached editor-chrome brushes/pens for the active theme variant.
-        /// Called on attach and whenever the theme changes, so <see cref="Render"/> never resolves resources.</summary>
-        private void RefreshThemeColors()
-        {
-            _canvasBackgroundBrush = new SolidColorBrush(ThemeColor("EditorColor.SurfacePanel", Color.FromRgb(40, 44, 52)));
-            _levelBorderPen = new Pen(new SolidColorBrush(ThemeColor("EditorColor.CanvasBorder", Colors.DimGray)), 1);
-            _gridPen = new Pen(new SolidColorBrush(ThemeColor("EditorColor.CanvasGrid", Color.FromArgb(40, 255, 255, 255))), 1)
-            {
-                DashStyle = new DashStyle([4, 4], 0),
-            };
-
-            _grabRadiusPen = OverlayPen(ThemeColor("EditorColor.OverlayGrabRadius", Colors.Orange), 1.5);
-            _bulbRadiusPen = OverlayPen(ThemeColor("EditorColor.OverlayBulbRadius", Colors.Gold), 1.5);
-            _hitboxDesktopPen = OverlayPen(ThemeColor("EditorColor.OverlayHitboxDesktop", Colors.LimeGreen), 1.5);
-            _hitboxPhonePen = OverlayPen(ThemeColor("EditorColor.OverlayHitboxPhone", Colors.Magenta), 1.5);
-            _objectLockedPen = OverlayPen(ThemeColor("EditorColor.OverlayObjectLocked", Colors.Red), 2);
-            _objectSelectedPen = OverlayPen(ThemeColor("EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
-        }
-
-        /// <summary>Builds a dashed overlay pen with the shared editor dash pattern.</summary>
-        private static Pen OverlayPen(IBrush brush, double thickness)
-        {
-            return new Pen(brush, thickness) { DashStyle = new DashStyle([4, 3], 0) };
-        }
-
-        /// <summary>Builds a dashed overlay pen from a solid color.</summary>
-        private static Pen OverlayPen(Color color, double thickness)
-        {
-            return OverlayPen(new SolidColorBrush(color), thickness);
         }
 
         /// <inheritdoc />
@@ -400,21 +355,12 @@ namespace CtrDxEditor.Rendering
             return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
         }
 
-        /// <summary>Resolves a themed <see cref="Color"/> resource for the control's active theme variant,
-        /// falling back to <paramref name="fallback"/> when the key is missing.</summary>
-        private Color ThemeColor(string key, Color fallback)
-        {
-            return this.TryFindResource(key, ActualThemeVariant, out object? value) && value is Color color
-                ? color
-                : fallback;
-        }
-
         /// <inheritdoc />
         public override void Render(DrawingContext context)
         {
             base.Render(context);
 
-            context.FillRectangle(_canvasBackgroundBrush, new Rect(Bounds.Size));
+            context.FillRectangle(_palette.Background, new Rect(Bounds.Size));
 
             LevelDocument? doc = Document;
             SpriteCache? sprites = Sprites;
@@ -480,7 +426,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            context.DrawRectangle(null, _levelBorderPen,
+            context.DrawRectangle(null, _palette.LevelBorder,
                 new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
 
             int grid = doc.GridSize > 0 ? doc.GridSize : 32;
@@ -488,13 +434,13 @@ namespace CtrDxEditor.Rendering
             {
                 Vec2 a = v.LevelToScreen(new Vec2(gx, 0));
                 Vec2 b = v.LevelToScreen(new Vec2(gx, doc.Height));
-                context.DrawLine(_gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
             }
             for (int gy = 0; gy <= doc.Height; gy += grid)
             {
                 Vec2 a = v.LevelToScreen(new Vec2(0, gy));
                 Vec2 b = v.LevelToScreen(new Vec2(doc.Width, gy));
-                context.DrawLine(_gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
             }
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
@@ -542,7 +488,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            GrabRenderer.DrawRadiusRings(context, v, objects, _grabRadiusPen, _bulbRadiusPen);
+            GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius);
 
             if (ShowHitboxes || ShowMobileHitboxes)
             {
@@ -554,11 +500,11 @@ namespace CtrDxEditor.Rendering
                     }
                     if (ShowHitboxes)
                     {
-                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _hitboxDesktopPen);
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop);
                     }
                     if (ShowMobileHitboxes)
                     {
-                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _hitboxPhonePen);
+                        DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _palette.HitboxPhone);
                     }
                 }
             }
@@ -570,7 +516,7 @@ namespace CtrDxEditor.Rendering
                 Vec2 stl = v.LevelToScreen(new Vec2(sb.X, sb.Y));
                 Vec2 sbr = v.LevelToScreen(new Vec2(sb.X + sb.W, sb.Y + sb.H));
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
-                Pen pen = Equals(LockedObject, selected) ? _objectLockedPen : _objectSelectedPen;
+                Pen pen = Equals(LockedObject, selected) ? _palette.ObjectLocked : _palette.ObjectSelected;
                 context.DrawRectangle(null, pen, new Rect(stl.X, stl.Y, sbr.X - stl.X, sbr.Y - stl.Y));
             }
 
