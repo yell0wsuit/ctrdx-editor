@@ -45,6 +45,29 @@
         </MenuItem>
       </MenuItem>
       <MenuItem Header="{loc:Tr Menu.Edit}">
+        <MenuItem Click="Undo_Click" IsEnabled="{Binding CanUndo}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="Undo" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Undo}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Undo}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Click="Redo_Click" IsEnabled="{Binding CanRedo}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="Redo" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Redo}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Redo}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator />
         <MenuItem Header="{loc:Tr Menu.Edit.LevelSettings}" Click="LevelSettings_Click"
                   IsEnabled="{Binding Document, Converter={x:Static ObjectConverters.IsNotNull}}">
           <MenuItem.Icon>

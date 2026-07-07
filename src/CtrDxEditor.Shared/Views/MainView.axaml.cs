@@ -44,6 +44,8 @@ namespace CtrDxEditor.Views
                 DataContext is EditorViewModel vm ? vm.PlaceObject(element, x, y) : null;
             canvas.ToggleLock = obj => (DataContext as EditorViewModel)?.ToggleLock(obj);
             canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
+            canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();
+            canvas.CompleteDocumentEdit = () => (DataContext as EditorViewModel)?.CompleteUndoTransaction();
 
             // Palette placement is an internal pointer-capture drag (no OS drag-drop, so no OS drag image):
             // a click drops at center, a drag drops where it lands on the canvas, a drag off-canvas cancels.
@@ -62,9 +64,22 @@ namespace CtrDxEditor.Views
             KeyDown += (_, e) =>
             {
                 bool ctrl = e.KeyModifiers.HasFlag(cmdModifier);
+                bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
 #pragma warning disable IDE0010
                 switch (e.Key)
                 {
+                    case Key.Z when ctrl && !shift && DataContext is EditorViewModel { CanUndo: true } undoVm:
+                        undoVm.Undo();
+                        e.Handled = true;
+                        break;
+                    case Key.Z when ctrl && shift && DataContext is EditorViewModel { CanRedo: true } redoVm:
+                        redoVm.Redo();
+                        e.Handled = true;
+                        break;
+                    case Key.Y when ctrl && !OperatingSystem.IsMacOS() && DataContext is EditorViewModel { CanRedo: true } redoVm:
+                        redoVm.Redo();
+                        e.Handled = true;
+                        break;
                     case Key.Delete when DataContext is EditorViewModel vm:
                         vm.DeleteSelected();
                         canvas.InvalidateVisual();
@@ -94,6 +109,22 @@ namespace CtrDxEditor.Views
                 }
 #pragma warning restore IDE0010
             };
+        }
+
+        private void Undo_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.Undo();
+            }
+        }
+
+        private void Redo_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.Redo();
+            }
         }
 
         private void SnapToggle_Click(object? sender, RoutedEventArgs e)

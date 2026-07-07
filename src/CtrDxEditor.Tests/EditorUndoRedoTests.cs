@@ -1,0 +1,155 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+using CtrDxEditor.Content;
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.ViewModels;
+
+using Xunit;
+
+namespace CtrDxEditor.Tests
+{
+    /// <summary>Tests undo and redo behavior in the editor view model.</summary>
+    public class EditorUndoRedoTests
+    {
+        private sealed class EmptyStore : IContentStore
+        {
+            public Task<bool> ExistsAsync(string relPath)
+            {
+                return Task.FromResult(false);
+            }
+
+            public Task<byte[]> ReadBytesAsync(string relPath)
+            {
+                return Task.FromResult(Array.Empty<byte>());
+            }
+
+            public Task<string> ReadTextAsync(string relPath)
+            {
+                return Task.FromResult("");
+            }
+
+            public Task<bool> IsPopulatedAsync()
+            {
+                return Task.FromResult(false);
+            }
+        }
+
+        private const string Level = """
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings">
+                <map gridSize="32" width="640" height="480" />
+            </layer>
+            <layer name="Objects">
+                <candy x="100" y="100" />
+            </layer>
+        </map>
+        """;
+
+        /// <summary>Verifies that undoing and redoing placement removes and restores the object.</summary>
+        [Fact]
+        public void UndoAndRedoRestorePlacedObject()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+
+            _ = vm.PlaceObject("star", 50, 60);
+
+            Assert.True(vm.CanUndo);
+            Assert.False(vm.CanRedo);
+            Assert.Equal(2, vm.Document!.Objects.Count);
+
+            vm.Undo();
+
+            _ = Assert.Single(vm.Document.Objects);
+            Assert.False(vm.CanUndo);
+            Assert.True(vm.CanRedo);
+
+            vm.Redo();
+
+            Assert.Equal(2, vm.Document.Objects.Count);
+            Assert.Equal("star", vm.Document.Objects[1].Type);
+            Assert.True(vm.CanUndo);
+            Assert.False(vm.CanRedo);
+        }
+
+        /// <summary>Verifies that making a new edit after undo replaces the redo chain.</summary>
+        [Fact]
+        public void NewEditAfterUndoClearsRedo()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            _ = vm.PlaceObject("star", 50, 60);
+            vm.Undo();
+
+            _ = vm.PlaceObject("target", 300, 200);
+
+            Assert.True(vm.CanUndo);
+            Assert.False(vm.CanRedo);
+            Assert.Equal(["candy", "target"], vm.Document!.Objects.Select(o => o.Type));
+        }
+
+        /// <summary>Verifies that undoing deletion restores the object and selection.</summary>
+        [Fact]
+        public void UndoRestoresDeletedSelection()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            LevelObject candy = vm.Document!.Objects[0];
+            vm.SelectedObject = candy;
+
+            vm.DeleteSelected();
+
+            Assert.Empty(vm.Document.Objects);
+
+            vm.Undo();
+
+            LevelObject restored = Assert.Single(vm.Document.Objects);
+            Assert.Equal("candy", restored.Type);
+            Assert.Same(restored.Element, vm.SelectedObject!.Element);
+        }
+
+        /// <summary>Verifies that property-panel edits are undoable.</summary>
+        [Fact]
+        public void UndoRestoresPropertyFieldEdit()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            vm.SelectedObject = vm.Document!.Objects[0];
+            AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
+
+            xField.Value = "250";
+
+            Assert.Equal(250, vm.Document.Objects[0].X);
+
+            vm.Undo();
+
+            Assert.Equal(100, vm.Document.Objects[0].X);
+            Assert.Equal("100", vm.Fields.Single(f => f.Name == "x").Value);
+        }
+
+        /// <summary>Verifies that direct document edits can be grouped into one undo entry.</summary>
+        [Fact]
+        public void UndoTransactionCoalescesDirectMutations()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            LevelObject candy = vm.Document!.Objects[0];
+            vm.SelectedObject = candy;
+
+            vm.BeginUndoTransaction();
+            candy.X = 120;
+            candy.Y = 140;
+            vm.CompleteUndoTransaction();
+
+            vm.Undo();
+
+            Assert.Equal(100, vm.Document.Objects[0].X);
+            Assert.Equal(100, vm.Document.Objects[0].Y);
+        }
+
+        private static EditorViewModel CreateLoadedViewModel()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            return vm;
+        }
+    }
+}

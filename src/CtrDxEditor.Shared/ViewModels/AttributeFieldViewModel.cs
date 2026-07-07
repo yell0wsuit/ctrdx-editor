@@ -17,10 +17,17 @@ namespace CtrDxEditor.ViewModels
     {
         private readonly Func<string?> _get;
         private readonly Action<string?> _set;
+        private readonly Action _onChanging;
         private readonly Action _onChanged;
 
         /// <summary>Attribute-backed field (text, number, bool, or fixed enum).</summary>
-        public AttributeFieldViewModel(LevelObject target, string name, AttrType type, string[]? enumValues, Action onChanged)
+        public AttributeFieldViewModel(
+            LevelObject target,
+            string name,
+            AttrType type,
+            string[]? enumValues,
+            Action onChanged,
+            Action? onChanging = null)
         {
             Name = name;
             Label = Localizer.AttributeName(name);
@@ -30,11 +37,18 @@ namespace CtrDxEditor.ViewModels
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
             _get = () => target.GetAttr(name);
             _set = v => target.SetAttr(name, v ?? string.Empty);
+            _onChanging = onChanging ?? (() => { });
             _onChanged = onChanged;
         }
 
         /// <summary>Delegate-backed choice field with dynamic options (e.g. grab "Attach to").</summary>
-        public AttributeFieldViewModel(string name, AttributeOptionViewModel[] options, Func<string?> get, Action<string?> set, Action onChanged)
+        public AttributeFieldViewModel(
+            string name,
+            AttributeOptionViewModel[] options,
+            Func<string?> get,
+            Action<string?> set,
+            Action onChanged,
+            Action? onChanging = null)
         {
             Name = name;
             Label = Localizer.AttributeName(name);
@@ -42,11 +56,18 @@ namespace CtrDxEditor.ViewModels
             EnumOptions = options;
             _get = get;
             _set = set;
+            _onChanging = onChanging ?? (() => { });
             _onChanged = onChanged;
         }
 
         /// <summary>Delegate-backed simple field (bool/text/number) with no fixed option list.</summary>
-        public AttributeFieldViewModel(string name, AttrType type, Func<string?> get, Action<string?> set, Action onChanged)
+        public AttributeFieldViewModel(
+            string name,
+            AttrType type,
+            Func<string?> get,
+            Action<string?> set,
+            Action onChanged,
+            Action? onChanging = null)
         {
             Name = name;
             Label = Localizer.AttributeName(name);
@@ -54,6 +75,7 @@ namespace CtrDxEditor.ViewModels
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             _get = get;
             _set = set;
+            _onChanging = onChanging ?? (() => { });
             _onChanged = onChanged;
         }
 
@@ -112,6 +134,11 @@ namespace CtrDxEditor.ViewModels
             get => _get();
             set
             {
+                if (_get() == value)
+                {
+                    return;
+                }
+                _onChanging();
                 _set(value);
                 _onChanged();
                 OnPropertyChanged();

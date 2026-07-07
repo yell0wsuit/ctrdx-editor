@@ -22,6 +22,7 @@ namespace CtrDxEditor.ViewModels
             LevelObject grab,
             LevelDocument document,
             Action onChanged,
+            Action onChanging,
             Action rebuild)
         {
             bool gun = Bool(grab, "gun");
@@ -51,7 +52,8 @@ namespace CtrDxEditor.ViewModels
                     vmOptions,
                     () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
                     token => GrabBinding.Apply(grab, token ?? "primary"),
-                    onChanged)
+                    onChanged,
+                    onChanging)
                 { IsEnabled = !gun && !autoCatch });
             }
 
@@ -66,59 +68,62 @@ namespace CtrDxEditor.ViewModels
                 () => autoCatch,
                 on => grab.SetAttr("radius", on ? "100" : "-1"),
                 Structural,
+                onChanging,
                 geomEnabled));
             fields.Add(autoCatch
-                ? Attr(grab, "radius", AttrType.Whole, onChanged, geomEnabled)
-                : Attr(grab, "length", AttrType.Whole, onChanged, geomEnabled));
+                ? Attr(grab, "radius", AttrType.Whole, onChanged, onChanging, geomEnabled)
+                : Attr(grab, "length", AttrType.Whole, onChanged, onChanging, geomEnabled));
 
             fields.Add(Synthetic(
                 "movable",
                 () => movable,
                 on => grab.SetAttr("moveLength", on ? "100" : "-1"),
                 Structural,
+                onChanging,
                 railEnabled));
             if (movable)
             {
-                fields.Add(Attr(grab, "moveVertical", AttrType.Bool, onChanged, railEnabled));
-                fields.Add(Attr(grab, "moveLength", AttrType.Whole, onChanged, railEnabled));
-                fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, railEnabled));
+                fields.Add(Attr(grab, "moveVertical", AttrType.Bool, onChanged, onChanging, railEnabled));
+                fields.Add(Attr(grab, "moveLength", AttrType.Whole, onChanged, onChanging, railEnabled));
+                fields.Add(Attr(grab, "moveOffset", AttrType.Whole, onChanged, onChanging, railEnabled));
             }
 
-            fields.Add(BoolAttr(grab, "wheel", Structural, !(gun || movable), ClearMoveRail));
-            fields.Add(BoolAttr(grab, "gun", Structural, !(wheel || spider || kickable || movable), ClearMoveRail));
+            fields.Add(BoolAttr(grab, "wheel", Structural, onChanging, !(gun || movable), ClearMoveRail));
+            fields.Add(BoolAttr(grab, "gun", Structural, onChanging, !(wheel || spider || kickable || movable), ClearMoveRail));
 
-            fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, !gun));
-            fields.Add(BoolAttr(grab, "kickable", Structural, !(gun || movable), ClearMoveRail));
+            fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, onChanging, !gun));
+            fields.Add(BoolAttr(grab, "kickable", Structural, onChanging, !(gun || movable), ClearMoveRail));
             if (kickable)
             {
-                fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, !gun));
+                fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, onChanging, !gun));
             }
 
             // The game hides an invisible grab (and its rope) entirely; the editor keeps it visible but
             // pale so it stays selectable. Works for every grab type, so it is never gated.
-            fields.Add(Attr(grab, "invisible", AttrType.Bool, onChanged, true));
+            fields.Add(Attr(grab, "invisible", AttrType.Bool, onChanged, onChanging, true));
         }
 
         private static AttributeFieldViewModel Attr(
-            LevelObject grab, string name, AttrType type, Action onChanged, bool enabled)
+            LevelObject grab, string name, AttrType type, Action onChanged, Action onChanging, bool enabled)
         {
-            return new AttributeFieldViewModel(grab, name, type, null, onChanged) { IsEnabled = enabled };
+            return new AttributeFieldViewModel(grab, name, type, null, onChanged, onChanging) { IsEnabled = enabled };
         }
 
         private static AttributeFieldViewModel Synthetic(
-            string name, Func<bool> get, Action<bool> set, Action onChanged, bool enabled)
+            string name, Func<bool> get, Action<bool> set, Action onChanged, Action onChanging, bool enabled)
         {
             return new AttributeFieldViewModel(
                 name,
                 AttrType.Bool,
                 () => get() ? "true" : "false",
                 v => set(v == "true"),
-                onChanged)
+                onChanged,
+                onChanging)
             { IsEnabled = enabled };
         }
 
         private static AttributeFieldViewModel BoolAttr(
-            LevelObject grab, string name, Action onChanged, bool enabled, Action<LevelObject> whenEnabled)
+            LevelObject grab, string name, Action onChanged, Action onChanging, bool enabled, Action<LevelObject> whenEnabled)
         {
             return new AttributeFieldViewModel(
                 name,
@@ -133,7 +138,8 @@ namespace CtrDxEditor.ViewModels
                         whenEnabled(grab);
                     }
                 },
-                onChanged)
+                onChanged,
+                onChanging)
             { IsEnabled = enabled };
         }
 

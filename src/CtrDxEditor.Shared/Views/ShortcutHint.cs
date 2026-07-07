@@ -18,5 +18,11 @@ namespace CtrDxEditor.Views
 
         /// <summary>Localized platform shortcut text for fitting the level to the viewport.</summary>
         public static string ZoomFit { get; } = $"{Mod} 0";
+
+        /// <summary>Localized platform shortcut text for undo.</summary>
+        public static string Undo { get; } = $"{Mod} Z";
+
+        /// <summary>Localized platform shortcut text for redo.</summary>
+        public static string Redo { get; } = OperatingSystem.IsMacOS() ? $"{Mod} Shift Z" : $"{Mod} Y";
     }
 }

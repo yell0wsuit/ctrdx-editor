@@ -169,6 +169,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
+        /// <summary>Callback raised before a direct canvas edit begins, so the view model can capture undo state.</summary>
+        public Action? BeginDocumentEdit { get; set; }
+
+        /// <summary>Callback raised after a direct canvas edit ends, so the view model can commit undo state.</summary>
+        public Action? CompleteDocumentEdit { get; set; }
+
         // Hovering / dragging the auto-catch radius ring, or a horizontal rail end/hook, uses a horizontal-
         // resize cursor (col-resize); a vertical rail end/hook uses the vertical one.
         private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
@@ -927,6 +933,7 @@ namespace CtrDxEditor.Rendering
             // (the ring can sit over other objects) but not over a middle-button pan.
             if (OnRadiusEdge(levelPt))
             {
+                BeginDocumentEdit?.Invoke();
                 _resizingRadius = true;
                 e.Pointer.Capture(this);
                 return;
@@ -940,10 +947,12 @@ namespace CtrDxEditor.Rendering
                 case GrabRail.Handle.ResizeStart:
                 case GrabRail.Handle.ResizeEnd:
                 case GrabRail.Handle.SlideHook:
+                    BeginDocumentEdit?.Invoke();
                     _railDrag = handle;
                     e.Pointer.Capture(this);
                     return;
                 case GrabRail.Handle.MoveBar:
+                    BeginDocumentEdit?.Invoke();
                     _dragOffset = levelPt - new Vec2(SelectedObject!.X, SelectedObject.Y);
                     _dragging = true;
                     e.Pointer.Capture(this);
@@ -977,6 +986,7 @@ namespace CtrDxEditor.Rendering
                 if (li >= 0 && bounds[li].Contains(levelPt))
                 {
                     SelectedObject = locked;
+                    BeginDocumentEdit?.Invoke();
                     _dragOffset = levelPt - new Vec2(locked.X, locked.Y);
                     _dragging = true;
                     e.Pointer.Capture(this);
@@ -1000,6 +1010,7 @@ namespace CtrDxEditor.Rendering
 
             LevelObject obj = doc.Objects[hit];
             SelectedObject = obj;
+            BeginDocumentEdit?.Invoke();
             _dragOffset = levelPt - new Vec2(obj.X, obj.Y);
             _dragging = true;
             e.Pointer.Capture(this);
@@ -1057,10 +1068,15 @@ namespace CtrDxEditor.Rendering
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
+            bool editedDocument = _dragging || _resizingRadius || _railDrag != GrabRail.Handle.None;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
+            if (editedDocument)
+            {
+                CompleteDocumentEdit?.Invoke();
+            }
             // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
             SetHookHovered(false);
             e.Pointer.Capture(null);

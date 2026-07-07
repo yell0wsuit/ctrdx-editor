@@ -21,6 +21,9 @@ namespace CtrDxEditor.ViewModels
     public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
     {
         private readonly DescriptorTable _descriptors = DescriptorTable.Default;
+        private readonly List<HistoryState> _undoStack = [];
+        private readonly List<HistoryState> _redoStack = [];
+        private HistoryState? _pendingUndoTransaction;
 
         /// <summary>Persisted editor settings store, for reading/writing decoration defaults; null when unavailable.</summary>
         public ISettingsStore? Settings { get; } = settings;
@@ -64,12 +67,19 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
+        /// <summary>True when an undo snapshot is available.</summary>
+        public bool CanUndo => _undoStack.Count > 0;
+
+        /// <summary>True when a redo snapshot is available.</summary>
+        public bool CanRedo => _redoStack.Count > 0;
+
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
             Document = LevelDocument.Parse(xml);
             SelectedObject = null;
             LockedObject = null;
+            ClearHistory();
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
@@ -82,6 +92,7 @@ namespace CtrDxEditor.ViewModels
             Document = null;
             SelectedObject = null;
             LockedObject = null;
+            ClearHistory();
             Palette.Clear();
             ObjectList.Clear();
             Fields.Clear();
@@ -109,6 +120,7 @@ namespace CtrDxEditor.ViewModels
             ActiveOmNomSupport = omNomSupport;
             SelectedObject = null;
             LockedObject = null;
+            ClearHistory();
             RefreshPalette();
             RefreshObjectList();
             LevelLoaded?.Invoke();
@@ -121,6 +133,7 @@ namespace CtrDxEditor.ViewModels
             {
                 return;
             }
+            CaptureUndoSnapshot();
             Document.UpdateSettings(settings);
             RefreshPalette();
             RefreshObjectList();
@@ -146,6 +159,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             LevelObject removed = SelectedObject;
+            CaptureUndoSnapshot();
             LevelDocument.Remove(removed);
             if (Equals(LockedObject, removed))
             {
@@ -225,6 +239,7 @@ namespace CtrDxEditor.ViewModels
                 return null;
             }
 
+            CaptureUndoSnapshot();
             LevelObject obj = Placement.CreateObject(d, levelX, levelY);
             LevelObjectPolicy.ApplyDefaults(obj, Document);
             Document.Add(obj);
@@ -238,6 +253,60 @@ namespace CtrDxEditor.ViewModels
         public string? ToXml()
         {
             return Document?.Save();
+        }
+
+        /// <summary>Begins a coalesced undo transaction for direct document mutations such as canvas drags.</summary>
+        public void BeginUndoTransaction()
+        {
+            _pendingUndoTransaction ??= CreateHistoryState();
+        }
+
+        /// <summary>Completes a coalesced undo transaction if the document changed.</summary>
+        public void CompleteUndoTransaction()
+        {
+            if (_pendingUndoTransaction is not { } before || Document is null)
+            {
+                _pendingUndoTransaction = null;
+                return;
+            }
+
+            _pendingUndoTransaction = null;
+            if (before.Xml == Document.Save())
+            {
+                return;
+            }
+
+            PushUndoState(before);
+        }
+
+        /// <summary>Restores the previous document snapshot, if available.</summary>
+        public void Undo()
+        {
+            if (Document is null || _undoStack.Count == 0)
+            {
+                return;
+            }
+
+            HistoryState current = CreateHistoryState()!;
+            HistoryState previous = PopLast(_undoStack);
+            _redoStack.Add(current);
+            RestoreHistoryState(previous);
+            NotifyHistoryChanged();
+        }
+
+        /// <summary>Restores the next document snapshot after an undo, if available.</summary>
+        public void Redo()
+        {
+            if (Document is null || _redoStack.Count == 0)
+            {
+                return;
+            }
+
+            HistoryState current = CreateHistoryState()!;
+            HistoryState next = PopLast(_redoStack);
+            _undoStack.Add(current);
+            RestoreHistoryState(next);
+            NotifyHistoryChanged();
         }
 
         /// <summary>Re-reads every property field from the selected object, for canvas-driven mutations like dragging.</summary>
@@ -287,12 +356,17 @@ namespace CtrDxEditor.ViewModels
                 ObjectMutated?.Invoke();
             }
 
-            Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed));
-            Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed));
+            void Changing()
+            {
+                CaptureUndoSnapshot();
+            }
+
+            Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed, Changing));
+            Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed, Changing));
 
             if (value.Type == "grab" && Document is not null)
             {
-                GrabFieldBuilder.Build(Fields, value, Document, Changed, () => PopulateFields(value));
+                GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => PopulateFields(value));
                 return;
             }
 
@@ -305,9 +379,95 @@ namespace CtrDxEditor.ViewModels
                     {
                         continue;
                     }
-                    Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.Type, spec.EnumValues, Changed));
+                    Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.Type, spec.EnumValues, Changed, Changing));
                 }
             }
         }
+
+        private void CaptureUndoSnapshot()
+        {
+            if (CreateHistoryState() is { } state)
+            {
+                PushUndoState(state);
+            }
+        }
+
+        private void PushUndoState(HistoryState state)
+        {
+            if (_undoStack.Count > 0 && _undoStack[^1].Xml == state.Xml)
+            {
+                return;
+            }
+
+            _undoStack.Add(state);
+            _redoStack.Clear();
+            NotifyHistoryChanged();
+        }
+
+        private HistoryState? CreateHistoryState()
+        {
+            return Document is null
+                ? null
+                : new HistoryState(Document.Save(), IndexOf(Document.Objects, SelectedObject), IndexOf(Document.Objects, LockedObject));
+        }
+
+        private void RestoreHistoryState(HistoryState state)
+        {
+            Document = LevelDocument.Parse(state.Xml);
+            RefreshPalette();
+            RefreshObjectList();
+            SelectedObject = ObjectAt(state.SelectedIndex);
+            LockedObject = ObjectAt(state.LockedIndex);
+            LevelLoaded?.Invoke();
+            ObjectMutated?.Invoke();
+        }
+
+        private LevelObject? ObjectAt(int index)
+        {
+            return Document is { } doc && index >= 0 && index < doc.Objects.Count
+                ? doc.Objects[index]
+                : null;
+        }
+
+        private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject? target)
+        {
+            if (target is null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                if (Equals(objects[i], target))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private static HistoryState PopLast(List<HistoryState> states)
+        {
+            int index = states.Count - 1;
+            HistoryState state = states[index];
+            states.RemoveAt(index);
+            return state;
+        }
+
+        private void ClearHistory()
+        {
+            _undoStack.Clear();
+            _redoStack.Clear();
+            _pendingUndoTransaction = null;
+            NotifyHistoryChanged();
+        }
+
+        private void NotifyHistoryChanged()
+        {
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private sealed record HistoryState(string Xml, int SelectedIndex, int LockedIndex);
     }
 }

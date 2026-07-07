@@ -9,6 +9,8 @@
     "Menu.File.Close": "_Close",
 
     "Menu.Edit": "_Edit",
+    "Menu.Edit.Undo": "_Undo",
+    "Menu.Edit.Redo": "_Redo",
     "Menu.Edit.LevelSettings": "Level _Settings...",
 
     "Menu.View": "_View",
