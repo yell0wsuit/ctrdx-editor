@@ -30,6 +30,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Display label shown under the swatch.</summary>
         public string Label { get; } = label;
 
+        /// <summary>Whether this is the Random option; its card shows a dice icon rather than a preview.</summary>
+        public bool IsRandom => Id < 0;
+
         /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
         [ObservableProperty] public partial bool IsSelected { get; set; }
     }
@@ -42,6 +45,9 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Display label shown under the thumbnail.</summary>
         public string Label { get; } = label;
+
+        /// <summary>Whether this is the Random option; its card shows a dice icon rather than a preview.</summary>
+        public bool IsRandom => Id < 0;
 
         /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
         [ObservableProperty] public partial bool IsSelected { get; set; }
@@ -58,6 +64,9 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Display label shown under the thumbnail.</summary>
         public string Label { get; } = label;
+
+        /// <summary>Whether this is the Random option; its card shows a dice icon rather than a preview.</summary>
+        public bool IsRandom => Id < 0;
 
         /// <summary>Whether this option is the current pick; drives (and follows) its radio button.</summary>
         [ObservableProperty] public partial bool IsSelected { get; set; }

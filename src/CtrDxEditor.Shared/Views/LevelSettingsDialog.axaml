@@ -3,6 +3,7 @@
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:loc="using:CtrDxEditor.Localization"
              xmlns:ctrl="using:CtrDxEditor.Controls"
+             xmlns:icons="using:Material.Icons.Avalonia"
              x:Class="CtrDxEditor.Views.LevelSettingsDialog"
              x:DataType="vm:LevelSettingsViewModel">
 
@@ -259,11 +260,21 @@
                                     CornerRadius="7"
                                     Background="#252525"
                                     ClipToBounds="True">
-                              <ctrl:RopeSwatch Width="76"
-                                                Height="28"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Skin="{Binding Id}" />
+                              <Panel>
+                                <ctrl:RopeSwatch Width="76"
+                                                  Height="28"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  IsVisible="{Binding !IsRandom}"
+                                                  Skin="{Binding Id}" />
+                                <icons:MaterialIcon Kind="DiceMultiple"
+                                                    Width="24"
+                                                    Height="24"
+                                                    Foreground="#B0B0B0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsRandom}" />
+                              </Panel>
                             </Border>
 
                             <TextBlock Text="{Binding Label}"
@@ -331,8 +342,18 @@
                                     ClipToBounds="True"
                                     CornerRadius="7"
                                     HorizontalAlignment="Stretch">
-                              <Image Source="{Binding Thumbnail}"
-                                     Stretch="UniformToFill" />
+                              <Panel>
+                                <Image Source="{Binding Thumbnail}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding !IsRandom}" />
+                                <icons:MaterialIcon Kind="DiceMultiple"
+                                                    Width="32"
+                                                    Height="32"
+                                                    Foreground="#B0B0B0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsRandom}" />
+                              </Panel>
                             </Border>
 
                             <TextBlock Text="{Binding Label}"
@@ -399,9 +420,19 @@
                                     CornerRadius="7"
                                     Background="#252525"
                                     ClipToBounds="True">
-                              <Image Source="{Binding Thumbnail}"
-                                     Stretch="Uniform"
-                                     Margin="6" />
+                              <Panel>
+                                <Image Source="{Binding Thumbnail}"
+                                       Stretch="Uniform"
+                                       Margin="6"
+                                       IsVisible="{Binding !IsRandom}" />
+                                <icons:MaterialIcon Kind="DiceMultiple"
+                                                    Width="28"
+                                                    Height="28"
+                                                    Foreground="#B0B0B0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsRandom}" />
+                              </Panel>
                             </Border>
 
                             <TextBlock Text="{Binding Label}"
