@@ -31,9 +31,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor bulb = VisualDescriptorMap.For("lightBulb")!;
 
-            Assert.Equal(
-                ["02_bottle.png", "03_top.png"],
-                bulb.Layers.Select(l => l.FrameName));
+            Assert.Equal([1, 2], bulb.Layers.Select(l => l.Quad));
             Assert.All(bulb.Layers, l => Assert.Equal("images/obj_lighter.json", l.AtlasJsonRelPath));
         }
 

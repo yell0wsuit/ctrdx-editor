@@ -27,8 +27,8 @@ namespace CtrDxEditor.Content
             // so the cup naturally sits below the mouth point with no manual offset.
             new("target",
             [
-                new SpriteLayer("images/char_supports.json", "images/char_supports", "frame_0000.png"),
-                new SpriteLayer("images/char_animations.json", "images/char_animations", "frame_0000.png"),
+                new SpriteLayer("images/char_supports.json", "images/char_supports", 0),
+                new SpriteLayer("images/char_animations.json", "images/char_animations", 0),
             ]),
 
             // Candy = wrapper bottom + body + wrapper top (all share sourceSize 393x418). Addressed by
@@ -37,72 +37,72 @@ namespace CtrDxEditor.Content
             // GameObject_createWithResIDQuad(candyResource, 0/1/2).
             new("candy",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom", Quad: 0),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main", Quad: 1),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top", Quad: 2),
+                new SpriteLayer(CandyJson, CandyImageBase, 0),
+                new SpriteLayer(CandyJson, CandyImageBase, 1),
+                new SpriteLayer(CandyJson, CandyImageBase, 2),
             ], Scale: 0.71),
 
             // Split candy halves = quad 8 (part_1) / quad 9 (part_2) of the same candy atlas, at the
             // same 0.71 scale. Matches the game's candyL/candyR quad indices in GameScene.LoadMetadata.
             new("candyL",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_08_part_1", Quad: 8),
+                new SpriteLayer(CandyJson, CandyImageBase, 8),
             ], Scale: 0.71),
             new("candyR",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_09_part_2", Quad: 9),
+                new SpriteLayer(CandyJson, CandyImageBase, 9),
             ], Scale: 0.71),
 
             // Grab hook = arm + ring (share sourceSize 276x276).
             new("grab",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_01_frame_0000.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_01_frame_0001.png"),
+                new SpriteLayer(HookJson, HookImageBase, 0),
+                new SpriteLayer(HookJson, HookImageBase, 1),
             ]),
 
             // Wheel grab = regulated hook wheel art. The game draws the base wheel first, then the
             // variable/idle wheel face in front; the editor uses the idle face for a stable preview.
             new("grab_wheel",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_regulated_frame_0000.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_regulated_frame_0001.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_regulated_frame_0003.png"),
+                new SpriteLayer(HookJson, HookImageBase, 11),
+                new SpriteLayer(HookJson, HookImageBase, 12),
+                new SpriteLayer(HookJson, HookImageBase, 14),
             ]),
 
             // Gun grab = back, aim arrow, and front cap from the gun atlas.
             new("grab_gun",
             [
-                new SpriteLayer(GunJson, GunImageBase, "frame_00_GunBackQuad.png"),
-                new SpriteLayer(GunJson, GunImageBase, "frame_01_GunArrowQuad.png"),
-                new SpriteLayer(GunJson, GunImageBase, "frame_02_GunFrontQuad.png"),
+                new SpriteLayer(GunJson, GunImageBase, 0),
+                new SpriteLayer(GunJson, GunImageBase, 1),
+                new SpriteLayer(GunJson, GunImageBase, 2),
             ]),
 
             // Spider grab = a static frame from the spider idle loop. In-game the spider animates along
             // the rope; the editor keeps it centered on the authored grab point as a state marker.
             new("grab_spider",
             [
-                new SpriteLayer(SpiderJson, SpiderImageBase, "frame_0000.png"),
+                new SpriteLayer(SpiderJson, SpiderImageBase, 0),
             ]),
 
             // Suction cup grab = sticker cup. Kicked=false uses quads 3/4; kicked=true uses
             // quads 1/2 after updateKickState detaches the cup.
             new("grab_suction",
             [
-                new SpriteLayer(StickerJson, StickerImageBase, "frame_0003.png"),
-                new SpriteLayer(StickerJson, StickerImageBase, "frame_0004.png"),
+                new SpriteLayer(StickerJson, StickerImageBase, 3),
+                new SpriteLayer(StickerJson, StickerImageBase, 4),
             ]),
             new("grab_suction_kicked",
             [
-                new SpriteLayer(StickerJson, StickerImageBase, "frame_0001.png"),
-                new SpriteLayer(StickerJson, StickerImageBase, "frame_0002.png"),
+                new SpriteLayer(StickerJson, StickerImageBase, 1),
+                new SpriteLayer(StickerJson, StickerImageBase, 2),
             ]),
 
             // Auto-catch grab = the auto-hook art (game HookAuto quads 4/5, back + front), used in place
             // of the fixed hook when radius is positive. Not a placeable element; picked by grab state.
             new("grab_auto",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_auto_frame_0000.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_auto_frame_0001.png"),
+                new SpriteLayer(HookJson, HookImageBase, 4),
+                new SpriteLayer(HookJson, HookImageBase, 5),
             ]),
 
             // Movable-rail pieces (game HookMovable quads 6/8/7 = left cap, center tile, right cap). The
@@ -110,64 +110,64 @@ namespace CtrDxEditor.Content
             // normal sprite, so the layer order here is left, center, right for the renderer to index.
             new("grab_rail",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0000.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0002.png"),
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0001.png"),
+                new SpriteLayer(HookJson, HookImageBase, 6),
+                new SpriteLayer(HookJson, HookImageBase, 8),
+                new SpriteLayer(HookJson, HookImageBase, 7),
             ]),
 
             // Movable-rail hook (game HookMovable quad 10), drawn at the hook rest point in place of the
             // fixed hook when moveLength > 0. Not placeable; picked by grab state.
             new("grab_movable",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0004.png"),
+                new SpriteLayer(HookJson, HookImageBase, 10),
             ]),
 
             // Highlighted movable-rail hook (game HookMovable quad 9), shown in place of grab_movable while
             // the mover is being dragged (game moverDragging != -1). Not placeable; picked by grab state.
             new("grab_movable_highlight",
             [
-                new SpriteLayer(HookJson, HookImageBase, "obj_hook_movable_frame_0003.png"),
+                new SpriteLayer(HookJson, HookImageBase, 9),
             ]),
 
             // Bubble = attached quad 0 over one random attached outline, matching LoadBubble's
             // parent quad RND_RANGE(1,3) plus child Image quad 0.
             new("bubble",
             [
-                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0000.png"),
+                new SpriteLayer(BubbleJson, BubbleImageBase, 0),
             ],
             RandomBackLayers:
             [
-                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0001.png"),
-                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0002.png"),
-                new SpriteLayer(BubbleJson, BubbleImageBase, "obj_bubble_attached_frame_0003.png"),
+                new SpriteLayer(BubbleJson, BubbleImageBase, 1),
+                new SpriteLayer(BubbleJson, BubbleImageBase, 2),
+                new SpriteLayer(BubbleJson, BubbleImageBase, 3),
             ]),
 
             // Star = glow halo (frame 0, the ImgObjStarIdleGlow quad) behind the star body. The body
             // idle loops frames 1-18 in game; frame 18 is the fullest front-on pose for a static view.
             new("star",
             [
-                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0000.png"),
-                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0018.png"),
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 0),
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 18),
             ]),
 
             // Gravity button.
             new("gravitySwitch",
             [
-                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", "frame_0056.png"),
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 21),
             ]),
 
             // Light bulb = lantern bottle + top (the lit glow quad is omitted for a static thumbnail).
             new("lightBulb",
             [
-                new SpriteLayer(LighterJson, LighterImageBase, "02_bottle.png"),
-                new SpriteLayer(LighterJson, LighterImageBase, "03_top.png"),
+                new SpriteLayer(LighterJson, LighterImageBase, 1),
+                new SpriteLayer(LighterJson, LighterImageBase, 2),
             ]),
 
             // Lit-glow halo quad, drawn additively under the bottle at 1.5x litRadius by GlowDrawOperation.
             // A separate element so it is never composited into the static bulb thumbnail or selection bounds.
             new("lightBulb_glow",
             [
-                new SpriteLayer(LighterJson, LighterImageBase, "01_light.png"),
+                new SpriteLayer(LighterJson, LighterImageBase, 0),
             ]),
         ];
 

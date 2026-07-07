@@ -158,6 +158,7 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Highest background id (bgr_01..bgr_17); ids map to the game's box backgrounds.</summary>
         private const int BackgroundCount = 17;
+        private const int OmNomSupportCount = 17;
 
         /// <summary>Rope skin choices: default + 8 skins + Random.</summary>
         public IReadOnlyList<RopeSkinOption> RopeSkinOptions { get; } = BuildRopeSkinOptions();
@@ -445,7 +446,7 @@ namespace CtrDxEditor.ViewModels
         private static OmNomSupportOption[] BuildOmNomSupportOptions()
         {
             List<OmNomSupportOption> list = [];
-            for (int i = 0; i < OmNomSupports.Count; i++)
+            for (int i = 0; i < OmNomSupportCount; i++)
             {
                 list.Add(new OmNomSupportOption(i, $"{Localizer.Get("Dialog.LevelSettings.OmNomSupport.Platform")} {i + 1}"));
             }
@@ -473,7 +474,7 @@ namespace CtrDxEditor.ViewModels
                 _ => SelectedBackground,                // 0 (Blank) or 1..17 as chosen
             };
             int candy = SelectedCandySkin >= 0 ? SelectedCandySkin : rng.Next(0, CandySkins.Count);
-            int support = SelectedOmNomSupport >= 0 ? SelectedOmNomSupport : rng.Next(0, OmNomSupports.Count);
+            int support = SelectedOmNomSupport >= 0 ? SelectedOmNomSupport : rng.Next(0, OmNomSupportCount);
             return (skin, bg, candy, support);
         }
 

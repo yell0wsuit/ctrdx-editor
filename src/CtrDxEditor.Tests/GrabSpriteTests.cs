@@ -21,9 +21,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor grab = VisualDescriptorMap.For("grab")!;
 
-            Assert.Equal(
-                ["obj_hook_01_frame_0000.png", "obj_hook_01_frame_0001.png"],
-                grab.Layers.Select(l => l.FrameName));
+            Assert.Equal([0, 1], grab.Layers.Select(l => l.Quad));
         }
 
         /// <summary>The auto-catch grab uses the auto-hook frames (game HookAuto quads 4/5).</summary>
@@ -32,9 +30,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor grabAuto = VisualDescriptorMap.For("grab_auto")!;
 
-            Assert.Equal(
-                ["obj_hook_auto_frame_0000.png", "obj_hook_auto_frame_0001.png"],
-                grabAuto.Layers.Select(l => l.FrameName));
+            Assert.Equal([4, 5], grabAuto.Layers.Select(l => l.Quad));
             Assert.All(grabAuto.Layers, l => Assert.Equal("images/obj_hook.json", l.AtlasJsonRelPath));
         }
 
@@ -44,13 +40,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor rail = VisualDescriptorMap.For("grab_rail")!;
 
-            Assert.Equal(
-                [
-                    "obj_hook_movable_frame_0000.png", // left cap
-                    "obj_hook_movable_frame_0002.png", // center tile
-                    "obj_hook_movable_frame_0001.png", // right cap
-                ],
-                rail.Layers.Select(l => l.FrameName));
+            Assert.Equal([6, 8, 7], rail.Layers.Select(l => l.Quad));
         }
 
         /// <summary>The movable hook uses the movable hook frame (game HookMovable quad 10).</summary>
@@ -59,7 +49,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor movable = VisualDescriptorMap.For("grab_movable")!;
 
-            Assert.Equal(["obj_hook_movable_frame_0004.png"], movable.Layers.Select(l => l.FrameName));
+            Assert.Equal([10], movable.Layers.Select(l => l.Quad));
         }
 
         /// <summary>The dragged movable hook uses the highlight frame (game HookMovable quad 9).</summary>
@@ -68,7 +58,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor highlight = VisualDescriptorMap.For("grab_movable_highlight")!;
 
-            Assert.Equal(["obj_hook_movable_frame_0003.png"], highlight.Layers.Select(l => l.FrameName));
+            Assert.Equal([9], highlight.Layers.Select(l => l.Quad));
         }
 
         /// <summary>Wheel grabs use the regulated hook wheel frames.</summary>
@@ -77,13 +67,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor wheel = VisualDescriptorMap.For("grab_wheel")!;
 
-            Assert.Equal(
-                [
-                    "obj_hook_regulated_frame_0000.png",
-                    "obj_hook_regulated_frame_0001.png",
-                    "obj_hook_regulated_frame_0003.png",
-                ],
-                wheel.Layers.Select(l => l.FrameName));
+            Assert.Equal([11, 12, 14], wheel.Layers.Select(l => l.Quad));
         }
 
         /// <summary>Gun grabs use the gun back, arrow, and front frames.</summary>
@@ -92,13 +76,7 @@ namespace CtrDxEditor.Tests
         {
             VisualDescriptor gun = VisualDescriptorMap.For("grab_gun")!;
 
-            Assert.Equal(
-                [
-                    "frame_00_GunBackQuad.png",
-                    "frame_01_GunArrowQuad.png",
-                    "frame_02_GunFrontQuad.png",
-                ],
-                gun.Layers.Select(l => l.FrameName));
+            Assert.Equal([0, 1, 2], gun.Layers.Select(l => l.Quad));
             Assert.All(gun.Layers, l => Assert.Equal("images/obj_gun.json", l.AtlasJsonRelPath));
         }
 
@@ -110,18 +88,18 @@ namespace CtrDxEditor.Tests
 
             SpriteLayer layer = Assert.Single(spider.Layers);
             Assert.Equal("images/obj_spider.json", layer.AtlasJsonRelPath);
-            Assert.Equal("frame_0000.png", layer.FrameName);
+            Assert.Equal(0, layer.Quad);
         }
 
         /// <summary>Suction cup grabs use attached or detached sticker frames depending on kicked state.</summary>
         [Theory]
-        [InlineData("grab_suction", "frame_0003.png", "frame_0004.png")]
-        [InlineData("grab_suction_kicked", "frame_0001.png", "frame_0002.png")]
-        public void SuctionCupGrabsUseStickerFrames(string key, string backFrame, string frontFrame)
+        [InlineData("grab_suction", 3, 4)]
+        [InlineData("grab_suction_kicked", 1, 2)]
+        public void SuctionCupGrabsUseStickerFrames(string key, int backQuad, int frontQuad)
         {
             VisualDescriptor suction = VisualDescriptorMap.For(key)!;
 
-            Assert.Equal([backFrame, frontFrame], suction.Layers.Select(l => l.FrameName));
+            Assert.Equal([backQuad, frontQuad], suction.Layers.Select(l => l.Quad));
             Assert.All(suction.Layers, l => Assert.Equal("images/obj_sticker.json", l.AtlasJsonRelPath));
         }
 

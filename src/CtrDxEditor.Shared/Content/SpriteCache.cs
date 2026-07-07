@@ -348,8 +348,8 @@ namespace CtrDxEditor.Content
                 Atlas? atlas = isCandy ? candyAtlas : LoadAtlas(layer.AtlasJsonRelPath);
                 // The target's platform is whichever char_supports frame the active support selects.
                 AtlasFrame? frame = isTarget && omNomSupport > 0 && layer.AtlasJsonRelPath == SupportsAtlasJson
-                    ? atlas?.Find(OmNomSupports.FrameName(omNomSupport))
-                    : ResolveFrame(atlas, layer);
+                    ? atlas?.At(omNomSupport)
+                    : atlas?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)
                 {
                     layers.Add(new SpriteLayerDraw(bitmap, frame));
@@ -360,7 +360,7 @@ namespace CtrDxEditor.Content
             foreach (SpriteLayer layer in v.RandomBackLayers)
             {
                 Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
-                AtlasFrame? frame = ResolveFrame(LoadAtlas(layer.AtlasJsonRelPath), layer);
+                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)
                 {
                     variants.Add(new SpriteLayerDraw(bitmap, frame));
@@ -368,11 +368,6 @@ namespace CtrDxEditor.Content
             }
 
             return layers.Count == 0 ? null : new ObjectSprite(layers, v.Scale, variants);
-        }
-
-        private static AtlasFrame? ResolveFrame(Atlas? atlas, SpriteLayer layer)
-        {
-            return layer.Quad is int quad ? atlas?.At(quad) : atlas?.Find(layer.FrameName);
         }
 
         /// <summary>
