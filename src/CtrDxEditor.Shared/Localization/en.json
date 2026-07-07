@@ -6,6 +6,7 @@
     "Menu.File.Open": "_Open...",
     "Menu.File.Save": "_Save",
     "Menu.File.SaveAs": "Save _As...",
+    "Menu.File.Screenshot": "Take Level Screenshot...",
     "Menu.File.Close": "_Close",
 
     "Menu.Edit": "_Edit",
@@ -28,6 +29,8 @@
     "Dialog.Open.Title": "Open level XML",
     "Dialog.Save.Title": "Save level XML",
     "Dialog.FileType.LevelXml": "Level XML",
+    "Dialog.Screenshot.Title": "Save level screenshot",
+    "Dialog.FileType.Png": "PNG image",
 
     "Dialog.Common.Cancel": "Cancel",
     "Dialog.Common.Ok": "OK",

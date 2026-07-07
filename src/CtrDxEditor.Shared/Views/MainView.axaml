@@ -37,6 +37,13 @@
           </MenuItem.Icon>
         </MenuItem>
         <Separator />
+        <MenuItem Header="{loc:Tr Menu.File.Screenshot}" Click="Screenshot_Click"
+                  IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="Camera" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
         <MenuItem Header="{loc:Tr Menu.File.Close}" Click="Close_Click"
                   IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>

@@ -10,6 +10,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 
@@ -498,6 +499,40 @@ namespace CtrDxEditor.Views
             if (DataContext is EditorViewModel vm)
             {
                 await SaveAsAsync(vm);
+            }
+        }
+
+        private async void Screenshot_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm || !vm.HasDocument)
+            {
+                return;
+            }
+
+            LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
+            RenderTargetBitmap? bitmap = canvas.RenderLevelToBitmap();
+            if (bitmap is null)
+            {
+                return;
+            }
+
+            string suggested = _currentLevelFile is { Name: { } name }
+                ? Path.ChangeExtension(name, ".png")
+                : "level.png";
+
+            IStorageFile? file = await TopLevel.GetTopLevel(this)!.StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = Localizer.Get("Dialog.Screenshot.Title"),
+                    DefaultExtension = "png",
+                    SuggestedFileName = suggested,
+                    FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.Png")) { Patterns = ["*.png"] }],
+                });
+
+            if (file is not null)
+            {
+                await using Stream stream = await file.OpenWriteAsync();
+                bitmap.Save(stream);
             }
         }
 
