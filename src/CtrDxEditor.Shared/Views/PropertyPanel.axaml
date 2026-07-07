@@ -6,6 +6,12 @@
              xmlns:loc="using:CtrDxEditor.Localization"
              x:Class="CtrDxEditor.Views.PropertyPanel"
              x:DataType="vm:EditorViewModel">
+  <UserControl.Styles>
+    <!-- Dim a property field's label when the field itself is disabled. -->
+    <Style Selector="TextBlock.field-label:disabled">
+      <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Disabled}" />
+    </Style>
+  </UserControl.Styles>
   <DockPanel>
     <TextBlock DockPanel.Dock="Top" Text="{loc:Tr Panel.Properties}" FontWeight="Bold" Margin="8,8,8,4" />
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
@@ -18,7 +24,9 @@
                 <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
                 <ColumnDefinition Width="100" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <TextBlock Grid.Column="0" Classes="field-label" Text="{Binding Label}"
+                         IsEnabled="{Binding IsEnabled}"
+                         VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
                         IsEnabled="{Binding IsEnabled}"
                         Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
