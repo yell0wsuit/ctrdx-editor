@@ -302,6 +302,29 @@ namespace CtrDxEditor.Rendering
             UpdateScrollState();
         }
 
+        /// <summary>The pixel size and view transform for a clean full-level screenshot.</summary>
+        /// <param name="Size">Output bitmap size in pixels (level units x MapScale).</param>
+        /// <param name="View">Transform placing the frame's top-left at pixel (0, 0).</param>
+        public readonly record struct ScreenshotFrame(PixelSize Size, ViewTransform View);
+
+        /// <summary>
+        /// Computes the screenshot frame for a level. The frame width is the wider of the playfield and the
+        /// background column (<paramref name="bgWidth"/>, 0 when no background), centered on the playfield;
+        /// the height is the level height. Everything renders at <see cref="SpritePlacement.MapScale"/> so the
+        /// output matches the game's native art resolution.
+        /// </summary>
+        public static ScreenshotFrame ComputeScreenshotFrame(int levelWidth, int levelHeight, double bgWidth)
+        {
+            double scale = SpritePlacement.MapScale;
+            double frameWidth = Math.Max(levelWidth, bgWidth);
+            double frameLeft = (levelWidth - frameWidth) / 2.0;
+            PixelSize size = new(
+                Math.Max(1, (int)Math.Round(frameWidth * scale)),
+                Math.Max(1, (int)Math.Round(levelHeight * scale)));
+            ViewTransform view = new(scale, -frameLeft * scale, 0.0);
+            return new ScreenshotFrame(size, view);
+        }
+
         /// <summary>Zooms about the viewport center (for menu/keyboard zoom).</summary>
         public void ZoomBy(double factor)
         {
