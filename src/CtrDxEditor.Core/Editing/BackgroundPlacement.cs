@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
@@ -10,9 +12,13 @@ namespace CtrDxEditor.Core.Editing
     /// <param name="Width">Level-space width of the p1 column (the internal screen width).</param>
     /// <param name="TileHeight">Level-space height of one p1 tile; repeat this down from y=0.</param>
     /// <param name="P2">The secondary background's bounds, or null when the map is short or has no p2.</param>
-    /// <param name="EarthCenter">Level-space center of the earth decoration (cosmic box only), or null.</param>
+    /// <param name="EarthCenters">
+    /// Level-space centers of the earth decoration (cosmic box only), empty when there is no earth. The
+    /// game draws a base earth plus a horizontal copy for maps wider than one screen and a vertical copy
+    /// for maps taller than one screen (up to three), so this holds 0..3 positions.
+    /// </param>
     public readonly record struct BackgroundLayout(
-        double Left, double Width, double TileHeight, LevelBounds? P2, Vec2? EarthCenter);
+        double Left, double Width, double TileHeight, LevelBounds? P2, IReadOnlyList<Vec2> EarthCenters);
 
     /// <summary>
     /// Pure background placement math. The game (GameScene.Draw / GameScene.Init) draws the box
@@ -66,11 +72,25 @@ namespace CtrDxEditor.Core.Editing
 
             // The earth is center-anchored at earthBgPosition within the p1 column's space (GameScene
             // CreateEarthImageWithOffsetXY), so it maps to level space by ÷MapScale, offset by the column.
-            Vec2? earth = earthPosition is { } e
-                ? new Vec2(left + (e.X / SpritePlacement.MapScale), e.Y / SpritePlacement.MapScale)
-                : null;
+            // The game wraps it with the tiled background when the map exceeds one screen: an extra copy
+            // one column to the right for wide maps (mapWidth > SCREEN_WIDTH) and one tile down for tall
+            // maps (mapHeight > SCREEN_HEIGHT). Both offsets scale to the p1 column width / tile height.
+            List<Vec2> earthCenters = [];
+            if (earthPosition is { } e)
+            {
+                Vec2 baseEarth = new(left + (e.X / SpritePlacement.MapScale), e.Y / SpritePlacement.MapScale);
+                earthCenters.Add(baseEarth);
+                if (levelWidth > width)
+                {
+                    earthCenters.Add(new Vec2(baseEarth.X + width, baseEarth.Y));
+                }
+                if (tall)
+                {
+                    earthCenters.Add(new Vec2(baseEarth.X, baseEarth.Y + tileHeight));
+                }
+            }
 
-            return new BackgroundLayout(left, width, tileHeight, p2, earth);
+            return new BackgroundLayout(left, width, tileHeight, p2, earthCenters);
         }
     }
 }

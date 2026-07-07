@@ -514,15 +514,19 @@ namespace CtrDxEditor.Rendering
                         context.DrawImage(p2, new Rect(p2.Size), LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
                     }
 
-                    if (layout.EarthCenter is { } ec && sprites.GetEarthArt() is { } earthArt)
+                    if (layout.EarthCenters.Count > 0 && sprites.GetEarthArt() is { } earthArt)
                     {
                         IntRect ef = earthArt.Frame.Frame;
                         double ew = ef.W / SpritePlacement.MapScale;
                         double eh = ef.H / SpritePlacement.MapScale;
-                        context.DrawImage(
-                            earthArt.Bitmap,
-                            new Rect(ef.X, ef.Y, ef.W, ef.H),
-                            LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
+                        Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
+                        foreach (Vec2 ec in layout.EarthCenters)
+                        {
+                            context.DrawImage(
+                                earthArt.Bitmap,
+                                earthSrc,
+                                LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
+                        }
                     }
                 }
             }
