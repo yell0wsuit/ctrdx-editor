@@ -219,7 +219,7 @@ namespace CtrDxEditor.Content
             Bitmap? bmp = null;
             try
             {
-                string rel = $"images/backgrounds/bgr_{id:D2}{suffix}.png";
+                string rel = $"images/backgrounds/bgr_{id:D2}{suffix}{imageExtension}";
                 byte[] bytes = store.ReadBytes(rel);
                 using MemoryStream ms = new(bytes);
                 bmp = Bitmap.DecodeToWidth(ms, decodeWidth);

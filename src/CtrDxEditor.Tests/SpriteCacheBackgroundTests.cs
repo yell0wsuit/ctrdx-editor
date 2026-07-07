@@ -56,6 +56,7 @@ namespace CtrDxEditor.Tests
             public bool AsyncBytesCalled;
             public bool SyncBytesCalled;
             public bool SyncTextCalled;
+            public string? LastSyncBytesPath;
 
             public Task<bool> ExistsAsync(string relPath)
             {
@@ -82,6 +83,7 @@ namespace CtrDxEditor.Tests
             public byte[] ReadBytes(string relPath)
             {
                 SyncBytesCalled = true;
+                LastSyncBytesPath = relPath;
                 return [];
             }
 
@@ -107,6 +109,21 @@ namespace CtrDxEditor.Tests
 
             Assert.True(store.SyncBytesCalled, "GetBackground must read background bytes synchronously.");
             Assert.False(store.AsyncBytesCalled, "GetBackground must not block on an async read (deadlocks on WASM).");
+        }
+
+        /// <summary>
+        /// Regression: the background path must honour the configured image extension. The browser bundle
+        /// ships WebP, not PNG, so a hardcoded ".png" resolves to no entry and the background renders blank.
+        /// </summary>
+        [Fact]
+        public void GetBackgroundHonoursConfiguredImageExtension()
+        {
+            RecordingStore store = new();
+            SpriteCache cache = new(store, ".webp");
+
+            _ = cache.GetBackground(1);
+
+            Assert.Equal("images/backgrounds/bgr_01_p1.webp", store.LastSyncBytesPath);
         }
 
         /// <summary>
