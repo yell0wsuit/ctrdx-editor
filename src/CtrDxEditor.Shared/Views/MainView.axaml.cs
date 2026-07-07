@@ -512,7 +512,9 @@ namespace CtrDxEditor.Views
             }
 
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
-            RenderTargetBitmap? bitmap = canvas.RenderLevelToBitmap();
+            // The bitmap must be rendered on the UI thread (Avalonia draws RenderTargetBitmap there); the
+            // encode+write below is what we push off-thread. Disposed at method end - it holds a GPU surface.
+            using RenderTargetBitmap? bitmap = canvas.RenderLevelToBitmap();
             if (bitmap is null)
             {
                 return;
@@ -536,9 +538,13 @@ namespace CtrDxEditor.Views
                 return;
             }
 
+            // PNG encoding of a full-resolution level can take a noticeable amount of time. The bitmap is
+            // finished rendering and is not touched elsewhere, so encode + write it on a background thread
+            // to keep the editor responsive. (On the single-threaded browser runtime this still runs inline,
+            // but harmlessly.) The await resumes on the UI thread for the toast below.
             await using (Stream stream = await file.OpenWriteAsync())
             {
-                bitmap.Save(stream);
+                await Task.Run(() => bitmap.Save(stream));
             }
 
             // Confirm the save with a toast showing where it landed (a full local path on desktop, the
