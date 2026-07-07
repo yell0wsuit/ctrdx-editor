@@ -252,6 +252,10 @@ namespace CtrDxEditor.Content
             return thumb;
         }
 
+        /// <summary>Smallest source-frame side (px) a layer must have to count as real art in a thumbnail;
+        /// below this a frame is a placeholder that would only distort the crop bounds.</summary>
+        private const int MinThumbnailFrameSide = 8;
+
         private RenderTargetBitmap? BuildThumbnail(string element, int candySkin)
         {
             ObjectSprite? sprite = GetSprite(element, candySkin);
@@ -260,10 +264,26 @@ namespace CtrDxEditor.Content
                 return null;
             }
 
+            // Some skins pad an unused layer with a tiny placeholder frame parked in a corner (e.g. candy
+            // skins whose "top" quad is a 3x3 sprite at 0,0). Folding that into the crop bounds would
+            // balloon the preview and shove the real art off-center, so drop such layers from the thumbnail.
+            List<SpriteLayerDraw> drawn = new(sprite.Layers.Count);
+            foreach (SpriteLayerDraw layer in sprite.Layers)
+            {
+                if (layer.Frame.Frame.W >= MinThumbnailFrameSide && layer.Frame.Frame.H >= MinThumbnailFrameSide)
+                {
+                    drawn.Add(layer);
+                }
+            }
+            if (drawn.Count == 0)
+            {
+                drawn.AddRange(sprite.Layers);
+            }
+
             // Lay the layers out in pixel space (mapScale 1) centered at the origin, then take the union
             // of their drawn rects so the preview is cropped to the visible art.
             double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
-            foreach (SpriteLayerDraw layer in sprite.Layers)
+            foreach (SpriteLayerDraw layer in drawn)
             {
                 LevelBounds d = SpritePlacement.Compute(layer.Frame, 0, 0, sprite.Scale, mapScale: 1.0).Dest;
                 minX = Math.Min(minX, d.X);
@@ -285,7 +305,7 @@ namespace CtrDxEditor.Content
             RenderTargetBitmap rtb = new(size, new Vector(96, 96));
             using (DrawingContext ctx = rtb.CreateDrawingContext())
             {
-                foreach (SpriteLayerDraw layer in sprite.Layers)
+                foreach (SpriteLayerDraw layer in drawn)
                 {
                     SpriteLayout layout = SpritePlacement.Compute(layer.Frame, 0, 0, sprite.Scale, mapScale: 1.0);
                     Rect src = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
