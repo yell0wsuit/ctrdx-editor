@@ -414,123 +414,9 @@ namespace CtrDxEditor.Rendering
             }
 
             ViewTransform v = View;
-            Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
-            Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
-
-            // Editor-decoration background, drawn as the bottom layer so the level border and grid sit
-            // on top of it. The p1 column keeps its game width and aspect (GameScene.Draw scales it to
-            // the internal screen width) and stays centered on the map, so it extends past the level
-            // rect sideways rather than being cropped to it - but it's bounded to the level's own height
-            // (clipped top/bottom) so it doesn't repeat off into empty canvas. Horizontally it's a
-            // single column: the game repeats the background vertically only, never sideways. A p2
-            // overlay is drawn once for maps taller than one screen. BackgroundPlacement mirrors that.
-            Bitmap? bg = sprites.GetBackground(ActiveBackground);
-            if (bg is not null && bg.Size is { Width: > 0, Height: > 0 } bgSize)
-            {
-                Bitmap? p2 = sprites.GetBackgroundP2(ActiveBackground);
-                double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
-                BackgroundLayout layout = BackgroundPlacement.Compute(
-                    doc.Width, doc.Height, bgSize.Height / bgSize.Width,
-                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
-                    SpriteCache.GetEarthBgPosition(ActiveBackground));
-
-                // Clip vertically to the level's height (full canvas width, so the wide column still
-                // shows past the level sides), keeping the background within the level's own span.
-                using (context.PushClip(new Rect(0, tl.Y, Bounds.Width, br.Y - tl.Y)))
-                {
-                    if (layout.TileHeight > 0.5)
-                    {
-                        Rect bgSrc = new(bgSize);
-                        for (double ty = 0; ty < doc.Height; ty += layout.TileHeight)
-                        {
-                            context.DrawImage(bg, bgSrc, LevelRectToScreen(v, layout.Left, ty, layout.Width, layout.TileHeight));
-                        }
-                    }
-
-                    if (layout.P2 is { } p2b && p2 is not null)
-                    {
-                        context.DrawImage(p2, new Rect(p2.Size), LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
-                    }
-
-                    // Cosmic box only: the earth sprite the game draws over the background (GameScene.Draw
-                    // earthAnims). Static here - the game's gravity-flip spin has no editor equivalent.
-                    // The game centers the trimmed quad directly on earthBgPosition (Image with anchor
-                    // CENTER and restoreCutTransparency off, so DrawQuad applies no trim offset), so place
-                    // the frame itself - not the untrimmed sourceSize box that SpritePlacement would use.
-                    if (layout.EarthCenter is { } ec && sprites.GetEarthArt() is { } earthArt)
-                    {
-                        IntRect ef = earthArt.Frame.Frame;
-                        double ew = ef.W / SpritePlacement.MapScale;
-                        double eh = ef.H / SpritePlacement.MapScale;
-                        context.DrawImage(
-                            earthArt.Bitmap,
-                            new Rect(ef.X, ef.Y, ef.W, ef.H),
-                            LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
-                    }
-                }
-            }
-
-            context.DrawRectangle(null, _palette.LevelBorder,
-                new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
-
-            int grid = doc.GridSize > 0 ? doc.GridSize : 32;
-            for (int gx = 0; gx <= doc.Width; gx += grid)
-            {
-                Vec2 a = v.LevelToScreen(new Vec2(gx, 0));
-                Vec2 b = v.LevelToScreen(new Vec2(gx, doc.Height));
-                context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
-            }
-            for (int gy = 0; gy <= doc.Height; gy += grid)
-            {
-                Vec2 a = v.LevelToScreen(new Vec2(0, gy));
-                Vec2 b = v.LevelToScreen(new Vec2(doc.Width, gy));
-                context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
-            }
+            DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true);
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
-
-            // Ropes are interleaved per grab - each grab draws its hook's back art, then its rope, then the
-            // hook's front art - so the rope threads between the two hook layers the way the game does
-            // (Grab.DrawBack + Grab.Draw). Ropes with no target resolve to null and are skipped, keeping the
-            // per-rope seed (for seasonal light frames) in step with the grabs that actually have a rope.
-            Rect opBounds = new(Bounds.Size);
-
-            // Light-bulb lit-glow halos: an additive Skia pass under the bottles, matching the game's
-            // DrawLight-then-bottle order. Drawn once for every bulb with a positive litRadius.
-            List<(Vec2 Center, double Radius)> glowBulbs = [];
-            foreach (LevelObject o in objects)
-            {
-                if (o.Type == "lightBulb" && RadiusRing.Of(o) is { } ring)
-                {
-                    glowBulbs.Add((new Vec2(o.X, o.Y), ring.Radius));
-                }
-            }
-            if (glowBulbs.Count > 0 && sprites.GetSprite("lightBulb_glow") is { Layers.Count: >= 1 } glow)
-            {
-                SpriteLayerDraw glowLayer = glow.Layers[0];
-                context.Custom(new GlowDrawOperation(opBounds, v, glowLayer.Bitmap, glowLayer.Frame.Frame, glowBulbs));
-            }
-
-            // Draw in the game's fixed z-order (GameScene.Draw) rather than level-list order, so a candy
-            // placed before a grab still sits above its rope. OrderBy is a stable sort, so objects sharing
-            // a layer keep their list order - this keeps the per-rope seed deterministic across grabs.
-            int ropeSeed = 0;
-            foreach (LevelObject obj in objects.OrderBy(GameDrawLayer))
-            {
-                if (obj.Type == "grab")
-                {
-                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts, ActiveRopeSkin);
-                    DrawGrab(context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds);
-                    if (rope is not null)
-                    {
-                        ropeSeed++;
-                    }
-                }
-                else
-                {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
-                }
-            }
 
             GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius);
 
@@ -573,6 +459,143 @@ namespace CtrDxEditor.Rendering
                     DrawSprite(context, v, ghostSprite, _ghostLevel.X, _ghostLevel.Y);
                 }
             }
+        }
+
+        // Draws the level itself - background decoration, optional border+grid, light-bulb glow, and all
+        // objects/grabs in the game's z-order - into the given surface. Interactive chrome (selection,
+        // radius rings, hitboxes, ghost) is NOT drawn here; Render layers that on top. drawGrid gates the
+        // editor-only border and grid so a clean screenshot can omit them.
+        private void DrawLevelContent(
+            DrawingContext context,
+            ViewTransform v,
+            Size renderSize,
+            LevelDocument doc,
+            SpriteCache sprites,
+            bool drawGrid)
+        {
+            Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
+            Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
+
+            Bitmap? bg = sprites.GetBackground(ActiveBackground);
+            if (bg is not null && bg.Size is { Width: > 0, Height: > 0 } bgSize)
+            {
+                Bitmap? p2 = sprites.GetBackgroundP2(ActiveBackground);
+                double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
+                BackgroundLayout layout = BackgroundPlacement.Compute(
+                    doc.Width, doc.Height, bgSize.Height / bgSize.Width,
+                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
+                    SpriteCache.GetEarthBgPosition(ActiveBackground));
+
+                using (context.PushClip(new Rect(0, tl.Y, renderSize.Width, br.Y - tl.Y)))
+                {
+                    if (layout.TileHeight > 0.5)
+                    {
+                        Rect bgSrc = new(bgSize);
+                        for (double ty = 0; ty < doc.Height; ty += layout.TileHeight)
+                        {
+                            context.DrawImage(bg, bgSrc, LevelRectToScreen(v, layout.Left, ty, layout.Width, layout.TileHeight));
+                        }
+                    }
+
+                    if (layout.P2 is { } p2b && p2 is not null)
+                    {
+                        context.DrawImage(p2, new Rect(p2.Size), LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                    }
+
+                    if (layout.EarthCenter is { } ec && sprites.GetEarthArt() is { } earthArt)
+                    {
+                        IntRect ef = earthArt.Frame.Frame;
+                        double ew = ef.W / SpritePlacement.MapScale;
+                        double eh = ef.H / SpritePlacement.MapScale;
+                        context.DrawImage(
+                            earthArt.Bitmap,
+                            new Rect(ef.X, ef.Y, ef.W, ef.H),
+                            LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
+                    }
+                }
+            }
+
+            if (drawGrid)
+            {
+                context.DrawRectangle(null, _palette.LevelBorder,
+                    new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
+
+                int grid = doc.GridSize > 0 ? doc.GridSize : 32;
+                for (int gx = 0; gx <= doc.Width; gx += grid)
+                {
+                    Vec2 a = v.LevelToScreen(new Vec2(gx, 0));
+                    Vec2 b = v.LevelToScreen(new Vec2(gx, doc.Height));
+                    context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                }
+                for (int gy = 0; gy <= doc.Height; gy += grid)
+                {
+                    Vec2 a = v.LevelToScreen(new Vec2(0, gy));
+                    Vec2 b = v.LevelToScreen(new Vec2(doc.Width, gy));
+                    context.DrawLine(_palette.Grid, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                }
+            }
+
+            IReadOnlyList<LevelObject> objects = doc.Objects;
+            Rect opBounds = new(renderSize);
+
+            // Light-bulb lit-glow halos: an additive Skia pass under the bottles (game's DrawLight order).
+            List<(Vec2 Center, double Radius)> glowBulbs = [];
+            foreach (LevelObject o in objects)
+            {
+                if (o.Type == "lightBulb" && RadiusRing.Of(o) is { } ring)
+                {
+                    glowBulbs.Add((new Vec2(o.X, o.Y), ring.Radius));
+                }
+            }
+            if (glowBulbs.Count > 0 && sprites.GetSprite("lightBulb_glow") is { Layers.Count: >= 1 } glow)
+            {
+                SpriteLayerDraw glowLayer = glow.Layers[0];
+                context.Custom(new GlowDrawOperation(opBounds, v, glowLayer.Bitmap, glowLayer.Frame.Frame, glowBulbs));
+            }
+
+            // Draw in the game's fixed z-order (GameScene.Draw), a stable sort so same-layer objects keep list order.
+            int ropeSeed = 0;
+            foreach (LevelObject obj in objects.OrderBy(GameDrawLayer))
+            {
+                if (obj.Type == "grab")
+                {
+                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts, ActiveRopeSkin);
+                    DrawGrab(context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds);
+                    if (rope is not null)
+                    {
+                        ropeSeed++;
+                    }
+                }
+                else
+                {
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Renders the whole level clean (no grid, border, selection, hitboxes, or ghost) onto an opaque
+        /// black backdrop at the game's native scale, for saving as a screenshot. Returns null when there is
+        /// no document or sprite cache.
+        /// </summary>
+        public RenderTargetBitmap? RenderLevelToBitmap()
+        {
+            if (Document is not { } doc || Sprites is not { } sprites)
+            {
+                return null;
+            }
+
+            double bgWidth = ActiveBackground > 0 ? BackgroundPlacement.LevelScreenWidth : 0.0;
+            ScreenshotFrame frame = ComputeScreenshotFrame(doc.Width, doc.Height, bgWidth);
+
+            RenderTargetBitmap rtb = new(frame.Size, new Vector(96, 96));
+            Size renderSize = new(frame.Size.Width, frame.Size.Height);
+            using (DrawingContext ctx = rtb.CreateDrawingContext())
+            {
+                ctx.FillRectangle(Brushes.Black, new Rect(renderSize));
+                DrawLevelContent(ctx, frame.View, renderSize, doc, sprites, drawGrid: false);
+            }
+            return rtb;
         }
 
         // Selection marquee: the trimmed (visible) sprite bounds — the union of every layer's drawn
