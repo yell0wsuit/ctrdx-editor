@@ -582,8 +582,18 @@ namespace CtrDxEditor.Views
                 NotificationType.Success));
         }
 
-        // The toast host, created lazily against the current TopLevel and reused. Null only before the
-        // view is attached to a window, which cannot happen from a menu click.
+        /// <inheritdoc />
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            // Create the toast host now, while there is a TopLevel, so it is attached and laid out before
+            // the first save. A manager constructed at the first Show() call drops that first notification
+            // (it is not yet in the visual tree), which is why the initial "Saving…" toast went missing.
+            _ = Notifications();
+        }
+
+        // The toast host, created against the current TopLevel and reused. Null only before the view is
+        // attached to a window, which cannot happen from a menu click.
         private WindowNotificationManager? Notifications()
         {
             if (_notifications is null && TopLevel.GetTopLevel(this) is { } top)
