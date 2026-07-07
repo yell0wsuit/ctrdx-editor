@@ -210,12 +210,22 @@ namespace CtrDxEditor.Tests
             Assert.Equal(3, settings.Background);
         }
 
-        /// <summary>Decoration options show only when creating a level, not when editing one.</summary>
+        /// <summary>The remember-as-default checkbox shows only when creating a level, not when editing.</summary>
         [Fact]
-        public void ShowDecorationTrueForNewFalseForEdit()
+        public void ShowRememberDecorationNewOnly()
         {
-            Assert.True(LevelSettingsViewModel.ForNew().ShowDecoration);
-            Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowDecoration);
+            Assert.True(LevelSettingsViewModel.ForNew().ShowRememberDecoration);
+            Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowRememberDecoration);
+        }
+
+        /// <summary>Edit mode seeds the decoration pickers from the editor's live rope/background ids.</summary>
+        [Fact]
+        public void ForEditPrefillsDecoration()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
+                new LevelSettings(320, 480, 1f, 0, false, false), ropeSkin: 5, background: 7);
+            Assert.Equal(5, vm.SelectedRopeSkin);
+            Assert.Equal(7, vm.SelectedBackground);
         }
 
         /// <summary>Background options run Blank first, then all 17 box backgrounds, then Random last.</summary>

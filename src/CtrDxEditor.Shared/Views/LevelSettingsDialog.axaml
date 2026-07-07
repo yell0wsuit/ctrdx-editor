@@ -217,9 +217,8 @@
           </CheckBox>
         </StackPanel>
 
-        <!-- Editor-decoration pickers, new-level mode only. -->
-        <StackPanel Spacing="8"
-                    IsVisible="{Binding ShowDecoration}">
+        <!-- Editor-decoration pickers, shown in both New and Edit modes. -->
+        <StackPanel Spacing="8">
 
           <Border Height="1"
                   Background="#22FFFFFF"
@@ -372,6 +371,7 @@
           </Expander>
 
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberCustomizationChoice}"
+                    IsVisible="{Binding ShowRememberDecoration}"
                     IsChecked="{Binding RememberDecoration, Mode=TwoWay}" />
         </StackPanel>
       </StackPanel>

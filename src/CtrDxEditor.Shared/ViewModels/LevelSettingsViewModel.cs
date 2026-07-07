@@ -125,8 +125,8 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial int SelectedBackground { get; set; }
         [ObservableProperty] public partial bool RememberDecoration { get; set; }
 
-        /// <summary>Decoration options are only offered when creating a new level.</summary>
-        public bool ShowDecoration => IsNewMode;
+        /// <summary>The "remember as default" checkbox is only meaningful when creating a new level.</summary>
+        public bool ShowRememberDecoration => IsNewMode;
 
         // Guards the two-way mirror between the Selected* ids and each option's IsSelected flag so a
         // change on one side doesn't recurse back through the other.
@@ -253,8 +253,11 @@ namespace CtrDxEditor.ViewModels
             return new LevelSettingsViewModel(isNewMode: true);
         }
 
-        /// <summary>A dialog for editing an existing level, prefilled from <paramref name="current"/>.</summary>
-        public static LevelSettingsViewModel ForEdit(LevelSettings current)
+        /// <summary>
+        /// A dialog for editing an existing level, prefilled from <paramref name="current"/>. The
+        /// decoration pickers seed from the editor's live <paramref name="ropeSkin"/>/<paramref name="background"/>.
+        /// </summary>
+        public static LevelSettingsViewModel ForEdit(LevelSettings current, int ropeSkin = 0, int background = 0)
         {
             LevelSettingsViewModel vm = new(isNewMode: false)
             {
@@ -264,6 +267,8 @@ namespace CtrDxEditor.ViewModels
                 UseMobilePhysics = current.UseMobilePhysics,
                 CustomWidth = current.Width,
                 CustomHeight = current.Height,
+                SelectedRopeSkin = ropeSkin,
+                SelectedBackground = background,
             };
             vm.SelectSpecial(current.Special);
             ResolutionPreset? match = vm.Presets.FirstOrDefault(

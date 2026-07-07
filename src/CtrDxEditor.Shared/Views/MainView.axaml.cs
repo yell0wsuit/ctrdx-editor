@@ -285,11 +285,19 @@ namespace CtrDxEditor.Views
             {
                 return;
             }
-            LevelSettingsDialog dialog = new() { DataContext = LevelSettingsViewModel.ForEdit(current) };
+            LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForEdit(current, vm.ActiveRopeSkin, vm.ActiveBackground);
+            LevelSettingsDialog dialog = new() { DataContext = dialogVm };
+            // Fill in the background thumbnails progressively off the UI thread; the dialog opens at once.
+            _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
                 vm.UpdateLevelSettings(settings);
+                // Apply the chosen decoration to the live editor (Random resolves to a concrete id);
+                // the canvas repaints via LevelCanvas's affectsRender on these properties.
+                (int ropeSkin, int background) = dialogVm.ResolveDecoration(Random.Shared);
+                vm.ActiveRopeSkin = ropeSkin;
+                vm.ActiveBackground = background;
             }
         }
 
