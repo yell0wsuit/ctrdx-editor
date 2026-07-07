@@ -129,7 +129,7 @@
         </MenuItem>
       </MenuItem>
     </Menu>
-    <Grid ColumnDefinitions="160,*,280">
+    <Grid ColumnDefinitions="160,1,*,1,280">
       <Border Grid.Column="0" Background="{DynamicResource EditorBrush.Surface.Panel}">
         <ItemsControl x:Name="PaletteList" ItemsSource="{Binding Palette}" Margin="6,6,6,10">
           <ItemsControl.ItemTemplate>
@@ -147,7 +147,8 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </Border>
-      <Grid Grid.Column="1" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
+      <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
+      <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
         <render:LevelCanvas Grid.Row="0" Grid.Column="0" x:Name="Canvas" Focusable="True"
                             ClipToBounds="True"
                             Document="{Binding Document}"
@@ -180,7 +181,8 @@
                    LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
         <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Panel}" />
       </Grid>
-      <Grid Grid.Column="2" Background="{DynamicResource EditorBrush.Surface.Panel}" RowDefinitions="Auto,2*,Auto,3*">
+      <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
+      <Grid Grid.Column="4" Background="{DynamicResource EditorBrush.Surface.Panel}" RowDefinitions="Auto,2*,Auto,3*">
         <TextBlock Grid.Row="0" Text="{loc:Tr Panel.Objects}" FontWeight="Bold" Margin="8,8,8,4" />
         <ListBox Grid.Row="1" Margin="4,0,4,4" x:Name="ObjectsListBox"
                  Background="Transparent"
