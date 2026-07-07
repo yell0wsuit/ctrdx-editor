@@ -292,6 +292,10 @@
       <Color x:Key="EditorColor.TextSubtle">#62748E</Color>  <!-- slate-500 -->
       <Color x:Key="EditorColor.TextDisabled">#90A1B9</Color>  <!-- slate-400 -->
 
+      <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
+      <Color x:Key="EditorColor.CanvasBorder">#90A1B9</Color>  <!-- slate-400 -->
+      <Color x:Key="EditorColor.CanvasGrid">#28314158</Color>  <!-- slate-700 @ ~16% -->
+
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Light tints so the dark row text stays readable. -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#BEDBFF" />     <!-- blue-200, selected -->
@@ -317,6 +321,10 @@
       <Color x:Key="EditorColor.SurfacePreview">#1D293D</Color>  <!-- slate-800 -->
       <Color x:Key="EditorColor.TextSubtle">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.TextDisabled">#62748E</Color>  <!-- slate-500 -->
+
+      <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
+      <Color x:Key="EditorColor.CanvasBorder">#45556C</Color>  <!-- slate-600 -->
+      <Color x:Key="EditorColor.CanvasGrid">#28CAD5E2</Color>  <!-- slate-300 @ ~16% -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Deep blues so the light row text stays readable. -->

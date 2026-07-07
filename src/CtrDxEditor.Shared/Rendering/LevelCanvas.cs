@@ -193,6 +193,15 @@ namespace CtrDxEditor.Rendering
         private string? _ghostElement;
         private Vec2 _ghostLevel;
 
+        // Editor-chrome brushes/pens resolved from the theme once per theme change, not per Render.
+        // Fallbacks match the pre-theming literals in case a resource key is ever missing.
+        private IBrush _canvasBackgroundBrush = new SolidColorBrush(Color.FromRgb(40, 44, 52));
+        private Pen _levelBorderPen = new(new SolidColorBrush(Colors.DimGray), 1);
+        private Pen _gridPen = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1)
+        {
+            DashStyle = new DashStyle([4, 4], 0),
+        };
+
         /// <summary>Creates the canvas and enables native touch gestures.</summary>
         public LevelCanvas()
         {
@@ -200,6 +209,39 @@ namespace CtrDxEditor.Rendering
             AddHandler(PinchEvent, Canvas_Pinch, RoutingStrategies.Bubble);
             AddHandler(PinchEndedEvent, Canvas_PinchEnded, RoutingStrategies.Bubble);
             AddHandler(PointerTouchPadGestureMagnifyEvent, Canvas_TouchPadMagnify, RoutingStrategies.Bubble);
+        }
+
+        /// <inheritdoc />
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            RefreshThemeColors();
+            ActualThemeVariantChanged += OnActualThemeVariantChanged;
+        }
+
+        /// <inheritdoc />
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            ActualThemeVariantChanged -= OnActualThemeVariantChanged;
+            base.OnDetachedFromVisualTree(e);
+        }
+
+        private void OnActualThemeVariantChanged(object? sender, EventArgs e)
+        {
+            RefreshThemeColors();
+            InvalidateVisual();
+        }
+
+        /// <summary>Re-resolves the cached editor-chrome brushes/pens for the active theme variant.
+        /// Called on attach and whenever the theme changes, so <see cref="Render"/> never resolves resources.</summary>
+        private void RefreshThemeColors()
+        {
+            _canvasBackgroundBrush = new SolidColorBrush(ThemeColor("EditorColor.SurfacePanel", Color.FromRgb(40, 44, 52)));
+            _levelBorderPen = new Pen(new SolidColorBrush(ThemeColor("EditorColor.CanvasBorder", Colors.DimGray)), 1);
+            _gridPen = new Pen(new SolidColorBrush(ThemeColor("EditorColor.CanvasGrid", Color.FromArgb(40, 255, 255, 255))), 1)
+            {
+                DashStyle = new DashStyle([4, 4], 0),
+            };
         }
 
         /// <inheritdoc />
@@ -331,12 +373,21 @@ namespace CtrDxEditor.Rendering
             return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
         }
 
+        /// <summary>Resolves a themed <see cref="Color"/> resource for the control's active theme variant,
+        /// falling back to <paramref name="fallback"/> when the key is missing.</summary>
+        private Color ThemeColor(string key, Color fallback)
+        {
+            return this.TryFindResource(key, ActualThemeVariant, out object? value) && value is Color color
+                ? color
+                : fallback;
+        }
+
         /// <inheritdoc />
         public override void Render(DrawingContext context)
         {
             base.Render(context);
 
-            context.FillRectangle(new SolidColorBrush(Color.FromRgb(40, 44, 52)), new Rect(Bounds.Size));
+            context.FillRectangle(_canvasBackgroundBrush, new Rect(Bounds.Size));
 
             LevelDocument? doc = Document;
             SpriteCache? sprites = Sprites;
@@ -402,22 +453,21 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            context.DrawRectangle(null, new Pen(Brushes.DimGray, 1),
+            context.DrawRectangle(null, _levelBorderPen,
                 new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
 
             int grid = doc.GridSize > 0 ? doc.GridSize : 32;
-            Pen gridPen = new(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
             for (int gx = 0; gx <= doc.Width; gx += grid)
             {
                 Vec2 a = v.LevelToScreen(new Vec2(gx, 0));
                 Vec2 b = v.LevelToScreen(new Vec2(gx, doc.Height));
-                context.DrawLine(gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                context.DrawLine(_gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
             }
             for (int gy = 0; gy <= doc.Height; gy += grid)
             {
                 Vec2 a = v.LevelToScreen(new Vec2(0, gy));
                 Vec2 b = v.LevelToScreen(new Vec2(doc.Width, gy));
-                context.DrawLine(gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
+                context.DrawLine(_gridPen, new Point(a.X, a.Y), new Point(b.X, b.Y));
             }
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
