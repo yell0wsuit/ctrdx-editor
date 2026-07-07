@@ -211,7 +211,7 @@ namespace CtrDxEditor.ViewModels
                 {
                     continue;
                 }
-                bool enabled = Document is not null && !Cardinality.IsAtCapacity(d, objs);
+                bool enabled = Document is not null && LockedObject is null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled,
                     Sprites.GetThumbnail(d.ElementName, ActiveCandySkin, ActiveOmNomSupport)));
@@ -234,7 +234,7 @@ namespace CtrDxEditor.ViewModels
         public LevelObject? PlaceObject(string element, int levelX, int levelY)
         {
             ObjectDescriptor? d = _descriptors.For(element);
-            if (d is null || Document is null || Cardinality.IsAtCapacity(d, Document.Objects))
+            if (d is null || Document is null || LockedObject is not null || Cardinality.IsAtCapacity(d, Document.Objects))
             {
                 return null;
             }
@@ -326,6 +326,11 @@ namespace CtrDxEditor.ViewModels
         partial void OnDocumentChanged(LevelDocument? value)
         {
             OnPropertyChanged(nameof(HasDocument));
+        }
+
+        partial void OnLockedObjectChanged(LevelObject? value)
+        {
+            RefreshPalette();
         }
 
         // The candy skin changes the candy sprites, so the palette thumbnails must be rebuilt. (The

@@ -139,5 +139,25 @@ namespace CtrDxEditor.Tests
             Assert.False(PaletteItem(vm, "candyL").Enabled);
             Assert.False(PaletteItem(vm, "candyR").Enabled);
         }
+
+        /// <summary>Locking an object disables palette placement until the lock is cleared.</summary>
+        [Fact]
+        public void LockedObjectDisablesPalettePlacement()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject locked = vm.PlaceObject("target", 320, 240)!;
+
+            vm.ToggleLock(locked);
+
+            Assert.All(vm.Palette, item => Assert.False(item.Enabled));
+            Assert.Null(vm.PlaceObject("star", 100, 120));
+            Assert.DoesNotContain(vm.Document!.Objects, o => o.Type == "star");
+
+            vm.ToggleLock(locked);
+
+            Assert.True(PaletteItem(vm, "star").Enabled);
+            Assert.NotNull(vm.PlaceObject("star", 100, 120));
+        }
     }
 }
