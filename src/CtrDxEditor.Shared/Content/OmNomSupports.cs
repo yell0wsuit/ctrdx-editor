@@ -11,6 +11,9 @@ namespace CtrDxEditor.Content
         public const int Count = 17;
 
         /// <summary>The char_supports frame name for the given platform index.</summary>
-        public static string FrameName(int support) => $"frame_{support:D4}.png";
+        public static string FrameName(int support)
+        {
+            return $"frame_{support:D4}.png";
+        }
     }
 }
