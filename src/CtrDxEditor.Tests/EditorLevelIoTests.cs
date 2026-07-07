@@ -43,12 +43,35 @@ namespace CtrDxEditor.Tests
 
             vm.LoadLevelXml(xml);
 
+            Assert.True(vm.HasDocument);
             Assert.NotNull(vm.Document);
             Assert.Equal(100, vm.Document.Width);
             Assert.Equal(80, vm.Document.Height);
             string? saved = vm.ToXml();
             Assert.NotNull(saved);
             Assert.Contains("width=\"100\"", saved);
+        }
+
+        /// <summary>Verifies that closing a level resets the editable document state.</summary>
+        [Fact]
+        public void CloseLevelClearsDocumentAndEditorState()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            const string xml = "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"100\" height=\"80\" /></layer></map>";
+            vm.LoadLevelXml(xml);
+            _ = vm.PlaceObject("target", 50, 60);
+            vm.ToggleLock(vm.SelectedObject);
+
+            vm.CloseLevel();
+
+            Assert.False(vm.HasDocument);
+            Assert.Null(vm.Document);
+            Assert.Null(vm.SelectedObject);
+            Assert.Null(vm.LockedObject);
+            Assert.Empty(vm.ObjectList);
+            Assert.Empty(vm.Palette);
+            Assert.Empty(vm.Fields);
+            Assert.Null(vm.ToXml());
         }
 
         /// <summary>Verifies that loading XML notifies the view after the document has been replaced.</summary>

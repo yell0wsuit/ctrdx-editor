@@ -24,9 +24,23 @@
             <icons:MaterialIcon Kind="FolderOpenOutline" />
           </MenuItem.Icon>
         </MenuItem>
-        <MenuItem Header="{loc:Tr Menu.File.SaveAs}" Click="SaveAs_Click">
+        <MenuItem Header="{loc:Tr Menu.File.Save}" Click="Save_Click"
+                  IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="ContentSave" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="{loc:Tr Menu.File.SaveAs}" Click="SaveAs_Click"
+                  IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentSaveEdit" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="{loc:Tr Menu.File.Close}" Click="Close_Click"
+                  IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="CloseBoxOutline" />
           </MenuItem.Icon>
         </MenuItem>
       </MenuItem>
@@ -41,7 +55,7 @@
       <MenuItem Header="{loc:Tr Menu.View}">
         <!-- Shortcut text lives in the header (KeyGesture can't render "Ctrl +"/"Ctrl 0"); the keys
              themselves are handled in MainWindow's KeyDown. A fixed MinWidth right-aligns the hint. -->
-        <MenuItem Click="ZoomIn_Click">
+        <MenuItem Click="ZoomIn_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="MagnifyPlusOutline" />
           </MenuItem.Icon>
@@ -52,7 +66,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="ZoomOut_Click">
+        <MenuItem Click="ZoomOut_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="MagnifyMinusOutline" />
           </MenuItem.Icon>
@@ -63,7 +77,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="ZoomFit_Click">
+        <MenuItem Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="FitToScreen" />
           </MenuItem.Icon>
@@ -77,7 +91,7 @@
         <Separator />
         <!-- Transparent icon placeholder reserves the icon column so the check lines up with the
              zoom shortcuts above; the check sits at the header's right edge via the same MinWidth. -->
-        <MenuItem Click="SnapToggle_Click">
+        <MenuItem Click="SnapToggle_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <Border Width="16" Height="16" Background="Transparent" />
           </MenuItem.Icon>
@@ -89,7 +103,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="ShowHitboxesToggle_Click">
+        <MenuItem Click="ShowHitboxesToggle_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <Border Width="16" Height="16" Background="Transparent" />
           </MenuItem.Icon>
@@ -101,7 +115,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="ShowMobileHitboxesToggle_Click">
+        <MenuItem Click="ShowMobileHitboxesToggle_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <Border Width="16" Height="16" Background="Transparent" />
           </MenuItem.Icon>

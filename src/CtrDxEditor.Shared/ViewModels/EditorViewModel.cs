@@ -61,6 +61,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The current level's editable settings, or null when no level is loaded.</summary>
         public LevelSettings? CurrentSettings => Document?.Settings;
 
+        /// <summary>True when a level is open and editor-only commands can run.</summary>
+        public bool HasDocument => Document is not null;
+
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
@@ -71,6 +74,17 @@ namespace CtrDxEditor.ViewModels
             RefreshPalette();
             RefreshObjectList();
             LevelLoaded?.Invoke();
+        }
+
+        /// <summary>Closes the current level and clears document-scoped editor state.</summary>
+        public void CloseLevel()
+        {
+            Document = null;
+            SelectedObject = null;
+            LockedObject = null;
+            Palette.Clear();
+            ObjectList.Clear();
+            Fields.Clear();
         }
 
         /// <summary>
@@ -238,6 +252,11 @@ namespace CtrDxEditor.ViewModels
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
             PopulateFields(value);
+        }
+
+        partial void OnDocumentChanged(LevelDocument? value)
+        {
+            OnPropertyChanged(nameof(HasDocument));
         }
 
         // The candy skin changes the candy sprites, so the palette thumbnails must be rebuilt. (The

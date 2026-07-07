@@ -4,7 +4,9 @@
     "Menu.File": "_File",
     "Menu.File.New": "_New...",
     "Menu.File.Open": "_Open...",
+    "Menu.File.Save": "_Save",
     "Menu.File.SaveAs": "Save _As...",
+    "Menu.File.Close": "_Close",
 
     "Menu.Edit": "_Edit",
     "Menu.Edit.LevelSettings": "Level _Settings...",
@@ -106,6 +108,9 @@
     "Dialog.Validation.SaveProceed": "Save anyway",
     "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
     "Dialog.Validation.EditProceed": "Edit anyway",
+    "Dialog.Close.Header": "Confirm your action",
+    "Dialog.Close.Body": "Close the current level?",
+    "Dialog.Close.Proceed": "Close level",
 
     "Object.target": "Om Nom",
     "Object.candy": "Candy",

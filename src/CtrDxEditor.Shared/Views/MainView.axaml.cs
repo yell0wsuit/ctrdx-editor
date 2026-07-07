@@ -29,6 +29,7 @@ namespace CtrDxEditor.Views
     {
         private EditorViewModel? _mutatedSubscription;
         private readonly Action _invalidateCanvas;
+        private IStorageFile? _currentLevelFile;
 
         /// <summary>Creates the main editor view and wires input gestures.</summary>
         public MainView()
@@ -70,16 +71,25 @@ namespace CtrDxEditor.Views
                         e.Handled = true;
                         break;
                     case Key.OemPlus or Key.Add when ctrl:
-                        canvas.ZoomBy(1.2);
-                        e.Handled = true;
+                        if (DataContext is EditorViewModel { HasDocument: true })
+                        {
+                            canvas.ZoomBy(1.2);
+                            e.Handled = true;
+                        }
                         break;
                     case Key.OemMinus or Key.Subtract when ctrl:
-                        canvas.ZoomBy(1 / 1.2);
-                        e.Handled = true;
+                        if (DataContext is EditorViewModel { HasDocument: true })
+                        {
+                            canvas.ZoomBy(1 / 1.2);
+                            e.Handled = true;
+                        }
                         break;
                     case Key.D0 or Key.NumPad0 when ctrl:
-                        canvas.FitToView();
-                        e.Handled = true;
+                        if (DataContext is EditorViewModel { HasDocument: true })
+                        {
+                            canvas.FitToView();
+                            e.Handled = true;
+                        }
                         break;
                 }
 #pragma warning restore IDE0010
@@ -255,6 +265,7 @@ namespace CtrDxEditor.Views
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
+                _currentLevelFile = null;
                 (int ropeSkin, int background, int candySkin, int omNomSupport) = dialogVm.ResolveDecoration(Random.Shared);
                 vm.NewLevel(settings, ropeSkin, background, candySkin, omNomSupport);
 
@@ -357,6 +368,19 @@ namespace CtrDxEditor.Views
             return confirmed.GetValueOrDefault();
         }
 
+        private static async Task<bool> ConfirmCloseAsync()
+        {
+            ConfirmDialog dialog = new()
+            {
+                Header = Localizer.Get("Dialog.Close.Header"),
+                Message = Localizer.Get("Dialog.Close.Body"),
+                PositiveText = Localizer.Get("Dialog.Close.Proceed"),
+                NegativeText = Localizer.Get("Dialog.Common.Cancel"),
+            };
+            Optional<bool> confirmed = await dialog.ShowAsync();
+            return confirmed.GetValueOrDefault();
+        }
+
         private async void Open_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm)
@@ -385,24 +409,57 @@ namespace CtrDxEditor.Views
                     return;
                 }
                 vm.LoadLevelXml(xml);
+                _currentLevelFile = files[0];
+            }
+        }
+
+        private async void Close_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm || !vm.HasDocument)
+            {
+                return;
+            }
+
+            if (await ConfirmCloseAsync())
+            {
+                vm.CloseLevel();
+                _currentLevelFile = null;
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+            }
+        }
+
+        private async void Save_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm || !vm.HasDocument)
+            {
+                return;
+            }
+
+            if (_currentLevelFile is null)
+            {
+                await SaveAsAsync(vm);
+                return;
+            }
+
+            if (await CanSaveAsync(vm) && vm.ToXml() is { } xml)
+            {
+                await WriteXmlAsync(_currentLevelFile, xml);
             }
         }
 
         private async void SaveAs_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is not EditorViewModel vm)
+            if (DataContext is EditorViewModel vm)
+            {
+                await SaveAsAsync(vm);
+            }
+        }
+
+        private async Task SaveAsAsync(EditorViewModel vm)
+        {
+            if (!vm.HasDocument || !await CanSaveAsync(vm))
             {
                 return;
-            }
-
-            if (vm.Document is { } doc)
-            {
-                IReadOnlyList<string> warnings = LevelValidator.Validate(doc);
-                if (warnings.Count > 0
-                    && !await ConfirmValidationAsync(warnings, "Dialog.Validation.SavePrompt", "Dialog.Validation.SaveProceed"))
-                {
-                    return;
-                }
             }
 
             IStorageFile? file = await TopLevel.GetTopLevel(this)!.StorageProvider.SaveFilePickerAsync(
@@ -410,16 +467,41 @@ namespace CtrDxEditor.Views
                 {
                     Title = Localizer.Get("Dialog.Save.Title"),
                     DefaultExtension = "xml",
-                    SuggestedFileName = "level.xml",
+                    SuggestedFileName = _currentLevelFile?.Name ?? "level.xml",
                     FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.LevelXml")) { Patterns = ["*.xml"] }],
                 });
 
             if (file is not null && vm.ToXml() is { } xml)
             {
-                await using Stream stream = await file.OpenWriteAsync();
-                await using StreamWriter writer = new(stream);
-                await writer.WriteAsync(xml);
+                await WriteXmlAsync(file, xml);
+                _currentLevelFile = file;
             }
+        }
+
+        private static async Task<bool> CanSaveAsync(EditorViewModel vm)
+        {
+            if (vm.Document is { } doc)
+            {
+                IReadOnlyList<string> warnings = LevelValidator.Validate(doc);
+                if (warnings.Count > 0
+                    && !await ConfirmValidationAsync(warnings, "Dialog.Validation.SavePrompt", "Dialog.Validation.SaveProceed"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static async Task WriteXmlAsync(IStorageFile file, string xml)
+        {
+            await using Stream stream = await file.OpenWriteAsync();
+            if (stream.CanSeek)
+            {
+                stream.SetLength(0);
+            }
+            await using StreamWriter writer = new(stream);
+            await writer.WriteAsync(xml);
         }
     }
 }
