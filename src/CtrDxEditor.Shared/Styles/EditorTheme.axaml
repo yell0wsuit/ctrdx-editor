@@ -291,6 +291,13 @@
       <Color x:Key="EditorColor.SurfacePreview">#F1F5F9</Color>  <!-- slate-100 -->
       <Color x:Key="EditorColor.TextSubtle">#62748E</Color>  <!-- slate-500 -->
       <Color x:Key="EditorColor.TextDisabled">#90A1B9</Color>  <!-- slate-400 -->
+
+      <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
+           Light tints so the dark row text stays readable. -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#BEDBFF" />     <!-- blue-200, selected -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#8EC5FF" />  <!-- blue-300, selected+hover -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#51A2FF" />    <!-- blue-400, selected+pressed -->
+      <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#155DFC" />            <!-- blue-600, selection indicator -->
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Dark">
@@ -310,6 +317,13 @@
       <Color x:Key="EditorColor.SurfacePreview">#1D293D</Color>  <!-- slate-800 -->
       <Color x:Key="EditorColor.TextSubtle">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.TextDisabled">#62748E</Color>  <!-- slate-500 -->
+
+      <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
+           Deep blues so the light row text stays readable. -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#193CB8" />     <!-- blue-800, selected -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#1447E6" />  <!-- blue-700, selected+hover -->
+      <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#155DFC" />    <!-- blue-600, selected+pressed -->
+      <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#2B7FFF" />            <!-- blue-500, selection indicator -->
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 
