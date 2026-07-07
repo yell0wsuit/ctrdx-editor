@@ -248,13 +248,14 @@ namespace CtrDxEditor.Views
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForNew();
             dialogVm.LoadDecoration(vm.CurrentSettingsSnapshot);
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
-            // Fill in the background thumbnails progressively off the UI thread; the dialog opens at once.
+            // Fill in the background/candy thumbnails progressively off the UI thread; the dialog opens at once.
             _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
+            _ = LoadCandyThumbnailsAsync(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
-                (int ropeSkin, int background) = dialogVm.ResolveDecoration(Random.Shared);
-                vm.NewLevel(settings, ropeSkin, background);
+                (int ropeSkin, int background, int candySkin) = dialogVm.ResolveDecoration(Random.Shared);
+                vm.NewLevel(settings, ropeSkin, background, candySkin);
 
                 dialogVm.WriteDecorationInto(vm.CurrentSettingsSnapshot);
                 if (vm.Settings is { } store)
@@ -279,25 +280,44 @@ namespace CtrDxEditor.Views
             }
         }
 
+        // Warms each candy skin's atlas off the UI thread (the heavy PNG decode), then composites its
+        // small preview on the UI thread, so the picker cards fill in progressively. Random has no preview.
+        private static async Task LoadCandyThumbnailsAsync(LevelSettingsViewModel dialogVm, SpriteCache sprites)
+        {
+            foreach (CandySkinOption option in dialogVm.CandySkinOptions)
+            {
+                if (option.Id < 0)
+                {
+                    continue;
+                }
+                int skin = option.Id;
+                await Task.Run(() => sprites.PreloadCandySkin(skin));
+                option.Thumbnail = sprites.GetThumbnail("candy", skin);
+            }
+        }
+
         private async void LevelSettings_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm || vm.CurrentSettings is not { } current)
             {
                 return;
             }
-            LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForEdit(current, vm.ActiveRopeSkin, vm.ActiveBackground);
+            LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForEdit(
+                current, vm.ActiveRopeSkin, vm.ActiveBackground, vm.ActiveCandySkin);
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
-            // Fill in the background thumbnails progressively off the UI thread; the dialog opens at once.
+            // Fill in the background/candy thumbnails progressively off the UI thread; the dialog opens at once.
             _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
+            _ = LoadCandyThumbnailsAsync(dialogVm, vm.Sprites);
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
                 vm.UpdateLevelSettings(settings);
                 // Apply the chosen decoration to the live editor (Random resolves to a concrete id);
                 // the canvas repaints via LevelCanvas's affectsRender on these properties.
-                (int ropeSkin, int background) = dialogVm.ResolveDecoration(Random.Shared);
+                (int ropeSkin, int background, int candySkin) = dialogVm.ResolveDecoration(Random.Shared);
                 vm.ActiveRopeSkin = ropeSkin;
                 vm.ActiveBackground = background;
+                vm.ActiveCandySkin = candySkin;
             }
         }
 

@@ -43,6 +43,10 @@ namespace CtrDxEditor.Content
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
         private readonly Dictionary<string, Bitmap?> _thumbnails = [];
+        // Non-default candy skins (index 1..) are loaded on demand, not during preload. Concurrent so an
+        // off-thread picker preload and the UI-thread canvas render can both resolve skins without racing.
+        private readonly ConcurrentDictionary<int, Bitmap?> _candyBitmaps = new();
+        private readonly ConcurrentDictionary<int, Atlas?> _candyAtlases = new();
         // Concurrent so the UI-thread canvas render and an off-thread thumbnail preload can both
         // resolve backgrounds without racing the cache.
         private readonly ConcurrentDictionary<int, Bitmap?> _backgrounds = new();
@@ -230,22 +234,27 @@ namespace CtrDxEditor.Content
             return bmp;
         }
 
-        /// <summary>A small composited preview of an object's sprite, for the palette. Cached per element.</summary>
-        public Bitmap? GetThumbnail(string element)
+        /// <summary>
+        /// A small composited preview of an object's sprite, for the palette (and the candy-skin picker).
+        /// Cached per (element, candy skin). <paramref name="candySkin"/> only affects candy elements.
+        /// Call on the UI thread; warm non-default candy skins first with <see cref="PreloadCandySkin"/>.
+        /// </summary>
+        public Bitmap? GetThumbnail(string element, int candySkin = 0)
         {
-            if (_thumbnails.TryGetValue(element, out Bitmap? cached))
+            string key = candySkin == 0 ? element : $"{element}#{candySkin}";
+            if (_thumbnails.TryGetValue(key, out Bitmap? cached))
             {
                 return cached;
             }
 
-            Bitmap? thumb = BuildThumbnail(element);
-            _thumbnails[element] = thumb;
+            Bitmap? thumb = BuildThumbnail(element, candySkin);
+            _thumbnails[key] = thumb;
             return thumb;
         }
 
-        private RenderTargetBitmap? BuildThumbnail(string element)
+        private RenderTargetBitmap? BuildThumbnail(string element, int candySkin)
         {
-            ObjectSprite? sprite = GetSprite(element);
+            ObjectSprite? sprite = GetSprite(element, candySkin);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return null;
@@ -289,8 +298,12 @@ namespace CtrDxEditor.Content
             return rtb;
         }
 
-        /// <summary>Returns the resolved sprite layers for an object element, or null when unavailable.</summary>
-        public ObjectSprite? GetSprite(string element)
+        /// <summary>
+        /// Returns the resolved sprite layers for an object element, or null when unavailable. For candy
+        /// elements the layers are drawn from the given <paramref name="candySkin"/>'s atlas (resolved by
+        /// quad index); the parameter is ignored for every other element.
+        /// </summary>
+        public ObjectSprite? GetSprite(string element, int candySkin = 0)
         {
             VisualDescriptor? v = VisualDescriptorMap.For(element);
             if (v is null)
@@ -298,11 +311,17 @@ namespace CtrDxEditor.Content
                 return null;
             }
 
+            // Candy frames are addressed by quad index against the active skin's atlas; everything else
+            // resolves against its own preloaded atlas by frame name (or quad, if the layer specifies one).
+            bool isCandy = element is "candy" or "candyL" or "candyR";
+            (Bitmap? candyBitmap, Atlas? candyAtlas) = isCandy ? LoadCandySkin(candySkin) : (null, null);
+
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
             foreach (SpriteLayer layer in v.Layers)
             {
-                Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
-                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.Find(layer.FrameName);
+                Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(layer.AtlasImageBasePath + imageExtension);
+                Atlas? atlas = isCandy ? candyAtlas : LoadAtlas(layer.AtlasJsonRelPath);
+                AtlasFrame? frame = ResolveFrame(atlas, layer);
                 if (bitmap is not null && frame is not null)
                 {
                     layers.Add(new SpriteLayerDraw(bitmap, frame));
@@ -313,7 +332,7 @@ namespace CtrDxEditor.Content
             foreach (SpriteLayer layer in v.RandomBackLayers)
             {
                 Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
-                AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.Find(layer.FrameName);
+                AtlasFrame? frame = ResolveFrame(LoadAtlas(layer.AtlasJsonRelPath), layer);
                 if (bitmap is not null && frame is not null)
                 {
                     variants.Add(new SpriteLayerDraw(bitmap, frame));
@@ -321,6 +340,64 @@ namespace CtrDxEditor.Content
             }
 
             return layers.Count == 0 ? null : new ObjectSprite(layers, v.Scale, variants);
+        }
+
+        private static AtlasFrame? ResolveFrame(Atlas? atlas, SpriteLayer layer)
+        {
+            return layer.Quad is int quad ? atlas?.At(quad) : atlas?.Find(layer.FrameName);
+        }
+
+        /// <summary>
+        /// Returns the atlas bitmap and frame table for a candy skin, loading and caching the non-default
+        /// skins (index &gt;= 1) on first use. Skin 0 uses the atlas preloaded from the candy descriptor.
+        /// Safe to call off the UI thread (used to warm the picker's thumbnails).
+        /// </summary>
+        private (Bitmap? Bitmap, Atlas? Atlas) LoadCandySkin(int skin)
+        {
+            if (skin <= 0)
+            {
+                return (LoadBitmap(CandySkins.ResourceBase(0) + imageExtension), LoadAtlas(CandySkins.JsonPath(0)));
+            }
+            Bitmap? bmp = _candyBitmaps.GetOrAdd(skin, LoadCandyBitmap);
+            Atlas? atlas = _candyAtlases.GetOrAdd(skin, LoadCandyAtlas);
+            return (bmp, atlas);
+        }
+
+        private Bitmap? LoadCandyBitmap(int skin)
+        {
+            try
+            {
+                byte[] bytes = Task.Run(() => store.ReadBytesAsync(CandySkins.ResourceBase(skin) + imageExtension))
+                    .GetAwaiter().GetResult();
+                using MemoryStream ms = new(bytes);
+                return new Bitmap(ms);
+            }
+            catch (Exception ex) when (ex is IOException or FileNotFoundException or InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        private Atlas? LoadCandyAtlas(int skin)
+        {
+            try
+            {
+                string json = Task.Run(() => store.ReadTextAsync(CandySkins.JsonPath(skin))).GetAwaiter().GetResult();
+                return new Atlas(AtlasJsonLoader.ParseFrames(json));
+            }
+            catch (Exception ex) when (ex is IOException or FileNotFoundException or InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Decodes and caches a candy skin's atlas without building a sprite, so callers can warm a skin
+        /// off the UI thread before compositing its (UI-thread) thumbnail. No-op for skin 0.
+        /// </summary>
+        public void PreloadCandySkin(int skin)
+        {
+            _ = LoadCandySkin(skin);
         }
 
         private static IEnumerable<SpriteLayer> AllLayers(VisualDescriptor descriptor)

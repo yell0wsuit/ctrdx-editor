@@ -20,5 +20,9 @@ namespace CtrDxEditor.Content
         /// <summary>Remembered background id: 0 = Blank, 1..7 = bgr_01..bgr_07, -1 = Random.</summary>
         [JsonPropertyName("background")]
         public int Background { get; set; }
+
+        /// <summary>Remembered candy skin index: 0 = Candy 1 (default), 1..51 = Candy 2..52, -1 = Random.</summary>
+        [JsonPropertyName("candySkin")]
+        public int CandySkin { get; set; }
     }
 }

@@ -10,18 +10,19 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the sprites for split candy halves and the light bulb.</summary>
     public class SplitCandyAndBulbVisualTests
     {
-        /// <summary>Each split-candy half uses the half-candy sprite at 0.71 scale with its own frame.</summary>
+        /// <summary>
+        /// Each split-candy half uses the half-candy sprite at 0.71 scale, addressed by quad index
+        /// (candyL = 8, candyR = 9) so it resolves across candy skins with differing frame names.
+        /// </summary>
         [Theory]
-        [InlineData("candyL")]
-        [InlineData("candyR")]
-        public void SplitCandyUsesHalfCandySprite(string element)
+        [InlineData("candyL", 8)]
+        [InlineData("candyR", 9)]
+        public void SplitCandyUsesHalfCandySprite(string element, int expectedQuad)
         {
             VisualDescriptor half = VisualDescriptorMap.For(element)!;
 
             Assert.Equal(0.71, half.Scale);
-            Assert.Equal(
-                [element == "candyL" ? "frame_08_part_1.png" : "frame_09_part_2.png"],
-                half.Layers.Select(l => l.FrameName));
+            Assert.Equal([expectedQuad], half.Layers.Select(l => l.Quad));
         }
 
         /// <summary>The light bulb draws the obj_lighter bottle and top layers.</summary>

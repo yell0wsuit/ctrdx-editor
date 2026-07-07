@@ -37,6 +37,7 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool ShowMobileHitboxes { get; set; }
         [ObservableProperty] public partial int ActiveRopeSkin { get; set; }
         [ObservableProperty] public partial int ActiveBackground { get; set; }
+        [ObservableProperty] public partial int ActiveCandySkin { get; set; }
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
@@ -79,14 +80,16 @@ namespace CtrDxEditor.ViewModels
         {
             ActiveRopeSkin = CurrentSettingsSnapshot.RopeSkin >= 0 ? CurrentSettingsSnapshot.RopeSkin : 0;
             ActiveBackground = CurrentSettingsSnapshot.Background > 0 ? CurrentSettingsSnapshot.Background : 0;
+            ActiveCandySkin = CurrentSettingsSnapshot.CandySkin >= 0 ? CurrentSettingsSnapshot.CandySkin : 0;
         }
 
         /// <summary>Creates a new empty level from the given settings and applies the chosen editor decoration.</summary>
-        public void NewLevel(LevelSettings settings, int ropeSkin = 0, int background = 0)
+        public void NewLevel(LevelSettings settings, int ropeSkin = 0, int background = 0, int candySkin = 0)
         {
             Document = LevelDocument.CreateNew(settings);
             ActiveRopeSkin = ropeSkin;
             ActiveBackground = background;
+            ActiveCandySkin = candySkin;
             SelectedObject = null;
             LockedObject = null;
             RefreshPalette();
@@ -179,7 +182,8 @@ namespace CtrDxEditor.ViewModels
                 }
                 bool enabled = Document is not null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
-                    d.ElementName, Localizer.ObjectName(d.ElementName), enabled, Sprites.GetThumbnail(d.ElementName)));
+                    d.ElementName, Localizer.ObjectName(d.ElementName), enabled,
+                    Sprites.GetThumbnail(d.ElementName, ActiveCandySkin)));
             }
         }
 
@@ -231,6 +235,13 @@ namespace CtrDxEditor.ViewModels
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
             PopulateFields(value);
+        }
+
+        // The candy skin changes the candy sprites, so the palette thumbnails must be rebuilt. (The
+        // canvas repaints on its own via LevelCanvas's affectsRender binding.)
+        partial void OnActiveCandySkinChanged(int value)
+        {
+            RefreshPalette();
         }
 
         // Central field construction; re-invoked when a structural grab toggle changes so

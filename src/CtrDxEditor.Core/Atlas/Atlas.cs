@@ -14,5 +14,15 @@ namespace CtrDxEditor.Core.Atlas
         {
             return Frames.FirstOrDefault(f => f.Filename == filename);
         }
+
+        /// <summary>
+        /// Returns the frame at the given zero-based position (the engine's "quad" index), or null when
+        /// out of range. Used where atlases share a frame order but not frame names (e.g. candy skins,
+        /// which the game addresses purely by quad index).
+        /// </summary>
+        public AtlasFrame? At(int index)
+        {
+            return index >= 0 && index < Frames.Count ? Frames[index] : null;
+        }
     }
 }

@@ -31,22 +31,26 @@ namespace CtrDxEditor.Content
                 new SpriteLayer("images/char_animations.json", "images/char_animations", "frame_0000.png"),
             ]),
 
-            // Candy = wrapper bottom + body + wrapper top (all share sourceSize 393x418).
+            // Candy = wrapper bottom + body + wrapper top (all share sourceSize 393x418). Addressed by
+            // quad index, not frame name: candy skins share this frame order but not their frame names,
+            // and SpriteCache swaps in the active skin's atlas at resolve time. Matches the game's
+            // GameObject_createWithResIDQuad(candyResource, 0/1/2).
             new("candy",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main.png"),
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_00_bottom", Quad: 0),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_01_main", Quad: 1),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_02_top", Quad: 2),
             ], Scale: 0.71),
 
-            // Split candy halves use the part frames from the same candy atlas at the same 0.71 scale.
+            // Split candy halves = quad 8 (part_1) / quad 9 (part_2) of the same candy atlas, at the
+            // same 0.71 scale. Matches the game's candyL/candyR quad indices in GameScene.LoadMetadata.
             new("candyL",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_08_part_1.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_08_part_1", Quad: 8),
             ], Scale: 0.71),
             new("candyR",
             [
-                new SpriteLayer(CandyJson, CandyImageBase, "frame_09_part_2.png"),
+                new SpriteLayer(CandyJson, CandyImageBase, "frame_09_part_2", Quad: 9),
             ], Scale: 0.71),
 
             // Grab hook = arm + ring (share sourceSize 276x276).

@@ -108,6 +108,41 @@ namespace CtrDxEditor.Tests
                 Enumerable.Select(sprite.Variants, v => v.Frame.Filename));
         }
 
+        /// <summary>
+        /// Candy sprites resolve frames by quad index, not frame name, so a skin whose atlas names its
+        /// frames differently (e.g. "part_1" instead of "frame_08_part_1.png") still composes correctly.
+        /// </summary>
+        [Fact]
+        public void GetSpriteResolvesCandyFramesByQuadIndexRegardlessOfName()
+        {
+            SpriteCache cache = new(new FakeStore());
+            // Deliberately unhelpful frame names ("z0".."z9") that match no descriptor FrameName; only
+            // their order matters. Candy = quads 0/1/2, candyL = quad 8, candyR = quad 9.
+            SeedDefaultCandyAtlas(cache, [.. Enumerable.Range(0, 10).Select(i => Frame($"z{i}"))]);
+
+            ObjectSprite candy = Assert.IsType<ObjectSprite>(cache.GetSprite("candy"));
+            Assert.Equal(["z0", "z1", "z2"], candy.Layers.Select(l => l.Frame.Filename));
+
+            ObjectSprite candyL = Assert.IsType<ObjectSprite>(cache.GetSprite("candyL"));
+            Assert.Equal(["z8"], candyL.Layers.Select(l => l.Frame.Filename));
+
+            ObjectSprite candyR = Assert.IsType<ObjectSprite>(cache.GetSprite("candyR"));
+            Assert.Equal(["z9"], candyR.Layers.Select(l => l.Frame.Filename));
+        }
+
+        private static void SeedDefaultCandyAtlas(SpriteCache cache, IReadOnlyList<AtlasFrame> frames)
+        {
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                [CandySkins.ResourceBase(0) + ".png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                [CandySkins.JsonPath(0)] = new Atlas(frames),
+            });
+        }
+
         private static void SeedBubbleAtlas(SpriteCache cache)
         {
             Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));

@@ -61,6 +61,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<int> ActiveBackgroundProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveBackground));
 
+        /// <summary>Editor-decoration candy skin index applied to candy sprites (0 = default candy).</summary>
+        public static readonly StyledProperty<int> ActiveCandySkinProperty =
+            AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveCandySkin));
+
         /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
         public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
             AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
@@ -93,7 +97,7 @@ namespace CtrDxEditor.Rendering
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
                 ShowHitboxesProperty, ShowMobileHitboxesProperty,
-                ActiveRopeSkinProperty, ActiveBackgroundProperty);
+                ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty);
         }
 
         /// <summary>The loaded level document to render and edit.</summary>
@@ -125,6 +129,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Editor-decoration background id (0 = none, 1..7 = bgr_01..bgr_07).</summary>
         public int ActiveBackground { get => GetValue(ActiveBackgroundProperty); set => SetValue(ActiveBackgroundProperty, value); }
+
+        /// <summary>Editor-decoration candy skin index applied to candy sprites (0 = default candy).</summary>
+        public int ActiveCandySkin { get => GetValue(ActiveCandySkinProperty); set => SetValue(ActiveCandySkinProperty, value); }
 
         /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
         public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }
@@ -442,7 +449,7 @@ namespace CtrDxEditor.Rendering
                 }
                 else if (obj.Type != "lightBulb")
                 {
-                    DrawObject(context, v, sprites, obj);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin);
                 }
             }
 
@@ -454,7 +461,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "lightBulb")
                 {
-                    DrawObject(context, v, sprites, obj);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin);
                 }
             }
 
@@ -494,7 +501,7 @@ namespace CtrDxEditor.Rendering
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
             if (_ghostActive && _ghostElement is { } ghostElement
-                && sprites.GetSprite(ghostElement) is { } ghostSprite)
+                && sprites.GetSprite(ghostElement, ActiveCandySkin) is { } ghostSprite)
             {
                 using (context.PushOpacity(0.7))
                 {
@@ -539,9 +546,9 @@ namespace CtrDxEditor.Rendering
 
         // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
         // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
-        private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
+        private static void DrawObject(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin)
         {
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj));
+            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin);
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)

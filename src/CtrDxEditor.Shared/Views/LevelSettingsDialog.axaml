@@ -370,6 +370,75 @@
             </Border>
           </Expander>
 
+          <Expander Header="{loc:Tr Dialog.LevelSettings.CandySkin}"
+                    IsExpanded="False"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch">
+            <Border Padding="2,8,2,2">
+              <ItemsControl ItemsSource="{Binding CandySkinOptions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:CandySkinOption">
+                    <RadioButton Classes="PickerCard"
+                                 GroupName="CandySkin"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
+
+                      <Grid Width="96">
+                        <Border Classes="card-surface"
+                                Padding="8"
+                                CornerRadius="10">
+                          <StackPanel Spacing="7">
+
+                            <Border Classes="preview-frame"
+                                    Height="60"
+                                    CornerRadius="7"
+                                    Background="#252525"
+                                    ClipToBounds="True">
+                              <Image Source="{Binding Thumbnail}"
+                                     Stretch="Uniform"
+                                     Margin="6" />
+                            </Border>
+
+                            <TextBlock Text="{Binding Label}"
+                                       FontSize="12"
+                                       LineHeight="14"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       MinHeight="30" />
+
+                          </StackPanel>
+                        </Border>
+
+                        <Border Classes="selected-badge"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="10"
+                                Background="#FF0078D7"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,-4,-4,0">
+                          <TextBlock Text="✓"
+                                     Foreground="White"
+                                     FontSize="12"
+                                     FontWeight="Bold"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
+                        </Border>
+                      </Grid>
+                    </RadioButton>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+          </Expander>
+
           <CheckBox Content="{loc:Tr Dialog.LevelSettings.RememberCustomizationChoice}"
                     IsVisible="{Binding ShowRememberDecoration}"
                     IsChecked="{Binding RememberDecoration, Mode=TwoWay}" />
