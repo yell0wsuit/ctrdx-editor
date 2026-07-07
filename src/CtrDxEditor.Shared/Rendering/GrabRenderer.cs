@@ -144,25 +144,6 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws only grab auto-catch rings (not the light bulb's lit radius) with <paramref name="pen"/>.
-        /// Used for the game-accurate dashed blue ring baked into a level screenshot, where the bulb's
-        /// reach is already conveyed by its additive glow rather than a ring.
-        /// </summary>
-        public static void DrawGrabRadiusRings(DrawingContext ctx, ViewTransform v, IReadOnlyList<LevelObject> objects, Pen pen)
-        {
-            foreach (LevelObject obj in objects)
-            {
-                if (obj.Type != "grab" || RadiusRing.Of(obj) is not { } ring)
-                {
-                    continue;
-                }
-                Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
-                double screenR = ring.Radius * v.Zoom;
-                ctx.DrawEllipse(null, pen, new Point(c.X, c.Y), screenR, screenR);
-            }
-        }
-
-        /// <summary>
         /// Draws a movable grab's rail (left cap + tiled center + right cap), the back half of the mover
         /// assembly - the rope is drawn over it and under the movable hook, matching the game's
         /// <c>moveBackground</c> (DrawBack) then rope then <c>grabMover</c> (Draw) layering. Laid out in a
