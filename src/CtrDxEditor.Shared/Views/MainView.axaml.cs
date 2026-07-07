@@ -556,11 +556,16 @@ namespace CtrDxEditor.Views
                     ?? throw new InvalidOperationException("The level could not be rendered.");
 
                 // PNG encoding of a full-resolution level can take a noticeable amount of time. The bitmap
-                // is finished rendering and is not touched elsewhere, so encode + write it on a background
-                // thread to keep the editor responsive. (On the single-threaded browser runtime this still
-                // runs inline, but harmlessly.) The await resumes on the UI thread for the toast below.
+                // is finished rendering and is not touched elsewhere, so encode it on a background thread to
+                // keep the editor responsive. (On the single-threaded browser runtime this still runs inline,
+                // but harmlessly.) Bitmap.Save writes synchronously, which the browser's destination stream
+                // rejects - it supports only async writes - so encode into memory first, then copy to the
+                // destination with async writes. The await resumes on the UI thread for the toast below.
+                using MemoryStream buffer = new();
+                await Task.Run(() => bitmap.Save(buffer));
+                buffer.Position = 0;
                 await using Stream stream = await file.OpenWriteAsync();
-                await Task.Run(() => bitmap.Save(stream));
+                await buffer.CopyToAsync(stream);
             }
             catch (Exception ex)
             {
