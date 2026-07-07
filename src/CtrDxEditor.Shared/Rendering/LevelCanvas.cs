@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -443,8 +444,11 @@ namespace CtrDxEditor.Rendering
                 context.Custom(new GlowDrawOperation(opBounds, v, glowLayer.Bitmap, glowLayer.Frame.Frame, glowBulbs));
             }
 
+            // Draw in the game's fixed z-order (GameScene.Draw) rather than level-list order, so a candy
+            // placed before a grab still sits above its rope. OrderBy is a stable sort, so objects sharing
+            // a layer keep their list order - this keeps the per-rope seed deterministic across grabs.
             int ropeSeed = 0;
-            foreach (LevelObject obj in objects)
+            foreach (LevelObject obj in objects.OrderBy(GameDrawLayer))
             {
                 if (obj.Type == "grab")
                 {
@@ -455,19 +459,7 @@ namespace CtrDxEditor.Rendering
                         ropeSeed++;
                     }
                 }
-                else if (obj.Type != "lightBulb")
-                {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
-                }
-            }
-
-            // Light-bulb bottles draw in a pass of their own, above every rope, matching the game's
-            // order (GameScene.Draw: all bungee ropes first, then LightBulb.DrawBottleAndFirefly last).
-            // Drawing them inline would let a grab later in the object list paint its rope over an
-            // already-drawn bottle.
-            foreach (LevelObject obj in objects)
-            {
-                if (obj.Type == "lightBulb")
+                else
                 {
                     DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
                 }
@@ -552,6 +544,25 @@ namespace CtrDxEditor.Rendering
             double w = maxX - minX, h = maxY - minY;
             const double grow = 0.25;
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
+        }
+
+        // The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
+        // gravity button, Om Nom + support, bubbles, bungee ropes, stars, candy, then light-bulb bottles.
+        // Same-layer objects keep their list order because OrderBy is stable. Unknown types sit with the
+        // grabs (mid-stack) as a neutral default.
+        private static int GameDrawLayer(LevelObject obj)
+        {
+            return obj.Type switch
+            {
+                "gravitySwitch" => 0,
+                "target" => 1,
+                "bubble" => 2,
+                "grab" => 3,
+                "star" => 4,
+                "candy" or "candyL" or "candyR" => 5,
+                "lightBulb" => 6,
+                _ => 3,
+            };
         }
 
         // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
