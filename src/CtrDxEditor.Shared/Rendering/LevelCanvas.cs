@@ -703,6 +703,20 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (obj.Type == "pump")
+            {
+                if (sprites.GetSprite(CanvasSpriteKey("pump", nightLevel), candySkin, omNomSupport) is { } pumpSprite)
+                {
+                    double deg = PumpRotation.DisplayDegrees(obj);
+                    foreach (SpriteLayerDraw layer in pumpSprite.Layers)
+                    {
+                        DrawLayer(ctx, v, layer, obj.X, obj.Y, pumpSprite.Scale, deg);
+                    }
+                }
+                DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+                return;
+            }
+
             ObjectSprite? sprite = sprites.GetSprite(CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel), candySkin, omNomSupport);
             if (sprite is not null)
             {
