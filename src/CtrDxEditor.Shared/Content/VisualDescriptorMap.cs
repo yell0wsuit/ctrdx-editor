@@ -20,6 +20,8 @@ namespace CtrDxEditor.Content
         private const string BubbleImageBase = "images/obj_bubble";
         private const string LighterJson = "images/obj_lighter.json";
         private const string LighterImageBase = "images/obj_lighter";
+        private const string PumpJson = "images/obj_pump.json";
+        private const string PumpImageBase = "images/obj_pump";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -195,6 +197,12 @@ namespace CtrDxEditor.Content
             new("lightBulb_glow",
             [
                 new SpriteLayer(LighterJson, LighterImageBase, 0),
+            ]),
+
+            // Pump object
+            new("pump",
+            [
+                new SpriteLayer(PumpJson, PumpImageBase, 0),
             ]),
         ];
 

@@ -101,5 +101,16 @@ namespace CtrDxEditor.Tests
             Assert.Equal("images/obj_lighter", layer.AtlasImageBasePath);
             Assert.Equal(0, layer.Quad);
         }
+
+        /// <summary>Verifies the pump maps to a single resting-quad layer over the pump atlas.</summary>
+        [Fact]
+        public void PumpMapsToRestingQuadOfPumpAtlas()
+        {
+            VisualDescriptor pump = VisualDescriptorMap.For("pump")!;
+            SpriteLayer layer = Assert.Single(pump.Layers);
+            Assert.Equal("images/obj_pump.json", layer.AtlasJsonRelPath);
+            Assert.Equal("images/obj_pump", layer.AtlasImageBasePath);
+            Assert.Equal(0, layer.Quad);
+        }
     }
 }
