@@ -138,7 +138,7 @@ namespace CtrDxEditor.Rendering
             {
                 using (context.PushOpacity(0.7))
                 {
-                    LevelSceneRenderer.DrawSprite(context, v, ghostSprite, _ghostLevel.X, _ghostLevel.Y);
+                    LevelSceneRenderer.DrawSpritePreview(context, v, ghostSprite, ghostElement, _ghostLevel.X, _ghostLevel.Y);
                 }
             }
         }

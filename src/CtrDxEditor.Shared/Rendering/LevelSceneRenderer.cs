@@ -481,6 +481,29 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws a palette preview sprite, applying any object display-offset rotation.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprite">The sprite to draw.</param>
+        /// <param name="element">The palette element key whose preview is being drawn.</param>
+        /// <param name="x">Anchor X in level units.</param>
+        /// <param name="y">Anchor Y in level units.</param>
+        public static void DrawSpritePreview(DrawingContext ctx, ViewTransform v, ObjectSprite sprite, string element, double x, double y)
+        {
+            double rotation = PreviewRotationDegrees(element);
+            double? rotationOrNone = rotation == 0 ? null : rotation;
+            foreach (SpriteLayerDraw layer in sprite.Layers)
+            {
+                DrawLayer(ctx, v, layer, x, y, sprite.Scale, rotationOrNone);
+            }
+        }
+
+        /// <summary>The rotation used by palette previews and drag ghosts for raw sprite art.</summary>
+        private static double PreviewRotationDegrees(string element)
+        {
+            return RotationTable.For(element)?.DisplayOffset ?? 0;
+        }
+
         /// <summary>Draws a single sprite layer, optionally rotated about the object's anchor.</summary>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
