@@ -193,6 +193,9 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private GrabRail.Handle _railDrag;
 
+        /// <summary>Which selected spike end is being dragged to choose a new spike size.</summary>
+        private SpikeResize.Handle _spikeResizeDrag;
+
         /// <summary>
         /// Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even before a
         /// drag begins (the game highlights the mover on interaction).

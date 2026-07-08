@@ -60,6 +60,18 @@ namespace CtrDxEditor.Rendering
                 : GrabRail.Handle.None;
         }
 
+        /// <summary>What part of the selected spike resize affordance a level point is over.</summary>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>The spike resize handle under the point, or <see cref="SpikeResize.Handle.None"/>.</returns>
+        private SpikeResize.Handle HitSpikeResize(Vec2 levelPt)
+        {
+            return SelectedObject is { } sel
+                && View.Zoom > 0
+                && SpikeObject.IsSpike(sel.Type)
+                ? SpikeResize.HitTest(sel, levelPt, SpikeSpriteScale(sel), tolerance: 9 / View.Zoom, thickness: 12 / View.Zoom)
+                : SpikeResize.Handle.None;
+        }
+
         /// <summary>What part of the selected rotatable object's dial a level point is over, or <see cref="ObjectRotation.Handle.None"/>.</summary>
         /// <remarks>
         /// The geometry lives in <see cref="ObjectRotation"/>; here we supply the object's spec and the screen-derived
@@ -160,6 +172,18 @@ namespace CtrDxEditor.Rendering
                 GrabRail.Handle.None => Cursor.Default,
                 _ => Cursor.Default,
             };
+        }
+
+        /// <summary>Cursor for a spike resize handle based on the spike's current rotation.</summary>
+        private Cursor CursorForSpikeResize()
+        {
+            if (SelectedObject is not { } spike || RotationTable.For(spike.Type) is not { } spec)
+            {
+                return ResizeCursor;
+            }
+
+            double deg = Math.Abs(ObjectRotation.Normalize(ObjectRotation.DisplayDegrees(spike, spec)));
+            return deg is > 45 and < 135 ? VResizeCursor : ResizeCursor;
         }
 
         /// <summary>Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.</summary>
@@ -274,6 +298,18 @@ namespace CtrDxEditor.Rendering
                     break;
             }
 
+            SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
+            if (spikeHandle != SpikeResize.Handle.None && SelectedObject is { } spikeResizeObj)
+            {
+                BeginDocumentEdit?.Invoke();
+                _spikeResizeDrag = spikeHandle;
+                SpikeResize.ApplyDrag(spikeResizeObj, levelPt, SpikeSpriteScale(spikeResizeObj));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Pointer.Capture(this);
+                return;
+            }
+
             // Grabbing the selected object's rotation dial (knob or ring) rotates it; takes priority over
             // object hit-testing so the dial wins over anything beneath it.
             if (HitRotationDial(levelPt) != ObjectRotation.Handle.None
@@ -366,6 +402,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_spikeResizeDrag != SpikeResize.Handle.None && SelectedObject is { } spikeObj)
+            {
+                SpikeResize.ApplyDrag(spikeObj, levelPt, SpikeSpriteScale(spikeObj));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_rotating && SelectedObject is { } rotObj && RotationTable.For(rotObj.Type) is { } rotSpec)
             {
                 ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
@@ -389,7 +433,9 @@ namespace CtrDxEditor.Rendering
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
                 SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
+                SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
                 Cursor = dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
+                    : spikeHandle != SpikeResize.Handle.None ? CursorForSpikeResize()
                     : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
             }
@@ -425,18 +471,20 @@ namespace CtrDxEditor.Rendering
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
             bool gestureActive = _dragging || _panning || _resizingRadius
-                || _railDrag != GrabRail.Handle.None || _rotating || _hookHovered;
+                || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None
+                || _rotating || _hookHovered;
             if (!gestureActive)
             {
                 return;
             }
 
             bool editedDocument = _dragging || _resizingRadius
-                || _railDrag != GrabRail.Handle.None || _rotating;
+                || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None || _rotating;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
+            _spikeResizeDrag = SpikeResize.Handle.None;
             _rotating = false;
             if (editedDocument)
             {
@@ -506,6 +554,14 @@ namespace CtrDxEditor.Rendering
             double delta = Math.Abs(e.Delta.Y) > double.Epsilon ? e.Delta.Y : e.Delta.X;
             ZoomBy(ViewNavigation.MagnifyDeltaToZoomFactor(delta), e.GetPosition(this));
             e.Handled = true;
+        }
+
+        private double SpikeSpriteScale(LevelObject spike)
+        {
+            return Document is { } doc
+                && Sprites?.GetSprite(LevelSceneRenderer.CanvasSpriteKey(spike, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } sprite
+                ? sprite.Scale
+                : 1.0;
         }
     }
 }
