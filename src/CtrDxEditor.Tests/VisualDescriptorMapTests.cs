@@ -49,6 +49,25 @@ namespace CtrDxEditor.Tests
             Assert.Equal([20, 19], VisualDescriptorMap.For("star_timed")!.Layers.Select(l => l.Quad));
         }
 
+        /// <summary>Night stars are not registered as a separate static editor sprite.</summary>
+        [Fact]
+        public void NightStarDescriptorIsNotRegistered()
+        {
+            Assert.Null(VisualDescriptorMap.For("star_night"));
+        }
+
+        /// <summary>Night Om Nom uses the classic sleeping spritesheet and keeps the support layer.</summary>
+        [Fact]
+        public void SleepingTargetUsesSupportAndClassicSleepingSprite()
+        {
+            VisualDescriptor target = VisualDescriptorMap.For("target_sleeping")!;
+
+            Assert.Equal(
+                ["images/char_supports.json", "images/char_animations_sleeping.json"],
+                target.Layers.Select(l => l.AtlasJsonRelPath));
+            Assert.Equal([0, 6], target.Layers.Select(l => l.Quad));
+        }
+
         /// <summary>Verifies random back layers count toward the files a content bundle must provide.</summary>
         [Fact]
         public void RequiredFilesCoverRandomBackLayerAtlases()

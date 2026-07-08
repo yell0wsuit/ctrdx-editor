@@ -1,8 +1,17 @@
 using System.Reflection;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 
 using Avalonia;
+using Avalonia.Media.Imaging;
 
+using CtrDxEditor.Content;
+using CtrDxEditor.Core.Atlas;
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.Rendering;
 
 using Xunit;
@@ -12,6 +21,29 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the pure framing math behind the level-screenshot export.</summary>
     public class LevelCanvasScreenshotTests
     {
+        private sealed class FakeStore : IContentStore
+        {
+            public Task<bool> ExistsAsync(string relPath)
+            {
+                return Task.FromResult(true);
+            }
+
+            public Task<byte[]> ReadBytesAsync(string relPath)
+            {
+                return Task.FromResult<byte[]>([]);
+            }
+
+            public Task<string> ReadTextAsync(string relPath)
+            {
+                return Task.FromResult(/*lang=json,strict*/ """{"frames":{}}""");
+            }
+
+            public Task<bool> IsPopulatedAsync()
+            {
+                return Task.FromResult(true);
+            }
+        }
+
         /// <summary>No background: the frame is the playfield, rendered at MapScale, no pan.</summary>
         [Fact]
         public void NoBackgroundUsesLevelSizeAtMapScale()
@@ -82,6 +114,90 @@ namespace CtrDxEditor.Tests
             string label = (string)method.Invoke(null, [timeout])!;
 
             Assert.Equal(expected, label);
+        }
+
+        /// <summary>Night levels keep normal stars but draw classic sleeping Om Nom.</summary>
+        [Theory]
+        [InlineData("star", true, "star")]
+        [InlineData("target", true, "target_sleeping")]
+        [InlineData("star", false, "star")]
+        [InlineData("target", false, "target")]
+        public void CanvasSpriteKeyUsesNightLevelVariants(string element, bool nightLevel, string expected)
+        {
+            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+                "CanvasSpriteKey",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                [typeof(string), typeof(bool)]);
+            Assert.NotNull(method);
+
+            string key = (string)method.Invoke(null, [element, nightLevel])!;
+
+            Assert.Equal(expected, key);
+        }
+
+        /// <summary>Night star selection keeps the normal star marquee instead of the smaller night atlas canvas.</summary>
+        [Fact]
+        public void NightStarSelectionBoundsUseNormalStarBounds()
+        {
+            SpriteCache sprites = SeedStarAtlases();
+            LevelObject star = new(new XElement("star", new XAttribute("x", "0"), new XAttribute("y", "0")));
+            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+                "SelectionBounds",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            LevelBounds normal = (LevelBounds)method.Invoke(null, [sprites, star, 0, 0, false])!;
+            LevelBounds night = (LevelBounds)method.Invoke(null, [sprites, star, 0, 0, true])!;
+
+            Assert.Equal(normal.X, night.X, 3);
+            Assert.Equal(normal.Y, night.Y, 3);
+            Assert.Equal(normal.W, night.W, 3);
+            Assert.Equal(normal.H, night.H, 3);
+        }
+
+        private static SpriteCache SeedStarAtlases()
+        {
+            SpriteCache cache = new(new FakeStore());
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/obj_star_idle.png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/obj_star_idle.json"] = new Atlas(
+                [
+                    Frame("idle-glow", 236, 223, 155, 155, 552, 552),
+                    .. EmptyFrames(17),
+                    Frame("idle-body", 85, 80, 229, 229, 552, 552),
+                ]),
+            });
+            return cache;
+        }
+
+        private static IEnumerable<AtlasFrame> EmptyFrames(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                yield return Frame($"empty-{i}", 1, 1, 0, 0, 1, 1);
+            }
+        }
+
+        private static AtlasFrame Frame(string filename, int w, int h, int sourceX, int sourceY, int sourceW, int sourceH)
+        {
+            return new AtlasFrame(
+                filename,
+                new IntRect(0, 0, w, h),
+                new IntRect(sourceX, sourceY, w, h),
+                new IntSize(sourceW, sourceH),
+                Rotated: false,
+                Trimmed: true);
+        }
+
+        private static void SetPrivateField<T>(SpriteCache cache, string fieldName, T value)
+        {
+            FieldInfo field = typeof(SpriteCache).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+            field.SetValue(cache, value);
         }
     }
 }

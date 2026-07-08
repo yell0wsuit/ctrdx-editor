@@ -433,7 +433,7 @@ namespace CtrDxEditor.Rendering
             {
                 foreach (LevelObject obj in objects)
                 {
-                    if (sprites.GetSprite(obj.Type) is not { } sprite)
+                    if (sprites.GetSprite(CanvasSpriteKey(obj, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is not { } sprite)
                     {
                         continue;
                     }
@@ -451,7 +451,7 @@ namespace CtrDxEditor.Rendering
             LevelObject? selected = SelectedObject;
             if (selected is not null)
             {
-                LevelBounds sb = SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport);
+                LevelBounds sb = SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
                 Vec2 stl = v.LevelToScreen(new Vec2(sb.X, sb.Y));
                 Vec2 sbr = v.LevelToScreen(new Vec2(sb.X + sb.W, sb.Y + sb.H));
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
@@ -461,7 +461,7 @@ namespace CtrDxEditor.Rendering
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
             if (_ghostActive && _ghostElement is { } ghostElement
-                && sprites.GetSprite(ghostElement, ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
+                && sprites.GetSprite(CanvasSpriteKey(ghostElement, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
             {
                 using (context.PushOpacity(0.7))
                 {
@@ -584,7 +584,7 @@ namespace CtrDxEditor.Rendering
                 }
                 else
                 {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
                 }
             }
 
@@ -622,7 +622,7 @@ namespace CtrDxEditor.Rendering
         // Selection marquee: the trimmed (visible) sprite bounds — the union of every layer's drawn
         // region — grown 25% so the dashed box sits a little outside the art rather than hugging the
         // untrimmed sourceSize box (which is much larger than what the player sees).
-        private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport)
+        private static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
         {
             // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
             // be selected by clicking anywhere along the bar.
@@ -634,7 +634,7 @@ namespace CtrDxEditor.Rendering
             // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
             // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
             // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.RenderSpriteKey(obj), candySkin, omNomSupport);
+            ObjectSprite? sprite = sprites.GetSprite(SelectionSpriteKey(GrabRenderer.RenderSpriteKey(obj), nightLevel), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
@@ -678,7 +678,7 @@ namespace CtrDxEditor.Rendering
         // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
         // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
         private static void DrawObject(
-            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport)
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
         {
             if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
             {
@@ -686,7 +686,7 @@ namespace CtrDxEditor.Rendering
                 {
                     DrawSprite(ctx, v, timed, obj.X, obj.Y);
                 }
-                if (sprites.GetSprite("star", candySkin, omNomSupport) is { } star)
+                if (sprites.GetSprite(CanvasSpriteKey("star", nightLevel), candySkin, omNomSupport) is { } star)
                 {
                     DrawSprite(ctx, v, star, obj.X, obj.Y);
                     DrawStarDuration(ctx, v, star, obj, timeout);
@@ -695,7 +695,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin, omNomSupport);
+            ObjectSprite? sprite = sprites.GetSprite(CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel), candySkin, omNomSupport);
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)
@@ -712,6 +712,25 @@ namespace CtrDxEditor.Rendering
             return double.TryParse(obj.GetAttr("timeout"), NumberStyles.Float, CultureInfo.InvariantCulture, out double timeout)
                 ? timeout
                 : 0;
+        }
+
+        private static string CanvasSpriteKey(LevelObject obj, bool nightLevel)
+        {
+            return CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel);
+        }
+
+        private static string CanvasSpriteKey(string element, bool nightLevel)
+        {
+            return nightLevel ? element switch
+            {
+                "target" => "target_sleeping",
+                _ => element,
+            } : element;
+        }
+
+        private static string SelectionSpriteKey(string element, bool nightLevel)
+        {
+            return element == "star" ? "star" : CanvasSpriteKey(element, nightLevel);
         }
 
         private static void DrawStarDuration(DrawingContext ctx, ViewTransform v, ObjectSprite star, LevelObject obj, double timeout)
@@ -1045,7 +1064,7 @@ namespace CtrDxEditor.Rendering
             {
                 list.Add(Sprites is null
                     ? new LevelBounds(o.X - 8, o.Y - 8, 16, 16)
-                    : SelectionBounds(Sprites, o, ActiveCandySkin, ActiveOmNomSupport));
+                    : SelectionBounds(Sprites, o, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel));
             }
             return list;
         }

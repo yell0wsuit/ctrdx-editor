@@ -31,6 +31,14 @@ namespace CtrDxEditor.Content
                 new SpriteLayer("images/char_animations.json", "images/char_animations", 0),
             ]),
 
+            // Night Om Nom keeps the selected support cup, but uses DX's classic sleeping spritesheet
+            // (OriginalTargetAnimationBackend), not the Flash/XML blink frames.
+            new("target_sleeping",
+            [
+                new SpriteLayer("images/char_supports.json", "images/char_supports", 0),
+                new SpriteLayer("images/char_animations_sleeping.json", "images/char_animations_sleeping", 6),
+            ]),
+
             // Candy = wrapper bottom + body + wrapper top (all share sourceSize 393x418). Addressed by
             // quad index, not frame name: candy skins share this frame order but not their frame names,
             // and SpriteCache swaps in the active skin's atlas at resolve time. Matches the game's

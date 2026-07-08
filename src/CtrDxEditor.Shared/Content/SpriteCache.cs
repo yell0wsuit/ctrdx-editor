@@ -338,7 +338,6 @@ namespace CtrDxEditor.Content
             // Candy frames are addressed by quad index against the active skin's atlas; everything else
             // resolves against its own preloaded atlas by frame name (or quad, if the layer specifies one).
             bool isCandy = element is "candy" or "candyL" or "candyR";
-            bool isTarget = element == "target";
             (Bitmap? candyBitmap, Atlas? candyAtlas) = isCandy ? LoadCandySkin(candySkin) : (null, null);
 
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
@@ -347,7 +346,7 @@ namespace CtrDxEditor.Content
                 Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(layer.AtlasImageBasePath + imageExtension);
                 Atlas? atlas = isCandy ? candyAtlas : LoadAtlas(layer.AtlasJsonRelPath);
                 // The target's platform is whichever char_supports frame the active support selects.
-                AtlasFrame? frame = isTarget && omNomSupport > 0 && layer.AtlasJsonRelPath == SupportsAtlasJson
+                AtlasFrame? frame = omNomSupport > 0 && layer.AtlasJsonRelPath == SupportsAtlasJson
                     ? atlas?.At(omNomSupport)
                     : atlas?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)

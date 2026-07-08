@@ -175,6 +175,19 @@ namespace CtrDxEditor.Tests
             Assert.Equal("om-nom-quad-0", target.Layers[1].Frame.Filename);
         }
 
+        /// <summary>Sleeping target keeps the selected support and uses the classic sleeping spritesheet.</summary>
+        [Fact]
+        public void GetSpriteResolvesSleepingTargetPlatformAndSleepingFrame()
+        {
+            SpriteCache cache = new(new FakeStore());
+            SeedSleepingTargetAtlases(cache);
+
+            ObjectSprite target = Assert.IsType<ObjectSprite>(cache.GetSprite("target_sleeping", candySkin: 0, omNomSupport: 3));
+
+            Assert.Equal("support-quad-3", target.Layers[0].Frame.Filename);
+            Assert.Equal("sleeping-quad-6", target.Layers[1].Frame.Filename);
+        }
+
         private static void SeedTargetAtlases(SpriteCache cache)
         {
             Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
@@ -202,6 +215,21 @@ namespace CtrDxEditor.Tests
             {
                 ["images/char_supports.json"] = new Atlas([.. Enumerable.Range(0, 17).Select(i => Frame($"support-quad-{i}"))]),
                 ["images/char_animations.json"] = new Atlas([Frame("om-nom-quad-0")]),
+            });
+        }
+
+        private static void SeedSleepingTargetAtlases(SpriteCache cache)
+        {
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/char_supports.png"] = bitmap,
+                ["images/char_animations_sleeping.png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/char_supports.json"] = new Atlas([.. Enumerable.Range(0, 17).Select(i => Frame($"support-quad-{i}"))]),
+                ["images/char_animations_sleeping.json"] = new Atlas([.. Enumerable.Range(0, 7).Select(i => Frame($"sleeping-quad-{i}"))]),
             });
         }
 

@@ -215,8 +215,13 @@ namespace CtrDxEditor.ViewModels
                 bool enabled = Document is not null && LockedObject is null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled,
-                    Sprites.GetThumbnail(d.ElementName, ActiveCandySkin, ActiveOmNomSupport)));
+                    Sprites.GetThumbnail(PaletteSpriteKey(d.ElementName), ActiveCandySkin, ActiveOmNomSupport)));
             }
+        }
+
+        private static string PaletteSpriteKey(string element)
+        {
+            return element;
         }
 
         // Candy type follows twoParts. When no document is

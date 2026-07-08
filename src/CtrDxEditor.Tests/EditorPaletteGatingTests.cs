@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -75,6 +80,23 @@ namespace CtrDxEditor.Tests
             Assert.True(PaletteHas(vm, "candyL"));
             Assert.True(PaletteHas(vm, "candyR"));
             Assert.True(PaletteHas(vm, "lightBulb"));
+        }
+
+        /// <summary>The star palette thumbnail stays on the normal star in night levels.</summary>
+        [Fact]
+        public void NightLevelStarPaletteUsesNormalStarIcon()
+        {
+            SpriteCache sprites = new(new EmptyStore());
+            Bitmap star = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(sprites, "_thumbnails", new Dictionary<string, Bitmap?>
+            {
+                ["star"] = star,
+            });
+            EditorViewModel vm = new(sprites);
+
+            vm.NewLevel(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: true));
+
+            Assert.Same(star, PaletteItem(vm, "star").Icon);
         }
 
         /// <summary>Updating level settings rewrites the document's resolution and special value.</summary>
@@ -158,6 +180,13 @@ namespace CtrDxEditor.Tests
 
             Assert.True(PaletteItem(vm, "star").Enabled);
             Assert.NotNull(vm.PlaceObject("star", 100, 120));
+        }
+
+        private static void SetPrivateField<T>(object target, string name, T value)
+        {
+            FieldInfo? field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field);
+            field.SetValue(target, value);
         }
     }
 }
