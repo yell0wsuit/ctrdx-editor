@@ -42,6 +42,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains("Ja", localeLayers);
         }
 
+        /// <summary>Star timeout values survive round-trip as authored, including decimals and zero.</summary>
+        [Fact]
+        public void StarTimeoutsSurviveRoundTrip()
+        {
+            const string original =
+                "<level width=\"640\" height=\"480\">" +
+                "<star x=\"100\" y=\"120\" timeout=\"4.5\" />" +
+                "<star x=\"200\" y=\"220\" timeout=\"0\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(original);
+            XDocument after = XDocument.Parse(doc.Save());
+
+            string[] timeouts = [.. after.Root!.Elements("star").Select(s => (string?)s.Attribute("timeout") ?? string.Empty)];
+            Assert.Equal(["4.5", "0"], timeouts);
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {

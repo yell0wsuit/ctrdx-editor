@@ -161,6 +161,14 @@ namespace CtrDxEditor.Content
                 new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 18),
             ]),
 
+            // Timed star ring = empty ring behind full ring. The editor is static, so it draws the full
+            // timer rather than clipping it to a countdown fraction.
+            new("star_timed",
+            [
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 20),
+                new SpriteLayer("images/obj_star_idle.json", "images/obj_star_idle", 19),
+            ]),
+
             // Gravity button.
             new("gravitySwitch",
             [

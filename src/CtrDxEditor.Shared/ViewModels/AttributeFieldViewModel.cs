@@ -33,6 +33,7 @@ namespace CtrDxEditor.ViewModels
             Label = Localizer.AttributeName(name);
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
+            AllowsDecimal = type == AttrType.Number;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
             _get = () => target.GetAttr(name);
@@ -73,6 +74,7 @@ namespace CtrDxEditor.ViewModels
             Label = Localizer.AttributeName(name);
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
+            AllowsDecimal = type == AttrType.Number;
             _get = get;
             _set = set;
             _onChanging = onChanging ?? (() => { });
@@ -94,8 +96,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this field renders as a checkbox.</summary>
         public bool IsBool { get; }
 
-        /// <summary>Whether this field renders as a whole-number-only box (x, y, length, radius, ...).</summary>
+        /// <summary>Whether this field renders as a numeric box.</summary>
         public bool IsNumeric { get; }
+
+        /// <summary>Whether this numeric field accepts decimal values.</summary>
+        public bool AllowsDecimal { get; }
 
         /// <summary>
         /// Smallest value a numeric field accepts. Lengths and radii are magnitudes and cannot go
@@ -104,6 +109,7 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public int NumericMinimum => Name switch
         {
+            "timeout" => 1,
             "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" => 0,
             _ => -9999,
         };
@@ -131,7 +137,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The current underlying value.</summary>
         public string? Value
         {
-            get => _get();
+            get => DisplayValue(_get());
             set
             {
                 if (_get() == value)
@@ -171,6 +177,13 @@ namespace CtrDxEditor.ViewModels
                     "R" => "right",
                     _ => value,
                 }
+                : value;
+        }
+
+        private string? DisplayValue(string? value)
+        {
+            return AllowsDecimal && value?.EndsWith(".0", StringComparison.Ordinal) == true
+                ? value[..^2]
                 : value;
         }
     }

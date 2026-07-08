@@ -41,5 +41,20 @@ namespace CtrDxEditor.Tests
             Assert.False(NumericTextBox.IsAcceptable("-", 0, 9999));
             Assert.False(NumericTextBox.IsAcceptable("-5", 0, 9999));
         }
+
+        /// <summary>Decimal input is accepted only by boxes that opt in.</summary>
+        [Fact]
+        public void DecimalInputRequiresOptIn()
+        {
+            Assert.True(NumericTextBox.IsAcceptable("4.5", 1, 9999, acceptDecimal: true));
+            Assert.False(NumericTextBox.IsAcceptable("4.5", 1, 9999));
+        }
+
+        /// <summary>Decimal input rejects a second decimal separator.</summary>
+        [Fact]
+        public void DecimalInputRejectsSecondPoint()
+        {
+            Assert.False(NumericTextBox.IsAcceptable("4.5.1", 1, 9999, acceptDecimal: true));
+        }
     }
 }

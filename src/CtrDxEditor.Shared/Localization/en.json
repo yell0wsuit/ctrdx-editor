@@ -131,7 +131,8 @@
     "Object.gravitySwitch": "Gravity button",
     "Object.lightBulb": "Light bulb",
 
-    "Attr.timeout": "Timeout",
+    "Attr.timed": "Timed",
+    "Attr.timeout": "Duration (s)",
     "Attr.length": "Length",
     "Attr.part": "Split candy bind",
     "Attr.part.L": "Left",

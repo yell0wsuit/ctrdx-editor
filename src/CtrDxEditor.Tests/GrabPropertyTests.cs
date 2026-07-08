@@ -136,6 +136,44 @@ namespace CtrDxEditor.Tests
             Assert.Contains(vm.Fields, f => f.Name == "radius");
         }
 
+        /// <summary>Star timed disclosure keeps untimed stars compact, and toggling on authors a duration.</summary>
+        [Fact]
+        public void StarTimedToggleRevealsDuration()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject star = vm.PlaceObject("star", 100, 120)!;
+            vm.SelectedObject = star;
+
+            AttributeFieldViewModel timed = vm.Fields.Single(f => f.Name == "timed");
+            Assert.True(timed.IsBool);
+            Assert.False(timed.BoolValue);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "timeout");
+            Assert.Equal("-1", star.GetAttr("timeout"));
+
+            timed.BoolValue = true;
+
+            Assert.Equal("5", star.GetAttr("timeout"));
+            AttributeFieldViewModel duration = vm.Fields.Single(f => f.Name == "timeout");
+            Assert.Equal(1, duration.NumericMinimum);
+            Assert.True(duration.AllowsDecimal);
+        }
+
+        /// <summary>A loaded timeout of zero reads as untimed and is not rewritten by field construction.</summary>
+        [Fact]
+        public void StarTimeoutZeroReadsAsUntimed()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject star = vm.PlaceObject("star", 100, 120)!;
+            star.SetAttr("timeout", "0");
+            vm.SelectedObject = star;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "timed").BoolValue);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "timeout");
+            Assert.Equal("0", star.GetAttr("timeout"));
+        }
+
         /// <summary>Movable rail toggles rail sub-field disclosure.</summary>
         [Fact]
         public void MovableToggleRevealsRailFields()

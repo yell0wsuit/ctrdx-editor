@@ -680,6 +680,21 @@ namespace CtrDxEditor.Rendering
         private static void DrawObject(
             DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport)
         {
+            if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
+            {
+                if (sprites.GetSprite("star_timed") is { } timed)
+                {
+                    DrawSprite(ctx, v, timed, obj.X, obj.Y);
+                }
+                if (sprites.GetSprite("star", candySkin, omNomSupport) is { } star)
+                {
+                    DrawSprite(ctx, v, star, obj.X, obj.Y);
+                    DrawStarDuration(ctx, v, star, obj, timeout);
+                }
+                DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+                return;
+            }
+
             ObjectSprite? sprite = sprites.GetSprite(GrabRenderer.SpriteKey(obj), candySkin, omNomSupport);
             if (sprite is not null)
             {
@@ -690,6 +705,54 @@ namespace CtrDxEditor.Rendering
                 DrawSprite(ctx, v, sprite, obj.X, obj.Y);
             }
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+        }
+
+        private static double StarTimeout(LevelObject obj)
+        {
+            return double.TryParse(obj.GetAttr("timeout"), NumberStyles.Float, CultureInfo.InvariantCulture, out double timeout)
+                ? timeout
+                : 0;
+        }
+
+        private static void DrawStarDuration(DrawingContext ctx, ViewTransform v, ObjectSprite star, LevelObject obj, double timeout)
+        {
+            string text = FormatStarDuration(timeout);
+            FormattedText formatted = new(
+                text,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Bold),
+                Math.Max(10.0, 18.0 * v.Zoom),
+                Brushes.White);
+
+            double top = StarTop(star, obj);
+            Vec2 anchor = v.LevelToScreen(new Vec2(obj.X, top));
+            Point origin = ComputeStarDurationOrigin(
+                new Point(anchor.X, anchor.Y),
+                new Size(formatted.Width, formatted.Height),
+                v.Zoom);
+            ctx.DrawText(formatted, origin);
+        }
+
+        private static string FormatStarDuration(double timeout)
+        {
+            return timeout.ToString("0.###", CultureInfo.InvariantCulture) + "s";
+        }
+
+        private static Point ComputeStarDurationOrigin(Point starTopCenter, Size textSize, double zoom)
+        {
+            return new Point(starTopCenter.X - (textSize.Width / 2.0), starTopCenter.Y + (2.0 * zoom));
+        }
+
+        private static double StarTop(ObjectSprite star, LevelObject obj)
+        {
+            double top = double.MaxValue;
+            foreach (SpriteLayerDraw layer in star.Layers)
+            {
+                LevelBounds bounds = SpritePlacement.Compute(layer.Frame, obj.X, obj.Y, star.Scale).Dest;
+                top = Math.Min(top, bounds.Y);
+            }
+            return top == double.MaxValue ? obj.Y : top;
         }
 
         // A pale grab is one the game hides outright (invisible="true"); the editor keeps it visible at

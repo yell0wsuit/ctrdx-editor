@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,6 +25,10 @@ namespace CtrDxEditor.Controls
         public static readonly StyledProperty<int> MaximumProperty =
             AvaloniaProperty.Register<NumericTextBox, int>(nameof(Maximum), 9999);
 
+        /// <summary>Backs <see cref="AcceptDecimal"/>.</summary>
+        public static readonly StyledProperty<bool> AcceptDecimalProperty =
+            AvaloniaProperty.Register<NumericTextBox, bool>(nameof(AcceptDecimal));
+
         /// <inheritdoc/>
         protected override Type StyleKeyOverride => typeof(TextBox);
 
@@ -33,6 +38,9 @@ namespace CtrDxEditor.Controls
         /// <summary>Largest value the box will accept.</summary>
         public int Maximum { get => GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
 
+        /// <summary>Whether the box accepts one decimal point in addition to whole-number input.</summary>
+        public bool AcceptDecimal { get => GetValue(AcceptDecimalProperty); set => SetValue(AcceptDecimalProperty, value); }
+
         /// <summary>
         /// Whether <paramref name="text"/> is an acceptable value or a prefix of one: empty, a lone
         /// "-" (when negatives are allowed), or an integer within [<paramref name="min"/>,
@@ -40,6 +48,16 @@ namespace CtrDxEditor.Controls
         /// digit; anything containing a non-digit, or out of range, is rejected.
         /// </summary>
         public static bool IsAcceptable(string text, int min, int max)
+        {
+            return IsAcceptable(text, min, max, acceptDecimal: false);
+        }
+
+        /// <summary>
+        /// Decimal-aware variant of <see cref="IsAcceptable(string,int,int)"/>. When
+        /// <paramref name="acceptDecimal"/> is true, one "." is allowed and the parsed value is checked
+        /// against the same bounds.
+        /// </summary>
+        public static bool IsAcceptable(string text, int min, int max, bool acceptDecimal)
         {
             if (text.Length == 0)
             {
@@ -60,15 +78,30 @@ namespace CtrDxEditor.Controls
                 i = 1;
             }
 
+            bool sawDecimal = false;
             for (; i < text.Length; i++)
             {
-                if (!char.IsDigit(text[i]))
+                char c = text[i];
+                if (acceptDecimal && c == '.')
+                {
+                    if (sawDecimal)
+                    {
+                        return false;
+                    }
+                    sawDecimal = true;
+                    continue;
+                }
+                if (!char.IsDigit(c))
                 {
                     return false;
                 }
             }
 
-            return long.TryParse(text, out long value) && value >= min && value <= max;
+            return acceptDecimal && sawDecimal
+                ? double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double decimalValue)
+                    && decimalValue >= min
+                    && decimalValue <= max
+                : long.TryParse(text, out long value) && value >= min && value <= max;
         }
 
         /// <inheritdoc />
@@ -113,7 +146,7 @@ namespace CtrDxEditor.Controls
         // Whether replacing the current selection with insert yields an acceptable string.
         private bool WouldBeAcceptable(string insert)
         {
-            return IsAcceptable(Prospective(insert), Minimum, Maximum);
+            return IsAcceptable(Prospective(insert), Minimum, Maximum, AcceptDecimal);
         }
 
         private string Prospective(string insert)

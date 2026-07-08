@@ -48,12 +48,13 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(int.MaxValue, DescriptorTable.Default.For("star")!.MaxCount);
         }
 
-        /// <summary>Verifies the default timeout value for star descriptors.</summary>
+        /// <summary>Verifies the timeout metadata for star descriptors.</summary>
         [Fact]
-        public void StarDefaultTimeoutIsMinusOne()
+        public void StarTimeoutIsDecimalWithMinusOneDefault()
         {
             AttributeSpec timeout = Assert.Single(DescriptorTable.Default.For("star")!.Attributes);
             Assert.Equal("timeout", timeout.Name);
+            Assert.Equal(AttrType.Number, timeout.Type);
             Assert.Equal("-1", timeout.Default);
         }
 

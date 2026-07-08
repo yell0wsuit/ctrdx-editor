@@ -46,6 +46,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal([3, 4], VisualDescriptorMap.For("grab_suction")!.Layers.Select(l => l.Quad));
             Assert.Equal([1, 2], VisualDescriptorMap.For("grab_suction_kicked")!.Layers.Select(l => l.Quad));
             Assert.Equal([0, 18], VisualDescriptorMap.For("star")!.Layers.Select(l => l.Quad));
+            Assert.Equal([20, 19], VisualDescriptorMap.For("star_timed")!.Layers.Select(l => l.Quad));
         }
 
         /// <summary>Verifies random back layers count toward the files a content bundle must provide.</summary>

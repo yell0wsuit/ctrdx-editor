@@ -34,7 +34,7 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("candyR", "Candy (Right)", [], MaxCount: 1),
             new ObjectDescriptor("star", "Star",
             [
-                new AttributeSpec("timeout", AttrType.Whole, "-1"),
+                new AttributeSpec("timeout", AttrType.Number, "-1"),
             ], MaxCount: int.MaxValue),
             new ObjectDescriptor("grab", "Grab",
             [

@@ -370,6 +370,12 @@ namespace CtrDxEditor.ViewModels
             Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed, Changing));
             Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed, Changing));
 
+            if (value.Type == "star")
+            {
+                StarFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
             if (value.Type == "grab" && Document is not null)
             {
                 GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => PopulateFields(value));
