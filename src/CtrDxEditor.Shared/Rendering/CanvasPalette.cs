@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 namespace CtrDxEditor.Rendering
 {
@@ -42,6 +43,11 @@ namespace CtrDxEditor.Rendering
         /// <summary>Selection marquee for an unlocked object.</summary>
         public Pen ObjectSelected { get; private set; } = OverlayPen(Brushes.DeepSkyBlue, 1.5);
 
+        /// <summary>Text brush for a timed-star duration label on the blank (no-background) canvas:
+        /// pure white in the dark theme, pure black in the light theme. When a background is applied
+        /// the canvas draws these labels black regardless.</summary>
+        public IBrush StarDurationText { get; private set; } = Brushes.White;
+
         /// <summary>Re-resolves every brush and pen for <paramref name="host"/>'s active theme variant.</summary>
         public void Refresh(Control host)
         {
@@ -58,6 +64,7 @@ namespace CtrDxEditor.Rendering
             HitboxPhone = OverlayPen(ThemeColor(host, "EditorColor.OverlayHitboxPhone", Colors.Magenta), 1.5);
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
             ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
+            StarDurationText = host.ActualThemeVariant == ThemeVariant.Dark ? Brushes.White : Brushes.Black;
         }
 
         /// <summary>Resolves a themed <see cref="Color"/> resource for the host's active theme variant,

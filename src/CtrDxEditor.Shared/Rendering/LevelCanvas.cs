@@ -584,7 +584,8 @@ namespace CtrDxEditor.Rendering
                 }
                 else
                 {
-                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
+                    DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
+                        ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText);
                 }
             }
 
@@ -678,7 +679,14 @@ namespace CtrDxEditor.Rendering
         // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
         // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
         private static void DrawObject(
-            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            int candySkin,
+            int omNomSupport,
+            bool nightLevel,
+            IBrush starDurationText)
         {
             if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
             {
@@ -689,7 +697,7 @@ namespace CtrDxEditor.Rendering
                 if (sprites.GetSprite(CanvasSpriteKey("star", nightLevel), candySkin, omNomSupport) is { } star)
                 {
                     DrawSprite(ctx, v, star, obj.X, obj.Y);
-                    DrawStarDuration(ctx, v, star, obj, timeout);
+                    DrawStarDuration(ctx, v, star, obj, timeout, starDurationText);
                 }
                 DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
                 return;
@@ -733,16 +741,15 @@ namespace CtrDxEditor.Rendering
             return element == "star" ? "star" : CanvasSpriteKey(element, nightLevel);
         }
 
-        private static void DrawStarDuration(DrawingContext ctx, ViewTransform v, ObjectSprite star, LevelObject obj, double timeout)
+        private static void DrawStarDuration(
+            DrawingContext ctx,
+            ViewTransform v,
+            ObjectSprite star,
+            LevelObject obj,
+            double timeout,
+            IBrush foreground)
         {
-            string text = FormatStarDuration(timeout);
-            FormattedText formatted = new(
-                text,
-                CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight,
-                new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Bold),
-                Math.Max(10.0, 18.0 * v.Zoom),
-                Brushes.White);
+            FormattedText formatted = CreateStarDurationText(FormatStarDuration(timeout), v.Zoom, foreground);
 
             double top = StarTop(star, obj);
             Vec2 anchor = v.LevelToScreen(new Vec2(obj.X, top));
@@ -751,6 +758,17 @@ namespace CtrDxEditor.Rendering
                 new Size(formatted.Width, formatted.Height),
                 v.Zoom);
             ctx.DrawText(formatted, origin);
+        }
+
+        private static FormattedText CreateStarDurationText(string text, double zoom, IBrush foreground)
+        {
+            return new FormattedText(
+                text,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.DefaultFontFamilyName, FontStyle.Normal, FontWeight.Bold),
+                Math.Max(10.0, 18.0 * zoom),
+                foreground);
         }
 
         private static string FormatStarDuration(double timeout)
