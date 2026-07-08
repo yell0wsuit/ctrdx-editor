@@ -194,7 +194,19 @@ namespace CtrDxEditor.Rendering
                 DashStyle = new DashStyle([4, 3], 0),
             };
 
+        // Pump rotation dial: ring + 15° ticks, and the draggable facing knob.
+        private const double PumpDialRadiusPx = 96;
+        private const double PumpDialRingTolPx = 8;
+        private const double PumpDialKnobPx = 7;
+        private const double PumpDialKnobHitPx = 14;
+        private static readonly Pen PumpDialPen = new(new SolidColorBrush(Color.FromArgb(200, 90, 200, 255)), 1.5);
+        private static readonly Pen PumpDialTickPen = new(new SolidColorBrush(Color.FromArgb(140, 90, 200, 255)), 1);
+        private static readonly IBrush PumpDialKnobBrush = new SolidColorBrush(Color.FromArgb(230, 90, 200, 255));
+        private static readonly IBrush PumpDialKnobActiveBrush = new SolidColorBrush(Color.FromArgb(255, 255, 210, 90));
+
         private bool _dragging;
+        // True while dragging the selected pump's rotation dial.
+        private bool _rotatingPump;
         private bool _resizingRadius;
         // Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
         // None when no rail drag is in progress. A MoveBar drag routes through _dragging instead.
@@ -457,6 +469,11 @@ namespace CtrDxEditor.Rendering
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
                 Pen pen = Equals(LockedObject, selected) ? _palette.ObjectLocked : _palette.ObjectSelected;
                 context.DrawRectangle(null, pen, new Rect(stl.X, stl.Y, sbr.X - stl.X, sbr.Y - stl.Y));
+            }
+
+            if (selected?.Type == "pump")
+            {
+                DrawPumpDial(context, v, selected);
             }
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
@@ -974,6 +991,35 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        // Draws the rotation dial for the selected pump: a ring, a 15° tick every 24th of a turn, and a
+        // knob at the pump's facing (highlighted while dragging). All sizes are screen-constant via zoom.
+        private void DrawPumpDial(DrawingContext ctx, ViewTransform v, LevelObject pump)
+        {
+            if (View.Zoom <= 0)
+            {
+                return;
+            }
+            Vec2 c = new(pump.X, pump.Y);
+            double radius = PumpDialRadiusPx / View.Zoom;
+            Vec2 cs = v.LevelToScreen(c);
+            double rs = PumpDialRadiusPx; // screen radius = level radius * zoom = px constant
+            ctx.DrawEllipse(null, PumpDialPen, new Point(cs.X, cs.Y), rs, rs);
+
+            for (int i = 0; i < 24; i++)
+            {
+                double a = i * 15 * Math.PI / 180;
+                double dx = Math.Cos(a), dy = Math.Sin(a);
+                double inner = i % 6 == 0 ? rs - 10 : rs - 5; // longer ticks at cardinals
+                ctx.DrawLine(PumpDialTickPen,
+                    new Point(cs.X + (dx * inner), cs.Y + (dy * inner)),
+                    new Point(cs.X + (dx * rs), cs.Y + (dy * rs)));
+            }
+
+            Vec2 knob = v.LevelToScreen(PumpRotation.KnobPosition(c, PumpRotation.StoredAngle(pump), radius));
+            IBrush knobBrush = _rotatingPump ? PumpDialKnobActiveBrush : PumpDialKnobBrush;
+            ctx.DrawEllipse(knobBrush, null, new Point(knob.X, knob.Y), PumpDialKnobPx, PumpDialKnobPx);
+        }
+
         private static void DrawHitbox(
             DrawingContext ctx,
             ViewTransform v,
@@ -1010,6 +1056,31 @@ namespace CtrDxEditor.Rendering
                 && GrabRail.Of(sel) is { } g
                 ? GrabRail.HitTest(g, levelPt, endTolerance: 9 / View.Zoom, hookTolerance: 24, barThickness: 20)
                 : GrabRail.Handle.None;
+        }
+
+        // Whether a level point is over the selected pump's dial knob or ring, or neither. Tolerances are
+        // screen pixels converted to level units by the current zoom, like the rail/radius handles.
+        private (bool OnKnob, bool OnRing) HitPumpDial(Vec2 levelPt)
+        {
+            if (SelectedObject is not { Type: "pump" } pump || View.Zoom <= 0)
+            {
+                return (false, false);
+            }
+            Vec2 c = new(pump.X, pump.Y);
+            double radius = PumpDialRadiusPx / View.Zoom;
+            double angle = PumpRotation.StoredAngle(pump);
+            bool onKnob = PumpRotation.OnKnob(c, angle, radius, levelPt, PumpDialKnobHitPx / View.Zoom);
+            bool onRing = !onKnob && PumpRotation.OnRing(c, radius, levelPt, PumpDialRingTolPx / View.Zoom);
+            return (onKnob, onRing);
+        }
+
+        // Writes the pump's new angle from a dial drag: free (whole degrees) unless Alt is held, which
+        // snaps to the nearest 15°.
+        private static void ApplyPumpRotation(LevelObject pump, Vec2 levelPt, KeyModifiers mods)
+        {
+            bool snap = mods.HasFlag(KeyModifiers.Alt);
+            double angle = PumpRotation.AngleFromPoint(new Vec2(pump.X, pump.Y), levelPt, snap);
+            pump.SetAttr("angle", PumpRotation.Format(angle));
         }
 
         // Applies the active rail drag to the grab: sliding moves the hook (object x/y) and its offset
@@ -1159,6 +1230,20 @@ namespace CtrDxEditor.Rendering
                     break;
             }
 
+            // Grabbing the selected pump's dial (knob or ring) rotates it; takes priority over object
+            // hit-testing so the dial wins over anything beneath it.
+            (bool onKnob, bool onRing) = HitPumpDial(levelPt);
+            if (onKnob || onRing)
+            {
+                BeginDocumentEdit?.Invoke();
+                _rotatingPump = true;
+                ApplyPumpRotation(SelectedObject!, levelPt, e.KeyModifiers);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Pointer.Capture(this);
+                return;
+            }
+
             List<LevelBounds> bounds = BuildHitBounds(doc);
 
             // Double-click toggles the lock. ClickCount keeps climbing (3, 4, ...) while clicking in the
@@ -1237,6 +1322,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_rotatingPump && SelectedObject is { Type: "pump" } rp)
+            {
+                ApplyPumpRotation(rp, levelPt, e.KeyModifiers);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_panning)
             {
                 ScrollBy(_panLast.X - p.X, _panLast.Y - p.Y);
@@ -1250,7 +1343,9 @@ namespace CtrDxEditor.Rendering
                 // light up the hook when it's hovered.
                 GrabRail.Handle handle = HitRail(levelPt);
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
-                Cursor = OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
+                (bool onKnobHover, bool onRingHover) = HitPumpDial(levelPt);
+                Cursor = onKnobHover || onRingHover ? new Cursor(StandardCursorType.Hand)
+                    : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
             }
 
@@ -1281,17 +1376,19 @@ namespace CtrDxEditor.Rendering
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
             bool gestureActive = _dragging || _panning || _resizingRadius
-                || _railDrag != GrabRail.Handle.None || _hookHovered;
+                || _railDrag != GrabRail.Handle.None || _rotatingPump || _hookHovered;
             if (!gestureActive)
             {
                 return;
             }
 
-            bool editedDocument = _dragging || _resizingRadius || _railDrag != GrabRail.Handle.None;
+            bool editedDocument = _dragging || _resizingRadius
+                || _railDrag != GrabRail.Handle.None || _rotatingPump;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
+            _rotatingPump = false;
             if (editedDocument)
             {
                 CompleteDocumentEdit?.Invoke();
