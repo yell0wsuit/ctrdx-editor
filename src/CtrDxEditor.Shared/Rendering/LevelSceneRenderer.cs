@@ -541,7 +541,24 @@ namespace CtrDxEditor.Rendering
             }
             Vec2 tl = v.LevelToScreen(new Vec2(b.X, b.Y));
             Vec2 br = v.LevelToScreen(new Vec2(b.X + b.W, b.Y + b.H));
-            ctx.DrawRectangle(null, pen, new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y));
+            Rect box = new(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+
+            // A rotatable object's box turns with its sprite about the same anchor (see DrawLayer). The view
+            // transform is translation + uniform scale, so rotating the projected box about the projected
+            // anchor equals rotating it in level space. Square boxes only diverge visibly off the axes.
+            if (RotationTable.For(obj.Type) is { } rotSpec && ObjectRotation.DisplayDegrees(obj, rotSpec) is var deg && deg != 0)
+            {
+                Vec2 center = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+                Matrix m = Matrix.CreateTranslation(-center.X, -center.Y)
+                    * Matrix.CreateRotation(deg * Math.PI / 180.0)
+                    * Matrix.CreateTranslation(center.X, center.Y);
+                using (ctx.PushTransform(m))
+                {
+                    ctx.DrawRectangle(null, pen, box);
+                }
+                return;
+            }
+            ctx.DrawRectangle(null, pen, box);
         }
     }
 }
