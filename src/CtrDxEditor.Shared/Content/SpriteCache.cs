@@ -292,30 +292,66 @@ namespace CtrDxEditor.Content
                 maxY = Math.Max(maxY, d.Y + d.H);
             }
 
-            double w = maxX - minX, h = maxY - minY;
-            if (w <= 0 || h <= 0)
+            if (maxX - minX <= 0 || maxY - minY <= 0)
             {
                 return null;
             }
 
+            // Rotatable objects render on the canvas turned by their display offset (e.g. pump +90), so the
+            // preview matches by rotating the art about the origin it was laid out around. The crop is taken
+            // from the rotated bounds so the whole turned sprite stays framed. Same rotation sign as the
+            // canvas (see LevelSceneRenderer.DrawLayer), which Avalonia's CreateRotation matches.
+            double rad = (RotationTable.For(element)?.DisplayOffset ?? 0) * Math.PI / 180.0;
+            (double rMinX, double rMinY, double rMaxX, double rMaxY) = RotatedBounds(minX, minY, maxX, maxY, rad);
+
+            double w = rMaxX - rMinX, h = rMaxY - rMinY;
             const double maxDim = 32.0;
             double f = Math.Min(1.0, maxDim / Math.Max(w, h));
             PixelSize size = new(Math.Max(1, (int)Math.Ceiling(w * f)), Math.Max(1, (int)Math.Ceiling(h * f)));
 
+            // Map a laid-out (origin-centered) point to bitmap pixels: rotate about the origin, shift the
+            // rotated bounds to (0,0), then scale to fit. One pushed transform covers every layer.
+            Matrix toBitmap = Matrix.CreateRotation(rad)
+                * Matrix.CreateTranslation(-rMinX, -rMinY)
+                * Matrix.CreateScale(f, f);
+
             RenderTargetBitmap rtb = new(size, new Vector(96, 96));
             using (DrawingContext ctx = rtb.CreateDrawingContext())
+            using (ctx.PushTransform(toBitmap))
             {
                 foreach (SpriteLayerDraw layer in drawn)
                 {
                     SpriteLayout layout = SpritePlacement.Compute(layer.Frame, 0, 0, sprite.Scale, mapScale: 1.0);
                     Rect src = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
-                    Rect dst = new(
-                        (layout.Dest.X - minX) * f, (layout.Dest.Y - minY) * f,
-                        layout.Dest.W * f, layout.Dest.H * f);
+                    Rect dst = new(layout.Dest.X, layout.Dest.Y, layout.Dest.W, layout.Dest.H);
                     ctx.DrawImage(layer.Bitmap, src, dst);
                 }
             }
             return rtb;
+        }
+
+        /// <summary>The axis-aligned bounds of the rectangle (<paramref name="minX"/>,<paramref name="minY"/>)-
+        /// (<paramref name="maxX"/>,<paramref name="maxY"/>) rotated by <paramref name="rad"/> radians about
+        /// the origin. Returns the input unchanged when the angle is zero.</summary>
+        private static (double MinX, double MinY, double MaxX, double MaxY) RotatedBounds(
+            double minX, double minY, double maxX, double maxY, double rad)
+        {
+            if (rad == 0)
+            {
+                return (minX, minY, maxX, maxY);
+            }
+            double cos = Math.Cos(rad), sin = Math.Sin(rad);
+            double rMinX = double.MaxValue, rMinY = double.MaxValue, rMaxX = double.MinValue, rMaxY = double.MinValue;
+            foreach ((double px, double py) in new[] { (minX, minY), (maxX, minY), (maxX, maxY), (minX, maxY) })
+            {
+                double rx = (px * cos) - (py * sin);
+                double ry = (px * sin) + (py * cos);
+                rMinX = Math.Min(rMinX, rx);
+                rMinY = Math.Min(rMinY, ry);
+                rMaxX = Math.Max(rMaxX, rx);
+                rMaxY = Math.Max(rMaxY, ry);
+            }
+            return (rMinX, rMinY, rMaxX, rMaxY);
         }
 
         /// <summary>Atlas holding Om Nom's sitting platforms (the target's back layer), one per frame.</summary>
