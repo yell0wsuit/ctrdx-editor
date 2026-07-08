@@ -19,6 +19,10 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("bubble"));
             Assert.True(t.Knows("gravitySwitch"));
             Assert.True(t.Knows("pump"));
+            Assert.True(t.Knows("spike1"));
+            Assert.True(t.Knows("spike2"));
+            Assert.True(t.Knows("spike3"));
+            Assert.True(t.Knows("spike4"));
         }
 
         /// <summary>Verifies that bubble is unbounded and has no editable attributes (game reads only x/y).</summary>
@@ -77,6 +81,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(AttrType.Number, angle.Type);
             Assert.Equal("0", angle.Default);
             Assert.Equal(int.MaxValue, pump.MaxCount);
+        }
+
+        /// <summary>Verifies spike descriptors mirror the game's spike1-4 XML elements.</summary>
+        [Theory]
+        [InlineData("spike1", "1")]
+        [InlineData("spike2", "2")]
+        [InlineData("spike3", "3")]
+        [InlineData("spike4", "4")]
+        public void SpikesCarryAngleSizeAndToggledAttributes(string element, string size)
+        {
+            ObjectDescriptor spike = DescriptorTable.Default.For(element)!;
+
+            Assert.Equal("Spike", spike.DisplayName);
+            Assert.Equal(int.MaxValue, spike.MaxCount);
+            Assert.Contains(spike.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
+            Assert.Contains(spike.Attributes, a => a.Name == "size" && a.Type == AttrType.Enum && a.Default == size);
+            Assert.Contains(spike.Attributes, a => a.Name == "toggled" && a.Type == AttrType.Bool && a.Default == "false");
         }
     }
 }

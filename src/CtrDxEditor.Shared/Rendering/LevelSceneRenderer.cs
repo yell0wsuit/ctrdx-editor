@@ -58,7 +58,10 @@ namespace CtrDxEditor.Rendering
             // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
             // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
             // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
-            ObjectSprite? sprite = sprites.GetSprite(SelectionSpriteKey(GrabRenderer.RenderSpriteKey(obj), nightLevel), candySkin, omNomSupport);
+            string selectionKey = SpikeObject.IsSpike(obj.Type)
+                ? SpikeObject.SpriteKey(obj)
+                : GrabRenderer.RenderSpriteKey(obj);
+            ObjectSprite? sprite = sprites.GetSprite(SelectionSpriteKey(selectionKey, nightLevel), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
                 return new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
@@ -144,7 +147,8 @@ namespace CtrDxEditor.Rendering
 
             if (RotationTable.For(obj.Type) is { } rotSpec)
             {
-                if (sprites.GetSprite(CanvasSpriteKey(obj.Type, nightLevel), candySkin, omNomSupport) is { } rotSprite)
+                string rotKey = SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : obj.Type;
+                if (sprites.GetSprite(CanvasSpriteKey(rotKey, nightLevel), candySkin, omNomSupport) is { } rotSprite)
                 {
                     double deg = ObjectRotation.DisplayDegrees(obj, rotSpec);
                     foreach (SpriteLayerDraw layer in rotSprite.Layers)
@@ -156,7 +160,8 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            ObjectSprite? sprite = sprites.GetSprite(CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel), candySkin, omNomSupport);
+            string spriteKey = SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : GrabRenderer.SpriteKey(obj);
+            ObjectSprite? sprite = sprites.GetSprite(CanvasSpriteKey(spriteKey, nightLevel), candySkin, omNomSupport);
             if (sprite is not null)
             {
                 if (sprite.Variants.Count > 0)
@@ -184,7 +189,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The sprite key to draw.</returns>
         public static string CanvasSpriteKey(LevelObject obj, bool nightLevel)
         {
-            return CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel);
+            return CanvasSpriteKey(SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : GrabRenderer.SpriteKey(obj), nightLevel);
         }
 
         /// <summary>Applies night-level variants to a sprite element key (e.g. sleeping Om Nom target).</summary>
@@ -210,6 +215,54 @@ namespace CtrDxEditor.Rendering
         public static string SelectionSpriteKey(string element, bool nightLevel)
         {
             return element == "star" ? "star" : CanvasSpriteKey(element, nightLevel);
+        }
+
+        /// <summary>Screen-space selection outline corners, rotated around the object anchor when the object rotates.</summary>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">The selected object.</param>
+        /// <param name="bounds">The unrotated level-space selection bounds.</param>
+        /// <returns>Four screen-space corners ordered clockwise from top-left.</returns>
+        public static Point[] SelectionOutlinePoints(ViewTransform v, LevelObject obj, LevelBounds bounds)
+        {
+            Point[] points =
+            [
+                ScreenPoint(v, bounds.X, bounds.Y),
+                ScreenPoint(v, bounds.X + bounds.W, bounds.Y),
+                ScreenPoint(v, bounds.X + bounds.W, bounds.Y + bounds.H),
+                ScreenPoint(v, bounds.X, bounds.Y + bounds.H),
+            ];
+
+            if (RotationTable.For(obj.Type) is not { } rotSpec)
+            {
+                return points;
+            }
+
+            double degrees = ObjectRotation.DisplayDegrees(obj, rotSpec);
+            if (degrees == 0)
+            {
+                return points;
+            }
+
+            Point center = ScreenPoint(v, obj.X, obj.Y);
+            double radians = degrees * Math.PI / 180.0;
+            double sin = Math.Sin(radians);
+            double cos = Math.Cos(radians);
+            for (int i = 0; i < points.Length; i++)
+            {
+                double dx = points[i].X - center.X;
+                double dy = points[i].Y - center.Y;
+                points[i] = new Point(
+                    center.X + (dx * cos) - (dy * sin),
+                    center.Y + (dx * sin) + (dy * cos));
+            }
+
+            return points;
+        }
+
+        private static Point ScreenPoint(ViewTransform v, double x, double y)
+        {
+            Vec2 point = v.LevelToScreen(new Vec2(x, y));
+            return new Point(point.X, point.Y);
         }
 
         /// <summary>Draws the countdown label above a timed star.</summary>
@@ -558,7 +611,7 @@ namespace CtrDxEditor.Rendering
             HitboxModel model,
             Pen pen)
         {
-            if (HitboxTable.Compute(obj.Type, obj.X, obj.Y, scale, model) is not { } b)
+            if (HitboxTable.Compute(obj, scale, model) is not { } b)
             {
                 return;
             }

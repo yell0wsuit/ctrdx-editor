@@ -1,3 +1,6 @@
+using System.Xml.Linq;
+
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 
@@ -105,6 +108,39 @@ namespace CtrDxEditor.Core.Tests
             // desktop (300,300,175,175), ref 761: drawX = x - 761/2 = -380.5; box left = -380.5+300 = -80.5.
             LevelBounds? box = HitboxTable.Compute("pump", 0, 0, scale: 3, HitboxModel.Desktop);
             Assert.Equal(new LevelBounds(-80.5, -80.5, 175, 175), box);
+        }
+
+        /// <summary>Spike hitboxes follow the game's narrow rotated collision strip.</summary>
+        [Theory]
+        [InlineData("spike1", 214)]
+        [InlineData("spike2", 335)]
+        [InlineData("spike3", 455)]
+        [InlineData("spike4", 568)]
+        public void SpikeDesktopBoxUsesAtlasQuadWidthAndTenPixelCollisionHeight(string element, int width)
+        {
+            LevelBounds? box = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop);
+
+            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), box);
+        }
+
+        /// <summary>Toggled spikes use the rotatable spike quad width for their hitbox.</summary>
+        [Theory]
+        [InlineData("spike1", 204)]
+        [InlineData("spike2", 321)]
+        [InlineData("spike3", 446)]
+        [InlineData("spike4", 561)]
+        public void ToggledSpikeDesktopBoxUsesRotatableAtlasQuadWidth(string element, int width)
+        {
+            LevelObject spike = new(new XElement(
+                element,
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("size", element[^1].ToString()),
+                new XAttribute("toggled", "1")));
+
+            LevelBounds? box = HitboxTable.Compute(spike, 3, HitboxModel.Desktop);
+
+            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), box);
         }
     }
 }

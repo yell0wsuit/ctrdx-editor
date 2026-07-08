@@ -182,6 +182,19 @@ namespace CtrDxEditor.Tests
             Assert.NotNull(vm.PlaceObject("star", 100, 120));
         }
 
+        /// <summary>The palette exposes one resizable spike item, not four duplicate spike-size elements.</summary>
+        [Fact]
+        public void PaletteShowsSingleSpikeEntry()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.True(PaletteHas(vm, "spike1"));
+            Assert.False(PaletteHas(vm, "spike2"));
+            Assert.False(PaletteHas(vm, "spike3"));
+            Assert.False(PaletteHas(vm, "spike4"));
+        }
+
         private static void SetPrivateField<T>(object target, string name, T value)
         {
             FieldInfo? field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);

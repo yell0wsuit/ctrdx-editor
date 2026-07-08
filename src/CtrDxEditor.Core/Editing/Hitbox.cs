@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
@@ -49,7 +50,31 @@ namespace CtrDxEditor.Core.Editing
                 new("star", new(70, 64, 82, 82), new(22, 20, 30, 30), 236, 223),
                 new("target", new(264, 350, 108, 2), new(90, 110, 25, 1), 640, 640),
                 new("pump", new(300, 300, 175, 175), new(94, 95, 57, 57), 761, 761),
+                new("spike1", new(309.5, 120, 214, 10), new(309.5, 120, 214, 10), 833, 250),
+                new("spike2", new(249, 120, 335, 10), new(249, 120, 335, 10), 833, 250),
+                new("spike3", new(189, 120, 455, 10), new(189, 120, 455, 10), 833, 250),
+                new("spike4", new(132.5, 120, 568, 10), new(132.5, 120, 568, 10), 833, 250),
+                new("spike1_toggled", new(314.5, 120, 204, 10), new(314.5, 120, 204, 10), 833, 250),
+                new("spike2_toggled", new(256, 120, 321, 10), new(256, 120, 321, 10), 833, 250),
+                new("spike3_toggled", new(193.5, 120, 446, 10), new(193.5, 120, 446, 10), 833, 250),
+                new("spike4_toggled", new(136, 120, 561, 10), new(136, 120, 561, 10), 833, 250),
             }.ToDictionary(d => d.Element);
+
+        /// <summary>
+        /// The level-space box for <paramref name="obj"/>, accounting for state-dependent variants such as
+        /// rotatable spike quads.
+        /// </summary>
+        public static LevelBounds? Compute(
+            LevelObject obj,
+            double scale,
+            HitboxModel model,
+            double mapScale = SpritePlacement.MapScale)
+        {
+            string element = SpikeObject.IsSpike(obj.Type) && SpikeObject.IsToggled(obj)
+                ? $"{obj.Type}_toggled"
+                : obj.Type;
+            return Compute(element, obj.X, obj.Y, scale, model, mapScale);
+        }
 
         /// <summary>
         /// The level-space box for <paramref name="element"/> at object center

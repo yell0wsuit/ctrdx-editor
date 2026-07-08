@@ -233,6 +233,7 @@ namespace CtrDxEditor.ViewModels
             {
                 "candy" => !doc.TwoParts,
                 "candyL" or "candyR" => doc.TwoParts,
+                "spike2" or "spike3" or "spike4" => false,
                 _ => true,
             };
         }
@@ -385,6 +386,12 @@ namespace CtrDxEditor.ViewModels
             if (value.Type == "grab" && Document is not null)
             {
                 GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
+            if (SpikeObject.IsSpike(value.Type))
+            {
+                SpikeFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
                 return;
             }
 

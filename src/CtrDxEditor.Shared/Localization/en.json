@@ -132,6 +132,10 @@
     "Object.pump": "Air cushion",
     "Object.gravitySwitch": "Gravity button",
     "Object.lightBulb": "Light bulb",
+    "Object.spike1": "Spike",
+    "Object.spike2": "Spike",
+    "Object.spike3": "Spike",
+    "Object.spike4": "Spike",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -155,5 +159,8 @@
     "Attr.bulbNumber": "Bulb number",
     "Attr.candyNumber": "Candy number",
     "Attr.attachTo": "Attach to",
-    "Attr.angle": "Angle"
+    "Attr.angle": "Angle",
+    "Attr.size": "Size",
+    "Attr.toggled": "Toggled",
+    "Attr.toggleGroup": "Group"
 }

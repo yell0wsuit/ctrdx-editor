@@ -112,5 +112,32 @@ namespace CtrDxEditor.Tests
             Assert.Equal("images/obj_pump", layer.AtlasImageBasePath);
             Assert.Equal(0, layer.Quad);
         }
+
+        /// <summary>Verifies static spikes use obj_spikes quads 8-11 and rotatable spikes use quads 0-3 plus their group buttons.</summary>
+        [Theory]
+        [InlineData("spike1", 8, 0, 4, 6)]
+        [InlineData("spike2", 9, 1, 4, 6)]
+        [InlineData("spike3", 10, 2, 4, 6)]
+        [InlineData("spike4", 11, 3, 4, 6)]
+        public void SpikeDescriptorsMapToStaticRotatableAndButtonQuads(
+            string element,
+            int staticQuad,
+            int rotatableQuad,
+            int group1ButtonQuad,
+            int group2ButtonQuad)
+        {
+            VisualDescriptor spike = VisualDescriptorMap.For(element)!;
+            VisualDescriptor group1 = VisualDescriptorMap.For($"{element}_toggled_1")!;
+            VisualDescriptor group2 = VisualDescriptorMap.For($"{element}_toggled_2")!;
+
+            Assert.Equal([staticQuad], spike.Layers.Select(l => l.Quad));
+            Assert.Equal([rotatableQuad, group1ButtonQuad], group1.Layers.Select(l => l.Quad));
+            Assert.Equal([rotatableQuad, group2ButtonQuad], group2.Layers.Select(l => l.Quad));
+            Assert.All(spike.Layers.Concat(group1.Layers).Concat(group2.Layers), l =>
+            {
+                Assert.Equal("images/obj_spikes.json", l.AtlasJsonRelPath);
+                Assert.Equal("images/obj_spikes", l.AtlasImageBasePath);
+            });
+        }
     }
 }

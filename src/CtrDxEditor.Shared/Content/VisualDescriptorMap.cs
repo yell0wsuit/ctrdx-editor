@@ -22,6 +22,8 @@ namespace CtrDxEditor.Content
         private const string LighterImageBase = "images/obj_lighter";
         private const string PumpJson = "images/obj_pump.json";
         private const string PumpImageBase = "images/obj_pump";
+        private const string SpikesJson = "images/obj_spikes.json";
+        private const string SpikesImageBase = "images/obj_spikes";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -204,6 +206,23 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(PumpJson, PumpImageBase, 0),
             ]),
+
+            // Static spike quads. Game Spikes.GetSpikeTextureAndQuad maps width 1-4 to obj_spikes quads 8-11.
+            new("spike1", [new SpriteLayer(SpikesJson, SpikesImageBase, 8)]),
+            new("spike2", [new SpriteLayer(SpikesJson, SpikesImageBase, 9)]),
+            new("spike3", [new SpriteLayer(SpikesJson, SpikesImageBase, 10)]),
+            new("spike4", [new SpriteLayer(SpikesJson, SpikesImageBase, 11)]),
+
+            // Rotatable spike quads plus their rotate button. Game Spikes adds button quad 4 for group 1
+            // and quad 6 for group 2 as a child centered on the same obj_spikes sourceSize canvas.
+            new("spike1_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 0), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
+            new("spike2_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 1), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
+            new("spike3_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 2), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
+            new("spike4_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 3), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
+            new("spike1_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 0), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
+            new("spike2_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 1), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
+            new("spike3_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 2), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
+            new("spike4_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 3), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

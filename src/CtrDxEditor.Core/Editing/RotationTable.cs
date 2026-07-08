@@ -21,6 +21,10 @@ namespace CtrDxEditor.Core.Editing
         {
             // Pump: game LoadPumps sets rotation = angle + DEG_90.
             ["pump"] = new RotationSpec(DisplayOffset: 90),
+            ["spike1"] = new RotationSpec(DisplayOffset: 0),
+            ["spike2"] = new RotationSpec(DisplayOffset: 0),
+            ["spike3"] = new RotationSpec(DisplayOffset: 0),
+            ["spike4"] = new RotationSpec(DisplayOffset: 0),
         };
 
         /// <summary>The rotation spec for <paramref name="element"/>, or null when it does not rotate.</summary>

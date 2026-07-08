@@ -160,6 +160,49 @@ namespace CtrDxEditor.Tests
             Assert.Equal(normal.H, night.H, 3);
         }
 
+        /// <summary>Spike selection uses the trimmed visible strip, like other sprite-backed objects.</summary>
+        [Fact]
+        public void SpikeSelectionBoundsUseTrimmedSpriteBounds()
+        {
+            SpriteCache sprites = SeedSpikeAtlas();
+            LevelObject spike = new(new XElement("spike4", new XAttribute("x", "100"), new XAttribute("y", "200"), new XAttribute("size", "4")));
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "SelectionBounds",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            LevelBounds bounds = (LevelBounds)method.Invoke(null, [sprites, spike, 0, 0, false])!;
+
+            Assert.Equal(-18.5, bounds.X, 3);
+            Assert.Equal(179.375, bounds.Y, 3);
+            Assert.Equal(236.667, bounds.W, 3);
+            Assert.Equal(39.583, bounds.H, 3);
+        }
+
+        /// <summary>The selected spike outline rotates with the object's angle instead of staying axis-aligned.</summary>
+        [Fact]
+        public void SpikeSelectionOutlineRotatesWithObject()
+        {
+            LevelBounds bounds = new(-18.5, 179.375, 236.667, 39.583);
+            LevelObject spike = new(new XElement(
+                "spike4",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("angle", "90"),
+                new XAttribute("size", "4")));
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "SelectionOutlinePoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            Point[] points = (Point[])method.Invoke(null, [ViewTransform.Identity, spike, bounds])!;
+
+            Assert.Equal(120.625, points[0].X, 3);
+            Assert.Equal(81.5, points[0].Y, 3);
+            Assert.Equal(120.625, points[1].X, 3);
+            Assert.Equal(318.167, points[1].Y, 3);
+        }
+
         private static SpriteCache SeedStarAtlases()
         {
             SpriteCache cache = new(new FakeStore());
@@ -175,6 +218,25 @@ namespace CtrDxEditor.Tests
                     Frame("idle-glow", 236, 223, 155, 155, 552, 552),
                     .. EmptyFrames(17),
                     Frame("idle-body", 85, 80, 229, 229, 552, 552),
+                ]),
+            });
+            return cache;
+        }
+
+        private static SpriteCache SeedSpikeAtlas()
+        {
+            SpriteCache cache = new(new FakeStore());
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/obj_spikes.png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/obj_spikes.json"] = new Atlas(
+                [
+                    .. EmptyFrames(11),
+                    Frame("obj_spikes_04_frame_0000.png", 568, 95, 132, 75, 833, 250),
                 ]),
             });
             return cache;

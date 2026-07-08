@@ -120,11 +120,13 @@ namespace CtrDxEditor.Rendering
             if (selected is not null)
             {
                 LevelBounds sb = LevelSceneRenderer.SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
-                Vec2 stl = v.LevelToScreen(new Vec2(sb.X, sb.Y));
-                Vec2 sbr = v.LevelToScreen(new Vec2(sb.X + sb.W, sb.Y + sb.H));
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
                 Pen pen = Equals(LockedObject, selected) ? _palette.ObjectLocked : _palette.ObjectSelected;
-                context.DrawRectangle(null, pen, new Rect(stl.X, stl.Y, sbr.X - stl.X, sbr.Y - stl.Y));
+                Point[] points = LevelSceneRenderer.SelectionOutlinePoints(v, selected, sb);
+                for (int i = 0; i < points.Length; i++)
+                {
+                    context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
+                }
             }
 
             if (selected is not null && RotationTable.For(selected.Type) is { } rotSpec)
