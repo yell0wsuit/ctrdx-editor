@@ -18,7 +18,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("grab"));
             Assert.True(t.Knows("bubble"));
             Assert.True(t.Knows("gravitySwitch"));
-            Assert.False(t.Knows("pump"));
+            Assert.True(t.Knows("pump"));
         }
 
         /// <summary>Verifies that bubble is unbounded and has no editable attributes (game reads only x/y).</summary>
@@ -65,6 +65,18 @@ namespace CtrDxEditor.Core.Tests
             ObjectDescriptor grab = DescriptorTable.Default.For("grab")!;
             Assert.Contains(grab.Attributes, a => a.Name == "kickable" && a.Type == AttrType.Bool);
             Assert.Contains(grab.Attributes, a => a.Name == "kicked" && a.Type == AttrType.Bool);
+        }
+
+        /// <summary>Verifies the pump exposes a single float angle attribute defaulting to 0.</summary>
+        [Fact]
+        public void PumpHasAngleAttributeDefaultingToZero()
+        {
+            ObjectDescriptor pump = DescriptorTable.Default.For("pump")!;
+            AttributeSpec angle = Assert.Single(pump.Attributes);
+            Assert.Equal("angle", angle.Name);
+            Assert.Equal(AttrType.Number, angle.Type);
+            Assert.Equal("0", angle.Default);
+            Assert.Equal(int.MaxValue, pump.MaxCount);
         }
     }
 }

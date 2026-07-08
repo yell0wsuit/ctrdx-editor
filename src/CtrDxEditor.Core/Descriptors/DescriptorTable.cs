@@ -58,6 +58,10 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("litRadius", AttrType.Whole, "50"),
                 new AttributeSpec("bulbNumber", AttrType.Text, null),
             ], MaxCount: int.MaxValue),
+            new ObjectDescriptor("pump", "Pump",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
+            ], MaxCount: int.MaxValue),
         ]);
     }
 }
