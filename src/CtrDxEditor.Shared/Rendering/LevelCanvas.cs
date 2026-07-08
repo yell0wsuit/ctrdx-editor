@@ -170,30 +170,62 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised after a direct canvas edit ends, so the view model can commit undo state.</summary>
         public Action? CompleteDocumentEdit { get; set; }
 
+        /// <summary>True while dragging the selected object (or a grab via its move-bar) to a new position.</summary>
         private bool _dragging;
-        // True while dragging the selected object's rotation dial.
+
+        /// <summary>True while dragging the selected object's rotation dial.</summary>
         private bool _rotating;
+
+        /// <summary>True while dragging a grab's auto-catch radius ring to resize it.</summary>
         private bool _resizingRadius;
-        // Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
-        // None when no rail drag is in progress. A MoveBar drag routes through _dragging instead.
+
+        /// <summary>
+        /// Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
+        /// <see cref="GrabRail.Handle.None"/> when no rail drag is in progress. A <see cref="GrabRail.Handle.MoveBar"/>
+        /// drag routes through <see cref="_dragging"/> instead.
+        /// </summary>
         private GrabRail.Handle _railDrag;
-        // Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even
-        // before a drag begins (the game highlights the mover on interaction).
+
+        /// <summary>
+        /// Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even before a
+        /// drag begins (the game highlights the mover on interaction).
+        /// </summary>
         private bool _hookHovered;
-        // True while the cursor hovers the selected object's rotation knob (lights it up).
+
+        /// <summary>True while the cursor hovers the selected object's rotation knob (lights it up).</summary>
         private bool _dialKnobHovered;
+
+        /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;
+
+        /// <summary>Index of the last object a click hit, so repeated clicks in one spot cycle through stacked objects.</summary>
         private int _lastHitIndex = -1;
+
+        /// <summary>True while panning the view with the middle button or an empty-space drag.</summary>
         private bool _panning;
+
+        /// <summary>Last pointer position during a pan, in screen pixels.</summary>
         private Point _panLast;
+
+        /// <summary>Cumulative pinch scale from the previous pinch event, used to derive an incremental zoom factor.</summary>
         private double _lastPinchScale = 1;
+
+        /// <summary>Guards scrollbar/<see cref="View"/> sync so a programmatic scroll update doesn't recurse back through property changes.</summary>
         private bool _syncingScroll;
+
+        /// <summary>True when a fit-to-view is queued, waiting for the control to be laid out with non-zero bounds.</summary>
         private bool _pendingFit;
+
+        /// <summary>True while a translucent palette drag-ghost is being shown.</summary>
         private bool _ghostActive;
+
+        /// <summary>Element id of the palette drag-ghost, or null when none is active.</summary>
         private string? _ghostElement;
+
+        /// <summary>Snapped level-space position of the drag-ghost.</summary>
         private Vec2 _ghostLevel;
 
-        // Editor-chrome brushes/pens resolved from the theme once per theme change, not per Render.
+        /// <summary>Editor-chrome brushes/pens resolved from the theme once per theme change, not per Render.</summary>
         private readonly CanvasPalette _palette = new();
 
         /// <summary>Creates the canvas and enables native touch gestures.</summary>
@@ -220,6 +252,9 @@ namespace CtrDxEditor.Rendering
             base.OnDetachedFromVisualTree(e);
         }
 
+        /// <summary>Re-resolves the theme-dependent palette and repaints when the active theme variant changes.</summary>
+        /// <param name="sender">The control raising the theme-changed event.</param>
+        /// <param name="e">Event data (unused).</param>
         private void OnActualThemeVariantChanged(object? sender, EventArgs e)
         {
             _palette.Refresh(this);

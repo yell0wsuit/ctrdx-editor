@@ -11,6 +11,8 @@ namespace CtrDxEditor.Rendering
     public sealed partial class LevelCanvas
     {
         /// <summary>Shows a translucent preview of <paramref name="element"/> at the snapped drop position.</summary>
+        /// <param name="element">The palette element id to preview.</param>
+        /// <param name="screenPoint">The pointer position in screen pixels.</param>
         public void ShowGhost(string element, Point screenPoint)
         {
             Vec2 levelPt = View.ScreenToLevel(new Vec2(screenPoint.X, screenPoint.Y));
@@ -33,6 +35,8 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Adds an object at the level's center (for single-click placement from the palette).</summary>
+        /// <param name="element">The palette element id to add.</param>
+        /// <returns>True when an object was placed.</returns>
         public bool AddAtCenter(string element)
         {
             if (Document is not { } doc)
@@ -50,6 +54,9 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Drops an object at a screen-space point, snapping according to the current settings.</summary>
+        /// <param name="element">The palette element id to place.</param>
+        /// <param name="screenPoint">The drop position in screen pixels.</param>
+        /// <returns>True when an object was placed.</returns>
         public bool DropElement(string element, Point screenPoint)
         {
             Vec2 levelPt = View.ScreenToLevel(new Vec2(screenPoint.X, screenPoint.Y));
@@ -63,6 +70,9 @@ namespace CtrDxEditor.Rendering
             return placed is not null;
         }
 
+        /// <summary>Rounds a level-space point to whole units, snapping to the grid when snapping is enabled.</summary>
+        /// <param name="levelPt">The point to snap, in level coordinates.</param>
+        /// <returns>The snapped integer level coordinates.</returns>
         private (int X, int Y) Snap(Vec2 levelPt)
         {
             int x = (int)Math.Round(levelPt.X);

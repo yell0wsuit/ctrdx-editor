@@ -10,6 +10,7 @@ namespace CtrDxEditor.Rendering
     /// <summary>View navigation: fit-to-view, zoom, scroll, and scrollbar state sync.</summary>
     public sealed partial class LevelCanvas
     {
+        /// <summary>Runs a queued fit-to-view once the control has non-zero bounds, then clears the pending flag.</summary>
         private void TryFit()
         {
             if (_pendingFit && Bounds is { Width: > 0, Height: > 0 })
@@ -42,12 +43,15 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Zooms about the viewport center (for menu/keyboard zoom).</summary>
+        /// <param name="factor">Multiplicative zoom factor; greater than 1 zooms in, less than 1 zooms out.</param>
         public void ZoomBy(double factor)
         {
             ZoomBy(factor, new Point(Bounds.Width / 2, Bounds.Height / 2));
         }
 
         /// <summary>Zooms about a screen-space point in this canvas.</summary>
+        /// <param name="factor">Multiplicative zoom factor; greater than 1 zooms in, less than 1 zooms out.</param>
+        /// <param name="anchor">Screen-space point that stays fixed under the cursor while zooming.</param>
         public void ZoomBy(double factor, Point anchor)
         {
             View = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
@@ -55,11 +59,16 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Scrolls the level viewport by screen-space pixels.</summary>
+        /// <param name="deltaX">Horizontal scroll amount in screen pixels.</param>
+        /// <param name="deltaY">Vertical scroll amount in screen pixels.</param>
         public void ScrollBy(double deltaX, double deltaY)
         {
             ScrollTo(HorizontalScrollValue + deltaX, VerticalScrollValue + deltaY);
         }
 
+        /// <summary>Scrolls to an absolute screen-space offset, clamped to the scrollable range.</summary>
+        /// <param name="offsetX">Target horizontal scroll offset in screen pixels.</param>
+        /// <param name="offsetY">Target vertical scroll offset in screen pixels.</param>
         private void ScrollTo(double offsetX, double offsetY)
         {
             if (Document is not { } doc)
@@ -71,6 +80,7 @@ namespace CtrDxEditor.Rendering
             UpdateScrollState();
         }
 
+        /// <summary>Recomputes the scrollbar viewport, maximum, and value from the current document and view, without recursing.</summary>
         private void UpdateScrollState()
         {
             LevelDocument? doc = Document;

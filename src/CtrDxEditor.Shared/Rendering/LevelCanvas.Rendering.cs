@@ -16,9 +16,11 @@ namespace CtrDxEditor.Rendering
     /// <summary>Scene render passes: interactive <see cref="Render"/> chrome and the clean screenshot export.</summary>
     public sealed partial class LevelCanvas
     {
-        // Game-accurate grab auto-catch ring for screenshots: a dashed blue circle matching the game's
-        // Grab.DrawGrabCircle (RGBA 0.2/0.5/0.9, drawn as alternating segments). The on-canvas ring keeps
-        // the themed orange editor guide; this fixed color is only baked into the exported image.
+        /// <summary>
+        /// Game-accurate grab auto-catch ring for screenshots: a dashed blue circle matching the game's
+        /// <c>Grab.DrawGrabCircle</c> (RGBA 0.2/0.5/0.9, drawn as alternating segments). The on-canvas ring keeps
+        /// the themed orange editor guide; this fixed color is only baked into the exported image.
+        /// </summary>
         private static readonly Pen ScreenshotGrabRadiusPen =
             new(new SolidColorBrush(Color.FromArgb(255, 51, 128, 230)), 3.0)
             {
@@ -36,6 +38,10 @@ namespace CtrDxEditor.Rendering
         /// the height is the level height. Everything renders at <see cref="SpritePlacement.MapScale"/> so the
         /// output matches the game's native art resolution.
         /// </summary>
+        /// <param name="levelWidth">Playfield width in level units.</param>
+        /// <param name="levelHeight">Playfield height in level units.</param>
+        /// <param name="bgWidth">Background column width in level units, or 0 when there is no background.</param>
+        /// <returns>The output pixel size and the view transform that frames the level.</returns>
         public static ScreenshotFrame ComputeScreenshotFrame(int levelWidth, int levelHeight, double bgWidth)
         {
             double scale = SpritePlacement.MapScale;
@@ -115,12 +121,21 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        // Draws the level itself - background decoration, optional border+grid, light-bulb glow, and all
-        // objects/grabs in the game's z-order - into the given surface. Interactive chrome (selection,
-        // hitboxes, ghost) is NOT drawn here; Render layers that on top. drawGrid gates the editor-only
-        // border and grid so a clean screenshot can omit them. grabRadiusPen, when set, bakes the grab
-        // auto-catch rings into the image with that pen (the screenshot's game-blue ring); Render passes
-        // null and draws its own themed rings in the chrome pass instead.
+        /// <summary>
+        /// Draws the level itself — background decoration, optional border and grid, light-bulb glow, and all
+        /// objects/grabs in the game's z-order — into the given surface. Interactive chrome (selection, hitboxes,
+        /// ghost) is not drawn here; <see cref="Render"/> layers that on top.
+        /// </summary>
+        /// <param name="context">Drawing surface to render into.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="renderSize">Size of the target surface in screen pixels.</param>
+        /// <param name="doc">The level document supplying dimensions and objects.</param>
+        /// <param name="sprites">Sprite cache used to resolve object and background art.</param>
+        /// <param name="drawGrid">When true, draws the editor-only level border and grid; a clean screenshot omits them.</param>
+        /// <param name="grabRadiusPen">
+        /// When set, bakes the grab auto-catch rings into the image with this pen (the screenshot's game-blue ring);
+        /// <see cref="Render"/> passes null and draws its own themed rings in the chrome pass instead.
+        /// </param>
         private void DrawLevelContent(
             DrawingContext context,
             ViewTransform v,

@@ -14,30 +14,42 @@ namespace CtrDxEditor.Rendering
     /// <summary>Pointer, wheel, and touch input: hit-testing, dragging, and gesture handling.</summary>
     public sealed partial class LevelCanvas
     {
-        // Hovering / dragging the auto-catch radius ring, or a horizontal rail end/hook, uses a horizontal-
-        // resize cursor (col-resize); a vertical rail end/hook uses the vertical one.
-        // Cached, but created lazily rather than in the static constructor: eager creation would touch
-        // Avalonia's cursor factory at type load, which throws in the headless test host. Lazy .Value
-        // still allocates each cursor only once, so pointer-move hit-testing doesn't churn instances.
+        /// <summary>
+        /// Horizontal-resize cursor (col-resize) shown over the auto-catch radius ring or a horizontal rail end/hook.
+        /// Created lazily rather than in the static constructor: eager creation would touch Avalonia's cursor factory
+        /// at type load, which throws in the headless test host. <see cref="Lazy{T}.Value"/> still allocates the cursor
+        /// only once, so pointer-move hit-testing doesn't churn instances.
+        /// </summary>
         private static readonly Lazy<Cursor> LazyResizeCursor = new(() => new Cursor(StandardCursorType.SizeWestEast));
 
+        /// <summary>Vertical-resize cursor shown over a vertical rail end/hook; lazily created for the same reason as <see cref="LazyResizeCursor"/>.</summary>
         private static readonly Lazy<Cursor> LazyVResizeCursor = new(() => new Cursor(StandardCursorType.SizeNorthSouth));
 
+        /// <summary>The shared horizontal-resize cursor instance.</summary>
         private static Cursor ResizeCursor => LazyResizeCursor.Value;
 
+        /// <summary>The shared vertical-resize cursor instance.</summary>
         private static Cursor VResizeCursor => LazyVResizeCursor.Value;
 
-        // Whether a level-space point sits on the selected grab's auto-catch radius ring, within a
-        // ~6px screen tolerance (converted to level units by the current zoom).
+        /// <summary>
+        /// Whether a level-space point sits on the selected grab's auto-catch radius ring, within a ~6 px screen
+        /// tolerance (converted to level units by the current zoom).
+        /// </summary>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>True when the point is on the ring's edge and a grab with a radius is selected.</returns>
         private bool OnRadiusEdge(Vec2 levelPt)
         {
             return SelectedObject is { } g && View.Zoom > 0 && RadiusRing.Of(g) is { } ring
                 && GrabRadius.OnEdge(new Vec2(g.X, g.Y), ring.Radius, levelPt, 6 / View.Zoom);
         }
 
-        // What part of the selected movable grab's rail a level point is over, or None. The hit-testing
-        // itself lives in GrabRail; here we only supply the selected grab's geometry and the screen-derived
-        // tolerances: ~9 px for the end caps, the hook's own footprint, and the bar's half thickness.
+        /// <summary>What part of the selected movable grab's rail a level point is over, or <see cref="GrabRail.Handle.None"/>.</summary>
+        /// <remarks>
+        /// The hit-testing itself lives in <see cref="GrabRail"/>; here we only supply the selected grab's geometry and
+        /// the screen-derived tolerances: ~9 px for the end caps, the hook's own footprint, and the bar's half thickness.
+        /// </remarks>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>The rail handle under the point, or <see cref="GrabRail.Handle.None"/>.</returns>
         private GrabRail.Handle HitRail(Vec2 levelPt)
         {
             return SelectedObject is { Type: "grab" } sel
@@ -48,9 +60,13 @@ namespace CtrDxEditor.Rendering
                 : GrabRail.Handle.None;
         }
 
-        // What part of the selected rotatable object's dial a level point is over, or None. The geometry
-        // lives in ObjectRotation; here we supply the object's spec and the screen-derived tolerances
-        // (converted to level units by the current zoom), matching the rail/radius handles.
+        /// <summary>What part of the selected rotatable object's dial a level point is over, or <see cref="ObjectRotation.Handle.None"/>.</summary>
+        /// <remarks>
+        /// The geometry lives in <see cref="ObjectRotation"/>; here we supply the object's spec and the screen-derived
+        /// tolerances (converted to level units by the current zoom), matching the rail/radius handles.
+        /// </remarks>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>The dial handle under the point, or <see cref="ObjectRotation.Handle.None"/>.</returns>
         private ObjectRotation.Handle HitRotationDial(Vec2 levelPt)
         {
             if (SelectedObject is not { } obj || View.Zoom <= 0 || RotationTable.For(obj.Type) is not { } spec)
@@ -65,8 +81,14 @@ namespace CtrDxEditor.Rendering
                 knobTolerance: RotationDialRenderer.KnobTolerancePx / View.Zoom);
         }
 
-        // Writes the object's new angle from a dial drag: free (whole degrees) unless Alt is held, which
-        // snaps to the spec's step (15°).
+        /// <summary>
+        /// Writes the object's new angle from a dial drag: free (whole degrees) unless <see cref="KeyModifiers.Alt"/>
+        /// is held, which snaps to the spec's step (15°).
+        /// </summary>
+        /// <param name="obj">The rotatable object being edited.</param>
+        /// <param name="spec">Rotation spec describing the object's angle attribute and snap step.</param>
+        /// <param name="levelPt">The pointer position in level coordinates.</param>
+        /// <param name="mods">Active keyboard modifiers; Alt enables snapping.</param>
         private static void ApplyRotation(LevelObject obj, RotationSpec spec, Vec2 levelPt, KeyModifiers mods)
         {
             bool snap = mods.HasFlag(KeyModifiers.Alt);
@@ -74,9 +96,14 @@ namespace CtrDxEditor.Rendering
             obj.SetAttr(spec.AttributeName, ObjectRotation.Format(angle));
         }
 
-        // Applies the active rail drag to the grab: sliding moves the hook (object x/y) and its offset
-        // together so the rail stays put; resizing an end rewrites moveLength (and moveOffset for the near
-        // end). All constrained by GrabRail so the hook never leaves the rail.
+        /// <summary>
+        /// Applies the active rail drag to the grab: sliding moves the hook (object x/y) and its offset together so the
+        /// rail stays put; resizing an end rewrites <c>moveLength</c> (and <c>moveOffset</c> for the near end). All
+        /// constrained by <see cref="GrabRail"/> so the hook never leaves the rail.
+        /// </summary>
+        /// <param name="grab">The grab object being edited.</param>
+        /// <param name="g">The grab's current rail geometry.</param>
+        /// <param name="levelPt">The pointer position in level coordinates.</param>
         private void ApplyRailDrag(LevelObject grab, GrabRail.Geometry g, Vec2 levelPt)
         {
             switch (_railDrag)
@@ -108,14 +135,21 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Rounds a level-space value to a whole number and formats it with the invariant culture for an attribute.</summary>
+        /// <param name="value">The value to round and format.</param>
+        /// <returns>The rounded integer as an invariant-culture string.</returns>
         private static string Whole(double value)
         {
             return ((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture);
         }
 
-        // The cursor for a rail handle: a horizontal rail end/hook reads as a horizontal resize, a vertical
-        // one as a vertical resize (the hook slides along the same axis). The bar keeps the default arrow -
-        // it is still draggable to move the whole grab, but a move cursor over the whole rail is noisy.
+        /// <summary>
+        /// The cursor for a rail handle: a horizontal rail end/hook reads as a horizontal resize, a vertical one as a
+        /// vertical resize (the hook slides along the same axis). The bar keeps the default arrow — it is still
+        /// draggable to move the whole grab, but a move cursor over the whole rail is noisy.
+        /// </summary>
+        /// <param name="handle">The rail handle under the cursor.</param>
+        /// <returns>The cursor to display for that handle.</returns>
         private Cursor CursorForHandle(GrabRail.Handle handle)
         {
             return handle switch
@@ -128,7 +162,8 @@ namespace CtrDxEditor.Rendering
             };
         }
 
-        // Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.
+        /// <summary>Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.</summary>
+        /// <param name="hovered">True when the pointer is over the selected grab's hook.</param>
         private void SetHookHovered(bool hovered)
         {
             if (_hookHovered != hovered)
@@ -138,6 +173,8 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Updates the rotation-knob hover state, repainting only on a change so the knob lights up/down.</summary>
+        /// <param name="hovered">True when the pointer is over the selected object's rotation knob.</param>
         private void SetDialKnobHovered(bool hovered)
         {
             if (_dialKnobHovered != hovered)
@@ -147,6 +184,10 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Finds the index of an object within the list by reference/value equality.</summary>
+        /// <param name="objects">The object list to search.</param>
+        /// <param name="target">The object to locate.</param>
+        /// <returns>The zero-based index of <paramref name="target"/>, or -1 when it is not present.</returns>
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)
         {
             for (int i = 0; i < objects.Count; i++)
@@ -159,9 +200,12 @@ namespace CtrDxEditor.Rendering
             return -1;
         }
 
+        /// <summary>Builds the per-object click-test bounds, one entry per object in document order.</summary>
+        /// <remarks>Clicking uses the same box that the selection marquee draws (trimmed art + 25%).</remarks>
+        /// <param name="doc">The level document whose objects are measured.</param>
+        /// <returns>Level-space hit-test bounds parallel to <see cref="LevelDocument.Objects"/>.</returns>
         private List<LevelBounds> BuildHitBounds(LevelDocument doc)
         {
-            // Clicking uses the same box that the selection marquee draws (trimmed art + 25%).
             List<LevelBounds> list = [];
             foreach (LevelObject o in doc.Objects)
             {
@@ -372,6 +416,10 @@ namespace CtrDxEditor.Rendering
             EndPointerGesture();
         }
 
+        /// <summary>
+        /// Ends any active pointer gesture (drag, pan, radius resize, rail drag, rotation, hook hover), resets its
+        /// state, and fires <see cref="CompleteDocumentEdit"/> once when the gesture edited the document.
+        /// </summary>
         private void EndPointerGesture()
         {
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
@@ -430,6 +478,9 @@ namespace CtrDxEditor.Rendering
             e.Handled = true;
         }
 
+        /// <summary>Handles a touch pinch gesture, converting its cumulative scale into an incremental zoom about the pinch origin.</summary>
+        /// <param name="sender">The gesture source (unused).</param>
+        /// <param name="e">Pinch event data supplying the scale and origin.</param>
         private void Canvas_Pinch(object? sender, PinchEventArgs e)
         {
             double factor = ViewNavigation.PinchScaleToZoomFactor(_lastPinchScale, e.Scale);
@@ -438,12 +489,18 @@ namespace CtrDxEditor.Rendering
             e.Handled = true;
         }
 
+        /// <summary>Resets the pinch scale baseline when a touch pinch gesture ends.</summary>
+        /// <param name="sender">The gesture source (unused).</param>
+        /// <param name="e">Pinch-ended event data (unused).</param>
         private void Canvas_PinchEnded(object? sender, PinchEndedEventArgs e)
         {
             _lastPinchScale = 1;
             e.Handled = true;
         }
 
+        /// <summary>Handles a trackpad magnify gesture, converting its delta into a zoom about the pointer position.</summary>
+        /// <param name="sender">The gesture source (unused).</param>
+        /// <param name="e">Magnify event data supplying the delta and pointer position.</param>
         private void Canvas_TouchPadMagnify(object? sender, PointerDeltaEventArgs e)
         {
             double delta = Math.Abs(e.Delta.Y) > double.Epsilon ? e.Delta.Y : e.Delta.X;
