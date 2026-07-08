@@ -43,6 +43,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Selection marquee for an unlocked object.</summary>
         public Pen ObjectSelected { get; private set; } = OverlayPen(Brushes.DeepSkyBlue, 1.5);
 
+        /// <summary>Solid arrow marking a directional force field's push direction (pump, and later steam).
+        /// Solid rather than dashed so it reads as an arrow against the dashed hitbox boxes.</summary>
+        public Pen ForceArrow { get; private set; } = new(new SolidColorBrush(Color.FromRgb(0x7F, 0x22, 0xFE)), 2);
+
         /// <summary>Text brush for a timed-star duration label on the blank (no-background) canvas:
         /// pure white in the dark theme, pure black in the light theme. When a background is applied
         /// the canvas draws these labels black regardless.</summary>
@@ -64,6 +68,7 @@ namespace CtrDxEditor.Rendering
             HitboxPhone = OverlayPen(ThemeColor(host, "EditorColor.OverlayHitboxPhone", Colors.Magenta), 1.5);
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
             ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
+            ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);
             StarDurationText = host.ActualThemeVariant == ThemeVariant.Dark ? Brushes.White : Brushes.Black;
         }
 

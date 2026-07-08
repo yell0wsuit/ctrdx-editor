@@ -169,6 +169,18 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
+        <MenuItem Click="ShowForceFieldsToggle_Click" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <Border Width="16" Height="16" Background="Transparent" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <TextBlock Grid.Column="0" Text="{loc:Tr Menu.View.ShowForceFields}" VerticalAlignment="Center" />
+              <icons:MaterialIcon Grid.Column="1" Kind="CheckBold" Width="14" Height="14"
+                                  Margin="24,0,0,0" VerticalAlignment="Center" IsVisible="{Binding ShowForceFields}" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
       </MenuItem>
     </Menu>
     <Grid ColumnDefinitions="160,1,*,1,280">
@@ -199,6 +211,7 @@
                             SnapEnabled="{Binding SnapEnabled}"
                             ShowHitboxes="{Binding ShowHitboxes}"
                             ShowMobileHitboxes="{Binding ShowMobileHitboxes}"
+                            ShowForceFields="{Binding ShowForceFields}"
                             ActiveRopeSkin="{Binding ActiveRopeSkin}"
                             ActiveBackground="{Binding ActiveBackground}"
                             ActiveCandySkin="{Binding ActiveCandySkin}"

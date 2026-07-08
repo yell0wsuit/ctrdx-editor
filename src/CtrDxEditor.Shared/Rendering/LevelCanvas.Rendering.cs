@@ -94,6 +94,28 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // A directional emitter shows which way and how far it pushes, toggled on its own: it is a force
+            // region, not a collision box, and its reach is model-independent (so no desktop/mobile split).
+            // Push direction is the display angle plus the field offset; reach is the game-unit flow length in
+            // level units (scale / mapScale, as hitboxes).
+            if (ShowForceFields)
+            {
+                foreach (LevelObject obj in objects)
+                {
+                    if (ForceFieldTable.For(obj.Type) is not { } field || RotationTable.For(obj.Type) is not { } forceSpec)
+                    {
+                        continue;
+                    }
+                    if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(obj, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is not { } sprite)
+                    {
+                        continue;
+                    }
+                    double dir = (ObjectRotation.DisplayDegrees(obj, forceSpec) + field.DirectionOffset) * Math.PI / 180.0;
+                    double reach = field.Reach * sprite.Scale / SpritePlacement.MapScale;
+                    LevelSceneRenderer.DrawForceArrow(context, v, new Vec2(obj.X, obj.Y), dir, reach, _palette.ForceArrow);
+                }
+            }
+
             LevelObject? selected = SelectedObject;
             if (selected is not null)
             {

@@ -49,6 +49,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
 
+        /// <summary>Avalonia property backing <see cref="ShowForceFields"/>.</summary>
+        public static readonly StyledProperty<bool> ShowForceFieldsProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowForceFields), defaultValue: true);
+
         /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
         public static readonly StyledProperty<int> ActiveRopeSkinProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveRopeSkin));
@@ -96,7 +100,7 @@ namespace CtrDxEditor.Rendering
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
-                ShowHitboxesProperty, ShowMobileHitboxesProperty,
+                ShowHitboxesProperty, ShowMobileHitboxesProperty, ShowForceFieldsProperty,
                 ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty,
                 ActiveOmNomSupportProperty);
         }
@@ -124,6 +128,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether phone hitboxes are drawn over objects.</summary>
         public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
+
+        /// <summary>Whether directional force-field arrows (e.g. the pump's flow) are drawn over objects.</summary>
+        public bool ShowForceFields { get => GetValue(ShowForceFieldsProperty); set => SetValue(ShowForceFieldsProperty, value); }
 
         /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
         public int ActiveRopeSkin { get => GetValue(ActiveRopeSkinProperty); set => SetValue(ActiveRopeSkinProperty, value); }

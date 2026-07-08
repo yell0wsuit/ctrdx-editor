@@ -22,6 +22,7 @@
     "Menu.View.SnapToGrid": "Snap to grid",
     "Menu.View.ShowHitboxes": "Show hitboxes",
     "Menu.View.ShowMobileHitboxes": "Show mobile hitboxes",
+    "Menu.View.ShowForceFields": "Show force fields",
 
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",

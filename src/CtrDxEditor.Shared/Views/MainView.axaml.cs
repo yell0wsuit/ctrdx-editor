@@ -164,6 +164,14 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void ShowForceFieldsToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ShowForceFields = !vm.ShowForceFields;
+            }
+        }
+
         private void ObjectList_DoubleTapped(object? sender, TappedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)
