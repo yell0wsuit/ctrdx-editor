@@ -204,6 +204,8 @@ namespace CtrDxEditor.Rendering
         // Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even
         // before a drag begins (the game highlights the mover on interaction).
         private bool _hookHovered;
+        // True while the cursor hovers the selected object's rotation knob (lights it up).
+        private bool _dialKnobHovered;
         private Vec2 _dragOffset;
         private int _lastHitIndex = -1;
         private bool _panning;
@@ -463,7 +465,7 @@ namespace CtrDxEditor.Rendering
 
             if (selected is not null && RotationTable.For(selected.Type) is { } rotSpec)
             {
-                RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating);
+                RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
             }
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
@@ -1109,6 +1111,15 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        private void SetDialKnobHovered(bool hovered)
+        {
+            if (_dialKnobHovered != hovered)
+            {
+                _dialKnobHovered = hovered;
+                InvalidateVisual();
+            }
+        }
+
         private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject target)
         {
             for (int i = 0; i < objects.Count; i++)
@@ -1305,7 +1316,9 @@ namespace CtrDxEditor.Rendering
                 // light up the hook when it's hovered.
                 GrabRail.Handle handle = HitRail(levelPt);
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
-                Cursor = HitRotationDial(levelPt) != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
+                ObjectRotation.Handle dial = HitRotationDial(levelPt);
+                SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
+                Cursor = dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
             }
@@ -1363,6 +1376,7 @@ namespace CtrDxEditor.Rendering
         {
             base.OnPointerExited(e);
             SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
+            SetDialKnobHovered(false); // nor the rotation knob
         }
 
         /// <inheritdoc />
