@@ -48,6 +48,7 @@ namespace CtrDxEditor.Core.Editing
                 new("candy", new(142, 157, 112, 104), new(46, 49, 35, 35), 393, 418),
                 new("star", new(70, 64, 82, 82), new(22, 20, 30, 30), 236, 223),
                 new("target", new(264, 350, 108, 2), new(90, 110, 25, 1), 640, 640),
+                new("pump", new(300, 300, 175, 175), new(94, 95, 57, 57), 761, 761),
             }.ToDictionary(d => d.Element);
 
         /// <summary>

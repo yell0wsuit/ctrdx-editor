@@ -92,11 +92,19 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData("grab")]
         [InlineData("gravitySwitch")]
-        [InlineData("pump")]
         [InlineData("")]
         public void UnsupportedElementsReturnNull(string element)
         {
             Assert.Null(HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop));
+        }
+
+        /// <summary>Verifies the pump desktop hitbox uses the raw game box against the 761 ref frame.</summary>
+        [Fact]
+        public void PumpDesktopBoxUsesRawGameValues()
+        {
+            // desktop (300,300,175,175), ref 761: drawX = x - 761/2 = -380.5; box left = -380.5+300 = -80.5.
+            LevelBounds? box = HitboxTable.Compute("pump", 0, 0, scale: 3, HitboxModel.Desktop);
+            Assert.Equal(new LevelBounds(-80.5, -80.5, 175, 175), box);
         }
     }
 }
