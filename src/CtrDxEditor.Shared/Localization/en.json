@@ -128,6 +128,7 @@
     "Object.star": "Star",
     "Object.grab": "Rope hook",
     "Object.bubble": "Bubble",
+    "Object.pump": "Air cushion",
     "Object.gravitySwitch": "Gravity button",
     "Object.lightBulb": "Light bulb",
 
@@ -152,5 +153,6 @@
     "Attr.litRadius": "Lit radius",
     "Attr.bulbNumber": "Bulb number",
     "Attr.candyNumber": "Candy number",
-    "Attr.attachTo": "Attach to"
+    "Attr.attachTo": "Attach to",
+    "Attr.angle": "Angle"
 }
