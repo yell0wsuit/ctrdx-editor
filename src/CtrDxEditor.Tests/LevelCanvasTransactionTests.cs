@@ -12,7 +12,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void PointerCaptureLostCompletesDocumentEditGesture()
         {
-            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.cs"));
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
 
             Assert.Contains("protected override void OnPointerCaptureLost", source, StringComparison.Ordinal);
             Assert.Contains("EndPointerGesture();", source, StringComparison.Ordinal);

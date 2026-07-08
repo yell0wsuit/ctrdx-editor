@@ -1,0 +1,120 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+
+using CtrDxEditor.Content;
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Core.Geometry;
+
+namespace CtrDxEditor.Rendering
+{
+    /// <summary>View navigation: fit-to-view, zoom, scroll, and scrollbar state sync.</summary>
+    public sealed partial class LevelCanvas
+    {
+        private void TryFit()
+        {
+            if (_pendingFit && Bounds is { Width: > 0, Height: > 0 })
+            {
+                FitToView();
+                _pendingFit = false;
+            }
+        }
+
+        /// <summary>Scales and centers the level to fit the current viewport with a small margin.</summary>
+        public void FitToView()
+        {
+            LevelDocument? doc = Document;
+            if (doc is null || doc.Width <= 0 || doc.Height <= 0 || Bounds.Width <= 0 || Bounds.Height <= 0)
+            {
+                return;
+            }
+            const double margin = 24;
+            double zoom = Math.Min(
+                (Bounds.Width - (2 * margin)) / doc.Width,
+                (Bounds.Height - (2 * margin)) / doc.Height);
+            if (zoom <= 0)
+            {
+                zoom = 1;
+            }
+            double panX = (Bounds.Width - (doc.Width * zoom)) / 2;
+            double panY = (Bounds.Height - (doc.Height * zoom)) / 2;
+            View = new ViewTransform(zoom, panX, panY);
+            UpdateScrollState();
+        }
+
+        /// <summary>Zooms about the viewport center (for menu/keyboard zoom).</summary>
+        public void ZoomBy(double factor)
+        {
+            ZoomBy(factor, new Point(Bounds.Width / 2, Bounds.Height / 2));
+        }
+
+        /// <summary>Zooms about a screen-space point in this canvas.</summary>
+        public void ZoomBy(double factor, Point anchor)
+        {
+            View = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
+            UpdateScrollState();
+        }
+
+        /// <summary>Scrolls the level viewport by screen-space pixels.</summary>
+        public void ScrollBy(double deltaX, double deltaY)
+        {
+            ScrollTo(HorizontalScrollValue + deltaX, VerticalScrollValue + deltaY);
+        }
+
+        private void ScrollTo(double offsetX, double offsetY)
+        {
+            if (Document is not { } doc)
+            {
+                return;
+            }
+
+            View = ViewNavigation.ScrollTo(View, doc.Width, doc.Height, Bounds.Width, Bounds.Height, offsetX, offsetY);
+            UpdateScrollState();
+        }
+
+        private void UpdateScrollState()
+        {
+            LevelDocument? doc = Document;
+            double viewportWidth = Math.Max(0, Bounds.Width);
+            double viewportHeight = Math.Max(0, Bounds.Height);
+            double maxX = 0;
+            double maxY = 0;
+            double valueX = 0;
+            double valueY = 0;
+
+            if (doc is not null)
+            {
+                double contentWidth = Math.Max(0, doc.Width * View.Zoom);
+                double contentHeight = Math.Max(0, doc.Height * View.Zoom);
+                maxX = Math.Max(0, contentWidth - viewportWidth);
+                maxY = Math.Max(0, contentHeight - viewportHeight);
+                valueX = Math.Clamp(-View.PanX, 0, maxX);
+                valueY = Math.Clamp(-View.PanY, 0, maxY);
+            }
+
+            _syncingScroll = true;
+            try
+            {
+                HorizontalScrollViewport = viewportWidth;
+                VerticalScrollViewport = viewportHeight;
+                HorizontalScrollMaximum = maxX;
+                VerticalScrollMaximum = maxY;
+                HorizontalScrollValue = valueX;
+                VerticalScrollValue = valueY;
+            }
+            finally
+            {
+                _syncingScroll = false;
+            }
+        }
+    }
+}
