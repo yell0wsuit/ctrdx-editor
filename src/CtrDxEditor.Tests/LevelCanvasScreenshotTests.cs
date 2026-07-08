@@ -21,6 +21,11 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the pure framing math behind the level-screenshot export.</summary>
     public class LevelCanvasScreenshotTests
     {
+        // The scene-drawing helpers live on the internal LevelSceneRenderer; reflect into it by name
+        // since the test assembly can't reference the internal type directly.
+        private static readonly System.Type SceneRenderer =
+            typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+
         private sealed class FakeStore : IContentStore
         {
             public Task<bool> ExistsAsync(string relPath)
@@ -89,9 +94,9 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void StarDurationLabelSitsBelowStarTop()
         {
-            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+            MethodInfo? method = SceneRenderer.GetMethod(
                 "ComputeStarDurationOrigin",
-                BindingFlags.NonPublic | BindingFlags.Static);
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(method);
 
             Point origin = (Point)method.Invoke(null, [new Point(120, 80), new Size(20, 12), 2.0])!;
@@ -106,9 +111,9 @@ namespace CtrDxEditor.Tests
         [InlineData(4.5, "4.5s")]
         public void StarDurationLabelShowsSecondsUnit(double timeout, string expected)
         {
-            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+            MethodInfo? method = SceneRenderer.GetMethod(
                 "FormatStarDuration",
-                BindingFlags.NonPublic | BindingFlags.Static);
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(method);
 
             string label = (string)method.Invoke(null, [timeout])!;
@@ -124,9 +129,9 @@ namespace CtrDxEditor.Tests
         [InlineData("target", false, "target")]
         public void CanvasSpriteKeyUsesNightLevelVariants(string element, bool nightLevel, string expected)
         {
-            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+            MethodInfo? method = SceneRenderer.GetMethod(
                 "CanvasSpriteKey",
-                BindingFlags.NonPublic | BindingFlags.Static,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
                 [typeof(string), typeof(bool)]);
             Assert.NotNull(method);
 
@@ -141,9 +146,9 @@ namespace CtrDxEditor.Tests
         {
             SpriteCache sprites = SeedStarAtlases();
             LevelObject star = new(new XElement("star", new XAttribute("x", "0"), new XAttribute("y", "0")));
-            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+            MethodInfo? method = SceneRenderer.GetMethod(
                 "SelectionBounds",
-                BindingFlags.NonPublic | BindingFlags.Static);
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(method);
 
             LevelBounds normal = (LevelBounds)method.Invoke(null, [sprites, star, 0, 0, false])!;
