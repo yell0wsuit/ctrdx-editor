@@ -19,7 +19,13 @@ namespace CtrDxEditor.Rendering
     /// </summary>
     internal static class LevelSceneRenderer
     {
-        /// <summary>Maps a level-space rectangle (x, y, w, h) to its axis-aligned screen rectangle.</summary>
+        /// <summary>Maps a level-space rectangle to its axis-aligned screen rectangle.</summary>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="x">Left edge of the rectangle in level units.</param>
+        /// <param name="y">Top edge of the rectangle in level units.</param>
+        /// <param name="w">Width of the rectangle in level units.</param>
+        /// <param name="h">Height of the rectangle in level units.</param>
+        /// <returns>The rectangle in screen pixels.</returns>
         public static Rect LevelRectToScreen(ViewTransform v, double x, double y, double w, double h)
         {
             Vec2 tl = v.LevelToScreen(new Vec2(x, y));
@@ -27,9 +33,19 @@ namespace CtrDxEditor.Rendering
             return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
         }
 
-        // Selection marquee: the trimmed (visible) sprite bounds — the union of every layer's drawn
-        // region — grown 25% so the dashed box sits a little outside the art rather than hugging the
-        // untrimmed sourceSize box (which is much larger than what the player sees).
+        /// <summary>Computes the selection marquee / click box for an object.</summary>
+        /// <remarks>
+        /// The box is the trimmed (visible) sprite bounds — the union of every layer's drawn region — grown
+        /// 25% so the dashed box sits a little outside the art rather than hugging the untrimmed sourceSize
+        /// box (which is much larger than what the player sees). A movable grab's box wraps the whole rail
+        /// so it can be selected by clicking anywhere along the bar.
+        /// </remarks>
+        /// <param name="sprites">Sprite cache used to resolve the object's art.</param>
+        /// <param name="obj">The object to bound.</param>
+        /// <param name="candySkin">Active candy skin index, so the box matches the drawn candy art.</param>
+        /// <param name="omNomSupport">Active Om Nom support index, so the box matches the drawn platform art.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <returns>The selection bounds in level units.</returns>
         public static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
         {
             // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
@@ -64,10 +80,15 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
-        // The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
-        // gravity button, Om Nom + support, bubbles, bungee ropes, stars, candy, then light-bulb bottles.
-        // Same-layer objects keep their list order because OrderBy is stable. Unknown types sit with the
-        // grabs (mid-stack) as a neutral default.
+        /// <summary>The object's fixed draw layer in the game's z-order.</summary>
+        /// <remarks>
+        /// The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
+        /// gravity button, Om Nom + support, bubbles, bungee ropes, stars, candy, then light-bulb bottles.
+        /// Same-layer objects keep their list order because OrderBy is stable. Unknown types sit with the
+        /// grabs (mid-stack) as a neutral default.
+        /// </remarks>
+        /// <param name="obj">The object to classify.</param>
+        /// <returns>The z-order layer index (lower draws first / further back).</returns>
         public static int GameDrawLayer(LevelObject obj)
         {
             return obj.Type switch
@@ -83,8 +104,19 @@ namespace CtrDxEditor.Rendering
             };
         }
 
-        // Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
-        // then any overlays. Grabs go through DrawGrab instead so their rope can slot between hook layers.
+        /// <summary>
+        /// Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
+        /// then any overlays. Grabs go through <see cref="DrawGrab"/> instead so their rope can slot between
+        /// hook layers.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the object's art.</param>
+        /// <param name="obj">The object to draw.</param>
+        /// <param name="candySkin">Active candy skin index.</param>
+        /// <param name="omNomSupport">Active Om Nom support index.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <param name="starDurationText">Brush for the timed-star duration label.</param>
         public static void DrawObject(
             DrawingContext ctx,
             ViewTransform v,
@@ -136,6 +168,9 @@ namespace CtrDxEditor.Rendering
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
         }
 
+        /// <summary>Reads a star's <c>timeout</c> attribute in seconds.</summary>
+        /// <param name="obj">The star object.</param>
+        /// <returns>The timeout in seconds, or 0 when the attribute is absent or unparseable.</returns>
         private static double StarTimeout(LevelObject obj)
         {
             return double.TryParse(obj.GetAttr("timeout"), NumberStyles.Float, CultureInfo.InvariantCulture, out double timeout)
@@ -143,11 +178,19 @@ namespace CtrDxEditor.Rendering
                 : 0;
         }
 
+        /// <summary>Resolves the sprite key for an object, applying night-level variants.</summary>
+        /// <param name="obj">The object whose base sprite key is resolved first.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <returns>The sprite key to draw.</returns>
         public static string CanvasSpriteKey(LevelObject obj, bool nightLevel)
         {
             return CanvasSpriteKey(GrabRenderer.SpriteKey(obj), nightLevel);
         }
 
+        /// <summary>Applies night-level variants to a sprite element key (e.g. sleeping Om Nom target).</summary>
+        /// <param name="element">The base sprite element key.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <returns>The night variant key when applicable, otherwise <paramref name="element"/> unchanged.</returns>
         public static string CanvasSpriteKey(string element, bool nightLevel)
         {
             return nightLevel ? element switch
@@ -157,11 +200,25 @@ namespace CtrDxEditor.Rendering
             } : element;
         }
 
+        /// <summary>
+        /// The sprite key used to size a selection box. Stars keep their normal (day) marquee even on night
+        /// levels; everything else follows <see cref="CanvasSpriteKey(string, bool)"/>.
+        /// </summary>
+        /// <param name="element">The base sprite element key.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <returns>The sprite key to measure for the selection box.</returns>
         public static string SelectionSpriteKey(string element, bool nightLevel)
         {
             return element == "star" ? "star" : CanvasSpriteKey(element, nightLevel);
         }
 
+        /// <summary>Draws the countdown label above a timed star.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="star">The star sprite, used to find its visible top edge.</param>
+        /// <param name="obj">The star object.</param>
+        /// <param name="timeout">The star's timeout in seconds.</param>
+        /// <param name="foreground">Brush for the label text.</param>
         private static void DrawStarDuration(
             DrawingContext ctx,
             ViewTransform v,
@@ -181,6 +238,11 @@ namespace CtrDxEditor.Rendering
             ctx.DrawText(formatted, origin);
         }
 
+        /// <summary>Builds the formatted duration text, scaling the font with the current zoom.</summary>
+        /// <param name="text">The label string to render.</param>
+        /// <param name="zoom">Current view zoom, used to scale the font size.</param>
+        /// <param name="foreground">Brush for the label text.</param>
+        /// <returns>The formatted text ready to draw.</returns>
         private static FormattedText CreateStarDurationText(string text, double zoom, IBrush foreground)
         {
             return new FormattedText(
@@ -192,16 +254,28 @@ namespace CtrDxEditor.Rendering
                 foreground);
         }
 
+        /// <summary>Formats a star timeout as a trimmed seconds string (e.g. "4.5s").</summary>
+        /// <param name="timeout">The timeout in seconds.</param>
+        /// <returns>The formatted label including the seconds unit.</returns>
         private static string FormatStarDuration(double timeout)
         {
             return timeout.ToString("0.###", CultureInfo.InvariantCulture) + "s";
         }
 
+        /// <summary>Positions the duration label centered horizontally and just inside the star top.</summary>
+        /// <param name="starTopCenter">Screen point at the star's top-center.</param>
+        /// <param name="textSize">Measured size of the label.</param>
+        /// <param name="zoom">Current view zoom, used for the vertical inset.</param>
+        /// <returns>The top-left screen origin at which to draw the label.</returns>
         private static Point ComputeStarDurationOrigin(Point starTopCenter, Size textSize, double zoom)
         {
             return new Point(starTopCenter.X - (textSize.Width / 2.0), starTopCenter.Y + (2.0 * zoom));
         }
 
+        /// <summary>Finds the visible top edge of a star's art in level units.</summary>
+        /// <param name="star">The star sprite.</param>
+        /// <param name="obj">The star object providing the anchor position.</param>
+        /// <returns>The topmost drawn Y, or the object's Y when the sprite has no layers.</returns>
         private static double StarTop(ObjectSprite star, LevelObject obj)
         {
             double top = double.MaxValue;
@@ -213,16 +287,29 @@ namespace CtrDxEditor.Rendering
             return top == double.MaxValue ? obj.Y : top;
         }
 
-        // A pale grab is one the game hides outright (invisible="true"); the editor keeps it visible at
-        // this opacity so it stays selectable and editable rather than vanishing.
+        /// <summary>
+        /// Opacity for a grab the game hides outright (<c>invisible="true"</c>). The editor keeps it visible
+        /// at this opacity so it stays selectable and editable rather than vanishing.
+        /// </summary>
         private const double InvisibleGrabOpacity = 0.3;
 
-        // Draws a grab with its rope threaded between the hook's back and front art, matching the game's
-        // Grab.DrawBack (back art) then Grab.Draw (rope, then front art) order. An invisible grab (hidden
-        // entirely in-game) is drawn pale so it can still be selected. A movable grab splits into its rail
-        // bar (back) and movable hook (front); every other grab splits its sprite layers by
-        // GrabRenderer.BackLayerCount. rope is null when the grab has nothing to hang from. hookHighlighted
-        // lights the movable hook while the caller reports it hovered or being slid.
+        /// <summary>Draws a grab with its rope threaded between the hook's back and front art.</summary>
+        /// <remarks>
+        /// Matches the game's Grab.DrawBack (back art) then Grab.Draw (rope, then front art) order. An
+        /// invisible grab (hidden entirely in-game) is drawn pale so it can still be selected. A movable
+        /// grab splits into its rail bar (back) and movable hook (front); every other grab splits its sprite
+        /// layers by <c>GrabRenderer.BackLayerCount</c>.
+        /// </remarks>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
+        /// <param name="obj">The grab object.</param>
+        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
+        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
+        /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
+        /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
+        /// <param name="hookHighlighted">Whether to light the movable hook (hovered or being slid).</param>
         public static void DrawGrab(
             DrawingContext ctx,
             ViewTransform v,
@@ -251,11 +338,29 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Whether a grab is flagged <c>invisible="true"</c> (hidden in-game).</summary>
+        /// <param name="obj">The grab object.</param>
+        /// <returns>True when the grab is invisible.</returns>
         private static bool IsInvisible(LevelObject obj)
         {
             return bool.TryParse(obj.GetAttr("invisible"), out bool b) && b;
         }
 
+        /// <summary>
+        /// Draws the grab's art and rope in the correct back-to-front order, splitting a movable grab into
+        /// rail bar then rope then hook, and every other grab into back layers then rope then front layers.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
+        /// <param name="obj">The grab object.</param>
+        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
+        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
+        /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
+        /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
+        /// <param name="ropeOpacity">Rope alpha, passed explicitly since <c>PushOpacity</c> doesn't reach the custom op.</param>
+        /// <param name="hookHighlighted">Whether to light the movable hook (hovered or being slid).</param>
         private static void DrawGrabContent(
             DrawingContext ctx,
             ViewTransform v,
@@ -306,8 +411,18 @@ namespace CtrDxEditor.Rendering
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
         }
 
-        // Draws the sprite layers in [from, to), applying the gun's aim rotation to the arrow layer
-        // (index 1) when this grab previews a gun aim - the same rotation the old single-pass path used.
+        /// <summary>
+        /// Draws the sprite layers in the half-open range [<paramref name="from"/>, <paramref name="to"/>),
+        /// applying the gun's aim rotation to the arrow layer (index 1) when this grab previews a gun aim.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprite">The grab's resolved sprite.</param>
+        /// <param name="obj">The grab object.</param>
+        /// <param name="objects">All level objects, used to resolve the gun-aim target.</param>
+        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="from">First layer index to draw (inclusive).</param>
+        /// <param name="to">Last layer index to draw (exclusive).</param>
         private static void DrawGrabLayers(
             DrawingContext ctx,
             ViewTransform v,
@@ -328,6 +443,13 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws every overlay sprite an object contributes (e.g. spider, Christmas lights).</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the overlay art.</param>
+        /// <param name="obj">The object whose overlays are drawn.</param>
+        /// <param name="x">Overlay anchor X in level units.</param>
+        /// <param name="y">Overlay anchor Y in level units.</param>
         private static void DrawOverlays(
             DrawingContext ctx,
             ViewTransform v,
@@ -345,6 +467,12 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws every layer of a sprite at a level position.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprite">The sprite to draw.</param>
+        /// <param name="x">Anchor X in level units.</param>
+        /// <param name="y">Anchor Y in level units.</param>
         public static void DrawSprite(DrawingContext ctx, ViewTransform v, ObjectSprite sprite, double x, double y)
         {
             foreach (SpriteLayerDraw layer in sprite.Layers)
@@ -353,6 +481,14 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws a single sprite layer, optionally rotated about the object's anchor.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="layer">The sprite layer to draw.</param>
+        /// <param name="x">Anchor X in level units.</param>
+        /// <param name="y">Anchor Y in level units.</param>
+        /// <param name="scale">Sprite scale factor.</param>
+        /// <param name="rotationDegrees">Rotation about the anchor in degrees, or null for no rotation.</param>
         private static void DrawLayer(
             DrawingContext ctx,
             ViewTransform v,
@@ -384,6 +520,13 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws an object's hitbox rectangle for the given device model, if it has one.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">The object whose hitbox is drawn.</param>
+        /// <param name="scale">Sprite scale factor, used to size the hitbox.</param>
+        /// <param name="model">Which device hitbox model (desktop or phone) to compute.</param>
+        /// <param name="pen">Pen for the hitbox outline.</param>
         public static void DrawHitbox(
             DrawingContext ctx,
             ViewTransform v,
