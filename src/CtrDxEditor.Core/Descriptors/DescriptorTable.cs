@@ -25,17 +25,24 @@ namespace CtrDxEditor.Core.Descriptors
         /// <summary>Built-in descriptor set for the currently supported editor objects.</summary>
         public static DescriptorTable Default { get; } = new(
         [
+            // Om Nom
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: int.MaxValue),
+
+            // Candy
             new ObjectDescriptor("candy", "Candy",
             [
                 new AttributeSpec("candyNumber", AttrType.Text, null),
             ], MaxCount: int.MaxValue),
             new ObjectDescriptor("candyL", "Candy (Left)", [], MaxCount: 1),
             new ObjectDescriptor("candyR", "Candy (Right)", [], MaxCount: 1),
+
+            // Star
             new ObjectDescriptor("star", "Star",
             [
                 new AttributeSpec("timeout", AttrType.Number, "-1"),
             ], MaxCount: int.MaxValue),
+
+            // Rope hook
             new ObjectDescriptor("grab", "Grab",
             [
                 new AttributeSpec("length", AttrType.Whole, "100"),
@@ -51,12 +58,11 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("kicked", AttrType.Bool, "false"),
                 new AttributeSpec("invisible", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
+
+            // Bubble
             new ObjectDescriptor("bubble", "Bubble", [], MaxCount: int.MaxValue),
-            new ObjectDescriptor("pump", "Pump",
-            [
-                new AttributeSpec("angle", AttrType.Number, "0"),
-            ], MaxCount: int.MaxValue),
-            new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
+
+            // Spike
             new ObjectDescriptor("spike1", "Spike",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
@@ -81,6 +87,15 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("size", AttrType.Enum, "4", EnumValues: ["1", "2", "3", "4"]),
                 new AttributeSpec("toggled", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
+
+            // Air cushion
+            new ObjectDescriptor("pump", "Pump",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
+            ], MaxCount: int.MaxValue),
+            new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
+
+            // Light bulb
             new ObjectDescriptor("lightBulb", "Light Bulb",
             [
                 new AttributeSpec("litRadius", AttrType.Whole, "50"),
