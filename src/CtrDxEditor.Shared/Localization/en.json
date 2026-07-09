@@ -174,5 +174,6 @@
     "Attr.spinClockwise": "Spin clockwise",
     "Attr.spinOrbital": "Orbit object",
     "Attr.orbitRadius": "Orbit radius",
+    "Attr.orbitSpeed": "Orbit speed",
     "Attr.orbitClockwise": "Orbit clockwise"
 }

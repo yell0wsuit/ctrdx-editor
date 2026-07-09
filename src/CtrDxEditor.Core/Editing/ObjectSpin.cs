@@ -99,6 +99,14 @@ namespace CtrDxEditor.Core.Editing
                 : DefaultOrbitRadius;
         }
 
+        /// <summary>The positive whole-number movement speed encoded in DX <c>moveSpeed</c>.</summary>
+        /// <param name="obj">Object whose <c>moveSpeed</c> attribute is inspected.</param>
+        /// <returns>The absolute whole-number movement speed, or zero when absent or invalid.</returns>
+        public static int OrbitSpeed(LevelObject obj)
+        {
+            return RawMoveSpeed(obj);
+        }
+
         /// <summary>Writes or clears orbit data using DX circular path syntax (<c>RC</c>/<c>RW</c>).</summary>
         /// <param name="obj">Object whose orbital spin attributes are updated.</param>
         /// <param name="enabled">Whether orbital spin should remain enabled.</param>
@@ -123,6 +131,20 @@ namespace CtrDxEditor.Core.Editing
                 moveSpeed = SpinSpeed(obj);
             }
             obj.SetAttr("moveSpeed", (moveSpeed > 0 ? moveSpeed : DefaultSpeed).ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>Writes the DX <c>moveSpeed</c> used to advance along an orbital path.</summary>
+        /// <param name="obj">Object whose orbital movement speed is updated.</param>
+        /// <param name="speed">Positive whole-number movement speed magnitude.</param>
+        public static void SetOrbitSpeed(LevelObject obj, int speed)
+        {
+            if (speed <= 0)
+            {
+                obj.RemoveAttr("moveSpeed");
+                return;
+            }
+
+            obj.SetAttr("moveSpeed", speed.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>Computes the signed live-preview rotation angle for elapsed playback time.</summary>

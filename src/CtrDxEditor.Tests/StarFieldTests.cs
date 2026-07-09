@@ -86,13 +86,17 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
             Assert.Equal("30", radius.Value);
             Assert.Equal(1, radius.NumericMinimum);
+            AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "orbitSpeed");
+            Assert.Equal("70", speed.Value);
+            Assert.Equal(1, speed.NumericMinimum);
             Assert.True(vm.Fields.Single(f => f.Name == "orbitClockwise").BoolValue);
 
             radius.Value = "45";
+            speed.Value = "120";
             vm.Fields.Single(f => f.Name == "orbitClockwise").BoolValue = false;
 
             Assert.Equal("RW45", star.GetAttr("path"));
-            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.Equal("120", star.GetAttr("moveSpeed"));
         }
 
         /// <summary>Clearing orbit radius behaves like timed-star duration: it stays visible while editing.</summary>
@@ -113,11 +117,38 @@ namespace CtrDxEditor.Tests
             Assert.Equal("70", star.GetAttr("moveSpeed"));
             Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
             Assert.Contains(vm.Fields, f => f.Name == "orbitRadius");
+            Assert.Contains(vm.Fields, f => f.Name == "orbitSpeed");
 
             radius.Value = "45";
 
             Assert.Equal("RC45", star.GetAttr("path"));
             Assert.Equal("45", radius.Value);
+            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+        }
+
+        /// <summary>Clearing orbit speed behaves like timed-star duration and keeps orbit fields visible.</summary>
+        [Fact]
+        public void ClearingStarOrbitSpeedKeepsOrbitFieldsVisibleLikeTimedDuration()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "orbitSpeed");
+
+            speed.Value = string.Empty;
+
+            Assert.Equal(string.Empty, speed.Value);
+            Assert.Equal(string.Empty, star.GetAttr("moveSpeed"));
+            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Contains(vm.Fields, f => f.Name == "orbitRadius");
+            Assert.Contains(vm.Fields, f => f.Name == "orbitSpeed");
+
+            speed.Value = "130";
+
+            Assert.Equal("130", star.GetAttr("moveSpeed"));
+            Assert.Equal("130", speed.Value);
             Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
         }
 
@@ -163,6 +194,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("70", star.GetAttr("moveSpeed"));
             Assert.Equal("70", vm.Fields.Single(f => f.Name == "spinSpeed").Value);
             Assert.Equal("30", vm.Fields.Single(f => f.Name == "orbitRadius").Value);
+            Assert.Equal("70", vm.Fields.Single(f => f.Name == "orbitSpeed").Value);
         }
 
         /// <summary>Changing spin refreshes object-list bindings without clearing the selected object.</summary>

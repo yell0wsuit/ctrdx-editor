@@ -152,6 +152,30 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(40, ObjectSpin.OrbitRadius(star));
         }
 
+        /// <summary>Orbit speed exposes DX moveSpeed as a positive whole-number movement speed.</summary>
+        [Theory]
+        [InlineData("80", 80)]
+        [InlineData("-90", 90)]
+        [InlineData("12.9", 12)]
+        [InlineData("not-a-number", 0)]
+        public void OrbitSpeedUsesMoveSpeedMagnitude(string moveSpeed, int expected)
+        {
+            Assert.Equal(expected, ObjectSpin.OrbitSpeed(Obj("star", path: "RC40", moveSpeed: moveSpeed)));
+        }
+
+        /// <summary>Writing orbit speed updates moveSpeed without changing the circular path or rotateSpeed.</summary>
+        [Fact]
+        public void SetOrbitSpeedWritesMoveSpeedOnly()
+        {
+            LevelObject star = Obj("star", rotateSpeed: "-70", path: "RW60", moveSpeed: "80");
+
+            ObjectSpin.SetOrbitSpeed(star, speed: 120);
+
+            Assert.Equal("120", star.GetAttr("moveSpeed"));
+            Assert.Equal("RW60", star.GetAttr("path"));
+            Assert.Equal("-70", star.GetAttr("rotateSpeed"));
+        }
+
         /// <summary>Writing self-spin preserves existing circular orbit data.</summary>
         [Fact]
         public void SetSpinPreservesCircularOrbit()

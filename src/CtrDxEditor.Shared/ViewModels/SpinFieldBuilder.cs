@@ -191,6 +191,31 @@ namespace CtrDxEditor.ViewModels
                     onChanging));
 
                 fields.Add(new AttributeFieldViewModel(
+                    "orbitSpeed",
+                    AttrType.Whole,
+                    () => OrbitSpeedValue(value),
+                    v =>
+                    {
+                        int speed = int.TryParse(
+                            v,
+                            NumberStyles.Integer,
+                            CultureInfo.InvariantCulture,
+                            out int parsed)
+                                ? parsed
+                                : 0;
+
+                        if (speed <= 0)
+                        {
+                            value.SetAttr("moveSpeed", v ?? string.Empty);
+                            return;
+                        }
+
+                        ObjectSpin.SetOrbitSpeed(value, speed);
+                    },
+                    onChanged,
+                    onChanging));
+
+                fields.Add(new AttributeFieldViewModel(
                     "orbitClockwise",
                     AttrType.Bool,
                     () => orbitClockwise ? "true" : "false",
@@ -198,6 +223,7 @@ namespace CtrDxEditor.ViewModels
                     {
                         orbitClockwise = v == "true";
                         string radiusValue = OrbitRadiusValue(value);
+                        string speedValue = OrbitSpeedValue(value);
                         if (int.TryParse(radiusValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int radius) && radius > 0)
                         {
                             ObjectSpin.SetOrbital(
@@ -205,6 +231,14 @@ namespace CtrDxEditor.ViewModels
                                 enabled: true,
                                 radius,
                                 clockwise: orbitClockwise);
+                            if (int.TryParse(speedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int speed) && speed > 0)
+                            {
+                                ObjectSpin.SetOrbitSpeed(value, speed);
+                            }
+                            else
+                            {
+                                value.SetAttr("moveSpeed", speedValue);
+                            }
                         }
                         else
                         {
@@ -230,6 +264,14 @@ namespace CtrDxEditor.ViewModels
             return path is { Length: >= 2 } && path[0] == 'R' && (path[1] == 'C' || path[1] == 'W')
                 ? path[2..]
                 : ObjectSpin.OrbitRadius(value).ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string OrbitSpeedValue(LevelObject value)
+        {
+            string? raw = value.GetAttr("moveSpeed");
+            return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out double speed) && speed != 0
+                ? Math.Abs((int)speed).ToString(CultureInfo.InvariantCulture)
+                : raw ?? string.Empty;
         }
 
         private static string OrbitPrefix(bool clockwise)
