@@ -47,6 +47,7 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial AnimationPreviewMode AnimationPreviewMode { get; set; }
         [ObservableProperty] public partial LevelObject? AnimationPreviewObject { get; set; }
         [ObservableProperty] public partial double AnimationPreviewElapsedSeconds { get; set; }
+        [ObservableProperty] public partial int ObjectListVersion { get; set; }
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
@@ -441,6 +442,7 @@ namespace CtrDxEditor.ViewModels
 
             void Changed()
             {
+                ObjectListVersion++;
                 ObjectMutated?.Invoke();
             }
 

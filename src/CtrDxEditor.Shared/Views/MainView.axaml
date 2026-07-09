@@ -293,11 +293,16 @@
                     </MultiBinding>
                   </icons:MaterialIcon.IsVisible>
                 </icons:MaterialIcon>
-                <Button Grid.Column="2" Width="24" Height="24" Padding="2" Margin="6,0,0,0"
+                <Button Grid.Column="2" Width="16" Height="16" Padding="0" Margin="6,0,0,0"
                         Background="Transparent" BorderBrush="Transparent"
                         Tag="{Binding .}" Click="ObjectAnimationPreview_Click"
-                        ToolTip.Tip="{loc:Tr Tooltip.ObjectAnimationPreview}"
-                        IsVisible="{Binding ., Converter={x:Static conv:SpinPreviewConverters.Available}}">
+                        ToolTip.Tip="{loc:Tr Tooltip.ObjectAnimationPreview}">
+                  <Button.IsVisible>
+                    <MultiBinding Converter="{x:Static conv:SpinPreviewConverters.AvailableForVersion}">
+                      <Binding Path="." />
+                      <Binding Path="$parent[ListBox].((vm:EditorViewModel)DataContext).ObjectListVersion" />
+                    </MultiBinding>
+                  </Button.IsVisible>
                   <Grid>
                     <icons:MaterialIcon Kind="PlayArrow" Width="16" Height="16"
                                         Foreground="{DynamicResource EditorBrush.SuccessText}">

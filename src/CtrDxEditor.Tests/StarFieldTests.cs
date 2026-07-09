@@ -63,5 +63,22 @@ namespace CtrDxEditor.Tests
             Assert.Equal("70", vm.Fields.Single(f => f.Name == "spinSpeed").Value);
             Assert.True(vm.Fields.Single(f => f.Name == "spinClockwise").BoolValue);
         }
+
+        /// <summary>Changing spin refreshes object-list bindings without clearing the selected object.</summary>
+        [Fact]
+        public void CheckingStarSpinRefreshesObjectListBindingsWithoutClearingSelection()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+            int version = vm.ObjectListVersion;
+
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+
+            Assert.True(vm.ObjectListVersion > version);
+            Assert.Same(star, vm.SelectedObject);
+            Assert.Contains(star, vm.ObjectList);
+        }
     }
 }

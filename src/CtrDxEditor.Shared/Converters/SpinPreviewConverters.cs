@@ -16,6 +16,9 @@ namespace CtrDxEditor.Converters
         /// <summary>True for objects that have active spin data and can show a per-object preview button.</summary>
         public static readonly IValueConverter Available = new SpinPreviewAvailableConverter();
 
+        /// <summary>True for objects that have active spin data, re-evaluated when object-row state changes.</summary>
+        public static readonly IMultiValueConverter AvailableForVersion = new SpinPreviewAvailableForVersionConverter();
+
         /// <summary>True when the row object is the active object-scoped preview target.</summary>
         public static readonly IMultiValueConverter IsObjectPreviewing = new ObjectAnimationPreviewingConverter();
 
@@ -29,6 +32,17 @@ namespace CtrDxEditor.Converters
             public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             {
                 throw new NotSupportedException();
+            }
+        }
+
+        private sealed class SpinPreviewAvailableForVersionConverter : IMultiValueConverter
+        {
+            public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+            {
+                return values.Count >= 1
+                    && values[0] is LevelObject obj
+                    && SpinTable.IsSpinnable(obj.Type)
+                    && ObjectSpin.IsSpinning(obj);
             }
         }
 
