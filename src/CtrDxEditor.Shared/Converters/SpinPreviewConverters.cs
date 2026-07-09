@@ -48,7 +48,7 @@ namespace CtrDxEditor.Converters
 
         private static bool HasPreviewAnimation(LevelObject obj)
         {
-            return ObjectSpin.IsRotatingInPlace(obj) || ObjectSpin.IsOrbital(obj);
+            return ElectroAnimation.IsElectro(obj.Type) || ObjectSpin.IsRotatingInPlace(obj) || ObjectSpin.IsOrbital(obj);
         }
 
         private sealed class ObjectAnimationPreviewingConverter : IMultiValueConverter

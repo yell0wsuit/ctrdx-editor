@@ -230,8 +230,14 @@ namespace CtrDxEditor.Content
             new("spike3_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 2), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
             new("spike4_toggled_2", [new SpriteLayer(SpikesJson, SpikesImageBase, 3), new SpriteLayer(SpikesJson, SpikesImageBase, 6)]),
 
-            // Electric spark
-            new("electro", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 1)]),
+            // Electrodes. The game uses quad 0 as the off/base timeline and quads 1-4 for the electric
+            // timeline loop. "electro" aliases the authored off state for thumbnails and static rendering.
+            new("electro", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 0)]),
+            new("electro_off", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 0)]),
+            new("electro_on_1", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 1)]),
+            new("electro_on_2", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 2)]),
+            new("electro_on_3", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 3)]),
+            new("electro_on_4", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 4)]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

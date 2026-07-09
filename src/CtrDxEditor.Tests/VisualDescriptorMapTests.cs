@@ -10,6 +10,16 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests for the built-in visual descriptor set.</summary>
     public class VisualDescriptorMapTests
     {
+        private static readonly string[] ElectroSpriteKeys =
+        [
+            "electro",
+            "electro_off",
+            "electro_on_1",
+            "electro_on_2",
+            "electro_on_3",
+            "electro_on_4",
+        ];
+
         /// <summary>
         /// Verifies the bubble draws the game's quad 0 attached frame over one of the three random
         /// attached-outline variants used by LoadBubble.
@@ -140,6 +150,27 @@ namespace CtrDxEditor.Tests
                 Assert.Equal("images/obj_spikes.json", l.AtlasJsonRelPath);
                 Assert.Equal("images/obj_spikes", l.AtlasImageBasePath);
             });
+        }
+
+        /// <summary>Electro descriptors expose the base/off frame and the four electric loop frames.</summary>
+        [Fact]
+        public void ElectroDescriptorsMapToOffAndOnAnimationQuads()
+        {
+            Assert.Equal([0], VisualDescriptorMap.For("electro_off")!.Layers.Select(l => l.Quad));
+            Assert.Equal([1], VisualDescriptorMap.For("electro_on_1")!.Layers.Select(l => l.Quad));
+            Assert.Equal([2], VisualDescriptorMap.For("electro_on_2")!.Layers.Select(l => l.Quad));
+            Assert.Equal([3], VisualDescriptorMap.For("electro_on_3")!.Layers.Select(l => l.Quad));
+            Assert.Equal([4], VisualDescriptorMap.For("electro_on_4")!.Layers.Select(l => l.Quad));
+
+            VisualDescriptor electro = VisualDescriptorMap.For("electro")!;
+            Assert.Equal([0], electro.Layers.Select(l => l.Quad));
+            Assert.All(
+                ElectroSpriteKeys.SelectMany(k => VisualDescriptorMap.For(k)!.Layers),
+                l =>
+                {
+                    Assert.Equal("images/obj_electrodes.json", l.AtlasJsonRelPath);
+                    Assert.Equal("images/obj_electrodes", l.AtlasImageBasePath);
+                });
         }
     }
 }

@@ -153,7 +153,7 @@ namespace CtrDxEditor.Rendering
 
             if (RotationTable.For(obj.Type) is { } rotSpec)
             {
-                string rotKey = SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : obj.Type;
+                string rotKey = RotatableSpriteKey(obj, animationPreviewSeconds);
                 if (sprites.GetSprite(CanvasSpriteKey(rotKey, nightLevel), candySkin, omNomSupport) is { } rotSprite)
                 {
                     double deg = ObjectRotation.DisplayDegrees(obj, rotSpec) + (spinRotation ?? 0.0);
@@ -177,6 +177,16 @@ namespace CtrDxEditor.Rendering
                 DrawSprite(ctx, v, sprite, x, y, spinRotation);
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);
+        }
+
+        private static string RotatableSpriteKey(LevelObject obj, double? animationPreviewSeconds)
+        {
+            return obj.Type switch
+            {
+                _ when SpikeObject.IsSpike(obj.Type) => SpikeObject.SpriteKey(obj),
+                "electro" => ElectroAnimation.SpriteKey(obj, animationPreviewSeconds),
+                _ => obj.Type,
+            };
         }
 
         private static Vec2 PreviewPosition(LevelObject obj, double? animationPreviewSeconds)

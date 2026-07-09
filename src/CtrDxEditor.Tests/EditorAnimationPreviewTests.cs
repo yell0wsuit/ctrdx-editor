@@ -134,5 +134,25 @@ namespace CtrDxEditor.Tests
 
             Assert.True(available is true);
         }
+
+        /// <summary>Electro timing can be previewed even without spin or orbit mover attributes.</summary>
+        [Fact]
+        public void ElectroTimingHasAnimationPreviewAvailable()
+        {
+            LevelObject electro = new(new XElement("electro",
+                new XAttribute("x", "20"),
+                new XAttribute("y", "30"),
+                new XAttribute("initialDelay", "0"),
+                new XAttribute("offTime", "2"),
+                new XAttribute("onTime", "1")));
+
+            object? available = SpinPreviewConverters.Available.Convert(
+                electro,
+                typeof(bool),
+                parameter: null,
+                CultureInfo.InvariantCulture);
+
+            Assert.True(available is true);
+        }
     }
 }
