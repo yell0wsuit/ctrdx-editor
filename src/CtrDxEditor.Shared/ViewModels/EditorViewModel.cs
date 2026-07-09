@@ -44,6 +44,9 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial int ActiveBackground { get; set; }
         [ObservableProperty] public partial int ActiveCandySkin { get; set; }
         [ObservableProperty] public partial int ActiveOmNomSupport { get; set; }
+        [ObservableProperty] public partial AnimationPreviewMode AnimationPreviewMode { get; set; }
+        [ObservableProperty] public partial LevelObject? AnimationPreviewObject { get; set; }
+        [ObservableProperty] public partial double AnimationPreviewElapsedSeconds { get; set; }
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
@@ -75,9 +78,17 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a redo snapshot is available.</summary>
         public bool CanRedo => _redoStack.Count > 0;
 
+        /// <summary>True when live object-animation preview is currently running.</summary>
+        public bool IsAnimationPreviewActive => AnimationPreviewMode != AnimationPreviewMode.Off;
+
+        /// <summary>View-menu label for starting or stopping live object-animation preview.</summary>
+        public string AnimationPreviewMenuText => Localizer.Get(
+            IsAnimationPreviewActive ? "Menu.View.StopAnimations" : "Menu.View.PlayAnimations");
+
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
+            StopAnimationPreview();
             Document = LevelDocument.Parse(xml);
             SelectedObject = null;
             LockedObject = null;
@@ -91,6 +102,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Closes the current level and clears document-scoped editor state.</summary>
         public void CloseLevel()
         {
+            StopAnimationPreview();
             Document = null;
             SelectedObject = null;
             LockedObject = null;
@@ -115,6 +127,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Creates a new empty level from the given settings and applies the chosen editor decoration.</summary>
         public void NewLevel(LevelSettings settings, int ropeSkin = 0, int background = 0, int candySkin = 0, int omNomSupport = 0)
         {
+            StopAnimationPreview();
             Document = LevelDocument.CreateNew(settings);
             ActiveRopeSkin = ropeSkin;
             ActiveBackground = background;
@@ -135,6 +148,7 @@ namespace CtrDxEditor.ViewModels
             {
                 return;
             }
+            StopAnimationPreview();
             CaptureUndoSnapshot();
             Document.UpdateSettings(settings);
             RefreshPalette();
@@ -161,6 +175,10 @@ namespace CtrDxEditor.ViewModels
             }
 
             LevelObject removed = SelectedObject;
+            if (IsAnimationPreviewing(removed))
+            {
+                StopAnimationPreview();
+            }
             CaptureUndoSnapshot();
             LevelDocument.Remove(removed);
             if (Equals(LockedObject, removed))
@@ -186,6 +204,57 @@ namespace CtrDxEditor.ViewModels
             {
                 SelectedObject = obj;
             }
+        }
+
+        /// <summary>Starts live preview for every spinning object, resetting elapsed time to zero.</summary>
+        public void PlayAllAnimations()
+        {
+            AnimationPreviewObject = null;
+            AnimationPreviewElapsedSeconds = 0;
+            AnimationPreviewMode = AnimationPreviewMode.All;
+        }
+
+        /// <summary>Stops live preview and resets visual playback to the authored static state.</summary>
+        public void StopAnimationPreview()
+        {
+            AnimationPreviewMode = AnimationPreviewMode.Off;
+            AnimationPreviewObject = null;
+            AnimationPreviewElapsedSeconds = 0;
+        }
+
+        /// <summary>Toggles the View-menu playback command: any active preview stops; otherwise all objects play.</summary>
+        public void ToggleAnimationPreviewAll()
+        {
+            if (IsAnimationPreviewActive)
+            {
+                StopAnimationPreview();
+                return;
+            }
+            PlayAllAnimations();
+        }
+
+        /// <summary>Starts live preview for one object, or stops when that same object is already the object preview.</summary>
+        /// <param name="obj">Object to preview.</param>
+        public void ToggleAnimationPreviewObject(LevelObject obj)
+        {
+            if (AnimationPreviewMode == AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj))
+            {
+                StopAnimationPreview();
+                return;
+            }
+
+            AnimationPreviewObject = obj;
+            AnimationPreviewElapsedSeconds = 0;
+            AnimationPreviewMode = AnimationPreviewMode.Focused;
+        }
+
+        /// <summary>Whether live preview motion applies to the given object right now.</summary>
+        /// <param name="obj">Object to inspect.</param>
+        /// <returns>True when global preview is active, or when object-scoped preview targets <paramref name="obj"/>.</returns>
+        public bool IsAnimationPreviewing(LevelObject obj)
+        {
+            return AnimationPreviewMode == AnimationPreviewMode.All
+                || (AnimationPreviewMode == AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj));
         }
 
         /// <summary>Refreshes the object list from the current document.</summary>
@@ -334,6 +403,12 @@ namespace CtrDxEditor.ViewModels
         partial void OnDocumentChanged(LevelDocument? value)
         {
             OnPropertyChanged(nameof(HasDocument));
+        }
+
+        partial void OnAnimationPreviewModeChanged(AnimationPreviewMode value)
+        {
+            OnPropertyChanged(nameof(IsAnimationPreviewActive));
+            OnPropertyChanged(nameof(AnimationPreviewMenuText));
         }
 
         partial void OnLockedObjectChanged(LevelObject? value)

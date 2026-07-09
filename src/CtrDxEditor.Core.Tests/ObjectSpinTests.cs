@@ -74,5 +74,16 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Null(star.GetAttr("rotateSpeed"));
         }
+
+        /// <summary>Live preview rotation advances by signed rotateSpeed degrees per elapsed second.</summary>
+        [Theory]
+        [InlineData("70", 0.5, 35.0)]
+        [InlineData("-130", 2.0, -260.0)]
+        [InlineData("0", 10.0, 0.0)]
+        [InlineData("12.9", 1.0, 12.0)]
+        public void PreviewDegreesUsesSignedWholeSpeed(string rotateSpeed, double elapsedSeconds, double expected)
+        {
+            Assert.Equal(expected, ObjectSpin.PreviewDegrees(Obj("star", rotateSpeed), elapsedSeconds));
+        }
     }
 }

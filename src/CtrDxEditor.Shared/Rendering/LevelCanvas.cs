@@ -9,6 +9,7 @@ using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
+using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Rendering
 {
@@ -69,6 +70,18 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<int> ActiveOmNomSupportProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveOmNomSupport));
 
+        /// <summary>Avalonia property backing <see cref="AnimationPreviewMode"/>.</summary>
+        public static readonly StyledProperty<AnimationPreviewMode> AnimationPreviewModeProperty =
+            AvaloniaProperty.Register<LevelCanvas, AnimationPreviewMode>(nameof(AnimationPreviewMode));
+
+        /// <summary>Avalonia property backing <see cref="AnimationPreviewObject"/>.</summary>
+        public static readonly StyledProperty<LevelObject?> AnimationPreviewObjectProperty =
+            AvaloniaProperty.Register<LevelCanvas, LevelObject?>(nameof(AnimationPreviewObject));
+
+        /// <summary>Avalonia property backing <see cref="AnimationPreviewElapsedSeconds"/>.</summary>
+        public static readonly StyledProperty<double> AnimationPreviewElapsedSecondsProperty =
+            AvaloniaProperty.Register<LevelCanvas, double>(nameof(AnimationPreviewElapsedSeconds));
+
         /// <summary>Avalonia property backing <see cref="HorizontalScrollMaximum"/>.</summary>
         public static readonly StyledProperty<double> HorizontalScrollMaximumProperty =
             AvaloniaProperty.Register<LevelCanvas, double>(nameof(HorizontalScrollMaximum));
@@ -102,7 +115,8 @@ namespace CtrDxEditor.Rendering
                 SelectedObjectProperty, LockedObjectProperty,
                 ShowHitboxesProperty, ShowMobileHitboxesProperty, ShowForceFieldsProperty,
                 ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty,
-                ActiveOmNomSupportProperty);
+                ActiveOmNomSupportProperty,
+                AnimationPreviewModeProperty, AnimationPreviewObjectProperty, AnimationPreviewElapsedSecondsProperty);
         }
 
         /// <summary>The loaded level document to render and edit.</summary>
@@ -143,6 +157,15 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Editor-decoration Om Nom sitting platform index applied to the target (0 = default).</summary>
         public int ActiveOmNomSupport { get => GetValue(ActiveOmNomSupportProperty); set => SetValue(ActiveOmNomSupportProperty, value); }
+
+        /// <summary>Which live object-animation preview is active.</summary>
+        public AnimationPreviewMode AnimationPreviewMode { get => GetValue(AnimationPreviewModeProperty); set => SetValue(AnimationPreviewModeProperty, value); }
+
+        /// <summary>The object targeted by object-scoped live preview, or null.</summary>
+        public LevelObject? AnimationPreviewObject { get => GetValue(AnimationPreviewObjectProperty); set => SetValue(AnimationPreviewObjectProperty, value); }
+
+        /// <summary>Elapsed live-preview time in seconds.</summary>
+        public double AnimationPreviewElapsedSeconds { get => GetValue(AnimationPreviewElapsedSecondsProperty); set => SetValue(AnimationPreviewElapsedSecondsProperty, value); }
 
         /// <summary>Largest horizontal scroll offset in screen pixels.</summary>
         public double HorizontalScrollMaximum { get => GetValue(HorizontalScrollMaximumProperty); private set => SetValue(HorizontalScrollMaximumProperty, value); }

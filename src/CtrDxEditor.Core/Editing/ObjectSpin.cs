@@ -52,6 +52,15 @@ namespace CtrDxEditor.Core.Editing
             obj.SetAttr("rotateSpeed", signed.ToString(CultureInfo.InvariantCulture));
         }
 
+        /// <summary>Computes the signed live-preview rotation angle for elapsed playback time.</summary>
+        /// <param name="obj">Object whose <c>rotateSpeed</c> attribute drives preview rotation.</param>
+        /// <param name="elapsedSeconds">Elapsed preview time in seconds.</param>
+        /// <returns>Signed clockwise-positive degrees to add to the object's authored rotation.</returns>
+        public static double PreviewDegrees(LevelObject obj, double elapsedSeconds)
+        {
+            return RawSpeed(obj) * elapsedSeconds;
+        }
+
         private static int RawSpeed(LevelObject obj)
         {
             return double.TryParse(obj.GetAttr("rotateSpeed"), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,6 +33,8 @@ namespace CtrDxEditor.Views
     {
         private EditorViewModel? _mutatedSubscription;
         private readonly Action _invalidateCanvas;
+        private readonly DispatcherTimer _animationPreviewTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
+        private DateTimeOffset _animationPreviewStartedAt;
         private IStorageFile? _currentLevelFile;
         private WindowNotificationManager? _notifications;
 
@@ -43,6 +46,7 @@ namespace CtrDxEditor.Views
             _invalidateCanvas = canvas.InvalidateVisual;
             DataContextChanged += (_, _) => WireObjectMutated();
             WireObjectMutated();
+            _animationPreviewTimer.Tick += AnimationPreviewTimer_Tick;
 
             canvas.PlaceAt = (element, x, y) =>
                 DataContext is EditorViewModel vm ? vm.PlaceObject(element, x, y) : null;
@@ -110,6 +114,13 @@ namespace CtrDxEditor.Views
                             e.Handled = true;
                         }
                         break;
+                    case Key.Space when !ctrl && !shift && e.KeyModifiers == KeyModifiers.None:
+                        if (!IsTextInputFocused(e.Source) && DataContext is EditorViewModel { HasDocument: true } previewVm)
+                        {
+                            previewVm.ToggleAnimationPreviewAll();
+                            e.Handled = true;
+                        }
+                        break;
                 }
 #pragma warning restore IDE0010
             };
@@ -169,6 +180,23 @@ namespace CtrDxEditor.Views
             if (DataContext is EditorViewModel vm)
             {
                 vm.ShowForceFields = !vm.ShowForceFields;
+            }
+        }
+
+        private void AnimationPreviewToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ToggleAnimationPreviewAll();
+            }
+        }
+
+        private void ObjectAnimationPreview_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is Button { Tag: LevelObject obj })
+            {
+                vm.ToggleAnimationPreviewObject(obj);
+                e.Handled = true;
             }
         }
 
@@ -291,13 +319,58 @@ namespace CtrDxEditor.Views
 
             _mutatedSubscription?.ObjectMutated -= _invalidateCanvas;
             _mutatedSubscription?.LevelLoaded -= FocusCanvasAfterLevelLoaded;
+            _mutatedSubscription?.PropertyChanged -= ViewModel_PropertyChanged;
 
             _mutatedSubscription = DataContext as EditorViewModel;
             if (_mutatedSubscription is not null)
             {
                 _mutatedSubscription.ObjectMutated += _invalidateCanvas;
                 _mutatedSubscription.LevelLoaded += FocusCanvasAfterLevelLoaded;
+                _mutatedSubscription.PropertyChanged += ViewModel_PropertyChanged;
             }
+
+            SyncAnimationPreviewTimer();
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(EditorViewModel.AnimationPreviewMode) or nameof(EditorViewModel.AnimationPreviewObject))
+            {
+                SyncAnimationPreviewTimer();
+            }
+        }
+
+        private void SyncAnimationPreviewTimer()
+        {
+            if (DataContext is not EditorViewModel vm || !vm.IsAnimationPreviewActive)
+            {
+                _animationPreviewTimer.Stop();
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+                return;
+            }
+
+            _animationPreviewStartedAt = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(vm.AnimationPreviewElapsedSeconds);
+            if (!_animationPreviewTimer.IsEnabled)
+            {
+                _animationPreviewTimer.Start();
+            }
+        }
+
+        private void AnimationPreviewTimer_Tick(object? sender, EventArgs e)
+        {
+            if (DataContext is not EditorViewModel { IsAnimationPreviewActive: true } vm)
+            {
+                _animationPreviewTimer.Stop();
+                return;
+            }
+
+            vm.AnimationPreviewElapsedSeconds = (DateTimeOffset.UtcNow - _animationPreviewStartedAt).TotalSeconds;
+            this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+        }
+
+        private static bool IsTextInputFocused(object? source)
+        {
+            return (source as Visual)?.FindAncestorOfType<TextBox>(includeSelf: true) is not null;
         }
 
         private void FocusCanvasAfterLevelLoaded()
@@ -603,6 +676,20 @@ namespace CtrDxEditor.Views
             // the first save. A manager constructed at the first Show() call drops that first notification
             // (it is not yet in the visual tree), which is why the initial "Saving…" toast went missing.
             _ = Notifications();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            _animationPreviewTimer.Stop();
+            if (_mutatedSubscription is not null)
+            {
+                _mutatedSubscription.ObjectMutated -= _invalidateCanvas;
+                _mutatedSubscription.LevelLoaded -= FocusCanvasAfterLevelLoaded;
+                _mutatedSubscription.PropertyChanged -= ViewModel_PropertyChanged;
+                _mutatedSubscription = null;
+            }
+            base.OnDetachedFromVisualTree(e);
         }
 
         // The toast host, created against the current TopLevel and reused. Null only before the view is

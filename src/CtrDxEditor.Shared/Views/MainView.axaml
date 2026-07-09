@@ -131,6 +131,25 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
+        <MenuItem Click="AnimationPreviewToggle_Click" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <Grid>
+              <icons:MaterialIcon Kind="PlayArrow">
+                <icons:MaterialIcon.IsVisible>
+                  <Binding Path="IsAnimationPreviewActive" Converter="{x:Static BoolConverters.Not}" />
+                </icons:MaterialIcon.IsVisible>
+              </icons:MaterialIcon>
+              <icons:MaterialIcon Kind="Stop" IsVisible="{Binding IsAnimationPreviewActive}" />
+            </Grid>
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{Binding AnimationPreviewMenuText}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.AnimationPreview}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator />
         <!-- Transparent icon placeholder reserves the icon column so the check lines up with the
              zoom shortcuts above; the check sits at the header's right edge via the same MinWidth. -->
         <MenuItem Click="SnapToggle_Click" IsEnabled="{Binding HasDocument}">
@@ -216,6 +235,9 @@
                             ActiveBackground="{Binding ActiveBackground}"
                             ActiveCandySkin="{Binding ActiveCandySkin}"
                             ActiveOmNomSupport="{Binding ActiveOmNomSupport}"
+                            AnimationPreviewMode="{Binding AnimationPreviewMode}"
+                            AnimationPreviewObject="{Binding AnimationPreviewObject}"
+                            AnimationPreviewElapsedSeconds="{Binding AnimationPreviewElapsedSeconds}"
                             SelectedObject="{Binding SelectedObject, Mode=TwoWay}"
                             LockedObject="{Binding LockedObject, Mode=TwoWay}" />
         <ScrollBar Grid.Row="0" Grid.Column="1"
@@ -259,7 +281,7 @@
           </ListBox.Styles>
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="core:LevelObject">
-              <Grid ColumnDefinitions="*,Auto">
+              <Grid ColumnDefinitions="*,Auto,Auto">
                 <TextBlock Grid.Column="0" VerticalAlignment="Center"
                            Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}" />
                 <icons:MaterialIcon Grid.Column="1" Kind="Lock" Width="14" Height="14"
@@ -271,6 +293,34 @@
                     </MultiBinding>
                   </icons:MaterialIcon.IsVisible>
                 </icons:MaterialIcon>
+                <Button Grid.Column="2" Width="24" Height="24" Padding="2" Margin="6,0,0,0"
+                        Background="Transparent" BorderBrush="Transparent"
+                        Tag="{Binding .}" Click="ObjectAnimationPreview_Click"
+                        ToolTip.Tip="{loc:Tr Tooltip.ObjectAnimationPreview}"
+                        IsVisible="{Binding ., Converter={x:Static conv:SpinPreviewConverters.Available}}">
+                  <Grid>
+                    <icons:MaterialIcon Kind="PlayArrow" Width="16" Height="16"
+                                        Foreground="{DynamicResource EditorBrush.SuccessText}">
+                      <icons:MaterialIcon.IsVisible>
+                        <MultiBinding Converter="{x:Static conv:SpinPreviewConverters.IsObjectPreviewing}" ConverterParameter="Invert">
+                          <Binding Path="." />
+                          <Binding Path="$parent[ListBox].((vm:EditorViewModel)DataContext).AnimationPreviewMode" />
+                          <Binding Path="$parent[ListBox].((vm:EditorViewModel)DataContext).AnimationPreviewObject" />
+                        </MultiBinding>
+                      </icons:MaterialIcon.IsVisible>
+                    </icons:MaterialIcon>
+                    <icons:MaterialIcon Kind="Stop" Width="16" Height="16"
+                                        Foreground="{DynamicResource EditorBrush.DangerText}">
+                      <icons:MaterialIcon.IsVisible>
+                        <MultiBinding Converter="{x:Static conv:SpinPreviewConverters.IsObjectPreviewing}">
+                          <Binding Path="." />
+                          <Binding Path="$parent[ListBox].((vm:EditorViewModel)DataContext).AnimationPreviewMode" />
+                          <Binding Path="$parent[ListBox].((vm:EditorViewModel)DataContext).AnimationPreviewObject" />
+                        </MultiBinding>
+                      </icons:MaterialIcon.IsVisible>
+                    </icons:MaterialIcon>
+                  </Grid>
+                </Button>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>

@@ -27,5 +27,8 @@ namespace CtrDxEditor.Views
 
         /// <summary>Localized platform shortcut text for deleting the selected object.</summary>
         public static string Delete { get; } = "Delete";
+
+        /// <summary>Localized platform shortcut text for toggling live animation preview.</summary>
+        public static string AnimationPreview { get; } = "Space";
     }
 }

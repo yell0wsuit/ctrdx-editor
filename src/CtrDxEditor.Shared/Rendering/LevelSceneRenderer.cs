@@ -120,6 +120,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="omNomSupport">Active Om Nom support index.</param>
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
         /// <param name="starDurationText">Brush for the timed-star duration label.</param>
+        /// <param name="spinPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
         public static void DrawObject(
             DrawingContext ctx,
             ViewTransform v,
@@ -128,17 +129,19 @@ namespace CtrDxEditor.Rendering
             int candySkin,
             int omNomSupport,
             bool nightLevel,
-            IBrush starDurationText)
+            IBrush starDurationText,
+            double? spinPreviewSeconds = null)
         {
+            double? spinRotation = SpinPreviewRotation(obj, spinPreviewSeconds);
             if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
             {
                 if (sprites.GetSprite("star_timed") is { } timed)
                 {
-                    DrawSprite(ctx, v, timed, obj.X, obj.Y);
+                    DrawSprite(ctx, v, timed, obj.X, obj.Y, spinRotation);
                 }
                 if (sprites.GetSprite(CanvasSpriteKey("star", nightLevel), candySkin, omNomSupport) is { } star)
                 {
-                    DrawSprite(ctx, v, star, obj.X, obj.Y);
+                    DrawSprite(ctx, v, star, obj.X, obj.Y, spinRotation);
                     DrawStarDuration(ctx, v, star, obj, timeout, starDurationText);
                 }
                 DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
@@ -150,7 +153,7 @@ namespace CtrDxEditor.Rendering
                 string rotKey = SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : obj.Type;
                 if (sprites.GetSprite(CanvasSpriteKey(rotKey, nightLevel), candySkin, omNomSupport) is { } rotSprite)
                 {
-                    double deg = ObjectRotation.DisplayDegrees(obj, rotSpec);
+                    double deg = ObjectRotation.DisplayDegrees(obj, rotSpec) + (spinRotation ?? 0.0);
                     foreach (SpriteLayerDraw layer in rotSprite.Layers)
                     {
                         DrawLayer(ctx, v, layer, obj.X, obj.Y, rotSprite.Scale, deg);
@@ -166,11 +169,22 @@ namespace CtrDxEditor.Rendering
             {
                 if (sprite.Variants.Count > 0)
                 {
-                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
+                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale, spinRotation);
                 }
-                DrawSprite(ctx, v, sprite, obj.X, obj.Y);
+                DrawSprite(ctx, v, sprite, obj.X, obj.Y, spinRotation);
             }
             DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+        }
+
+        private static double? SpinPreviewRotation(LevelObject obj, double? spinPreviewSeconds)
+        {
+            if (spinPreviewSeconds is not double seconds || !SpinTable.IsSpinnable(obj.Type) || !ObjectSpin.IsSpinning(obj))
+            {
+                return null;
+            }
+
+            double degrees = ObjectSpin.PreviewDegrees(obj, seconds);
+            return degrees == 0 ? null : degrees;
         }
 
         /// <summary>Reads a star's <c>timeout</c> attribute in seconds.</summary>
@@ -224,6 +238,21 @@ namespace CtrDxEditor.Rendering
         /// <returns>Four screen-space corners ordered clockwise from top-left.</returns>
         public static Point[] SelectionOutlinePoints(ViewTransform v, LevelObject obj, LevelBounds bounds)
         {
+            return SelectionOutlinePointsWithPreview(v, obj, bounds, previewRotationDegrees: 0.0);
+        }
+
+        /// <summary>Screen-space selection outline corners with optional live-preview spin added.</summary>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">The selected object.</param>
+        /// <param name="bounds">The unrotated level-space selection bounds.</param>
+        /// <param name="previewRotationDegrees">Live-preview spin degrees to add to the authored rotation.</param>
+        /// <returns>Four screen-space corners ordered clockwise from top-left.</returns>
+        public static Point[] SelectionOutlinePointsWithPreview(
+            ViewTransform v,
+            LevelObject obj,
+            LevelBounds bounds,
+            double previewRotationDegrees)
+        {
             Point[] points =
             [
                 ScreenPoint(v, bounds.X, bounds.Y),
@@ -232,12 +261,8 @@ namespace CtrDxEditor.Rendering
                 ScreenPoint(v, bounds.X, bounds.Y + bounds.H),
             ];
 
-            if (RotationTable.For(obj.Type) is not { } rotSpec)
-            {
-                return points;
-            }
-
-            double degrees = ObjectRotation.DisplayDegrees(obj, rotSpec);
+            double degrees = previewRotationDegrees
+                + (RotationTable.For(obj.Type) is { } rotSpec ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
             if (degrees == 0)
             {
                 return points;
@@ -526,11 +551,12 @@ namespace CtrDxEditor.Rendering
         /// <param name="sprite">The sprite to draw.</param>
         /// <param name="x">Anchor X in level units.</param>
         /// <param name="y">Anchor Y in level units.</param>
-        public static void DrawSprite(DrawingContext ctx, ViewTransform v, ObjectSprite sprite, double x, double y)
+        /// <param name="rotationDegrees">Rotation about the anchor in degrees, or null for no rotation.</param>
+        public static void DrawSprite(DrawingContext ctx, ViewTransform v, ObjectSprite sprite, double x, double y, double? rotationDegrees = null)
         {
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
-                DrawLayer(ctx, v, layer, x, y, sprite.Scale);
+                DrawLayer(ctx, v, layer, x, y, sprite.Scale, rotationDegrees);
             }
         }
 
@@ -603,13 +629,15 @@ namespace CtrDxEditor.Rendering
         /// <param name="scale">Sprite scale factor, used to size the hitbox.</param>
         /// <param name="model">Which device hitbox model (desktop or phone) to compute.</param>
         /// <param name="pen">Pen for the hitbox outline.</param>
+        /// <param name="previewRotationDegrees">Live-preview spin degrees to add to the authored rotation.</param>
         public static void DrawHitbox(
             DrawingContext ctx,
             ViewTransform v,
             LevelObject obj,
             double scale,
             HitboxModel model,
-            Pen pen)
+            Pen pen,
+            double previewRotationDegrees = 0.0)
         {
             if (HitboxTable.Compute(obj, scale, model) is not { } b)
             {
@@ -622,7 +650,9 @@ namespace CtrDxEditor.Rendering
             // A rotatable object's box turns with its sprite about the same anchor (see DrawLayer). The view
             // transform is translation + uniform scale, so rotating the projected box about the projected
             // anchor equals rotating it in level space. Square boxes only diverge visibly off the axes.
-            if (RotationTable.For(obj.Type) is { } rotSpec && ObjectRotation.DisplayDegrees(obj, rotSpec) is var deg && deg != 0)
+            double deg = previewRotationDegrees
+                + (RotationTable.For(obj.Type) is { } rotSpec ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
+            if (deg != 0)
             {
                 Vec2 center = v.LevelToScreen(new Vec2(obj.X, obj.Y));
                 Matrix m = Matrix.CreateTranslation(-center.X, -center.Y)

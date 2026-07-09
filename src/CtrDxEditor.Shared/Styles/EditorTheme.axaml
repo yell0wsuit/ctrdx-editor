@@ -282,6 +282,7 @@
       <Color x:Key="EditorColor.DangerHover">#C10007</Color>  <!-- red-700 -->
       <Color x:Key="EditorColor.DangerPressed">#9F0712</Color>  <!-- red-800 -->
       <Color x:Key="EditorColor.DangerText">#E7000B</Color>  <!-- red-600 -->
+      <Color x:Key="EditorColor.SuccessText">#008236</Color>  <!-- green-700 -->
       <Color x:Key="EditorColor.Warning">#BB4D00</Color>  <!-- amber-700 -->
       <Color x:Key="EditorColor.SurfacePanel">#F8FAFC</Color>  <!-- slate-50 -->
       <Color x:Key="EditorColor.SurfaceDivider">#E2E8F0</Color>  <!-- slate-200 -->
@@ -322,6 +323,7 @@
       <Color x:Key="EditorColor.DangerHover">#FB2C36</Color>  <!-- red-500 -->
       <Color x:Key="EditorColor.DangerPressed">#C10007</Color>  <!-- red-700 -->
       <Color x:Key="EditorColor.DangerText">#FF6467</Color>  <!-- red-400 -->
+      <Color x:Key="EditorColor.SuccessText">#05DF72</Color>  <!-- green-400 -->
       <Color x:Key="EditorColor.Warning">#FFB900</Color>  <!-- amber-400 -->
       <Color x:Key="EditorColor.SurfacePanel">#0F172B</Color>  <!-- slate-900 -->
       <Color x:Key="EditorColor.SurfaceDivider">#314158</Color>  <!-- slate-700 -->
@@ -361,6 +363,7 @@
   <SolidColorBrush x:Key="EditorBrush.OnPrimary" Color="{DynamicResource EditorColor.OnPrimary}" />
   <SolidColorBrush x:Key="EditorBrush.Danger" Color="{DynamicResource EditorColor.Danger}" />
   <SolidColorBrush x:Key="EditorBrush.DangerText" Color="{DynamicResource EditorColor.DangerText}" />
+  <SolidColorBrush x:Key="EditorBrush.SuccessText" Color="{DynamicResource EditorColor.SuccessText}" />
   <SolidColorBrush x:Key="EditorBrush.DangerHover" Color="{DynamicResource EditorColor.DangerHover}" />
   <SolidColorBrush x:Key="EditorBrush.DangerPressed" Color="{DynamicResource EditorColor.DangerPressed}" />
   <SolidColorBrush x:Key="EditorBrush.Warning" Color="{DynamicResource EditorColor.Warning}" />

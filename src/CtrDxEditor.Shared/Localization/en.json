@@ -19,6 +19,8 @@
     "Menu.View.ZoomIn": "Zoom _In",
     "Menu.View.ZoomOut": "Zoom _Out",
     "Menu.View.ZoomFit": "Zoom to _Fit",
+    "Menu.View.PlayAnimations": "Play animations",
+    "Menu.View.StopAnimations": "Stop animations",
     "Menu.View.SnapToGrid": "Snap to grid",
     "Menu.View.ShowHitboxes": "Show hitboxes",
     "Menu.View.ShowMobileHitboxes": "Show mobile hitboxes",
@@ -165,5 +167,6 @@
     "Attr.toggleGroup": "Group",
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Speed",
-    "Attr.spinClockwise": "Clockwise"
+    "Attr.spinClockwise": "Clockwise",
+    "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation"
 }
