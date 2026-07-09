@@ -25,6 +25,7 @@ namespace CtrDxEditor.Core.Editing
             ["spike2"] = new RotationSpec(DisplayOffset: 0),
             ["spike3"] = new RotationSpec(DisplayOffset: 0),
             ["spike4"] = new RotationSpec(DisplayOffset: 0),
+            ["electro"] = new RotationSpec(DisplayOffset: 0),
         };
 
         /// <summary>The rotation spec for <paramref name="element"/>, or null when it does not rotate.</summary>

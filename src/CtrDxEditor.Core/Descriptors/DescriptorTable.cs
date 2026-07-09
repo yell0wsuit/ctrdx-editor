@@ -93,6 +93,17 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
+
+            // Electric spark
+            new ObjectDescriptor("electro", "Electro",
+            [
+                new AttributeSpec("initialDelay", AttrType.Number, "0.0"),
+                new AttributeSpec("offTime", AttrType.Number, "2.0"),
+                new AttributeSpec("onTime", AttrType.Number, "2.0"),
+                new AttributeSpec("angle", AttrType.Number, "0"),
+            ], MaxCount: int.MaxValue),
+
+            // Gravity button
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
 
             // Light bulb

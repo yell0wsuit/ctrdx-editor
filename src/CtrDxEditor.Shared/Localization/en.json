@@ -142,6 +142,7 @@
     "Object.spike2": "Spike",
     "Object.spike3": "Spike",
     "Object.spike4": "Spike",
+    "Object.electro": "Electric spark",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -167,6 +168,9 @@
     "Attr.attachTo": "Attach to",
     "Attr.angle": "Angle",
     "Attr.size": "Size",
+    "Attr.initialDelay": "Initial delay (s)",
+    "Attr.offTime": "Off time (s)",
+    "Attr.onTime": "On time (s)",
     "Attr.toggled": "Toggled",
     "Attr.toggleGroup": "Group",
     "Attr.spin": "Spin object",

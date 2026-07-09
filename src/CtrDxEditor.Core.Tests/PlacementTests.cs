@@ -34,5 +34,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("100", obj.GetAttr("length"));
             Assert.Null(obj.GetAttr("part"));
         }
+
+        /// <summary>Verifies electro placement writes the exact game timing defaults.</summary>
+        [Fact]
+        public void CreateElectroObjectSetsTimingDefaults()
+        {
+            ObjectDescriptor electro = DescriptorTable.Default.For("electro")!;
+
+            LevelObject obj = Placement.CreateObject(electro, x: 250, y: 186);
+
+            Assert.Equal("electro", obj.Type);
+            Assert.Equal("0.0", obj.GetAttr("initialDelay"));
+            Assert.Equal("2.0", obj.GetAttr("offTime"));
+            Assert.Equal("2.0", obj.GetAttr("onTime"));
+            Assert.Equal("0", obj.GetAttr("angle"));
+            Assert.Null(obj.GetAttr("size"));
+        }
     }
 }

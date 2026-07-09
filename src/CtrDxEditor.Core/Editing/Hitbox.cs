@@ -58,6 +58,7 @@ namespace CtrDxEditor.Core.Editing
                 new("spike2_toggled", new(256, 120, 321, 10), new(256, 120, 321, 10), 833, 250),
                 new("spike3_toggled", new(193.5, 120, 446, 10), new(193.5, 120, 446, 10), 833, 250),
                 new("spike4_toggled", new(136, 120, 561, 10), new(136, 120, 561, 10), 833, 250),
+                new("electro", new(200, 120, 433, 10), new(200 / 3.0, 40, 433 / 3.0, 10 / 3.0), 833, 250),
             }.ToDictionary(d => d.Element);
 
         /// <summary>

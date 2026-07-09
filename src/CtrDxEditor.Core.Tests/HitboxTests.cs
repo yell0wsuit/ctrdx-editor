@@ -142,5 +142,23 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), box);
         }
+
+        /// <summary>Electrodes use the game's active electric strip width rather than the full visible art width.</summary>
+        [Fact]
+        public void ElectroDesktopBoxUsesActiveElectricStripWidth()
+        {
+            LevelBounds? box = HitboxTable.Compute("electro", 0, 0, scale: 3, HitboxModel.Desktop);
+
+            Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
+        }
+
+        /// <summary>Electrodes use the same Spikes.UpdateRotation collision strip for phone physics.</summary>
+        [Fact]
+        public void ElectroPhoneBoxMatchesDesktopSpikesCollisionStrip()
+        {
+            LevelBounds? box = HitboxTable.Compute("electro", 0, 0, scale: 3, HitboxModel.Phone);
+
+            Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
+        }
     }
 }

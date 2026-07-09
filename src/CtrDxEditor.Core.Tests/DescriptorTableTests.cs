@@ -23,6 +23,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("spike2"));
             Assert.True(t.Knows("spike3"));
             Assert.True(t.Knows("spike4"));
+            Assert.True(t.Knows("electro"));
         }
 
         /// <summary>Verifies that bubble is unbounded and has no editable attributes (game reads only x/y).</summary>
@@ -98,6 +99,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(spike.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
             Assert.Contains(spike.Attributes, a => a.Name == "size" && a.Type == AttrType.Enum && a.Default == size);
             Assert.Contains(spike.Attributes, a => a.Name == "toggled" && a.Type == AttrType.Bool && a.Default == "false");
+        }
+
+        /// <summary>Verifies electro descriptors expose only the editable timed electrode fields.</summary>
+        [Fact]
+        public void ElectroCarriesTimingAndAngleAttributes()
+        {
+            ObjectDescriptor electro = DescriptorTable.Default.For("electro")!;
+
+            Assert.Equal("Electro", electro.DisplayName);
+            Assert.Equal(int.MaxValue, electro.MaxCount);
+            Assert.Contains(electro.Attributes, a => a.Name == "initialDelay" && a.Type == AttrType.Number && a.Default == "0.0");
+            Assert.Contains(electro.Attributes, a => a.Name == "offTime" && a.Type == AttrType.Number && a.Default == "2.0");
+            Assert.Contains(electro.Attributes, a => a.Name == "onTime" && a.Type == AttrType.Number && a.Default == "2.0");
+            Assert.Contains(electro.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
+            Assert.DoesNotContain(electro.Attributes, a => a.Name == "size");
         }
     }
 }

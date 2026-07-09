@@ -158,6 +158,8 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(RotationTable.IsRotatable("pump"));
             Assert.Equal(90, RotationTable.For("pump")!.DisplayOffset);
             Assert.Equal("angle", RotationTable.For("pump")!.AttributeName);
+            Assert.True(RotationTable.IsRotatable("electro"));
+            Assert.Equal(0, RotationTable.For("electro")!.DisplayOffset);
             Assert.Null(RotationTable.For("grab"));
             Assert.False(RotationTable.IsRotatable("star"));
         }
