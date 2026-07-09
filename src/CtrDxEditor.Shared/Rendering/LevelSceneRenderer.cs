@@ -178,7 +178,7 @@ namespace CtrDxEditor.Rendering
 
         private static double? SpinPreviewRotation(LevelObject obj, double? spinPreviewSeconds)
         {
-            if (spinPreviewSeconds is not double seconds || !SpinTable.IsSpinnable(obj.Type) || !ObjectSpin.IsSpinning(obj))
+            if (spinPreviewSeconds is not double seconds || !SpinTable.IsSpinnable(obj.Type) || !ObjectSpin.IsRotatingInPlace(obj))
             {
                 return null;
             }
@@ -745,7 +745,7 @@ namespace CtrDxEditor.Rendering
             Vec2 centerLevel = new(obj.X, obj.Y);
             Vec2 screen = v.LevelToScreen(centerLevel);
             Point center = new(screen.X, screen.Y);
-            bool clockwise = ObjectSpin.Clockwise(obj);
+            bool clockwise = ObjectSpin.SpinClockwise(obj);
             const int arcSegments = 18;
             double start = -Math.PI * 0.75;
             double sweep = Math.PI * 1.5 * (clockwise ? 1 : -1);

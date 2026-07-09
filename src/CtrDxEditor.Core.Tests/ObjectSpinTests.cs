@@ -7,10 +7,10 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
-    /// <summary>Tests for the rotateSpeed-backed object spin model.</summary>
+    /// <summary>Tests for the mover-backed object spin model.</summary>
     public class ObjectSpinTests
     {
-        private static LevelObject Obj(string type, string? rotateSpeed = null, string? path = null)
+        private static LevelObject Obj(string type, string? rotateSpeed = null, string? path = null, string? moveSpeed = null)
         {
             XElement e = new(type);
             if (rotateSpeed is not null)
@@ -20,6 +20,10 @@ namespace CtrDxEditor.Core.Tests
             if (path is not null)
             {
                 e.SetAttributeValue("path", path);
+            }
+            if (moveSpeed is not null)
+            {
+                e.SetAttributeValue("moveSpeed", moveSpeed);
             }
             return new LevelObject(e);
         }
@@ -52,7 +56,7 @@ namespace CtrDxEditor.Core.Tests
         public void SpeedMagnitudeUsesAbsoluteTruncatedWholeNumber(string rotateSpeed, int expected)
         {
             Assert.True(ObjectSpin.IsSpinning(Obj("star", rotateSpeed)));
-            Assert.Equal(expected, ObjectSpin.Speed(Obj("star", rotateSpeed)));
+            Assert.Equal(expected, ObjectSpin.SpinSpeed(Obj("star", rotateSpeed)));
         }
 
         /// <summary>The clockwise checkbox maps directly to positive rotateSpeed values.</summary>
@@ -61,7 +65,7 @@ namespace CtrDxEditor.Core.Tests
         [InlineData("-130", false)]
         public void ClockwiseFollowsRotateSpeedSign(string rotateSpeed, bool expected)
         {
-            Assert.Equal(expected, ObjectSpin.Clockwise(Obj("star", rotateSpeed)));
+            Assert.Equal(expected, ObjectSpin.SpinClockwise(Obj("star", rotateSpeed)));
         }
 
         /// <summary>Writing spin stores a signed whole-number rotateSpeed and disabling removes the attribute.</summary>
@@ -91,6 +95,73 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal("0,0", star.GetAttr("path"));
             Assert.Equal("10,0,10,10", movingSpike.GetAttr("path"));
+        }
+
+        /// <summary>Orbital movement follows DX circular path syntax and defaults movement speed separately.</summary>
+        [Fact]
+        public void SetOrbitalWritesCircularPathRadiusWithoutClearingRotateSpeed()
+        {
+            LevelObject star = Obj("star", rotateSpeed: "70");
+
+            ObjectSpin.SetOrbital(star, enabled: true, radius: 45, clockwise: false);
+
+            Assert.Equal("RW45", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.Equal("70", star.GetAttr("rotateSpeed"));
+            Assert.True(ObjectSpin.IsSpinning(star));
+            Assert.True(ObjectSpin.IsOrbital(star));
+            Assert.Equal(45, ObjectSpin.OrbitRadius(star));
+            Assert.False(ObjectSpin.OrbitClockwise(star));
+        }
+
+        /// <summary>Disabling orbital movement removes circular mover attributes without clearing self-spin.</summary>
+        [Fact]
+        public void DisablingOrbitalRemovesCircularPathAndMoveSpeedWithoutClearingRotateSpeed()
+        {
+            LevelObject star = Obj("star", rotateSpeed: "-70", path: "RC40", moveSpeed: "70");
+
+            ObjectSpin.SetOrbital(star, enabled: false, radius: 70, clockwise: true);
+
+            Assert.Null(star.GetAttr("path"));
+            Assert.Null(star.GetAttr("moveSpeed"));
+            Assert.Equal("-70", star.GetAttr("rotateSpeed"));
+            Assert.True(ObjectSpin.IsSpinning(star));
+        }
+
+        /// <summary>Orbit-only data is active without rotateSpeed.</summary>
+        [Fact]
+        public void OrbitDoesNotCountAsSelfSpin()
+        {
+            LevelObject star = Obj("star", path: "RC40", moveSpeed: "70");
+
+            Assert.False(ObjectSpin.IsSpinning(star));
+            Assert.True(ObjectSpin.IsOrbital(star));
+        }
+
+        /// <summary>Orbital movement speed is preserved when switching direction or radius.</summary>
+        [Fact]
+        public void SetOrbitalSpinPreservesAuthoredMoveSpeed()
+        {
+            LevelObject star = Obj("star", path: "RW60", moveSpeed: "80");
+
+            ObjectSpin.SetOrbital(star, enabled: true, radius: 40, clockwise: true);
+
+            Assert.Equal("RC40", star.GetAttr("path"));
+            Assert.Equal("80", star.GetAttr("moveSpeed"));
+            Assert.Equal(40, ObjectSpin.OrbitRadius(star));
+        }
+
+        /// <summary>Writing self-spin preserves existing circular orbit data.</summary>
+        [Fact]
+        public void SetSpinPreservesCircularOrbit()
+        {
+            LevelObject star = Obj("star", path: "RW60", moveSpeed: "80");
+
+            ObjectSpin.SetSpin(star, enabled: true, speed: 130, clockwise: false);
+
+            Assert.Equal("-130", star.GetAttr("rotateSpeed"));
+            Assert.Equal("RW60", star.GetAttr("path"));
+            Assert.Equal("80", star.GetAttr("moveSpeed"));
         }
 
         /// <summary>Live preview rotation advances by signed rotateSpeed degrees per elapsed second.</summary>

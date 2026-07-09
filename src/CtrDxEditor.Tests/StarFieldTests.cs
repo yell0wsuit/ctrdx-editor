@@ -64,6 +64,56 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.Fields.Single(f => f.Name == "spinClockwise").BoolValue);
         }
 
+        /// <summary>Orbit can be enabled without rotateSpeed and exposes radius/direction separately.</summary>
+        [Fact]
+        public void CheckingStarOrbitWithoutSpinWritesCircularPathRadius()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+
+            Assert.False(vm.Fields.Single(f => f.Name == "spin").BoolValue);
+            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+
+            Assert.Null(star.GetAttr("rotateSpeed"));
+            Assert.Equal("RC30", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.False(vm.Fields.Single(f => f.Name == "spin").BoolValue);
+            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "spinSpeed");
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "spinClockwise");
+            AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
+            Assert.Equal("30", radius.Value);
+            Assert.Equal(1, radius.NumericMinimum);
+            Assert.True(vm.Fields.Single(f => f.Name == "orbitClockwise").BoolValue);
+
+            radius.Value = "45";
+            vm.Fields.Single(f => f.Name == "orbitClockwise").BoolValue = false;
+
+            Assert.Equal("RW45", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+        }
+
+        /// <summary>Spin and orbit can coexist, matching DX's separate rotateSpeed and moveSpeed handling.</summary>
+        [Fact]
+        public void CheckingStarSpinAndOrbitKeepsBothMoverAttributes()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+
+            Assert.Equal("70", star.GetAttr("rotateSpeed"));
+            Assert.Equal("RC30", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.Equal("70", vm.Fields.Single(f => f.Name == "spinSpeed").Value);
+            Assert.Equal("30", vm.Fields.Single(f => f.Name == "orbitRadius").Value);
+        }
+
         /// <summary>Changing spin refreshes object-list bindings without clearing the selected object.</summary>
         [Fact]
         public void CheckingStarSpinRefreshesObjectListBindingsWithoutClearingSelection()

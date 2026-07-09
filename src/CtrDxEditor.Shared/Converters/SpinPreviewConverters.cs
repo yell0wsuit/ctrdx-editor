@@ -13,10 +13,10 @@ namespace CtrDxEditor.Converters
     /// <summary>Converters for object-list live animation preview controls.</summary>
     public static class SpinPreviewConverters
     {
-        /// <summary>True for objects that have active spin data and can show a per-object preview button.</summary>
+        /// <summary>True for objects that have active in-place spin data and can show a per-object preview button.</summary>
         public static readonly IValueConverter Available = new SpinPreviewAvailableConverter();
 
-        /// <summary>True for objects that have active spin data, re-evaluated when object-row state changes.</summary>
+        /// <summary>True for objects that have active in-place spin data, re-evaluated when object-row state changes.</summary>
         public static readonly IMultiValueConverter AvailableForVersion = new SpinPreviewAvailableForVersionConverter();
 
         /// <summary>True when the row object is the active object-scoped preview target.</summary>
@@ -26,7 +26,7 @@ namespace CtrDxEditor.Converters
         {
             public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
             {
-                return value is LevelObject obj && SpinTable.IsSpinnable(obj.Type) && ObjectSpin.IsSpinning(obj);
+                return value is LevelObject obj && SpinTable.IsSpinnable(obj.Type) && ObjectSpin.IsRotatingInPlace(obj);
             }
 
             public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -42,7 +42,7 @@ namespace CtrDxEditor.Converters
                 return values.Count >= 1
                     && values[0] is LevelObject obj
                     && SpinTable.IsSpinnable(obj.Type)
-                    && ObjectSpin.IsSpinning(obj);
+                    && ObjectSpin.IsRotatingInPlace(obj);
             }
         }
 

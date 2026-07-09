@@ -110,7 +110,7 @@ namespace CtrDxEditor.ViewModels
         public int NumericMinimum => Name switch
         {
             "timeout" => 1,
-            "spinSpeed" => 1,
+            "spinSpeed" or "orbitRadius" => 1,
             "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" => 0,
             _ => -9999,
         };

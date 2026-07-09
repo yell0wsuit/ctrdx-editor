@@ -49,13 +49,13 @@ namespace CtrDxEditor.ViewModels
                         beforeEnable?.Invoke();
                     }
 
-                    int speed = ObjectSpin.Speed(value);
-                    if (enabled && speed == 0)
+                    int spinSpeed = ObjectSpin.SpinSpeed(value);
+                    if (enabled && spinSpeed == 0)
                     {
-                        speed = ObjectSpin.DefaultSpeed;
+                        spinSpeed = ObjectSpin.DefaultSpeed;
                     }
 
-                    ObjectSpin.SetSpin(value, enabled, speed, ObjectSpin.Clockwise(value));
+                    ObjectSpin.SetSpin(value, enabled, spinSpeed, ObjectSpin.SpinClockwise(value));
                     rebuild();
                 },
                 onChanged,
@@ -65,36 +65,82 @@ namespace CtrDxEditor.ViewModels
             };
             fields.Add(spin);
 
-            if (!ObjectSpin.IsSpinning(value))
+            if (ObjectSpin.IsSpinning(value))
             {
-                return;
+                fields.Add(new AttributeFieldViewModel(
+                    "spinSpeed",
+                    AttrType.Whole,
+                    () => ObjectSpin.SpinSpeed(value).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    v =>
+                    {
+                        int speed = int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int parsed)
+                            ? parsed
+                            : 0;
+                        ObjectSpin.SetSpin(value, enabled: true, speed, ObjectSpin.SpinClockwise(value));
+                        if (speed <= 0)
+                        {
+                            rebuild();
+                        }
+                    },
+                    onChanged,
+                    onChanging));
+
+                fields.Add(new AttributeFieldViewModel(
+                    "spinClockwise",
+                    AttrType.Bool,
+                    () => ObjectSpin.SpinClockwise(value) ? "true" : "false",
+                    v => ObjectSpin.SetSpin(value, enabled: true, ObjectSpin.SpinSpeed(value), clockwise: v == "true"),
+                    onChanged,
+                    onChanging));
             }
 
             fields.Add(new AttributeFieldViewModel(
-                "spinSpeed",
-                AttrType.Whole,
-                () => ObjectSpin.Speed(value).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "spinOrbital",
+                AttrType.Bool,
+                () => ObjectSpin.IsOrbital(value) ? "true" : "false",
                 v =>
                 {
-                    int speed = int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int parsed)
-                        ? parsed
-                        : 0;
-                    ObjectSpin.SetSpin(value, enabled: true, speed, ObjectSpin.Clockwise(value));
-                    if (speed <= 0)
+                    if (v == "true")
                     {
-                        rebuild();
+                        ObjectSpin.SetOrbital(value, enabled: true, ObjectSpin.OrbitRadius(value), ObjectSpin.OrbitClockwise(value));
                     }
+                    else
+                    {
+                        ObjectSpin.SetOrbital(value, enabled: false, ObjectSpin.OrbitRadius(value), ObjectSpin.OrbitClockwise(value));
+                    }
+                    rebuild();
                 },
                 onChanged,
                 onChanging));
 
-            fields.Add(new AttributeFieldViewModel(
-                "spinClockwise",
-                AttrType.Bool,
-                () => ObjectSpin.Clockwise(value) ? "true" : "false",
-                v => ObjectSpin.SetSpin(value, enabled: true, ObjectSpin.Speed(value), clockwise: v == "true"),
-                onChanged,
-                onChanging));
+            if (ObjectSpin.IsOrbital(value))
+            {
+                fields.Add(new AttributeFieldViewModel(
+                    "orbitRadius",
+                    AttrType.Whole,
+                    () => ObjectSpin.OrbitRadius(value).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    v =>
+                    {
+                        int radius = int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int parsed)
+                            ? parsed
+                            : 0;
+                        ObjectSpin.SetOrbital(value, enabled: true, radius, ObjectSpin.OrbitClockwise(value));
+                        if (radius <= 0)
+                        {
+                            rebuild();
+                        }
+                    },
+                    onChanged,
+                    onChanging));
+
+                fields.Add(new AttributeFieldViewModel(
+                    "orbitClockwise",
+                    AttrType.Bool,
+                    () => ObjectSpin.OrbitClockwise(value) ? "true" : "false",
+                    v => ObjectSpin.SetOrbital(value, enabled: true, ObjectSpin.OrbitRadius(value), clockwise: v == "true"),
+                    onChanged,
+                    onChanging));
+            }
         }
     }
 }

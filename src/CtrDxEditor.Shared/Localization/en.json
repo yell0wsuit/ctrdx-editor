@@ -124,6 +124,9 @@
     "Dialog.Close.Body": "Close the current level?",
     "Dialog.Close.Proceed": "Close level",
 
+    "Tooltip.ObjectLock": "Lock or unlock this object\nYou can also double click this object on the level canvas to lock/unlock it",
+    "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation",
+
     "Object.target": "Om Nom",
     "Object.candy": "Candy",
     "Object.candyL": "Candy (Left)",
@@ -168,6 +171,7 @@
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Spin speed",
     "Attr.spinClockwise": "Spin clockwise",
-    "Tooltip.ObjectLock": "Lock or unlock this object\nYou can also double click this object on the level canvas to lock/unlock it",
-    "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation"
+    "Attr.spinOrbital": "Orbit object",
+    "Attr.orbitRadius": "Orbit radius",
+    "Attr.orbitClockwise": "Orbit clockwise"
 }
