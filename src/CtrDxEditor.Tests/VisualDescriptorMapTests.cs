@@ -152,7 +152,7 @@ namespace CtrDxEditor.Tests
             });
         }
 
-        /// <summary>Electro descriptors expose the base/off frame and the four electric loop frames.</summary>
+        /// <summary>Electro descriptors expose a lit preview frame, the off frame, and the electric loop frames.</summary>
         [Fact]
         public void ElectroDescriptorsMapToOffAndOnAnimationQuads()
         {
@@ -163,7 +163,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal([4], VisualDescriptorMap.For("electro_on_4")!.Layers.Select(l => l.Quad));
 
             VisualDescriptor electro = VisualDescriptorMap.For("electro")!;
-            Assert.Equal([0], electro.Layers.Select(l => l.Quad));
+            Assert.Equal([1], electro.Layers.Select(l => l.Quad));
             Assert.All(
                 ElectroSpriteKeys.SelectMany(k => VisualDescriptorMap.For(k)!.Layers),
                 l =>

@@ -50,11 +50,11 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(ElectroAnimation.IsOn(electro, 0.80));
         }
 
-        /// <summary>Without preview playback, electro renders the base/off frame.</summary>
+        /// <summary>Without preview playback, electro renders the lit editor preview frame.</summary>
         [Fact]
-        public void NullElapsedUsesOffSpriteKey()
+        public void NullElapsedUsesEditorPreviewSpriteKey()
         {
-            Assert.Equal("electro_off", ElectroAnimation.SpriteKey(Electro("0", "2", "1"), null));
+            Assert.Equal("electro", ElectroAnimation.SpriteKey(Electro("0", "2", "1"), null));
         }
     }
 }

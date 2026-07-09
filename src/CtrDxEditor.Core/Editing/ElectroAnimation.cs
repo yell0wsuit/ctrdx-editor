@@ -29,7 +29,7 @@ namespace CtrDxEditor.Core.Editing
         {
             if (elapsedSeconds is not double seconds)
             {
-                return "electro_off";
+                return "electro";
             }
 
             double? onElapsed = OnElapsedSeconds(obj, seconds);
