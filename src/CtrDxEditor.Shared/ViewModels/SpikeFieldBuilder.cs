@@ -40,17 +40,26 @@ namespace CtrDxEditor.ViewModels
                 v => SpikeObject.SetSize(value, v),
                 onChanged,
                 onChanging));
-            fields.Add(new AttributeFieldViewModel(
+            AttributeFieldViewModel toggled = new(
                 "toggled",
                 AttrType.Bool,
                 () => SpikeObject.IsToggled(value) ? "true" : "false",
                 v =>
                 {
+                    if (v == "true")
+                    {
+                        ObjectSpin.SetSpin(value, enabled: false, speed: 0, clockwise: true);
+                    }
+
                     SpikeObject.SetToggled(value, v == "true");
                     rebuild();
                 },
                 onChanged,
-                onChanging));
+                onChanging)
+            {
+                IsEnabled = !ObjectSpin.IsSpinning(value),
+            };
+            fields.Add(toggled);
 
             if (SpikeObject.IsToggled(value))
             {
@@ -63,7 +72,14 @@ namespace CtrDxEditor.ViewModels
                     onChanging));
             }
 
-            SpinFieldBuilder.Build(fields, value, onChanged, onChanging, rebuild);
+            SpinFieldBuilder.Build(
+                fields,
+                value,
+                onChanged,
+                onChanging,
+                rebuild,
+                canEnable: !SpikeObject.IsToggled(value),
+                beforeEnable: () => SpikeObject.SetToggled(value, false));
         }
     }
 }

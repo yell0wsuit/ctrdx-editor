@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using CtrDxEditor.Core.Descriptors;
@@ -15,25 +16,39 @@ namespace CtrDxEditor.ViewModels
         /// <param name="onChanged">Callback invoked after a field writes to the document.</param>
         /// <param name="onChanging">Callback invoked before a field writes to the document.</param>
         /// <param name="rebuild">Callback that rebuilds fields after spin disclosure changes.</param>
+        /// <param name="canEnable">Whether the spin checkbox should be editable.</param>
+        /// <param name="beforeEnable">Optional normalization to run before spin is enabled.</param>
         public static void Build(
             IList<AttributeFieldViewModel> fields,
             LevelObject value,
-            System.Action onChanged,
-            System.Action onChanging,
-            System.Action rebuild)
+            Action onChanged,
+            Action onChanging,
+            Action rebuild,
+            bool canEnable = true,
+            Action? beforeEnable = null)
         {
             if (!SpinTable.IsSpinnable(value.Type))
             {
                 return;
             }
 
-            fields.Add(new AttributeFieldViewModel(
+            AttributeFieldViewModel spin = new(
                 "spin",
                 AttrType.Bool,
                 () => ObjectSpin.IsSpinning(value) ? "true" : "false",
                 v =>
                 {
                     bool enabled = v == "true";
+                    if (enabled && !canEnable)
+                    {
+                        return;
+                    }
+
+                    if (enabled)
+                    {
+                        beforeEnable?.Invoke();
+                    }
+
                     int speed = ObjectSpin.Speed(value);
                     if (enabled && speed == 0)
                     {
@@ -44,7 +59,11 @@ namespace CtrDxEditor.ViewModels
                     rebuild();
                 },
                 onChanged,
-                onChanging));
+                onChanging)
+            {
+                IsEnabled = canEnable,
+            };
+            fields.Add(spin);
 
             if (!ObjectSpin.IsSpinning(value))
             {

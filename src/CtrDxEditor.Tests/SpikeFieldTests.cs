@@ -130,5 +130,60 @@ namespace CtrDxEditor.Tests
             Assert.Null(spike.GetAttr("rotateSpeed"));
             Assert.Equal("0,0", spike.GetAttr("path"));
         }
+
+        /// <summary>Toggled spikes expose spin as unavailable so button rotation and continuous spin do not combine.</summary>
+        [Fact]
+        public void ToggledSpikeDisablesSpinField()
+        {
+            const string toggledLevel = """
+            <?xml version='1.0' encoding='utf-8'?>
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="640" height="480" />
+                </layer>
+                <layer name="Objects">
+                    <spike2 x="344" y="257" angle="0" size="2" toggled="1" />
+                </layer>
+            </map>
+            """;
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(toggledLevel);
+            vm.SelectedObject = vm.Document!.Objects[0];
+
+            AttributeFieldViewModel spin = vm.Fields.Single(f => f.Name == "spin");
+
+            Assert.False(spin.BoolValue);
+            Assert.False(spin.IsEnabled);
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "spinSpeed");
+        }
+
+        /// <summary>Enabling spin on a spike clears toggled state and preserves the existing path attribute.</summary>
+        [Fact]
+        public void EnablingSpikeSpinClearsToggledState()
+        {
+            const string level = """
+            <?xml version='1.0' encoding='utf-8'?>
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="640" height="480" />
+                </layer>
+                <layer name="Objects">
+                    <spike2 x="344" y="257" angle="0" size="2" path="0,0" toggled="1" />
+                </layer>
+            </map>
+            """;
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(level);
+            LevelObject spike = vm.Document!.Objects[0];
+            vm.SelectedObject = spike;
+
+            vm.Fields.Single(f => f.Name == "toggled").BoolValue = false;
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+
+            Assert.Equal("false", spike.GetAttr("toggled"));
+            Assert.Equal("70", spike.GetAttr("rotateSpeed"));
+            Assert.Equal("0,0", spike.GetAttr("path"));
+            Assert.False(vm.Fields.Single(f => f.Name == "toggled").IsEnabled);
+        }
     }
 }
