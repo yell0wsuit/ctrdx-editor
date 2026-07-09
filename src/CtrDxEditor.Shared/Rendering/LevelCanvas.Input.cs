@@ -240,6 +240,32 @@ namespace CtrDxEditor.Rendering
             return list;
         }
 
+        private bool HitBoundContains(LevelObject obj, LevelBounds bounds, Vec2 point)
+        {
+            return LevelSceneRenderer.SelectionContains(obj, bounds, point, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
+        }
+
+        private int TopmostHit(IReadOnlyList<LevelObject> objects, List<LevelBounds> bounds, Vec2 point, int afterIndex = -1)
+        {
+            int n = bounds.Count;
+            if (n == 0)
+            {
+                return -1;
+            }
+
+            int start = afterIndex >= 0 ? afterIndex - 1 + n : n - 1;
+            for (int step = 0; step < n; step++)
+            {
+                int i = (start - step) % n;
+                if (HitBoundContains(objects[i], bounds[i], point))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
         /// <inheritdoc />
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
@@ -336,7 +362,7 @@ namespace CtrDxEditor.Rendering
                     ToggleLock?.Invoke(current);
                     return;
                 }
-                int dh = HitTester.Topmost(bounds, levelPt, -1);
+                int dh = TopmostHit(doc.Objects, bounds, levelPt);
                 ToggleLock?.Invoke(dh >= 0 ? doc.Objects[dh] : null);
                 return;
             }
@@ -345,7 +371,7 @@ namespace CtrDxEditor.Rendering
             if (LockedObject is { } locked)
             {
                 int li = IndexOf(doc.Objects, locked);
-                if (li >= 0 && bounds[li].Contains(levelPt))
+                if (li >= 0 && HitBoundContains(locked, bounds[li], levelPt))
                 {
                     SelectedObject = locked;
                     BeginDocumentEdit?.Invoke();
@@ -357,8 +383,8 @@ namespace CtrDxEditor.Rendering
             }
 
             int after = _lastHitIndex >= 0 && _lastHitIndex < bounds.Count
-                        && bounds[_lastHitIndex].Contains(levelPt) ? _lastHitIndex : -1;
-            int hit = HitTester.Topmost(bounds, levelPt, after);
+                        && HitBoundContains(doc.Objects[_lastHitIndex], bounds[_lastHitIndex], levelPt) ? _lastHitIndex : -1;
+            int hit = TopmostHit(doc.Objects, bounds, levelPt, after);
             _lastHitIndex = hit;
 
             if (hit < 0)
