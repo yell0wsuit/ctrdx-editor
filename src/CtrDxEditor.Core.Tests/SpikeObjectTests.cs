@@ -45,6 +45,7 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData(null, false)]
         [InlineData("false", false)]
+        [InlineData("0", true)]
         [InlineData("1", true)]
         [InlineData("2", true)]
         public void ToggledCheckboxReadsGameValues(string? toggled, bool expected)
@@ -73,6 +74,7 @@ namespace CtrDxEditor.Core.Tests
 
         /// <summary>Rotatable spike sprite keys include the current group so the correct button quad can be drawn.</summary>
         [Theory]
+        [InlineData("0", "spike3_toggled_0")]
         [InlineData("1", "spike3_toggled_1")]
         [InlineData("2", "spike3_toggled_2")]
         public void SpriteKeyIncludesToggleGroup(string group, string expected)

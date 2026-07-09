@@ -19,6 +19,7 @@ namespace CtrDxEditor.ViewModels
 
         private static readonly AttributeOptionViewModel[] GroupOptions =
         [
+            new("0", "0"),
             new("1", "1"),
             new("2", "2"),
         ];

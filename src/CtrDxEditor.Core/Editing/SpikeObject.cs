@@ -37,11 +37,11 @@ namespace CtrDxEditor.Core.Editing
             obj.SetAttr("size", size!);
         }
 
-        /// <summary>Whether this spike participates in a rotate-button group.</summary>
+        /// <summary>Whether this spike uses rotatable spike state. Group 0 is rotatable but has no embedded button.</summary>
         public static bool IsToggled(LevelObject obj)
         {
             string? value = obj.GetAttr("toggled");
-            return value is "1" or "2";
+            return value is "0" or "1" or "2";
         }
 
         /// <summary>Sets or clears spike rotation grouping.</summary>
@@ -54,13 +54,13 @@ namespace CtrDxEditor.Core.Editing
         public static string Group(LevelObject obj)
         {
             string? value = obj.GetAttr("toggled");
-            return value is "2" ? "2" : "1";
+            return value is "0" or "2" ? value : "1";
         }
 
         /// <summary>Sets the spike toggle group to one of the game-supported values.</summary>
         public static void SetGroup(LevelObject obj, string? group)
         {
-            obj.SetAttr("toggled", group == "2" ? "2" : "1");
+            obj.SetAttr("toggled", group is "0" or "2" ? group : "1");
         }
 
         /// <summary>Sprite key for the spike's current toggle state.</summary>

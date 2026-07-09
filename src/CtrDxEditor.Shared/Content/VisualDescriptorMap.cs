@@ -213,8 +213,12 @@ namespace CtrDxEditor.Content
             new("spike3", [new SpriteLayer(SpikesJson, SpikesImageBase, 10)]),
             new("spike4", [new SpriteLayer(SpikesJson, SpikesImageBase, 11)]),
 
-            // Rotatable spike quads plus their rotate button. Game Spikes adds button quad 4 for group 1
-            // and quad 6 for group 2 as a child centered on the same obj_spikes sourceSize canvas.
+            // Rotatable spike quads. Group 0 has no embedded button; Game Spikes adds button quad 4 for
+            // group 1 and quad 6 for group 2 as a child centered on the same obj_spikes sourceSize canvas.
+            new("spike1_toggled_0", [new SpriteLayer(SpikesJson, SpikesImageBase, 0)]),
+            new("spike2_toggled_0", [new SpriteLayer(SpikesJson, SpikesImageBase, 1)]),
+            new("spike3_toggled_0", [new SpriteLayer(SpikesJson, SpikesImageBase, 2)]),
+            new("spike4_toggled_0", [new SpriteLayer(SpikesJson, SpikesImageBase, 3)]),
             new("spike1_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 0), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
             new("spike2_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 1), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),
             new("spike3_toggled_1", [new SpriteLayer(SpikesJson, SpikesImageBase, 2), new SpriteLayer(SpikesJson, SpikesImageBase, 4)]),

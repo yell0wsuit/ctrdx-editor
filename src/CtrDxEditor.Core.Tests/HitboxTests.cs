@@ -136,7 +136,7 @@ namespace CtrDxEditor.Core.Tests
                 new XAttribute("x", "0"),
                 new XAttribute("y", "0"),
                 new XAttribute("size", element[^1].ToString()),
-                new XAttribute("toggled", "1")));
+                new XAttribute("toggled", "0")));
 
             LevelBounds? box = HitboxTable.Compute(spike, 3, HitboxModel.Desktop);
 

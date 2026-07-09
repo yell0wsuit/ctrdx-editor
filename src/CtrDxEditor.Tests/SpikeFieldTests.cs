@@ -73,7 +73,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("1", spike.GetAttr("toggled"));
             AttributeFieldViewModel group = vm.Fields.Single(f => f.Name == "toggleGroup");
-            Assert.Equal(["1", "2"], group.EnumOptions!.Select(o => o.Value));
+            Assert.Equal(["0", "1", "2"], group.EnumOptions!.Select(o => o.Value));
             Assert.Equal("1", group.Value);
         }
 

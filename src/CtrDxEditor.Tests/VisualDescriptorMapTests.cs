@@ -127,13 +127,15 @@ namespace CtrDxEditor.Tests
             int group2ButtonQuad)
         {
             VisualDescriptor spike = VisualDescriptorMap.For(element)!;
+            VisualDescriptor group0 = VisualDescriptorMap.For($"{element}_toggled_0")!;
             VisualDescriptor group1 = VisualDescriptorMap.For($"{element}_toggled_1")!;
             VisualDescriptor group2 = VisualDescriptorMap.For($"{element}_toggled_2")!;
 
             Assert.Equal([staticQuad], spike.Layers.Select(l => l.Quad));
+            Assert.Equal([rotatableQuad], group0.Layers.Select(l => l.Quad));
             Assert.Equal([rotatableQuad, group1ButtonQuad], group1.Layers.Select(l => l.Quad));
             Assert.Equal([rotatableQuad, group2ButtonQuad], group2.Layers.Select(l => l.Quad));
-            Assert.All(spike.Layers.Concat(group1.Layers).Concat(group2.Layers), l =>
+            Assert.All(spike.Layers.Concat(group0.Layers).Concat(group1.Layers).Concat(group2.Layers), l =>
             {
                 Assert.Equal("images/obj_spikes.json", l.AtlasJsonRelPath);
                 Assert.Equal("images/obj_spikes", l.AtlasImageBasePath);
