@@ -681,5 +681,66 @@ namespace CtrDxEditor.Rendering
                     new Point(tip.X + (Math.Cos(barb) * head), tip.Y + (Math.Sin(barb) * head)));
             }
         }
+
+        /// <summary>Draws a curved arrow around an object with active rotateSpeed-backed spin.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">Object that may carry <c>rotateSpeed</c>.</param>
+        /// <param name="pen">Pen used for the arc and arrowhead.</param>
+        public static void DrawSpinArrow(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pen)
+        {
+            if (!SpinTable.IsSpinnable(obj.Type) || !ObjectSpin.IsSpinning(obj))
+            {
+                return;
+            }
+
+            Point[] points = ComputeSpinArrowPoints(v, obj, radiusScreen: 18.0);
+            for (int i = 1; i < points.Length - 2; i++)
+            {
+                ctx.DrawLine(pen, points[i - 1], points[i]);
+            }
+
+            Point tip = points[^3];
+            ctx.DrawLine(pen, tip, points[^2]);
+            ctx.DrawLine(pen, tip, points[^1]);
+        }
+
+        /// <summary>Computes screen-space points for the spin arrow arc plus the two arrowhead barbs.</summary>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">Object with a non-zero <c>rotateSpeed</c>.</param>
+        /// <param name="radiusScreen">Arrow radius in screen pixels.</param>
+        /// <returns>Arc points followed by the two arrowhead barb endpoints.</returns>
+        public static Point[] ComputeSpinArrowPoints(ViewTransform v, LevelObject obj, double radiusScreen)
+        {
+            Vec2 centerLevel = new(obj.X, obj.Y);
+            Vec2 screen = v.LevelToScreen(centerLevel);
+            Point center = new(screen.X, screen.Y);
+            bool clockwise = ObjectSpin.Clockwise(obj);
+            const int arcSegments = 18;
+            double start = -Math.PI * 0.75;
+            double sweep = Math.PI * 1.5 * (clockwise ? 1 : -1);
+            Point[] points = new Point[arcSegments + 3];
+            for (int i = 0; i <= arcSegments; i++)
+            {
+                double t = i / (double)arcSegments;
+                double angle = start + (sweep * t);
+                points[i] = new Point(
+                    center.X + (Math.Cos(angle) * radiusScreen),
+                    center.Y + (Math.Sin(angle) * radiusScreen));
+            }
+
+            Point prev = points[arcSegments - 1];
+            Point tip = points[arcSegments];
+            double direction = Math.Atan2(tip.Y - prev.Y, tip.X - prev.X);
+            double head = Math.Min(radiusScreen * 0.45, 9.0);
+            double spread = Math.PI / 6;
+            points[^2] = new Point(
+                tip.X + (Math.Cos(direction + Math.PI - spread) * head),
+                tip.Y + (Math.Sin(direction + Math.PI - spread) * head));
+            points[^1] = new Point(
+                tip.X + (Math.Cos(direction + Math.PI + spread) * head),
+                tip.Y + (Math.Sin(direction + Math.PI + spread) * head));
+            return points;
+        }
     }
 }

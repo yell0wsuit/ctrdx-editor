@@ -92,5 +92,43 @@ namespace CtrDxEditor.Tests
             Assert.Equal("spike4", spike.Type);
             Assert.Equal("4", spike.GetAttr("size"));
         }
+
+        /// <summary>Spike spin fields expose rotateSpeed as enabled, positive speed, and sign-backed direction.</summary>
+        [Fact]
+        public void SpikeSpinFieldsMapRotateSpeedSign()
+        {
+            const string spinningLevel = """
+            <?xml version='1.0' encoding='utf-8'?>
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="640" height="480" />
+                </layer>
+                <layer name="Objects">
+                    <spike2 x="344" y="257" angle="0" size="2" path="0,0" rotateSpeed="-130" />
+                </layer>
+            </map>
+            """;
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(spinningLevel);
+            LevelObject spike = vm.Document!.Objects[0];
+            vm.SelectedObject = spike;
+
+            Assert.True(vm.Fields.Single(f => f.Name == "spin").BoolValue);
+            AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "spinSpeed");
+            Assert.True(speed.IsNumeric);
+            Assert.False(speed.AllowsDecimal);
+            Assert.Equal(1, speed.NumericMinimum);
+            Assert.Equal("130", speed.Value);
+            Assert.False(vm.Fields.Single(f => f.Name == "spinClockwise").BoolValue);
+
+            vm.Fields.Single(f => f.Name == "spinClockwise").BoolValue = true;
+
+            Assert.Equal("130", spike.GetAttr("rotateSpeed"));
+
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = false;
+
+            Assert.Null(spike.GetAttr("rotateSpeed"));
+            Assert.Equal("0,0", spike.GetAttr("path"));
+        }
     }
 }

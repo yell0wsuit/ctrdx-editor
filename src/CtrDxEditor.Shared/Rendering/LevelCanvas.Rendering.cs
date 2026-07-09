@@ -75,6 +75,11 @@ namespace CtrDxEditor.Rendering
 
             GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius);
 
+            foreach (LevelObject obj in objects)
+            {
+                LevelSceneRenderer.DrawSpinArrow(context, v, obj, _palette.SpinArrow);
+            }
+
             if (ShowHitboxes || ShowMobileHitboxes)
             {
                 foreach (LevelObject obj in objects)

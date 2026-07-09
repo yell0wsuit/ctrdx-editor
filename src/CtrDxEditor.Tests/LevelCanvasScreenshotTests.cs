@@ -203,6 +203,26 @@ namespace CtrDxEditor.Tests
             Assert.Equal(318.167, points[1].Y, 3);
         }
 
+        /// <summary>Spin arrows use the rotateSpeed sign: positive sweeps clockwise, negative counter-clockwise.</summary>
+        [Fact]
+        public void SpinArrowDirectionFollowsRotateSpeedSign()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeSpinArrowPoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject clockwise = new(new XElement("star", new XAttribute("x", "100"), new XAttribute("y", "200"), new XAttribute("rotateSpeed", "70")));
+            LevelObject counterClockwise = new(new XElement("star", new XAttribute("x", "100"), new XAttribute("y", "200"), new XAttribute("rotateSpeed", "-70")));
+
+            Point[] cw = (Point[])method.Invoke(null, [ViewTransform.Identity, clockwise, 20.0])!;
+            Point[] ccw = (Point[])method.Invoke(null, [ViewTransform.Identity, counterClockwise, 20.0])!;
+
+            Assert.Equal(cw[0].X, ccw[0].X, 3);
+            Assert.Equal(cw[0].Y, ccw[0].Y, 3);
+            Assert.True(cw[1].Y < cw[0].Y);
+            Assert.True(ccw[1].Y > ccw[0].Y);
+        }
+
         private static SpriteCache SeedStarAtlases()
         {
             SpriteCache cache = new(new FakeStore());

@@ -62,6 +62,8 @@ namespace CtrDxEditor.ViewModels
                     onChanged,
                     onChanging));
             }
+
+            SpinFieldBuilder.Build(fields, value, onChanged, onChanging, rebuild);
         }
     }
 }

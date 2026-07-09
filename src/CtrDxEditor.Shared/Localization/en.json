@@ -162,5 +162,8 @@
     "Attr.angle": "Angle",
     "Attr.size": "Size",
     "Attr.toggled": "Toggled",
-    "Attr.toggleGroup": "Group"
+    "Attr.toggleGroup": "Group",
+    "Attr.spin": "Spin object",
+    "Attr.spinSpeed": "Speed",
+    "Attr.spinClockwise": "Clockwise"
 }

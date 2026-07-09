@@ -38,6 +38,8 @@ namespace CtrDxEditor.ViewModels
             {
                 fields.Add(new AttributeFieldViewModel(star, "timeout", AttrType.Number, null, onChanged, onChanging));
             }
+
+            SpinFieldBuilder.Build(fields, star, onChanged, onChanging, rebuild);
         }
 
         private static double Timeout(LevelObject star)

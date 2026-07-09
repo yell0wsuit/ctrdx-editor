@@ -47,6 +47,9 @@ namespace CtrDxEditor.Rendering
         /// Solid rather than dashed so it reads as an arrow against the dashed hitbox boxes.</summary>
         public Pen ForceArrow { get; private set; } = new(new SolidColorBrush(Color.FromRgb(0x7F, 0x22, 0xFE)), 2);
 
+        /// <summary>Solid curved arrow marking a rotateSpeed-backed object spin.</summary>
+        public Pen SpinArrow { get; private set; } = new(new SolidColorBrush(Color.FromRgb(0x0E, 0x74, 0x9A)), 2);
+
         /// <summary>Text brush for a timed-star duration label on the blank (no-background) canvas:
         /// pure white in the dark theme, pure black in the light theme. When a background is applied
         /// the canvas draws these labels black regardless.</summary>
@@ -69,6 +72,7 @@ namespace CtrDxEditor.Rendering
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
             ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
             ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);
+            SpinArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlaySpinArrow", Color.FromRgb(0x0E, 0x74, 0x9A))), 2);
             StarDurationText = host.ActualThemeVariant == ThemeVariant.Dark ? Brushes.White : Brushes.Black;
         }
 
