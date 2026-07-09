@@ -29,10 +29,7 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: int.MaxValue),
 
             // Candy
-            new ObjectDescriptor("candy", "Candy",
-            [
-                new AttributeSpec("candyNumber", AttrType.Text, null),
-            ], MaxCount: int.MaxValue),
+            new ObjectDescriptor("candy", "Candy", [], MaxCount: int.MaxValue),
             new ObjectDescriptor("candyL", "Candy (Left)", [], MaxCount: 1),
             new ObjectDescriptor("candyR", "Candy (Right)", [], MaxCount: 1),
 
@@ -101,7 +98,6 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("offTime", AttrType.Number, "2.0"),
                 new AttributeSpec("onTime", AttrType.Number, "2.0"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
-                new AttributeSpec("size", AttrType.Whole, "5"),
             ], MaxCount: int.MaxValue),
 
             // Gravity button
@@ -111,7 +107,6 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("lightBulb", "Light Bulb",
             [
                 new AttributeSpec("litRadius", AttrType.Whole, "50"),
-                new AttributeSpec("bulbNumber", AttrType.Text, null),
             ], MaxCount: int.MaxValue),
         ]);
     }

@@ -92,6 +92,7 @@ namespace CtrDxEditor.ViewModels
         {
             StopAnimationPreview();
             Document = LevelDocument.Parse(xml);
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
             SelectedObject = null;
             LockedObject = null;
             ClearHistory();
@@ -153,6 +154,7 @@ namespace CtrDxEditor.ViewModels
             StopAnimationPreview();
             CaptureUndoSnapshot();
             Document.UpdateSettings(settings);
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
             RefreshObjectList();
             if (SelectedObject is not null && !Document.Objects.Contains(SelectedObject))
@@ -183,6 +185,7 @@ namespace CtrDxEditor.ViewModels
             }
             CaptureUndoSnapshot();
             LevelDocument.Remove(removed);
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
             if (Equals(LockedObject, removed))
             {
                 LockedObject = null;
@@ -322,6 +325,7 @@ namespace CtrDxEditor.ViewModels
             LevelObject obj = Placement.CreateObject(d, levelX, levelY);
             LevelObjectPolicy.ApplyDefaults(obj, Document);
             Document.Add(obj);
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
             RefreshObjectList();
             SelectedObject = obj;
@@ -331,6 +335,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Serializes the current level to XML text, or null when no document is loaded.</summary>
         public string? ToXml()
         {
+            if (Document is not null)
+            {
+                LevelObjectPolicy.NormalizeBindingKeys(Document);
+            }
             return Document?.Save();
         }
 

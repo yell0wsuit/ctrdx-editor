@@ -98,6 +98,22 @@ namespace CtrDxEditor.Tests
             Assert.Equal("1", grab.GetAttr("candyNumber"));
         }
 
+        /// <summary>Candy and bulb binding keys stay internal instead of becoming property fields.</summary>
+        [Theory]
+        [InlineData("candy", "candyNumber")]
+        [InlineData("lightBulb", "bulbNumber")]
+        public void CandyAndBulbIdsAreNotEditablePropertyFields(string element, string attribute)
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: true));
+
+            LevelObject obj = vm.PlaceObject(element, 100, 120)!;
+            vm.SelectedObject = obj;
+
+            Assert.NotNull(obj.GetAttr(attribute));
+            Assert.DoesNotContain(vm.Fields, f => f.Name == attribute);
+        }
+
         /// <summary>Grab attribute should be a checkbox in the UI.</summary>
         [Fact]
         public void GrabBoolAttributeSurfacesAsCheckbox()
@@ -348,9 +364,9 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.Fields.Single(f => f.Name == "gun").IsEnabled);
         }
 
-        /// <summary>Selected single-candy objects expose the editable candyNumber field.</summary>
+        /// <summary>Selected single-candy objects keep their internal id without exposing an input.</summary>
         [Fact]
-        public void SelectedCandyShowsCandyNumberField()
+        public void SelectedCandyHidesCandyNumberField()
         {
             EditorViewModel vm = Vm();
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
@@ -358,8 +374,8 @@ namespace CtrDxEditor.Tests
             LevelObject candy = vm.PlaceObject("candy", 100, 120)!;
             vm.SelectedObject = candy;
 
-            AttributeFieldViewModel field = vm.Fields.Single(f => f.Name == "candyNumber");
-            Assert.Equal("0", field.Value);
+            Assert.Equal("0", candy.GetAttr("candyNumber"));
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "candyNumber");
         }
 
         /// <summary>Length and radius are magnitudes: their numeric box refuses negatives; x/y still allow them.</summary>

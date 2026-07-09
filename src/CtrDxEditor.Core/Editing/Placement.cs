@@ -22,6 +22,10 @@ namespace CtrDxEditor.Core.Editing
                     element.SetAttributeValue(spec.Name, spec.Default);
                 }
             }
+            if (descriptor.ElementName == "electro")
+            {
+                element.SetAttributeValue("size", "5");
+            }
 
             return new LevelObject(element);
         }

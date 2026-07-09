@@ -1,5 +1,3 @@
-using System.Linq;
-
 using CtrDxEditor.Core.Descriptors;
 
 using Xunit;
@@ -26,20 +24,27 @@ namespace CtrDxEditor.Core.Tests
             Assert.Empty(right.Attributes);
         }
 
-        /// <summary>Light bulbs expose litRadius and an editable bulbNumber with no load-time default.</summary>
+        /// <summary>Light bulbs expose litRadius only; bulb ids are assigned internally.</summary>
         [Fact]
-        public void LightBulbHasLitRadiusAndBulbNumber()
+        public void LightBulbHasOnlyLitRadius()
         {
             ObjectDescriptor? bulb = DescriptorTable.Default.For("lightBulb");
             Assert.NotNull(bulb);
 
-            AttributeSpec litRadius = bulb.Attributes.Single(a => a.Name == "litRadius");
+            AttributeSpec litRadius = Assert.Single(bulb.Attributes);
+            Assert.Equal("litRadius", litRadius.Name);
             Assert.Equal(AttrType.Whole, litRadius.Type);
             Assert.Equal("50", litRadius.Default);
+        }
 
-            AttributeSpec bulbNumber = bulb.Attributes.Single(a => a.Name == "bulbNumber");
-            Assert.Equal(AttrType.Text, bulbNumber.Type);
-            Assert.Null(bulbNumber.Default);
+        /// <summary>Plain candy ids are assigned internally and are not editable descriptor fields.</summary>
+        [Fact]
+        public void PlainCandyHasNoEditableAttributes()
+        {
+            ObjectDescriptor? candy = DescriptorTable.Default.For("candy");
+            Assert.NotNull(candy);
+
+            Assert.Empty(candy.Attributes);
         }
     }
 }
