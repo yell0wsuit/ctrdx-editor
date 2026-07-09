@@ -10,12 +10,16 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Tests for the rotateSpeed-backed object spin model.</summary>
     public class ObjectSpinTests
     {
-        private static LevelObject Obj(string type, string? rotateSpeed = null)
+        private static LevelObject Obj(string type, string? rotateSpeed = null, string? path = null)
         {
             XElement e = new(type);
             if (rotateSpeed is not null)
             {
                 e.SetAttributeValue("rotateSpeed", rotateSpeed);
+            }
+            if (path is not null)
+            {
+                e.SetAttributeValue("path", path);
             }
             return new LevelObject(e);
         }
@@ -73,6 +77,20 @@ namespace CtrDxEditor.Core.Tests
             ObjectSpin.SetSpin(star, enabled: true, speed: 0, clockwise: true);
 
             Assert.Null(star.GetAttr("rotateSpeed"));
+        }
+
+        /// <summary>Writing spin creates the minimal static path DX needs to construct a rotating mover.</summary>
+        [Fact]
+        public void SetSpinAddsStaticPathWithoutOverwritingAuthoredPath()
+        {
+            LevelObject star = Obj("star");
+            LevelObject movingSpike = Obj("spike2", path: "10,0,10,10");
+
+            ObjectSpin.SetSpin(star, enabled: true, speed: 70, clockwise: true);
+            ObjectSpin.SetSpin(movingSpike, enabled: true, speed: 130, clockwise: false);
+
+            Assert.Equal("0,0", star.GetAttr("path"));
+            Assert.Equal("10,0,10,10", movingSpike.GetAttr("path"));
         }
 
         /// <summary>Live preview rotation advances by signed rotateSpeed degrees per elapsed second.</summary>
