@@ -285,7 +285,8 @@
                            Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}" />
                 <Button Grid.Column="1" Width="16" Height="16" Padding="0" Margin="6,0,0,0"
                         Background="Transparent" BorderBrush="Transparent"
-                        Tag="{Binding .}" Click="ObjectLock_Click">
+                        Tag="{Binding .}" Click="ObjectLock_Click"
+                        ToolTip.Tip="{loc:Tr Tooltip.ObjectLock}">
                   <Grid>
                     <icons:MaterialIcon Kind="LockOpenVariant" Width="14" Height="14"
                                         Foreground="{DynamicResource EditorBrush.Text.Subtle}">

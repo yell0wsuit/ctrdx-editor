@@ -168,5 +168,6 @@
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Speed",
     "Attr.spinClockwise": "Clockwise",
+    "Tooltip.ObjectLock": "Lock or unlock this object\nYou can also double click this object on the level canvas to lock/unlock it",
     "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation"
 }
