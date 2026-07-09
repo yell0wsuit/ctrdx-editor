@@ -54,6 +54,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> ShowForceFieldsProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowForceFields), defaultValue: true);
 
+        /// <summary>Avalonia property backing <see cref="ShowMovementPaths"/>.</summary>
+        public static readonly StyledProperty<bool> ShowMovementPathsProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMovementPaths), defaultValue: true);
+
         /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
         public static readonly StyledProperty<int> ActiveRopeSkinProperty =
             AvaloniaProperty.Register<LevelCanvas, int>(nameof(ActiveRopeSkin));
@@ -113,7 +117,7 @@ namespace CtrDxEditor.Rendering
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
-                ShowHitboxesProperty, ShowMobileHitboxesProperty, ShowForceFieldsProperty,
+                ShowHitboxesProperty, ShowMobileHitboxesProperty, ShowForceFieldsProperty, ShowMovementPathsProperty,
                 ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty,
                 ActiveOmNomSupportProperty,
                 AnimationPreviewModeProperty, AnimationPreviewObjectProperty, AnimationPreviewElapsedSecondsProperty);
@@ -145,6 +149,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether directional force-field arrows (e.g. the pump's flow) are drawn over objects.</summary>
         public bool ShowForceFields { get => GetValue(ShowForceFieldsProperty); set => SetValue(ShowForceFieldsProperty, value); }
+
+        /// <summary>Whether object movement path guides are drawn over objects.</summary>
+        public bool ShowMovementPaths { get => GetValue(ShowMovementPathsProperty); set => SetValue(ShowMovementPathsProperty, value); }
 
         /// <summary>Editor-decoration rope skin index applied to every rope (0 = default brown).</summary>
         public int ActiveRopeSkin { get => GetValue(ActiveRopeSkinProperty); set => SetValue(ActiveRopeSkinProperty, value); }

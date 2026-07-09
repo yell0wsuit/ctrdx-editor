@@ -1,7 +1,10 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Converters;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
@@ -111,6 +114,25 @@ namespace CtrDxEditor.Tests
             vm.CloseLevel();
 
             Assert.Equal(AnimationPreviewMode.Off, vm.AnimationPreviewMode);
+        }
+
+        /// <summary>Orbit-only objects expose the same row preview affordance as rotateSpeed objects.</summary>
+        [Fact]
+        public void OrbitOnlyObjectHasAnimationPreviewAvailable()
+        {
+            LevelObject star = new(new XElement("star",
+                new XAttribute("x", "20"),
+                new XAttribute("y", "30"),
+                new XAttribute("path", "RC30"),
+                new XAttribute("moveSpeed", "70")));
+
+            object? available = SpinPreviewConverters.Available.Convert(
+                star,
+                typeof(bool),
+                parameter: null,
+                CultureInfo.InvariantCulture);
+
+            Assert.True(available is true);
         }
     }
 }

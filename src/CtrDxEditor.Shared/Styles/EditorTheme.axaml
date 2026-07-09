@@ -306,6 +306,7 @@
       <Color x:Key="EditorColor.OverlayObjectSelected">#0069A8</Color> <!-- sky-700 -->
       <Color x:Key="EditorColor.OverlayForceArrow">#7F22FE</Color>     <!-- violet-700 -->
       <Color x:Key="EditorColor.OverlaySpinArrow">#0E7490</Color>      <!-- cyan-700 -->
+      <Color x:Key="EditorColor.OverlayOrbitPath">#2563EB</Color>      <!-- blue-600 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Light tints so the dark row text stays readable. -->
@@ -347,6 +348,7 @@
       <Color x:Key="EditorColor.OverlayObjectSelected">#00BCFF</Color> <!-- sky-400, 8.18 -->
       <Color x:Key="EditorColor.OverlayForceArrow">#C4B4FF</Color>     <!-- violet-300, 8.90 -->
       <Color x:Key="EditorColor.OverlaySpinArrow">#67E8F9</Color>      <!-- cyan-300, 11.07 -->
+      <Color x:Key="EditorColor.OverlayOrbitPath">#93C5FD</Color>      <!-- blue-300, 8.37 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
            Deep blues so the light row text stays readable. -->

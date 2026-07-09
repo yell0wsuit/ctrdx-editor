@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
 {
@@ -133,6 +134,61 @@ namespace CtrDxEditor.Core.Editing
             return RawSpeed(obj) * elapsedSeconds;
         }
 
+        /// <summary>Computes the live-preview position for DX circular orbit paths.</summary>
+        /// <param name="obj">Object whose <c>RC</c>/<c>RW</c> path and <c>moveSpeed</c> are inspected.</param>
+        /// <param name="elapsedSeconds">Elapsed preview time in seconds.</param>
+        /// <returns>The preview position, or the authored position when no active orbit exists.</returns>
+        public static Vec2 PreviewPosition(LevelObject obj, double elapsedSeconds)
+        {
+            Vec2 authored = new(obj.X, obj.Y);
+            string? path = obj.GetAttr("path");
+            int moveSpeed = RawMoveSpeed(obj);
+            if (!IsCircularPath(path) || moveSpeed <= 0)
+            {
+                return authored;
+            }
+
+            int radius = OrbitRadius(obj);
+            int pointsCount = radius / 2;
+            if (pointsCount <= 0)
+            {
+                return authored;
+            }
+
+            Vec2[] points = BuildCircularPath(authored, radius, path![1] == 'C', pointsCount);
+            if (points.Length == 1 || elapsedSeconds <= 0)
+            {
+                return points[0];
+            }
+
+            double remaining = moveSpeed * elapsedSeconds;
+            int index = 0;
+            while (remaining > 0)
+            {
+                Vec2 start = points[index];
+                Vec2 end = points[(index + 1) % points.Length];
+                double dx = end.X - start.X;
+                double dy = end.Y - start.Y;
+                double distance = Math.Sqrt((dx * dx) + (dy * dy));
+                if (distance <= 0)
+                {
+                    index = (index + 1) % points.Length;
+                    continue;
+                }
+
+                if (remaining <= distance)
+                {
+                    double t = remaining / distance;
+                    return new Vec2(start.X + (dx * t), start.Y + (dy * t));
+                }
+
+                remaining -= distance;
+                index = (index + 1) % points.Length;
+            }
+
+            return points[index];
+        }
+
         private static int RawSpeed(LevelObject obj)
         {
             return double.TryParse(obj.GetAttr("rotateSpeed"), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
@@ -145,6 +201,27 @@ namespace CtrDxEditor.Core.Editing
             return double.TryParse(obj.GetAttr("moveSpeed"), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
                 ? Math.Abs((int)value)
                 : 0;
+        }
+
+        private static Vec2[] BuildCircularPath(Vec2 start, int radius, bool clockwise, int pointsCount)
+        {
+            Vec2[] points = new Vec2[pointsCount];
+            double angleStep = Math.Tau / pointsCount;
+            if (!clockwise)
+            {
+                angleStep = -angleStep;
+            }
+
+            double theta = 0.0;
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vec2(
+                    start.X + (radius * Math.Cos(theta)),
+                    start.Y + (radius * Math.Sin(theta)));
+                theta += angleStep;
+            }
+
+            return points;
         }
 
         private static bool IsCircularPath(string? path)

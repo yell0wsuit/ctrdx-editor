@@ -25,6 +25,7 @@
     "Menu.View.ShowHitboxes": "Show hitboxes",
     "Menu.View.ShowMobileHitboxes": "Show mobile hitboxes",
     "Menu.View.ShowForceFields": "Show force fields",
+    "Menu.View.ShowMovementPaths": "Show movement paths",
 
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",

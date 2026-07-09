@@ -77,6 +77,10 @@ namespace CtrDxEditor.Rendering
 
             foreach (LevelObject obj in objects)
             {
+                if (ShowMovementPaths)
+                {
+                    LevelSceneRenderer.DrawOrbitPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow);
+                }
                 if (!IsAnimationPreviewing(obj))
                 {
                     LevelSceneRenderer.DrawSpinArrow(context, v, obj, _palette.SpinArrow);
@@ -93,11 +97,11 @@ namespace CtrDxEditor.Rendering
                     }
                     if (ShowHitboxes)
                     {
-                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop, PreviewSpinDegrees(obj));
+                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
                     }
                     if (ShowMobileHitboxes)
                     {
-                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _palette.HitboxPhone, PreviewSpinDegrees(obj));
+                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _palette.HitboxPhone, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
                     }
                 }
             }
@@ -130,7 +134,7 @@ namespace CtrDxEditor.Rendering
                 LevelBounds sb = LevelSceneRenderer.SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
                 // Both boxes are dashed; a locked object is red, an unlocked one blue.
                 Pen pen = Equals(LockedObject, selected) ? _palette.ObjectLocked : _palette.ObjectSelected;
-                Point[] points = LevelSceneRenderer.SelectionOutlinePointsWithPreview(v, selected, sb, PreviewSpinDegrees(selected));
+                Point[] points = LevelSceneRenderer.SelectionOutlinePointsWithPreview(v, selected, sb, PreviewSpinDegrees(selected), PreviewAnimationSeconds(selected));
                 for (int i = 0; i < points.Length; i++)
                 {
                     context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
@@ -327,6 +331,11 @@ namespace CtrDxEditor.Rendering
         private double PreviewSpinDegrees(LevelObject obj)
         {
             return IsAnimationPreviewing(obj) ? ObjectSpin.PreviewDegrees(obj, AnimationPreviewElapsedSeconds) : 0.0;
+        }
+
+        private double? PreviewAnimationSeconds(LevelObject obj)
+        {
+            return IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null;
         }
     }
 }

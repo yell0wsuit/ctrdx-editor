@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -5,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using Avalonia;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
@@ -23,7 +25,7 @@ namespace CtrDxEditor.Tests
     {
         // The scene-drawing helpers live on the internal LevelSceneRenderer; reflect into it by name
         // since the test assembly can't reference the internal type directly.
-        private static readonly System.Type SceneRenderer =
+        private static readonly Type SceneRenderer =
             typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
 
         private sealed class FakeStore : IContentStore
@@ -221,6 +223,114 @@ namespace CtrDxEditor.Tests
             Assert.Equal(cw[0].Y, ccw[0].Y, 3);
             Assert.True(cw[1].Y < cw[0].Y);
             Assert.True(ccw[1].Y > ccw[0].Y);
+        }
+
+        /// <summary>Live orbit preview moves hitbox bounds with the object position, matching DX mover updates.</summary>
+        [Fact]
+        public void OrbitPreviewHitboxFollowsPreviewPosition()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "PreviewHitboxBounds",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject star = new(new XElement(
+                "star",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "100"),
+                new XAttribute("path", "RC8"),
+                new XAttribute("moveSpeed", "8")));
+
+            LevelBounds authored = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, null])!;
+            LevelBounds preview = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, 0.0])!;
+
+            Assert.Equal(authored.X + 8.0, preview.X, 6);
+            Assert.Equal(authored.Y, preview.Y, 6);
+            Assert.Equal(authored.W, preview.W, 6);
+            Assert.Equal(authored.H, preview.H, 6);
+        }
+
+        /// <summary>The orbit path overlay is a circle centered on the authored object position.</summary>
+        [Fact]
+        public void OrbitPathPointsCircleAuthoredCenter()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeOrbitPathPoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject star = new(new XElement(
+                "star",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("path", "RC30"),
+                new XAttribute("moveSpeed", "70")));
+
+            Point[] points = (Point[])method.Invoke(null, [ViewTransform.Identity, star])!;
+
+            Assert.True(points.Length > 12);
+            Assert.Equal(130.0, points[0].X, 6);
+            Assert.Equal(200.0, points[0].Y, 6);
+            Assert.All(points, p =>
+            {
+                double dx = p.X - 100.0;
+                double dy = p.Y - 200.0;
+                Assert.Equal(30.0, Math.Sqrt((dx * dx) + (dy * dy)), 6);
+            });
+        }
+
+        /// <summary>The orbit direction arrow sits on the circle tangent and follows RC/RW direction.</summary>
+        [Fact]
+        public void OrbitArrowDirectionFollowsPathPrefix()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeOrbitArrowPoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject clockwise = new(new XElement(
+                "star",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("path", "RC30"),
+                new XAttribute("moveSpeed", "70")));
+            LevelObject counterClockwise = new(new XElement(
+                "star",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("path", "RW30"),
+                new XAttribute("moveSpeed", "70")));
+
+            Point[] cw = (Point[])method.Invoke(null, [ViewTransform.Identity, clockwise])!;
+            Point[] ccw = (Point[])method.Invoke(null, [ViewTransform.Identity, counterClockwise])!;
+
+            Assert.Equal(4, cw.Length);
+            Assert.Equal(4, ccw.Length);
+            Assert.True(cw[1].X > cw[0].X);
+            Assert.Equal(cw[0].Y, cw[1].Y, 6);
+            Assert.True(ccw[1].X < ccw[0].X);
+            Assert.Equal(ccw[0].Y, ccw[1].Y, 6);
+        }
+
+        /// <summary>The orbit path overlay uses dots, not the longer shared overlay dash pattern.</summary>
+        [Fact]
+        public void OrbitPathPenUsesDottedPattern()
+        {
+            Type paletteType = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.CanvasPalette")!;
+            object palette = Activator.CreateInstance(paletteType, nonPublic: true)!;
+            Pen pen = (Pen)paletteType.GetProperty("OrbitPath")!.GetValue(palette)!;
+
+            Assert.NotNull(pen.DashStyle);
+            Assert.Equal([1.0, 3.0], pen.DashStyle!.Dashes);
+        }
+
+        /// <summary>The orbit direction arrow is solid so its small head remains legible over the dotted path.</summary>
+        [Fact]
+        public void OrbitPathArrowPenIsSolid()
+        {
+            Type paletteType = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.CanvasPalette")!;
+            object palette = Activator.CreateInstance(paletteType, nonPublic: true)!;
+            Pen pen = (Pen)paletteType.GetProperty("OrbitPathArrow")!.GetValue(palette)!;
+
+            Assert.Null(pen.DashStyle);
+            Assert.True(pen.Thickness > 1.5);
         }
 
         private static SpriteCache SeedStarAtlases()

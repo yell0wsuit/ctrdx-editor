@@ -50,6 +50,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Solid curved arrow marking a rotateSpeed-backed object spin.</summary>
         public Pen SpinArrow { get; private set; } = new(new SolidColorBrush(Color.FromRgb(0x0E, 0x74, 0x9A)), 2);
 
+        /// <summary>Dotted circular path marking RC/RW orbital movement.</summary>
+        public Pen OrbitPath { get; private set; } = DottedPen(Color.FromRgb(0x25, 0x63, 0xEB), 1.5);
+
+        /// <summary>Solid direction arrow for RC/RW orbital movement.</summary>
+        public Pen OrbitPathArrow { get; private set; } = SolidPen(Color.FromRgb(0x25, 0x63, 0xEB), 2.25);
+
         /// <summary>Text brush for a timed-star duration label on the blank (no-background) canvas:
         /// pure white in the dark theme, pure black in the light theme. When a background is applied
         /// the canvas draws these labels black regardless.</summary>
@@ -73,6 +79,9 @@ namespace CtrDxEditor.Rendering
             ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
             ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);
             SpinArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlaySpinArrow", Color.FromRgb(0x0E, 0x74, 0x9A))), 2);
+            Color orbitColor = ThemeColor(host, "EditorColor.OverlayOrbitPath", Color.FromRgb(0x25, 0x63, 0xEB));
+            OrbitPath = DottedPen(orbitColor, 1.5);
+            OrbitPathArrow = SolidPen(orbitColor, 2.25);
             StarDurationText = host.ActualThemeVariant == ThemeVariant.Dark ? Brushes.White : Brushes.Black;
         }
 
@@ -95,6 +104,18 @@ namespace CtrDxEditor.Rendering
         private static Pen OverlayPen(Color color, double thickness)
         {
             return OverlayPen(new SolidColorBrush(color), thickness);
+        }
+
+        /// <summary>Builds a dotted overlay pen from a solid color.</summary>
+        private static Pen DottedPen(Color color, double thickness)
+        {
+            return new Pen(new SolidColorBrush(color), thickness) { DashStyle = new DashStyle([1, 3], 0) };
+        }
+
+        /// <summary>Builds a solid overlay pen from a solid color.</summary>
+        private static Pen SolidPen(Color color, double thickness)
+        {
+            return new Pen(new SolidColorBrush(color), thickness);
         }
     }
 }

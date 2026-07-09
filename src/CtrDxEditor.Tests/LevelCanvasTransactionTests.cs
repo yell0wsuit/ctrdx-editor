@@ -19,6 +19,19 @@ namespace CtrDxEditor.Tests
             Assert.Contains("CompleteDocumentEdit?.Invoke();", source, StringComparison.Ordinal);
         }
 
+        /// <summary>Movement path visibility is exposed through the View menu and bound into the canvas.</summary>
+        [Fact]
+        public void ViewMenuWiresMovementPathToggleToCanvas()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("ShowMovementPathsToggle_Click", view, StringComparison.Ordinal);
+            Assert.Contains("Menu.View.ShowMovementPaths", view, StringComparison.Ordinal);
+            Assert.Contains("ShowMovementPaths=\"{Binding ShowMovementPaths}\"", view, StringComparison.Ordinal);
+            Assert.Contains("vm.ShowMovementPaths = !vm.ShowMovementPaths;", codeBehind, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

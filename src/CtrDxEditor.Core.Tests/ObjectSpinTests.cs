@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Core.Geometry;
 
 using Xunit;
 
@@ -173,6 +174,38 @@ namespace CtrDxEditor.Core.Tests
         public void PreviewDegreesUsesSignedWholeSpeed(string rotateSpeed, double elapsedSeconds, double expected)
         {
             Assert.Equal(expected, ObjectSpin.PreviewDegrees(Obj("star", rotateSpeed), elapsedSeconds));
+        }
+
+        /// <summary>Orbital preview starts at the first generated DX circular path point.</summary>
+        [Fact]
+        public void PreviewPositionStartsAtFirstCircularPathPoint()
+        {
+            Vec2 preview = ObjectSpin.PreviewPosition(Obj("star", path: "RC8", moveSpeed: "10"), 0.0);
+
+            Assert.Equal(8.0, preview.X);
+            Assert.Equal(0.0, preview.Y, precision: 6);
+        }
+
+        /// <summary>Orbital preview advances along RC and RW generated path points using moveSpeed.</summary>
+        [Fact]
+        public void PreviewPositionUsesMoveSpeedAndOrbitDirection()
+        {
+            Vec2 clockwise = ObjectSpin.PreviewPosition(Obj("star", path: "RC8", moveSpeed: "8"), 1.0);
+            Vec2 counterClockwise = ObjectSpin.PreviewPosition(Obj("star", path: "RW8", moveSpeed: "8"), 1.0);
+
+            Assert.Equal(2.3431457505, clockwise.X, precision: 6);
+            Assert.Equal(5.6568542495, clockwise.Y, precision: 6);
+            Assert.Equal(2.3431457505, counterClockwise.X, precision: 6);
+            Assert.Equal(-5.6568542495, counterClockwise.Y, precision: 6);
+        }
+
+        /// <summary>Objects without orbital data preview at their authored position.</summary>
+        [Fact]
+        public void PreviewPositionFallsBackToAuthoredPositionWithoutOrbit()
+        {
+            Vec2 preview = ObjectSpin.PreviewPosition(Obj("star", rotateSpeed: "70"), 2.0);
+
+            Assert.Equal(new Vec2(0.0, 0.0), preview);
         }
     }
 }

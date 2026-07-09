@@ -183,6 +183,14 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void ShowMovementPathsToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ShowMovementPaths = !vm.ShowMovementPaths;
+            }
+        }
+
         private void AnimationPreviewToggle_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)
