@@ -200,11 +200,12 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void ObjectList_DoubleTapped(object? sender, TappedEventArgs e)
+        private void ObjectLock_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is EditorViewModel vm)
+            if (DataContext is EditorViewModel vm && sender is Button { Tag: LevelObject obj })
             {
-                vm.ToggleLock(vm.SelectedObject);
+                vm.ToggleLock(obj);
+                e.Handled = true;
             }
         }
 

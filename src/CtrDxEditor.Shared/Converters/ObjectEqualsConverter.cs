@@ -6,7 +6,7 @@ using Avalonia.Data.Converters;
 
 namespace CtrDxEditor.Converters
 {
-    /// <summary>True when the two bound values are equal — used to show the lock icon on the locked row.</summary>
+    /// <summary>True when the two bound values are equal; optional Invert flips the result.</summary>
     public sealed class ObjectEqualsConverter : IMultiValueConverter
     {
         /// <summary>Shared converter instance for XAML bindings.</summary>
@@ -15,7 +15,8 @@ namespace CtrDxEditor.Converters
         /// <inheritdoc />
         public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
-            return values.Count == 2 && values[0] is not null && Equals(values[0], values[1]);
+            bool equal = values.Count == 2 && values[0] is not null && Equals(values[0], values[1]);
+            return string.Equals(parameter as string, "Invert", StringComparison.Ordinal) ? !equal : equal;
         }
     }
 }
