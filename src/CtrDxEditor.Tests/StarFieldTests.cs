@@ -95,6 +95,57 @@ namespace CtrDxEditor.Tests
             Assert.Equal("70", star.GetAttr("moveSpeed"));
         }
 
+        /// <summary>Clearing orbit radius behaves like timed-star duration: it stays visible while editing.</summary>
+        [Fact]
+        public void ClearingStarOrbitRadiusKeepsOrbitFieldsVisibleLikeTimedDuration()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
+
+            radius.Value = string.Empty;
+
+            Assert.Equal(string.Empty, radius.Value);
+            Assert.Equal("RC", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Contains(vm.Fields, f => f.Name == "orbitRadius");
+
+            radius.Value = "45";
+
+            Assert.Equal("RC45", star.GetAttr("path"));
+            Assert.Equal("45", radius.Value);
+            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+        }
+
+        /// <summary>Clearing spin speed behaves like timed-star duration: it stays visible while editing.</summary>
+        [Fact]
+        public void ClearingStarSpinSpeedKeepsSpinFieldsVisibleLikeTimedDuration()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+            AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "spinSpeed");
+
+            speed.Value = string.Empty;
+
+            Assert.Equal(string.Empty, speed.Value);
+            Assert.Equal(string.Empty, star.GetAttr("rotateSpeed"));
+            Assert.True(vm.Fields.Single(f => f.Name == "spin").BoolValue);
+            Assert.Contains(vm.Fields, f => f.Name == "spinSpeed");
+
+            speed.Value = "130";
+
+            Assert.Equal("130", star.GetAttr("rotateSpeed"));
+            Assert.Equal("130", speed.Value);
+            Assert.True(vm.Fields.Single(f => f.Name == "spin").BoolValue);
+        }
+
         /// <summary>Spin and orbit can coexist, matching DX's separate rotateSpeed and moveSpeed handling.</summary>
         [Fact]
         public void CheckingStarSpinAndOrbitKeepsBothMoverAttributes()
