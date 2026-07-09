@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Media;
@@ -120,6 +121,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="omNomSupport">Active Om Nom support index.</param>
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
         /// <param name="starDurationText">Brush for the timed-star duration label.</param>
+        /// <param name="objects">All level objects, used to decide whether binding id labels are needed.</param>
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
         public static void DrawObject(
             DrawingContext ctx,
@@ -130,6 +132,7 @@ namespace CtrDxEditor.Rendering
             int omNomSupport,
             bool nightLevel,
             IBrush starDurationText,
+            IReadOnlyList<LevelObject> objects,
             double? animationPreviewSeconds = null)
         {
             Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
@@ -148,6 +151,7 @@ namespace CtrDxEditor.Rendering
                     DrawStarDuration(ctx, v, star, x, y, timeout, starDurationText);
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
                 return;
             }
 
@@ -163,6 +167,7 @@ namespace CtrDxEditor.Rendering
                     }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
                 return;
             }
 
@@ -177,6 +182,21 @@ namespace CtrDxEditor.Rendering
                 DrawSprite(ctx, v, sprite, x, y, spinRotation);
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);
+            DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+        }
+
+        /// <summary>Returns the hidden binding id to show on a candy or bulb, or null when no label is needed.</summary>
+        /// <param name="obj">The object being drawn.</param>
+        /// <param name="objects">All level objects.</param>
+        /// <returns>The id label for multi-object candy/bulb groups, otherwise null.</returns>
+        internal static string? BindingIdLabel(LevelObject obj, IReadOnlyList<LevelObject> objects)
+        {
+            return obj.Type switch
+            {
+                "candy" => LabelForGroup(obj, objects, "candy", "candyNumber"),
+                "lightBulb" or "lightbulb" => LabelForGroup(obj, objects, obj.Type, "bulbNumber"),
+                _ => null,
+            };
         }
 
         internal static string PreviewSpriteKey(LevelObject obj, double? animationPreviewSeconds)
@@ -356,6 +376,63 @@ namespace CtrDxEditor.Rendering
         {
             Vec2 point = v.LevelToScreen(new Vec2(x, y));
             return new Point(point.X, point.Y);
+        }
+
+        private static string? LabelForGroup(
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            string element,
+            string attribute)
+        {
+            List<LevelObject> group = [.. objects.Where(o => o.Type == element)];
+            if (group.Count <= 1)
+            {
+                return null;
+            }
+
+            if (obj.GetAttr(attribute) is { Length: > 0 } key)
+            {
+                return key;
+            }
+
+            int index = group.IndexOf(obj);
+            return index >= 0 ? index.ToString(CultureInfo.InvariantCulture) : null;
+        }
+
+        private static void DrawBindingIdLabel(
+            DrawingContext ctx,
+            ViewTransform v,
+            LevelObject obj,
+            IReadOnlyList<LevelObject> objects,
+            double x,
+            double y)
+        {
+            string? label = BindingIdLabel(obj, objects);
+            if (label is null)
+            {
+                return;
+            }
+
+            FormattedText shadow = CreateBindingIdText(label, v.Zoom, Brushes.Black);
+            FormattedText text = CreateBindingIdText(label, v.Zoom, Brushes.White);
+            Vec2 center = v.LevelToScreen(new Vec2(x, y));
+            Point origin = new(
+                center.X - (text.Width / 2.0),
+                center.Y - (text.Height / 2.0));
+            double shadowOffset = Math.Max(1.0, 1.5 * v.Zoom);
+            ctx.DrawText(shadow, new Point(origin.X + shadowOffset, origin.Y + shadowOffset));
+            ctx.DrawText(text, origin);
+        }
+
+        private static FormattedText CreateBindingIdText(string text, double zoom, IBrush foreground)
+        {
+            return new FormattedText(
+                text,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.DefaultFontFamilyName, FontStyle.Normal, FontWeight.Bold),
+                Math.Max(10.0, 16.0 * zoom),
+                foreground);
         }
 
         /// <summary>Draws the countdown label above a timed star.</summary>
