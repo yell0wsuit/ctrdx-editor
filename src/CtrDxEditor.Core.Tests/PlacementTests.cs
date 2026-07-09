@@ -48,7 +48,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("2.0", obj.GetAttr("offTime"));
             Assert.Equal("2.0", obj.GetAttr("onTime"));
             Assert.Equal("0", obj.GetAttr("angle"));
-            Assert.Null(obj.GetAttr("size"));
+            Assert.Equal("5", obj.GetAttr("size"));
         }
     }
 }

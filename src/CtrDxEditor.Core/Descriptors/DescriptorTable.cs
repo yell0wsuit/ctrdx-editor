@@ -101,6 +101,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("offTime", AttrType.Number, "2.0"),
                 new AttributeSpec("onTime", AttrType.Number, "2.0"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
+                new AttributeSpec("size", AttrType.Whole, "5"),
             ], MaxCount: int.MaxValue),
 
             // Gravity button

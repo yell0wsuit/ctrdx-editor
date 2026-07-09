@@ -49,6 +49,12 @@ namespace CtrDxEditor.Core.Editing
                 return false;
             }
 
+            // Electro requires size="5" in XML for the game, but it is not user-editable.
+            if (element == "electro" && attribute == "size")
+            {
+                return false;
+            }
+
             // The candyNumber key is only meaningful outside split-candy levels.
             return element != "candy" || attribute != "candyNumber" || !document.TwoParts;
         }
