@@ -281,7 +281,8 @@ namespace CtrDxEditor.Rendering
                 return points;
             }
 
-            Point center = ScreenPoint(v, obj.X, obj.Y);
+            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
+            Point center = ScreenPoint(v, previewPosition.X, previewPosition.Y);
             double radians = degrees * Math.PI / 180.0;
             double sin = Math.Sin(radians);
             double cos = Math.Cos(radians);
