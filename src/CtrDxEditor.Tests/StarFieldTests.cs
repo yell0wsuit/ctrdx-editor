@@ -238,7 +238,9 @@ namespace CtrDxEditor.Tests
             vm.Fields.Single(f => f.Name == "movementMode").Value = "none";
 
             Assert.Equal("70", star.GetAttr("rotateSpeed"));
-            Assert.Null(star.GetAttr("path"));
+            // The game only spins an object that has a path (its mover carries rotateSpeed), so clearing movement
+            // keeps the static "0,0" spin-carrier rather than removing the path and silently breaking spin.
+            Assert.Equal("0,0", star.GetAttr("path"));
             Assert.Null(star.GetAttr("moveSpeed"));
             Assert.Equal("none", vm.Fields.Single(f => f.Name == "movementMode").Value);
         }

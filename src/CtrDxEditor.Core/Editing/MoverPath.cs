@@ -21,6 +21,31 @@ namespace CtrDxEditor.Core.Editing
                 && Points(new Vec2(obj.X, obj.Y), obj.GetAttr("path")).Length > 1;
         }
 
+        /// <summary>
+        /// True when a plain (non-circular) path actually translates the object — at least one stored point
+        /// differs from the start. The spin-carrier path (<c>"0,0"</c>) that hosts <c>rotateSpeed</c> does not, so
+        /// movement-mode detection can tell a real polyline apart from a bare spinner.
+        /// </summary>
+        public static bool IsPolylineMovement(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
+            {
+                return false;
+            }
+
+            Vec2 origin = new(0, 0);
+            Vec2[] points = Points(origin, path);
+            for (int i = 1; i < points.Length; i++)
+            {
+                if (points[i] != origin)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Computes absolute path points for a DX mover path.</summary>
         public static Vec2[] Points(Vec2 start, string? path)
         {

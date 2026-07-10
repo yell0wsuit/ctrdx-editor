@@ -315,6 +315,18 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(MoverPath.IsCanonicalClockwise(new Vec2(0, 0), "100,0"));
         }
 
+        /// <summary>The static "0,0" spin-carrier path is not polyline movement; a real segment or orbit is distinguished.</summary>
+        [Fact]
+        public void IsPolylineMovementIgnoresStaticSpinPath()
+        {
+            Assert.False(MoverPath.IsPolylineMovement("0,0"));
+            Assert.False(MoverPath.IsPolylineMovement(""));
+            Assert.False(MoverPath.IsPolylineMovement(null));
+            Assert.False(MoverPath.IsPolylineMovement("RC120"));
+            Assert.True(MoverPath.IsPolylineMovement("100,0"));
+            Assert.True(MoverPath.IsPolylineMovement("0,0,100,50"));
+        }
+
         private static Vec2[] PathPoints(int count)
         {
             Vec2[] points = new Vec2[count];

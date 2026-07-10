@@ -176,8 +176,17 @@ namespace CtrDxEditor.ViewModels
                             SetPolyline(value);
                             break;
                         default:
-                            value.RemoveAttr("path");
                             value.RemoveAttr("moveSpeed");
+                            // Keep the static spin-carrier path if the object still spins; only a non-spinner
+                            // clears the path entirely.
+                            if (ObjectSpin.IsSpinning(value))
+                            {
+                                value.SetAttr("path", ObjectSpin.StaticPath);
+                            }
+                            else
+                            {
+                                value.RemoveAttr("path");
+                            }
                             break;
                     }
 
@@ -387,7 +396,17 @@ namespace CtrDxEditor.ViewModels
         private static string MovementMode(LevelObject value)
         {
             string? path = value.GetAttr("path");
-            return string.IsNullOrWhiteSpace(path) ? "none" : IsOrbitEditingPath(path) ? "orbit" : "polyline";
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return "none";
+            }
+            if (IsOrbitEditingPath(path))
+            {
+                return "orbit";
+            }
+
+            // A bare spinner stores the static "0,0" path to host rotateSpeed; that is not polyline movement.
+            return MoverPath.IsPolylineMovement(path) ? "polyline" : "none";
         }
 
         private static bool IsOrbitEditingPath(string path)
@@ -397,7 +416,9 @@ namespace CtrDxEditor.ViewModels
 
         private static void SetPolyline(LevelObject value)
         {
-            if (string.IsNullOrWhiteSpace(value.GetAttr("path")) || IsOrbitEditingPath(value.GetAttr("path")!))
+            // Seed a real segment unless the object already has one — covers empty, orbit, and the static "0,0"
+            // spin-carrier path (so enabling polyline while spinning still gives it a movement path).
+            if (!MoverPath.IsPolylineMovement(value.GetAttr("path")))
             {
                 value.SetAttr("path", "100,0");
             }
