@@ -160,5 +160,25 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
         }
+
+        /// <summary>The magic hat returns its mouth box, ignoring scale and physics model.</summary>
+        [Fact]
+        public void SockBoxIsTheMagicHatMouth()
+        {
+            LevelBounds? box = HitboxTable.Compute("sock", 0, 0, scale: 3, HitboxModel.Desktop);
+
+            Assert.Equal(SockHitbox.Compute(0, 0), box);
+        }
+
+        /// <summary>The hat's box is identical for desktop and phone and independent of scale.</summary>
+        [Fact]
+        public void SockBoxIsIdenticalForDesktopAndPhone()
+        {
+            LevelBounds? desktop = HitboxTable.Compute("sock", 10, 20, scale: 3, HitboxModel.Desktop);
+            LevelBounds? phone = HitboxTable.Compute("sock", 10, 20, scale: 0.7, HitboxModel.Phone);
+
+            Assert.Equal(SockHitbox.Compute(10, 20), desktop);
+            Assert.Equal(desktop, phone);
+        }
     }
 }

@@ -90,6 +90,13 @@ namespace CtrDxEditor.Core.Editing
             HitboxModel model,
             double mapScale = SpritePlacement.MapScale)
         {
+            // The magic hat's mouth is world-unit, off-center, and scale/model-independent, so it
+            // does not fit the texture-pixel HitboxDef rows; compute it directly.
+            if (element == "sock")
+            {
+                return SockHitbox.Compute(x, y, mapScale);
+            }
+
             if (!Defs.TryGetValue(element, out HitboxDef? def))
             {
                 return null;
