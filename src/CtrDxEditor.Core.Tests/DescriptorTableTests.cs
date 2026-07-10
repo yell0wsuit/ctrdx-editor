@@ -27,7 +27,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("sock"));
         }
 
-        /// <summary>Verifies magic hats expose DX's three authored transporter groups as a dropdown.</summary>
+        /// <summary>Verifies magic hats expose the transporter group as a free whole-number field.</summary>
         [Fact]
         public void SockHasTeleportGroupDefaultingToZero()
         {
@@ -37,9 +37,9 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(int.MaxValue, sock.MaxCount);
             AttributeSpec group = Assert.Single(sock.Attributes, a => a.Name == "group");
             Assert.Equal("group", group.Name);
-            Assert.Equal(AttrType.Enum, group.Type);
+            Assert.Equal(AttrType.Whole, group.Type);
             Assert.Equal("0", group.Default);
-            Assert.Equal(["0", "1", "2"], group.EnumValues!);
+            Assert.Null(group.EnumValues);
             Assert.Equal("sockGroup", group.LocalizationName);
             AttributeSpec angle = Assert.Single(sock.Attributes, a => a.Name == "angle");
             Assert.Equal(AttrType.Number, angle.Type);

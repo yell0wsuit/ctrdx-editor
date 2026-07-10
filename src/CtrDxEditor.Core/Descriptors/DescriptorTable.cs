@@ -105,9 +105,8 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec(
                     "group",
-                    AttrType.Enum,
+                    AttrType.Whole,
                     "0",
-                    EnumValues: ["0", "1", "2"],
                     LocalizationName: "sockGroup"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
