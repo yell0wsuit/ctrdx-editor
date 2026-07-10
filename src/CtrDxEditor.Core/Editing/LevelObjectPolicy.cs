@@ -39,6 +39,13 @@ namespace CtrDxEditor.Core.Editing
                     .Select(o => o.GetAttr("bulbNumber"));
                 obj.SetAttr("bulbNumber", KeyNumbering.NextKey(keys));
             }
+
+            // Magic hats teleport in pairs; a new hat completes an open pair or starts a fresh group.
+            if (obj.Type == "sock")
+            {
+                obj.SetAttr("group", SockGrouping.NextGroup(
+                    document.Objects.Where(o => o.Type == "sock").Select(o => o.GetAttr("group"))));
+            }
         }
 
         /// <summary>
