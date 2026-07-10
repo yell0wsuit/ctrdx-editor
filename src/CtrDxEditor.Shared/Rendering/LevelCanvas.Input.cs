@@ -289,6 +289,26 @@ namespace CtrDxEditor.Rendering
             return (dx * dx) + (dy * dy) <= tolerance * tolerance;
         }
 
+        /// <summary>
+        /// True when hovering the end of a selected editable polyline that has hit its point cap, so the missing
+        /// append nub gets an explanatory hint instead of just silently vanishing.
+        /// </summary>
+        private bool HoveringPolylineLimit(Vec2 levelPt)
+        {
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
+                || IsAnimatingInPreview(obj)
+                || MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
+            {
+                return false;
+            }
+
+            Vec2 nub = PolylineNubPoint(obj);
+            double tolerance = 22 / View.Zoom;
+            double dx = nub.X - levelPt.X;
+            double dy = nub.Y - levelPt.Y;
+            return (dx * dx) + (dy * dy) <= tolerance * tolerance;
+        }
+
         /// <summary>Rounds a point to whole units after snapping its direction from an anchor to 45-degree increments.</summary>
         private static (int X, int Y) SnapAngle(Vec2 anchor, Vec2 point)
         {
@@ -654,10 +674,12 @@ namespace CtrDxEditor.Rendering
                 SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
+                bool oldLimitHint = _polylineAtLimitHint;
                 _polylineHoverPoint = HitPolylinePoint(levelPt);
                 _polylineNubHot = HitPolylineNub(levelPt);
+                _polylineAtLimitHint = HoveringPolylineLimit(levelPt);
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
-                if (oldHoverPoint != _polylineHoverPoint || oldNubHot != _polylineNubHot)
+                if (oldHoverPoint != _polylineHoverPoint || oldNubHot != _polylineNubHot || oldLimitHint != _polylineAtLimitHint)
                 {
                     InvalidateVisual();
                 }

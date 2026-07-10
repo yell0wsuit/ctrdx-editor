@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 using Avalonia;
@@ -10,6 +11,7 @@ using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
+using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.Rendering
 {
@@ -158,6 +160,32 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawSpritePreview(context, v, ghostSprite, ghostElement, _ghostLevel.X, _ghostLevel.Y);
                 }
             }
+
+            if (_polylineAtLimitHint && SelectedObject is { } limitObj)
+            {
+                DrawPolylineLimitHint(context, v, limitObj);
+            }
+        }
+
+        /// <summary>
+        /// Draws a small labelled hint at the end of a full polyline, explaining why the append nub is gone once
+        /// the path has hit its stored-point cap.
+        /// </summary>
+        private void DrawPolylineLimitHint(DrawingContext context, ViewTransform v, LevelObject obj)
+        {
+            Vec2 nub = v.LevelToScreen(PolylineNubPoint(obj));
+            FormattedText text = new(
+                Localizer.Get("Hint.PolylinePointLimit"),
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.DefaultFontFamilyName),
+                12.0,
+                Brushes.White);
+
+            Point origin = new(nub.X + 12.0, nub.Y - (text.Height / 2.0));
+            Rect box = new(origin.X - 6.0, origin.Y - 3.0, text.Width + 12.0, text.Height + 6.0);
+            context.FillRectangle(new SolidColorBrush(Color.FromArgb(220, 0, 0, 0)), box, 4.0f);
+            context.DrawText(text, origin);
         }
 
         /// <summary>Draws editable handles, segment inserts, and the append nub for the selected polyline path.</summary>

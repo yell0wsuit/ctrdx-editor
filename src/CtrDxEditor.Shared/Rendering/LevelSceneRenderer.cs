@@ -876,14 +876,28 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            // Draw each traversal segment with a mid-segment chevron pointing the way the object travels,
-            // so the loop's winding (and the back-and-forth of a retrace) is legible like the orbit arrow.
             for (int i = 0; i < points.Length; i++)
             {
-                Point a = points[i];
-                Point b = points[(i + 1) % points.Length];
-                ctx.DrawLine(pathPen, a, b);
-                DrawSegmentArrow(ctx, arrowPen, a, b);
+                ctx.DrawLine(pathPen, points[i], points[(i + 1) % points.Length]);
+            }
+
+            // A loop reads one way all the way round, so arrow every segment. A back-and-forth (retrace) path is
+            // stored as an out-and-back palindrome whose return segments overlap the outbound ones — arrowing all
+            // of them would draw contradictory '><' chevrons, so only arrow the outbound half (first length/2).
+            if (MoverPath.IsRetrace(obj.GetAttr("path")))
+            {
+                int outboundSegments = points.Length / 2;
+                for (int i = 0; i < outboundSegments; i++)
+                {
+                    DrawSegmentArrow(ctx, arrowPen, points[i], points[i + 1]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < points.Length; i++)
+                {
+                    DrawSegmentArrow(ctx, arrowPen, points[i], points[(i + 1) % points.Length]);
+                }
             }
         }
 

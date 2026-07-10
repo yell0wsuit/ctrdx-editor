@@ -185,5 +185,7 @@
     "Attr.orbitClockwise": "Orbit clockwise",
     "Attr.polylineSpeed": "Polyline speed",
     "Attr.polylineRetrace": "Back and forth",
-    "Attr.polylineClockwise": "Clockwise"
+    "Attr.polylineClockwise": "Clockwise",
+
+    "Hint.PolylinePointLimit": "Movement path is at its 99-point limit"
 }

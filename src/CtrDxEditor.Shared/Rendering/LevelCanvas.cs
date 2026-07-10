@@ -244,6 +244,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while the pointer is over the append nub of the selected polyline.</summary>
         private bool _polylineNubHot;
 
+        /// <summary>True while hovering the end of a selected polyline that has hit its point cap (shows the limit hint).</summary>
+        private bool _polylineAtLimitHint;
+
         /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;
 
@@ -352,9 +355,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Clears selected-polyline hover chrome and repaints when it was visible.</summary>
         private void ResetPolylineHover()
         {
-            bool changed = _polylineHoverPoint != -1 || _polylineNubHot;
+            bool changed = _polylineHoverPoint != -1 || _polylineNubHot || _polylineAtLimitHint;
             _polylineHoverPoint = -1;
             _polylineNubHot = false;
+            _polylineAtLimitHint = false;
             if (changed)
             {
                 InvalidateVisual();
