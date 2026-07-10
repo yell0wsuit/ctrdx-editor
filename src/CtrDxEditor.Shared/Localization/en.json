@@ -143,6 +143,7 @@
     "Object.spike3": "Spike",
     "Object.spike4": "Spike",
     "Object.electro": "Electric spark",
+    "Object.sock": "Magic hat",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -173,6 +174,7 @@
     "Attr.onTime": "On time (s)",
     "Attr.toggled": "Toggled",
     "Attr.toggleGroup": "Group",
+    "Attr.group": "Teleport group",
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Spin speed",
     "Attr.spinClockwise": "Spin clockwise",

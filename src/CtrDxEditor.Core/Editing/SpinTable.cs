@@ -13,6 +13,7 @@ namespace CtrDxEditor.Core.Editing
             "spike3",
             "spike4",
             "electro",
+            "sock",
         ];
 
         /// <summary>Whether <paramref name="element"/> can expose spin controls.</summary>

@@ -24,6 +24,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("spike3"));
             Assert.True(t.Knows("spike4"));
             Assert.True(t.Knows("electro"));
+            Assert.True(t.Knows("sock"));
+        }
+
+        /// <summary>Verifies magic hats expose the integer transporter pairing group used by DX.</summary>
+        [Fact]
+        public void SockHasTeleportGroupDefaultingToZero()
+        {
+            ObjectDescriptor sock = DescriptorTable.Default.For("sock")!;
+
+            Assert.Equal("Magic Hat", sock.DisplayName);
+            Assert.Equal(int.MaxValue, sock.MaxCount);
+            AttributeSpec group = Assert.Single(sock.Attributes);
+            Assert.Equal("group", group.Name);
+            Assert.Equal(AttrType.Whole, group.Type);
+            Assert.Equal("0", group.Default);
         }
 
         /// <summary>Verifies that bubble is unbounded and has no editable attributes (game reads only x/y).</summary>

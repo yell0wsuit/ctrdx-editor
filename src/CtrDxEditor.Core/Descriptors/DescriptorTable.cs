@@ -59,6 +59,12 @@ namespace CtrDxEditor.Core.Descriptors
             // Bubble
             new ObjectDescriptor("bubble", "Bubble", [], MaxCount: int.MaxValue),
 
+            // Magic hat teleporter (Christmas sock during the seasonal event)
+            new ObjectDescriptor("sock", "Magic Hat",
+            [
+                new AttributeSpec("group", AttrType.Whole, "0"),
+            ], MaxCount: int.MaxValue),
+
             // Spike
             new ObjectDescriptor("spike1", "Spike",
             [

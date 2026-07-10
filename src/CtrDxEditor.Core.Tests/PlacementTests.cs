@@ -50,5 +50,19 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("0", obj.GetAttr("angle"));
             Assert.Equal("5", obj.GetAttr("size"));
         }
+
+        /// <summary>Verifies magic-hat placement writes the DX sock element and default teleport group.</summary>
+        [Fact]
+        public void CreateSockObjectSetsTeleportGroupDefault()
+        {
+            ObjectDescriptor sock = DescriptorTable.Default.For("sock")!;
+
+            LevelObject obj = Placement.CreateObject(sock, x: 120, y: 240);
+
+            Assert.Equal("sock", obj.Type);
+            Assert.Equal(120, obj.X);
+            Assert.Equal(240, obj.Y);
+            Assert.Equal("0", obj.GetAttr("group"));
+        }
     }
 }

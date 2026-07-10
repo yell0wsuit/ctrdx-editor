@@ -31,12 +31,13 @@ namespace CtrDxEditor.Core.Tests
 
         /// <summary>Spin opt-in follows the object registry, parallel to RotationTable.</summary>
         [Fact]
-        public void SpinTableKnowsStarsSpikesAndElectro()
+        public void SpinTableKnowsObjectsLoadedThroughParseMover()
         {
             Assert.True(SpinTable.IsSpinnable("star"));
             Assert.True(SpinTable.IsSpinnable("spike1"));
             Assert.True(SpinTable.IsSpinnable("spike4"));
             Assert.True(SpinTable.IsSpinnable("electro"));
+            Assert.True(SpinTable.IsSpinnable("sock"));
             Assert.False(SpinTable.IsSpinnable("grab"));
         }
 
