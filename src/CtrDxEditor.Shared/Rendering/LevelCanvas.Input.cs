@@ -227,7 +227,8 @@ namespace CtrDxEditor.Rendering
         /// <summary>Returns the segment whose midpoint insert handle is under a level point, or -1.</summary>
         private int HitPolylineSegment(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj))
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
+                || !MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
             {
                 return -1;
             }
@@ -275,7 +276,8 @@ namespace CtrDxEditor.Rendering
         /// <summary>True when the pointer is over the append nub for the selected editable polyline.</summary>
         private bool HitPolylineNub(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj))
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
+                || !MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
             {
                 return false;
             }
@@ -725,12 +727,7 @@ namespace CtrDxEditor.Rendering
             base.OnPointerExited(e);
             SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
             SetDialKnobHovered(false); // nor the rotation knob
-            if (_polylineHoverPoint != -1 || _polylineNubHot)
-            {
-                _polylineHoverPoint = -1;
-                _polylineNubHot = false;
-                InvalidateVisual();
-            }
+            ResetPolylineHover();
         }
 
         /// <inheritdoc />

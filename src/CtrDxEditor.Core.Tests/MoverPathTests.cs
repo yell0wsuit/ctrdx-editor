@@ -146,6 +146,19 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(path, MoverPath.DeleteCanonicalPoint(start, path, 9));
         }
 
+        /// <summary>Deleting the sole waypoint leaves no movement path instead of recreating a zero-offset waypoint.</summary>
+        [Fact]
+        public void DeleteCanonicalPointRemovesSoleWaypoint()
+        {
+            Vec2 start = new(0, 0);
+
+            string edited = MoverPath.DeleteCanonicalPoint(start, "100,0", 1);
+
+            Assert.Equal(string.Empty, edited);
+            Assert.Equal([start], MoverPath.CanonicalPoints(start, edited));
+            Assert.Equal(-1, MoverPath.HitCanonicalPoint(start, edited, start, tolerance: 5));
+        }
+
         /// <summary>SetRetrace(true) expands the outbound shape to an out-and-back palindrome.</summary>
         [Fact]
         public void SetRetraceTrueProducesRetrace()
@@ -179,6 +192,55 @@ namespace CtrDxEditor.Core.Tests
         {
             Assert.Equal("RC120", MoverPath.SetRetrace(new Vec2(0, 0), "RC120", true));
             Assert.Equal(string.Empty, MoverPath.SetRetrace(new Vec2(0, 0), "", true));
+        }
+
+        /// <summary>Retrace serialization caps canonical points before mirroring so the stored path stays symmetric.</summary>
+        [Fact]
+        public void SerializeRetracePreservesSymmetryAtDxCapacity()
+        {
+            Vec2 start = new(0, 0);
+
+            string path = MoverPath.Serialize(start, PathPoints(100), retrace: true);
+
+            Assert.True(MoverPath.IsRetrace(path));
+            Assert.Equal(51, MoverPath.CanonicalPoints(start, path).Length);
+            Assert.Equal(MoverPath.MaxStoredPlainOffsetPoints * 2, path.Split(',').Length);
+        }
+
+        /// <summary>Enabling retrace refuses to discard canonical points that cannot fit in a symmetric DX path.</summary>
+        [Fact]
+        public void SetRetraceRefusesDataLosingConversionAtCapacity()
+        {
+            Vec2 start = new(0, 0);
+            string path = MoverPath.Serialize(start, PathPoints(52), retrace: false);
+
+            Assert.Equal(path, MoverPath.SetRetrace(start, path, retrace: true));
+            Assert.False(MoverPath.IsRetrace(path));
+        }
+
+        /// <summary>Full circuit and retrace paths reject additional canonical points.</summary>
+        [Fact]
+        public void FullPathsHaveNoCanonicalAddCapacity()
+        {
+            Vec2 start = new(0, 0);
+            string circuit = MoverPath.Serialize(start, PathPoints(100), retrace: false);
+            string retrace = MoverPath.Serialize(start, PathPoints(51), retrace: true);
+
+            Assert.False(MoverPath.CanAddCanonicalPoint(start, circuit));
+            Assert.False(MoverPath.CanAddCanonicalPoint(start, retrace));
+            Assert.Equal(circuit, MoverPath.AppendCanonicalPoint(start, circuit, new Vec2(100, 0)));
+            Assert.Equal(circuit, MoverPath.InsertCanonicalPoint(start, circuit, 0, new Vec2(0.5, 0)));
+            Assert.Equal(retrace, MoverPath.AppendCanonicalPoint(start, retrace, new Vec2(51, 0)));
+        }
+
+        private static Vec2[] PathPoints(int count)
+        {
+            Vec2[] points = new Vec2[count];
+            for (int i = 0; i < count; i++)
+            {
+                points[i] = new Vec2(i, 0);
+            }
+            return points;
         }
     }
 }

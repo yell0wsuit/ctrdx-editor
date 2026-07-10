@@ -105,21 +105,17 @@ namespace CtrDxEditor.Core.Editing
         {
             if (canonicalAbsolutePoints.Count <= 1)
             {
-                return "0,0";
+                return string.Empty;
             }
 
-            List<Vec2> stored = [.. canonicalAbsolutePoints.Skip(1)];
-            if (retrace && canonicalAbsolutePoints.Count > 2)
+            int canonicalPointCount = Math.Min(canonicalAbsolutePoints.Count, MaxCanonicalPointCount(retrace));
+            List<Vec2> stored = [.. canonicalAbsolutePoints.Skip(1).Take(canonicalPointCount - 1)];
+            if (retrace && canonicalPointCount > 2)
             {
-                for (int i = canonicalAbsolutePoints.Count - 2; i >= 1; i--)
+                for (int i = canonicalPointCount - 2; i >= 1; i--)
                 {
                     stored.Add(canonicalAbsolutePoints[i]);
                 }
-            }
-
-            if (stored.Count > MaxStoredPlainOffsetPoints)
-            {
-                stored.RemoveRange(MaxStoredPlainOffsetPoints, stored.Count - MaxStoredPlainOffsetPoints);
             }
 
             return string.Join(",", stored.SelectMany(p =>
@@ -184,6 +180,13 @@ namespace CtrDxEditor.Core.Editing
             return -1;
         }
 
+        /// <summary>Whether one more canonical waypoint can fit without truncating the serialized DX path.</summary>
+        public static bool CanAddCanonicalPoint(Vec2 start, string? path)
+        {
+            return !IsCircularPath(path)
+                && CanonicalPoints(start, path).Length < MaxCanonicalPointCount(IsRetrace(path));
+        }
+
         /// <summary>Moves one canonical waypoint and re-serializes, preserving retrace/circuit state.</summary>
         public static string MoveCanonicalPoint(Vec2 start, string? path, int index, Vec2 newPoint)
         {
@@ -205,6 +208,10 @@ namespace CtrDxEditor.Core.Editing
             {
                 return path ?? string.Empty;
             }
+            if (!CanAddCanonicalPoint(start, path))
+            {
+                return path ?? string.Empty;
+            }
 
             List<Vec2> list = [.. pts];
             list.Insert(segmentIndex + 1, newPoint);
@@ -214,7 +221,7 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Appends a canonical waypoint, preserving retrace/circuit state.</summary>
         public static string AppendCanonicalPoint(Vec2 start, string? path, Vec2 newPoint)
         {
-            if (IsCircularPath(path))
+            if (IsCircularPath(path) || !CanAddCanonicalPoint(start, path))
             {
                 return path ?? string.Empty;
             }
@@ -242,9 +249,22 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Re-serializes the canonical points as an out-and-back retrace or a plain circuit.</summary>
         public static string SetRetrace(Vec2 start, string? path, bool retrace)
         {
-            return string.IsNullOrWhiteSpace(path) || IsCircularPath(path)
-                ? path ?? string.Empty
-                : Serialize(start, CanonicalPoints(start, path), retrace);
+            if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
+            {
+                return path ?? string.Empty;
+            }
+
+            Vec2[] points = CanonicalPoints(start, path);
+            return retrace && points.Length > MaxCanonicalPointCount(retrace: true)
+                ? path
+                : Serialize(start, points, retrace);
+        }
+
+        private static int MaxCanonicalPointCount(bool retrace)
+        {
+            return retrace
+                ? (MaxStoredPlainOffsetPoints + 3) / 2
+                : MaxStoredPlainOffsetPoints + 1;
         }
 
         /// <summary>Returns true when <paramref name="path"/> is DX circular movement syntax.</summary>

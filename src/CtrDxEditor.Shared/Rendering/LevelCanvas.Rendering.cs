@@ -173,17 +173,22 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            bool canAddPoint = MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), path);
+
             // Segment midpoint insert dots use fuller opacity so they read as interactive handles.
-            using (context.PushOpacity(0.6))
+            if (canAddPoint)
             {
-                for (int i = 0; i < points.Length - 1; i++)
+                using (context.PushOpacity(0.6))
                 {
-                    Vec2 midpoint = new(
-                        (points[i].X + points[i + 1].X) / 2,
-                        (points[i].Y + points[i + 1].Y) / 2);
-                    Vec2 screen = v.LevelToScreen(midpoint);
-                    context.DrawEllipse(Brushes.White, _palette.OrbitPathArrow,
-                        new Point(screen.X, screen.Y), 3, 3);
+                    for (int i = 0; i < points.Length - 1; i++)
+                    {
+                        Vec2 midpoint = new(
+                            (points[i].X + points[i + 1].X) / 2,
+                            (points[i].Y + points[i + 1].Y) / 2);
+                        Vec2 screen = v.LevelToScreen(midpoint);
+                        context.DrawEllipse(Brushes.White, _palette.OrbitPathArrow,
+                            new Point(screen.X, screen.Y), 3, 3);
+                    }
                 }
             }
 
@@ -197,6 +202,11 @@ namespace CtrDxEditor.Rendering
                 {
                     context.DrawEllipse(null, _palette.OrbitPathArrow, center, 8, 8);
                 }
+            }
+
+            if (!canAddPoint)
+            {
+                return;
             }
 
             // The append nub follows the tip and fills when hovered.

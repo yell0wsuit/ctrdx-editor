@@ -342,6 +342,23 @@ namespace CtrDxEditor.Rendering
             {
                 ScrollTo(HorizontalScrollValue, VerticalScrollValue);
             }
+            else if (change.Property == SelectedObjectProperty)
+            {
+                _polylinePointDrag = -1;
+                ResetPolylineHover();
+            }
+        }
+
+        /// <summary>Clears selected-polyline hover chrome and repaints when it was visible.</summary>
+        private void ResetPolylineHover()
+        {
+            bool changed = _polylineHoverPoint != -1 || _polylineNubHot;
+            _polylineHoverPoint = -1;
+            _polylineNubHot = false;
+            if (changed)
+            {
+                InvalidateVisual();
+            }
         }
 
     }

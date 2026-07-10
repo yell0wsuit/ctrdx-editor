@@ -50,11 +50,14 @@ namespace CtrDxEditor.Tests
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             string vm = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "ViewModels", "EditorViewModel.cs"));
+            string canvas = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.cs"));
 
             Assert.DoesNotContain("PolylineEditMode", view, StringComparison.Ordinal);
             Assert.DoesNotContain("PolylineEditMode", vm, StringComparison.Ordinal);
             Assert.DoesNotContain("Menu.Edit.PolylineEditPoints", view, StringComparison.Ordinal);
             Assert.Contains("CanEditPolyline", vm, StringComparison.Ordinal);
+            Assert.Contains("change.Property == SelectedObjectProperty", canvas, StringComparison.Ordinal);
+            Assert.Contains("ResetPolylineHover();", canvas, StringComparison.Ordinal);
         }
 
         /// <summary>Polyline gestures append via the nub and delete single vertices; the old mode/truncate paths are gone.</summary>
@@ -69,6 +72,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains("MoverPath.DeleteCanonicalPoint", input, StringComparison.Ordinal);
             Assert.Contains("MoverPath.MoveCanonicalPoint", input, StringComparison.Ordinal);
             Assert.Contains("MoverPath.InsertCanonicalPoint", input, StringComparison.Ordinal);
+            Assert.Contains("MoverPath.CanAddCanonicalPoint", input, StringComparison.Ordinal);
             Assert.DoesNotContain("PolylineEditMode", input, StringComparison.Ordinal);
             Assert.DoesNotContain("MoverPath.TruncateCanonicalFrom", input, StringComparison.Ordinal);
             Assert.DoesNotContain("_altCloseHot", rendering, StringComparison.Ordinal);
