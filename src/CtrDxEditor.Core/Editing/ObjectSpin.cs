@@ -39,7 +39,7 @@ namespace CtrDxEditor.Core.Editing
         /// <returns><see langword="true"/> when the object has a circular path and non-zero move speed.</returns>
         public static bool IsOrbital(LevelObject obj)
         {
-            return IsCircularPath(obj.GetAttr("path")) && RawMoveSpeed(obj) > 0;
+            return MoverPath.IsCircularPath(obj.GetAttr("path")) && RawMoveSpeed(obj) > 0;
         }
 
         /// <summary>The positive whole-number speed magnitude shown in the editor.</summary>
@@ -63,8 +63,7 @@ namespace CtrDxEditor.Core.Editing
         /// <returns><see langword="true"/> for <c>RC</c> paths, and as the default for new orbit paths.</returns>
         public static bool OrbitClockwise(LevelObject obj)
         {
-            string? path = obj.GetAttr("path");
-            return !IsCircularPath(path) || path![1] == 'C';
+            return MoverPath.IsCircularClockwise(obj.GetAttr("path"));
         }
 
         /// <summary>Writes or clears spin data, storing direction as the sign of <paramref name="speed"/>.</summary>
@@ -94,9 +93,7 @@ namespace CtrDxEditor.Core.Editing
         public static int OrbitRadius(LevelObject obj)
         {
             string? path = obj.GetAttr("path");
-            return IsCircularPath(path) && int.TryParse(path![2..], NumberStyles.Integer, CultureInfo.InvariantCulture, out int radius) && radius > 0
-                ? radius
-                : DefaultOrbitRadius;
+            return MoverPath.CircularRadius(path, DefaultOrbitRadius);
         }
 
         /// <summary>The positive whole-number movement speed encoded in DX <c>moveSpeed</c>.</summary>
@@ -116,7 +113,7 @@ namespace CtrDxEditor.Core.Editing
         {
             if (!enabled || radius <= 0)
             {
-                if (IsCircularPath(obj.GetAttr("path")))
+                if (MoverPath.IsCircularPath(obj.GetAttr("path")))
                 {
                     obj.RemoveAttr("path");
                     obj.RemoveAttr("moveSpeed");
@@ -162,53 +159,7 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The preview position, or the authored position when no active orbit exists.</returns>
         public static Vec2 PreviewPosition(LevelObject obj, double elapsedSeconds)
         {
-            Vec2 authored = new(obj.X, obj.Y);
-            string? path = obj.GetAttr("path");
-            int moveSpeed = RawMoveSpeed(obj);
-            if (!IsCircularPath(path) || moveSpeed <= 0)
-            {
-                return authored;
-            }
-
-            int radius = OrbitRadius(obj);
-            int pointsCount = radius / 2;
-            if (pointsCount <= 0)
-            {
-                return authored;
-            }
-
-            Vec2[] points = BuildCircularPath(authored, radius, path![1] == 'C', pointsCount);
-            if (points.Length == 1 || elapsedSeconds <= 0)
-            {
-                return points[0];
-            }
-
-            double remaining = moveSpeed * elapsedSeconds;
-            int index = 0;
-            while (remaining > 0)
-            {
-                Vec2 start = points[index];
-                Vec2 end = points[(index + 1) % points.Length];
-                double dx = end.X - start.X;
-                double dy = end.Y - start.Y;
-                double distance = Math.Sqrt((dx * dx) + (dy * dy));
-                if (distance <= 0)
-                {
-                    index = (index + 1) % points.Length;
-                    continue;
-                }
-
-                if (remaining <= distance)
-                {
-                    double t = remaining / distance;
-                    return new Vec2(start.X + (dx * t), start.Y + (dy * t));
-                }
-
-                remaining -= distance;
-                index = (index + 1) % points.Length;
-            }
-
-            return points[index];
+            return MoverPath.PreviewPosition(obj, elapsedSeconds);
         }
 
         private static int RawSpeed(LevelObject obj)
@@ -223,36 +174,6 @@ namespace CtrDxEditor.Core.Editing
             return double.TryParse(obj.GetAttr("moveSpeed"), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
                 ? Math.Abs((int)value)
                 : 0;
-        }
-
-        private static Vec2[] BuildCircularPath(Vec2 start, int radius, bool clockwise, int pointsCount)
-        {
-            Vec2[] points = new Vec2[pointsCount];
-            double angleStep = Math.Tau / pointsCount;
-            if (!clockwise)
-            {
-                angleStep = -angleStep;
-            }
-
-            double theta = 0.0;
-            for (int i = 0; i < points.Length; i++)
-            {
-                points[i] = new Vec2(
-                    start.X + (radius * Math.Cos(theta)),
-                    start.Y + (radius * Math.Sin(theta)));
-                theta += angleStep;
-            }
-
-            return points;
-        }
-
-        private static bool IsCircularPath(string? path)
-        {
-            return path is { Length: > 2 }
-                && path[0] == 'R'
-                && (path[1] == 'C' || path[1] == 'W')
-                && int.TryParse(path[2..], NumberStyles.Integer, CultureInfo.InvariantCulture, out int radius)
-                && radius > 0;
         }
     }
 }

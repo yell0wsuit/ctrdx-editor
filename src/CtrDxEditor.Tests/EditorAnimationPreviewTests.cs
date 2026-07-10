@@ -135,6 +135,25 @@ namespace CtrDxEditor.Tests
             Assert.True(available is true);
         }
 
+        /// <summary>Plain point mover paths expose the same row preview affordance as RC/RW orbit paths.</summary>
+        [Fact]
+        public void PlainPathObjectHasAnimationPreviewAvailable()
+        {
+            LevelObject star = new(new XElement("star",
+                new XAttribute("x", "20"),
+                new XAttribute("y", "30"),
+                new XAttribute("path", "100,0,100,50"),
+                new XAttribute("moveSpeed", "70")));
+
+            object? available = SpinPreviewConverters.Available.Convert(
+                star,
+                typeof(bool),
+                parameter: null,
+                CultureInfo.InvariantCulture);
+
+            Assert.True(available is true);
+        }
+
         /// <summary>Electro timing can be previewed even without spin or orbit mover attributes.</summary>
         [Fact]
         public void ElectroTimingHasAnimationPreviewAvailable()

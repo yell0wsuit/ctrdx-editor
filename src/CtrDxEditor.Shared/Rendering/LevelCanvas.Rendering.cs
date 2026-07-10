@@ -79,7 +79,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (ShowMovementPaths)
                 {
-                    LevelSceneRenderer.DrawOrbitPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow);
+                    LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow);
                 }
                 if (!IsAnimationPreviewing(obj))
                 {

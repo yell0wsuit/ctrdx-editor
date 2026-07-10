@@ -74,13 +74,13 @@ namespace CtrDxEditor.Tests
             vm.SelectedObject = star;
 
             Assert.False(vm.Fields.Single(f => f.Name == "spin").BoolValue);
-            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
 
             Assert.Null(star.GetAttr("rotateSpeed"));
             Assert.Equal("RC30", star.GetAttr("path"));
             Assert.Equal("70", star.GetAttr("moveSpeed"));
             Assert.False(vm.Fields.Single(f => f.Name == "spin").BoolValue);
-            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Equal("orbit", vm.Fields.Single(f => f.Name == "movementMode").Value);
             Assert.DoesNotContain(vm.Fields, f => f.Name == "spinSpeed");
             Assert.DoesNotContain(vm.Fields, f => f.Name == "spinClockwise");
             AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
@@ -107,7 +107,7 @@ namespace CtrDxEditor.Tests
             vm.LoadLevelXml(Level);
             LevelObject star = vm.Document!.Objects[0];
             vm.SelectedObject = star;
-            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
             AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
 
             radius.Value = string.Empty;
@@ -115,7 +115,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(string.Empty, radius.Value);
             Assert.Equal("RC", star.GetAttr("path"));
             Assert.Equal("70", star.GetAttr("moveSpeed"));
-            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Equal("orbit", vm.Fields.Single(f => f.Name == "movementMode").Value);
             Assert.Contains(vm.Fields, f => f.Name == "orbitRadius");
             Assert.Contains(vm.Fields, f => f.Name == "orbitSpeed");
 
@@ -123,7 +123,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("RC45", star.GetAttr("path"));
             Assert.Equal("45", radius.Value);
-            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Equal("orbit", vm.Fields.Single(f => f.Name == "movementMode").Value);
         }
 
         /// <summary>Clearing orbit speed behaves like timed-star duration and keeps orbit fields visible.</summary>
@@ -134,14 +134,14 @@ namespace CtrDxEditor.Tests
             vm.LoadLevelXml(Level);
             LevelObject star = vm.Document!.Objects[0];
             vm.SelectedObject = star;
-            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
             AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "orbitSpeed");
 
             speed.Value = string.Empty;
 
             Assert.Equal(string.Empty, speed.Value);
             Assert.Equal(string.Empty, star.GetAttr("moveSpeed"));
-            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Equal("orbit", vm.Fields.Single(f => f.Name == "movementMode").Value);
             Assert.Contains(vm.Fields, f => f.Name == "orbitRadius");
             Assert.Contains(vm.Fields, f => f.Name == "orbitSpeed");
 
@@ -149,7 +149,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("130", star.GetAttr("moveSpeed"));
             Assert.Equal("130", speed.Value);
-            Assert.True(vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue);
+            Assert.Equal("orbit", vm.Fields.Single(f => f.Name == "movementMode").Value);
         }
 
         /// <summary>Clearing spin speed behaves like timed-star duration: it stays visible while editing.</summary>
@@ -187,7 +187,7 @@ namespace CtrDxEditor.Tests
             vm.SelectedObject = star;
 
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
-            vm.Fields.Single(f => f.Name == "spinOrbital").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
 
             Assert.Equal("70", star.GetAttr("rotateSpeed"));
             Assert.Equal("RC30", star.GetAttr("path"));
@@ -212,6 +212,35 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.ObjectListVersion > version);
             Assert.Same(star, vm.SelectedObject);
             Assert.Contains(star, vm.ObjectList);
+        }
+
+        /// <summary>Polyline movement is mutually exclusive with orbit but preserves independent spin.</summary>
+        [Fact]
+        public void SwitchingStarMovementModeBetweenOrbitAndPolylinePreservesSpin()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "polyline";
+
+            Assert.Equal("70", star.GetAttr("rotateSpeed"));
+            Assert.Equal("100,0", star.GetAttr("path"));
+            Assert.Equal("70", star.GetAttr("moveSpeed"));
+            Assert.Equal("polyline", vm.Fields.Single(f => f.Name == "movementMode").Value);
+            Assert.Contains(vm.Fields, f => f.Name == "polylineSpeed");
+            Assert.Contains(vm.Fields, f => f.Name == "polylineLoop");
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "orbitRadius");
+
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "none";
+
+            Assert.Equal("70", star.GetAttr("rotateSpeed"));
+            Assert.Null(star.GetAttr("path"));
+            Assert.Null(star.GetAttr("moveSpeed"));
+            Assert.Equal("none", vm.Fields.Single(f => f.Name == "movementMode").Value);
         }
     }
 }

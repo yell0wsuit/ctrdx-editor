@@ -861,6 +861,51 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Draws the movement path used by active DX mover data.</summary>
+        public static void DrawMovementPath(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pathPen, Pen arrowPen)
+        {
+            if (ObjectSpin.IsOrbital(obj))
+            {
+                DrawOrbitPath(ctx, v, obj, pathPen, arrowPen);
+                return;
+            }
+
+            Point[] points = ComputeMovementPathPoints(v, obj);
+            if (points.Length < 2)
+            {
+                return;
+            }
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                ctx.DrawLine(pathPen, points[i], points[(i + 1) % points.Length]);
+            }
+        }
+
+        /// <summary>Computes screen-space points for the active DX movement path.</summary>
+        public static Point[] ComputeMovementPathPoints(ViewTransform v, LevelObject obj)
+        {
+            if (!MoverPath.HasActiveMovement(obj))
+            {
+                return [];
+            }
+
+            if (ObjectSpin.IsOrbital(obj))
+            {
+                return ComputeOrbitPathPoints(v, obj);
+            }
+
+            Vec2[] points = MoverPath.Points(new Vec2(obj.X, obj.Y), obj.GetAttr("path"));
+            Point[] screenPoints = new Point[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                Vec2 screen = v.LevelToScreen(points[i]);
+                screenPoints[i] = new Point(screen.X, screen.Y);
+            }
+
+            return screenPoints;
+        }
+
         /// <summary>Computes screen-space points for the circular orbit path centered on authored object coordinates.</summary>
         public static Point[] ComputeOrbitPathPoints(ViewTransform v, LevelObject obj)
         {

@@ -277,6 +277,29 @@ namespace CtrDxEditor.Tests
             });
         }
 
+        /// <summary>Plain movement path overlays follow DX's authored start plus relative point offsets.</summary>
+        [Fact]
+        public void MovementPathPointsFollowPlainDxOffsets()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeMovementPathPoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject star = new(new XElement(
+                "star",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("path", "100,0,100,50"),
+                new XAttribute("moveSpeed", "70")));
+
+            Point[] points = (Point[])method.Invoke(null, [ViewTransform.Identity, star])!;
+
+            Assert.Equal(3, points.Length);
+            Assert.Equal(new Point(100, 200), points[0]);
+            Assert.Equal(new Point(200, 200), points[1]);
+            Assert.Equal(new Point(200, 250), points[2]);
+        }
+
         /// <summary>The orbit direction arrow sits on the circle tangent and follows RC/RW direction.</summary>
         [Fact]
         public void OrbitArrowDirectionFollowsPathPrefix()
