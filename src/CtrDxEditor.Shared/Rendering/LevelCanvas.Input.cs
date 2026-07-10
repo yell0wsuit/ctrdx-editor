@@ -357,7 +357,10 @@ namespace CtrDxEditor.Rendering
 
         private bool HitBoundContains(LevelObject obj, LevelBounds bounds, Vec2 point)
         {
-            return LevelSceneRenderer.SelectionContains(obj, bounds, point, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
+            // An animating object (moving or spinning) is a moving target whose hit box no longer matches where it's
+            // drawn, so it can't be picked until the preview stops. Static objects stay editable.
+            return !IsAnimatingInPreview(obj)
+                && LevelSceneRenderer.SelectionContains(obj, bounds, point, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
         }
 
         private int TopmostHit(IReadOnlyList<LevelObject> objects, List<LevelBounds> bounds, Vec2 point, int afterIndex = -1)

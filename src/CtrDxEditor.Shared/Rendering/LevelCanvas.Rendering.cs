@@ -128,7 +128,9 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            LevelObject? selected = SelectedObject;
+            // Selection chrome (outline, edit handles, rotation dial) is hidden while the selected object is a
+            // moving preview target — it isn't pickable, and drawing chrome at its stale home position would mislead.
+            LevelObject? selected = SelectedObject is { } s && !IsAnimatingInPreview(s) ? s : null;
             if (selected is not null)
             {
                 LevelBounds sb = LevelSceneRenderer.SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
@@ -395,6 +397,16 @@ namespace CtrDxEditor.Rendering
         {
             return AnimationPreviewMode == CtrDxEditor.ViewModels.AnimationPreviewMode.All
                 || (AnimationPreviewMode == CtrDxEditor.ViewModels.AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj));
+        }
+
+        /// <summary>
+        /// True when the object is animating during preview — moving along a path/orbit or spinning in place — so
+        /// its drawn transform no longer matches its authored one. Such an object can't be picked and its selection
+        /// chrome (outline, handles, rotation ring) is hidden until the preview stops.
+        /// </summary>
+        private bool IsAnimatingInPreview(LevelObject obj)
+        {
+            return IsAnimationPreviewing(obj) && (MoverPath.HasActiveMovement(obj) || ObjectSpin.IsSpinning(obj));
         }
 
         private double PreviewSpinDegrees(LevelObject obj)
