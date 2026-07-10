@@ -6,6 +6,7 @@ using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
+using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.ViewModels
 {
@@ -155,9 +156,9 @@ namespace CtrDxEditor.ViewModels
             fields.Add(new AttributeFieldViewModel(
                 "movementMode",
                 [
-                    new AttributeOptionViewModel("none", "none"),
-                    new AttributeOptionViewModel("orbit", "orbit"),
-                    new AttributeOptionViewModel("polyline", "polyline"),
+                    new AttributeOptionViewModel("none", Localizer.Get("Attr.movementMode.none")),
+                    new AttributeOptionViewModel("orbit", Localizer.Get("Attr.movementMode.orbit")),
+                    new AttributeOptionViewModel("polyline", Localizer.Get("Attr.movementMode.polyline")),
                 ],
                 () => movementMode,
                 v =>

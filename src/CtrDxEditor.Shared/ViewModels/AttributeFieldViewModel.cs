@@ -35,7 +35,7 @@ namespace CtrDxEditor.ViewModels
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
             EnumValues = enumValues;
-            EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, LabelForOption(name, v))).ToArray();
+            EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(name, v))).ToArray();
             _get = () => target.GetAttr(name);
             _set = v => target.SetAttr(name, v ?? string.Empty);
             _onChanging = onChanging ?? (() => { });
@@ -167,18 +167,6 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(Value));
             OnPropertyChanged(nameof(SelectedOption));
             OnPropertyChanged(nameof(BoolValue));
-        }
-
-        private static string LabelForOption(string attribute, string value)
-        {
-            return attribute == "part"
-                ? value switch
-                {
-                    "L" => "left",
-                    "R" => "right",
-                    _ => value,
-                }
-                : value;
         }
 
         private string? DisplayValue(string? value)

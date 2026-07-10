@@ -130,8 +130,8 @@
 
     "Object.target": "Om Nom",
     "Object.candy": "Candy",
-    "Object.candyL": "Candy (Left)",
-    "Object.candyR": "Candy (Right)",
+    "Object.candyL": "Candy (left)",
+    "Object.candyR": "Candy (right)",
     "Object.star": "Star",
     "Object.grab": "Rope hook",
     "Object.bubble": "Bubble",
@@ -176,11 +176,13 @@
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Spin speed",
     "Attr.spinClockwise": "Spin clockwise",
-    "Attr.spinOrbital": "Orbit object",
     "Attr.movementMode": "Movement",
+    "Attr.movementMode.none": "None",
+    "Attr.movementMode.orbit": "Orbit",
+    "Attr.movementMode.polyline": "Polyline",
     "Attr.orbitRadius": "Orbit radius",
     "Attr.orbitSpeed": "Orbit speed",
     "Attr.orbitClockwise": "Orbit clockwise",
     "Attr.polylineSpeed": "Polyline speed",
-    "Attr.polylineRetrace": "Bounce (out and back)"
+    "Attr.polylineRetrace": "Back and forth"
 }

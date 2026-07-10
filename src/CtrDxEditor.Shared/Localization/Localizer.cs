@@ -85,5 +85,11 @@ namespace CtrDxEditor.Localization
         {
             return Strings.TryGetValue($"Attr.{name}", out string? value) ? value : name;
         }
+
+        /// <summary>Display label for an enum option value; falls back to the raw value when no string is defined.</summary>
+        public static string AttributeOption(string attribute, string value)
+        {
+            return Strings.TryGetValue($"Attr.{attribute}.{value}", out string? label) ? label : value;
+        }
     }
 }
