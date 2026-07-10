@@ -72,9 +72,10 @@ namespace CtrDxEditor.Rendering
 
             double minX = double.MaxValue, minY = double.MaxValue;
             double maxX = double.MinValue, maxY = double.MinValue;
+            double offsetY = SockPlacementOffsetY(obj, sprite);
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
-                LevelBounds d = SpritePlacement.Compute(layer.Frame, obj.X, obj.Y, sprite.Scale).Dest;
+                LevelBounds d = SpritePlacement.Compute(layer.Frame, obj.X, obj.Y + offsetY, sprite.Scale).Dest;
                 minX = Math.Min(minX, d.X);
                 minY = Math.Min(minY, d.Y);
                 maxX = Math.Max(maxX, d.X + d.W);
@@ -163,10 +164,14 @@ namespace CtrDxEditor.Rendering
                 if (sprites.GetSprite(CanvasSpriteKey(rotKey, nightLevel), candySkin, omNomSupport) is { } rotSprite)
                 {
                     double deg = ObjectRotation.DisplayDegrees(obj, rotSpec) + (spinRotation ?? 0.0);
+                    double offsetY = SockPlacementOffsetY(obj, rotSprite);
                     foreach (SpriteLayerDraw layer in rotSprite.Layers)
                     {
-                        DrawLayer(ctx, v, layer, x, y, rotSprite.Scale, deg);
+                        DrawLayer(ctx, v, layer, x, y, rotSprite.Scale, deg, offsetY);
                     }
+                    DrawOverlays(ctx, v, sprites, obj, x, y);
+                    DrawBindingIdLabel(ctx, v, obj, objects, x, y + offsetY);
+                    return;
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
                 DrawBindingIdLabel(ctx, v, obj, objects, x, y);
@@ -417,6 +422,23 @@ namespace CtrDxEditor.Rendering
 
             int index = group.IndexOf(obj);
             return index >= 0 ? index.ToString(CultureInfo.InvariantCulture) : null;
+        }
+
+        /// <summary>
+        /// The magic hat's downward sprite offset (see <see cref="SockSprite"/>), or 0 for any other object.
+        /// The hat sprite is drawn offset from its collision anchor but still rotates about it, so the offset
+        /// applies to placement (and marquee / label) but never to the rotation center.
+        /// </summary>
+        private static double SockPlacementOffsetY(LevelObject obj, ObjectSprite sprite)
+        {
+            return SockPlacementOffsetY(obj.Type, sprite);
+        }
+
+        private static double SockPlacementOffsetY(string element, ObjectSprite sprite)
+        {
+            return element == "sock" && sprite.Layers.Count > 0
+                ? SockSprite.DrawOffsetY(sprite.Layers[0].Frame.SourceSize.H, sprite.Scale)
+                : 0.0;
         }
 
         private static void DrawBindingIdLabel(
@@ -739,9 +761,10 @@ namespace CtrDxEditor.Rendering
         {
             double rotation = PreviewRotationDegrees(element);
             double? rotationOrNone = rotation == 0 ? null : rotation;
+            double offsetY = SockPlacementOffsetY(element, sprite);
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
-                DrawLayer(ctx, v, layer, x, y, sprite.Scale, rotationOrNone);
+                DrawLayer(ctx, v, layer, x, y, sprite.Scale, rotationOrNone, offsetY);
             }
         }
 
@@ -759,6 +782,11 @@ namespace CtrDxEditor.Rendering
         /// <param name="y">Anchor Y in level units.</param>
         /// <param name="scale">Sprite scale factor.</param>
         /// <param name="rotationDegrees">Rotation about the anchor in degrees, or null for no rotation.</param>
+        /// <param name="placementOffsetY">
+        /// Level-space vertical shift of the drawn sprite that does NOT move the rotation anchor. Used by the
+        /// magic hat, whose sprite is offset from its (collision) anchor but still rotates about it. See
+        /// <see cref="SockSprite"/>.
+        /// </param>
         private static void DrawLayer(
             DrawingContext ctx,
             ViewTransform v,
@@ -766,9 +794,10 @@ namespace CtrDxEditor.Rendering
             double x,
             double y,
             double scale,
-            double? rotationDegrees = null)
+            double? rotationDegrees = null,
+            double placementOffsetY = 0.0)
         {
-            SpriteLayout layout = SpritePlacement.Compute(layer.Frame, x, y, scale);
+            SpriteLayout layout = SpritePlacement.Compute(layer.Frame, x, y + placementOffsetY, scale);
             Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
             Vec2 dtl = v.LevelToScreen(new Vec2(layout.Dest.X, layout.Dest.Y));
             Vec2 dbr = v.LevelToScreen(new Vec2(layout.Dest.X + layout.Dest.W, layout.Dest.Y + layout.Dest.H));

@@ -225,6 +225,29 @@ namespace CtrDxEditor.Tests
             Assert.Equal(318.167, points[1].Y, 3);
         }
 
+        /// <summary>
+        /// The magic hat's selection marquee sits below the object anchor, matching the game, which draws the
+        /// hat sprite offset from its (collision) anchor. A naive center-anchored hat would sit above it.
+        /// </summary>
+        [Fact]
+        public void SockSelectionBoundsSitBelowAnchorByGameOffset()
+        {
+            SpriteCache sprites = SeedHatAtlases();
+            LevelObject sock = new(new XElement("sock", new XAttribute("x", "0"), new XAttribute("y", "0")));
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "SelectionBounds",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            LevelBounds bounds = (LevelBounds)method.Invoke(null, [sprites, sock, 0, 0, false])!;
+
+            // The visible sprite center should be the game's downward offset applied to the same frame.
+            double offsetY = SockSprite.DrawOffsetY(431, 0.7);
+            LevelBounds dest = SpritePlacement.Compute(Frame("frame_0000.png", 296, 337, 52, 5, 431, 431), 0, offsetY, 0.7).Dest;
+            Assert.Equal(dest.Y + (dest.H / 2.0), bounds.Y + (bounds.H / 2.0), precision: 6);
+            Assert.True(bounds.Y + (bounds.H / 2.0) > 0, "hat marquee should sit below the anchor");
+        }
+
         /// <summary>Spin arrows use the rotateSpeed sign: positive sweeps clockwise, negative counter-clockwise.</summary>
         [Fact]
         public void SpinArrowDirectionFollowsRotateSpeedSign()
@@ -411,6 +434,25 @@ namespace CtrDxEditor.Tests
                     .. EmptyFrames(11),
                     Frame("obj_spikes_04_frame_0000.png", 568, 95, 132, 75, 833, 250),
                 ]),
+            });
+            return cache;
+        }
+
+        private static SpriteCache SeedHatAtlases()
+        {
+            SpriteCache cache = new(new FakeStore());
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/obj_hat.png"] = bitmap,
+                ["images/obj_sock_xmas.png"] = bitmap,
+            });
+            // Both seasonal atlases share the hat's 431x431 source frame so the test is season-independent.
+            AtlasFrame hat = Frame("frame_0000.png", 296, 337, 52, 5, 431, 431);
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/obj_hat.json"] = new Atlas([hat]),
+                ["images/obj_sock_xmas.json"] = new Atlas([hat]),
             });
             return cache;
         }
