@@ -139,6 +139,7 @@ namespace CtrDxEditor.Rendering
                 {
                     context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
                 }
+                DrawPolylinePointHandles(context, v, selected);
             }
 
             if (selected is not null && RotationTable.For(selected.Type) is { } rotSpec)
@@ -155,6 +156,63 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawSpritePreview(context, v, ghostSprite, ghostElement, _ghostLevel.X, _ghostLevel.Y);
                 }
             }
+        }
+
+        /// <summary>Draws editable handles, segment inserts, and the append nub for the selected polyline path.</summary>
+        private void DrawPolylinePointHandles(DrawingContext context, ViewTransform v, LevelObject obj)
+        {
+            string? path = obj.GetAttr("path");
+            if (string.IsNullOrWhiteSpace(path) || MoverPath.IsCircularPath(path))
+            {
+                return;
+            }
+
+            Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), path);
+            if (points.Length < 2)
+            {
+                return;
+            }
+
+            // Segment midpoint insert dots use fuller opacity so they read as interactive handles.
+            using (context.PushOpacity(0.6))
+            {
+                for (int i = 0; i < points.Length - 1; i++)
+                {
+                    Vec2 midpoint = new(
+                        (points[i].X + points[i + 1].X) / 2,
+                        (points[i].Y + points[i + 1].Y) / 2);
+                    Vec2 screen = v.LevelToScreen(midpoint);
+                    context.DrawEllipse(Brushes.White, _palette.OrbitPathArrow,
+                        new Point(screen.X, screen.Y), 3, 3);
+                }
+            }
+
+            // Waypoint handles are solid, with an outer ring when hovered or dragged.
+            for (int i = 1; i < points.Length; i++)
+            {
+                Vec2 screen = v.LevelToScreen(points[i]);
+                Point center = new(screen.X, screen.Y);
+                context.DrawEllipse(Brushes.White, _palette.OrbitPathArrow, center, 5, 5);
+                if (i == _polylineHoverPoint || i == _polylinePointDrag)
+                {
+                    context.DrawEllipse(null, _palette.OrbitPathArrow, center, 8, 8);
+                }
+            }
+
+            // The append nub follows the tip and fills when hovered.
+            Vec2 nub = PolylineNubPoint(obj);
+            Vec2 nubScreen = v.LevelToScreen(nub);
+            Point nubCenter = new(nubScreen.X, nubScreen.Y);
+            context.DrawEllipse(
+                _polylineNubHot ? Brushes.White : Brushes.Transparent,
+                _palette.OrbitPathArrow,
+                nubCenter,
+                7,
+                7);
+            context.DrawLine(_palette.OrbitPathArrow,
+                new Point(nubScreen.X - 3, nubScreen.Y), new Point(nubScreen.X + 3, nubScreen.Y));
+            context.DrawLine(_palette.OrbitPathArrow,
+                new Point(nubScreen.X, nubScreen.Y - 3), new Point(nubScreen.X, nubScreen.Y + 3));
         }
 
         /// <summary>

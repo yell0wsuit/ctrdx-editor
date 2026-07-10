@@ -208,6 +208,119 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Whether an object has a non-circular path that supports direct polyline editing.</summary>
+        private static bool IsEditablePolyline(LevelObject obj)
+        {
+            string? path = obj.GetAttr("path");
+            return !string.IsNullOrWhiteSpace(path) && !MoverPath.IsCircularPath(path);
+        }
+
+        /// <summary>Returns the selected canonical waypoint under a level point, or -1.</summary>
+        private int HitPolylinePoint(Vec2 levelPt)
+        {
+            return SelectedObject is { } obj && View.Zoom > 0 && IsEditablePolyline(obj)
+                ? MoverPath.HitCanonicalPoint(
+                    new Vec2(obj.X, obj.Y), obj.GetAttr("path"), levelPt, tolerance: 9 / View.Zoom)
+                : -1;
+        }
+
+        /// <summary>Returns the segment whose midpoint insert handle is under a level point, or -1.</summary>
+        private int HitPolylineSegment(Vec2 levelPt)
+        {
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj))
+            {
+                return -1;
+            }
+
+            Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), obj.GetAttr("path"));
+            double tolerance = 7 / View.Zoom;
+            double toleranceSquared = tolerance * tolerance;
+            for (int i = 0; i < points.Length - 1; i++)
+            {
+                Vec2 midpoint = new(
+                    (points[i].X + points[i + 1].X) / 2,
+                    (points[i].Y + points[i + 1].Y) / 2);
+                double dx = midpoint.X - levelPt.X;
+                double dy = midpoint.Y - levelPt.Y;
+                if ((dx * dx) + (dy * dy) <= toleranceSquared)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>Level-space position of the append "+" nub: ~24 px past the last waypoint along the last segment.</summary>
+        private Vec2 PolylineNubPoint(LevelObject obj)
+        {
+            Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), obj.GetAttr("path"));
+            Vec2 tip = points[^1];
+            Vec2 direction = points.Length >= 2
+                ? new Vec2(tip.X - points[^2].X, tip.Y - points[^2].Y)
+                : new Vec2(1, 0);
+            double length = Math.Sqrt((direction.X * direction.X) + (direction.Y * direction.Y));
+            if (length < 0.0001)
+            {
+                direction = new Vec2(1, 0);
+                length = 1;
+            }
+
+            double offset = 24 / View.Zoom;
+            return new Vec2(
+                tip.X + (direction.X / length * offset),
+                tip.Y + (direction.Y / length * offset));
+        }
+
+        /// <summary>True when the pointer is over the append nub for the selected editable polyline.</summary>
+        private bool HitPolylineNub(Vec2 levelPt)
+        {
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj))
+            {
+                return false;
+            }
+
+            Vec2 nub = PolylineNubPoint(obj);
+            double tolerance = 9 / View.Zoom;
+            double dx = nub.X - levelPt.X;
+            double dy = nub.Y - levelPt.Y;
+            return (dx * dx) + (dy * dy) <= tolerance * tolerance;
+        }
+
+        /// <summary>Rounds a point to whole units after snapping its direction from an anchor to 45-degree increments.</summary>
+        private static (int X, int Y) SnapAngle(Vec2 anchor, Vec2 point)
+        {
+            double dx = point.X - anchor.X;
+            double dy = point.Y - anchor.Y;
+            double length = Math.Sqrt((dx * dx) + (dy * dy));
+            if (length < 0.0001)
+            {
+                return ((int)Math.Round(point.X), (int)Math.Round(point.Y));
+            }
+
+            double angle = Math.Round(Math.Atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+            return (
+                (int)Math.Round(anchor.X + (Math.Cos(angle) * length)),
+                (int)Math.Round(anchor.Y + (Math.Sin(angle) * length)));
+        }
+
+        /// <summary>Deletes a single canonical waypoint from the selected polyline, reconnecting neighbors.</summary>
+        private void DeleteSelectedPolylineVertex(int index)
+        {
+            if (index <= 0 || SelectedObject is not { } obj)
+            {
+                return;
+            }
+
+            BeginDocumentEdit?.Invoke();
+            obj.SetAttr("path", MoverPath.DeleteCanonicalPoint(
+                new Vec2(obj.X, obj.Y), obj.GetAttr("path"), index));
+            _polylineHoverPoint = -1;
+            SelectedObjectMoved?.Invoke();
+            CompleteDocumentEdit?.Invoke();
+            InvalidateVisual();
+        }
+
         /// <summary>Finds the index of an object within the list by reference/value equality.</summary>
         /// <param name="objects">The object list to search.</param>
         /// <param name="target">The object to locate.</param>
@@ -283,13 +396,23 @@ namespace CtrDxEditor.Rendering
                 e.Pointer.Capture(this);
                 return;
             }
+
+            Point p = e.GetPosition(this);
+            Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
+            if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+            {
+                int rightHit = HitPolylinePoint(levelPt);
+                if (rightHit > 0)
+                {
+                    DeleteSelectedPolylineVertex(rightHit);
+                    e.Handled = true;
+                }
+                return;
+            }
             if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 return;
             }
-
-            Point p = e.GetPosition(this);
-            Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
             // Grabbing the auto-catch ring resizes the radius; it takes priority over object hit-testing
             // (the ring can sit over other objects) but not over a middle-button pan.
@@ -346,6 +469,53 @@ namespace CtrDxEditor.Rendering
                 ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
+                e.Pointer.Capture(this);
+                return;
+            }
+
+            int pointHit = HitPolylinePoint(levelPt);
+            if (pointHit > 0 && SelectedObject is not null)
+            {
+                BeginDocumentEdit?.Invoke();
+                _polylinePointDrag = pointHit;
+                e.Handled = true;
+                e.Pointer.Capture(this);
+                return;
+            }
+
+            int segmentHit = HitPolylineSegment(levelPt);
+            if (segmentHit >= 0 && SelectedObject is { } segmentObj)
+            {
+                Vec2 start = new(segmentObj.X, segmentObj.Y);
+                Vec2[] points = MoverPath.CanonicalPoints(start, segmentObj.GetAttr("path"));
+                (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
+                    ? SnapAngle(points[segmentHit], levelPt)
+                    : Snap(levelPt);
+                BeginDocumentEdit?.Invoke();
+                segmentObj.SetAttr("path", MoverPath.InsertCanonicalPoint(
+                    start, segmentObj.GetAttr("path"), segmentHit, new Vec2(x, y)));
+                SelectedObjectMoved?.Invoke();
+                _polylinePointDrag = segmentHit + 1;
+                InvalidateVisual();
+                e.Handled = true;
+                e.Pointer.Capture(this);
+                return;
+            }
+
+            if (HitPolylineNub(levelPt) && SelectedObject is { } nubObj)
+            {
+                Vec2 start = new(nubObj.X, nubObj.Y);
+                Vec2[] points = MoverPath.CanonicalPoints(start, nubObj.GetAttr("path"));
+                (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
+                    ? SnapAngle(points[^1], levelPt)
+                    : Snap(levelPt);
+                BeginDocumentEdit?.Invoke();
+                nubObj.SetAttr("path", MoverPath.AppendCanonicalPoint(
+                    start, nubObj.GetAttr("path"), new Vec2(x, y)));
+                SelectedObjectMoved?.Invoke();
+                _polylinePointDrag = MoverPath.CanonicalPoints(start, nubObj.GetAttr("path")).Length - 1;
+                InvalidateVisual();
+                e.Handled = true;
                 e.Pointer.Capture(this);
                 return;
             }
@@ -444,6 +614,23 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_polylinePointDrag > 0 && SelectedObject is { } pathObj)
+            {
+                Vec2 start = new(pathObj.X, pathObj.Y);
+                Vec2[] points = MoverPath.CanonicalPoints(start, pathObj.GetAttr("path"));
+                if (_polylinePointDrag < points.Length)
+                {
+                    (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
+                        ? SnapAngle(points[_polylinePointDrag - 1], levelPt)
+                        : Snap(levelPt);
+                    pathObj.SetAttr("path", MoverPath.MoveCanonicalPoint(
+                        start, pathObj.GetAttr("path"), _polylinePointDrag, new Vec2(x, y)));
+                    SelectedObjectMoved?.Invoke();
+                    InvalidateVisual();
+                }
+                return;
+            }
+
             if (_panning)
             {
                 ScrollBy(_panLast.X - p.X, _panLast.Y - p.Y);
@@ -460,7 +647,18 @@ namespace CtrDxEditor.Rendering
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
                 SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
                 SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
-                Cursor = dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
+                int oldHoverPoint = _polylineHoverPoint;
+                bool oldNubHot = _polylineNubHot;
+                _polylineHoverPoint = HitPolylinePoint(levelPt);
+                _polylineNubHot = HitPolylineNub(levelPt);
+                bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
+                if (oldHoverPoint != _polylineHoverPoint || oldNubHot != _polylineNubHot)
+                {
+                    InvalidateVisual();
+                }
+                Cursor = _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
+                    ? new Cursor(StandardCursorType.Hand)
+                    : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : spikeHandle != SpikeResize.Handle.None ? CursorForSpikeResize()
                     : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
@@ -496,7 +694,7 @@ namespace CtrDxEditor.Rendering
         {
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
-            bool gestureActive = _dragging || _panning || _resizingRadius
+            bool gestureActive = _dragging || _panning || _resizingRadius || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None
                 || _rotating || _hookHovered;
             if (!gestureActive)
@@ -504,7 +702,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            bool editedDocument = _dragging || _resizingRadius
+            bool editedDocument = _dragging || _resizingRadius || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None || _rotating;
             _dragging = false;
             _panning = false;
@@ -512,6 +710,7 @@ namespace CtrDxEditor.Rendering
             _railDrag = GrabRail.Handle.None;
             _spikeResizeDrag = SpikeResize.Handle.None;
             _rotating = false;
+            _polylinePointDrag = -1;
             if (editedDocument)
             {
                 CompleteDocumentEdit?.Invoke();
@@ -526,6 +725,25 @@ namespace CtrDxEditor.Rendering
             base.OnPointerExited(e);
             SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
             SetDialKnobHovered(false); // nor the rotation knob
+            if (_polylineHoverPoint != -1 || _polylineNubHot)
+            {
+                _polylineHoverPoint = -1;
+                _polylineNubHot = false;
+                InvalidateVisual();
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if ((e.Key == Key.Delete || e.Key == Key.Back) && _polylineHoverPoint > 0)
+            {
+                DeleteSelectedPolylineVertex(_polylineHoverPoint);
+                e.Handled = true;
+                return;
+            }
+
+            base.OnKeyDown(e);
         }
 
         /// <inheritdoc />

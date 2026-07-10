@@ -235,6 +235,15 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while the cursor hovers the selected object's rotation knob (lights it up).</summary>
         private bool _dialKnobHovered;
 
+        /// <summary>Canonical waypoint currently being dragged, or -1 when no path point drag is active.</summary>
+        private int _polylinePointDrag = -1;
+
+        /// <summary>Canonical waypoint currently under the pointer, or -1.</summary>
+        private int _polylineHoverPoint = -1;
+
+        /// <summary>True while the pointer is over the append nub of the selected polyline.</summary>
+        private bool _polylineNubHot;
+
         /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;
 
