@@ -35,10 +35,13 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal("Magic Hat", sock.DisplayName);
             Assert.Equal(int.MaxValue, sock.MaxCount);
-            AttributeSpec group = Assert.Single(sock.Attributes);
+            AttributeSpec group = Assert.Single(sock.Attributes, a => a.Name == "group");
             Assert.Equal("group", group.Name);
             Assert.Equal(AttrType.Whole, group.Type);
             Assert.Equal("0", group.Default);
+            AttributeSpec angle = Assert.Single(sock.Attributes, a => a.Name == "angle");
+            Assert.Equal(AttrType.Number, angle.Type);
+            Assert.Equal("0", angle.Default);
         }
 
         /// <summary>Verifies that bubble is unbounded and has no editable attributes (game reads only x/y).</summary>

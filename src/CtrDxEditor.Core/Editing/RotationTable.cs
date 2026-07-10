@@ -30,9 +30,9 @@ namespace CtrDxEditor.Core.Editing
             ["spike3"] = new RotationSpec(DisplayOffset: 0),
             ["spike4"] = new RotationSpec(DisplayOffset: 0),
             ["electro"] = new RotationSpec(DisplayOffset: 0),
-            // LoadSock turns both seasonal atlases by +90. The game does not read a sock angle attribute,
-            // so these specs affect drawing and bounds but never expose the rotation dial.
-            ["sock"] = new RotationSpec(DisplayOffset: 90, Editable: false),
+            // CTRGameObject.ParseMover reads the authored sock angle, then LoadSock adds +90.
+            // Derived visual keys are thumbnail-only and retain the fixed turn without becoming editable objects.
+            ["sock"] = new RotationSpec(DisplayOffset: 90),
             ["sock_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),
             ["sock_xmas"] = new RotationSpec(DisplayOffset: 90, Editable: false),
             ["sock_xmas_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),

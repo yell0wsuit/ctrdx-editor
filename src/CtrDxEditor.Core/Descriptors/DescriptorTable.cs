@@ -63,6 +63,7 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("sock", "Magic Hat",
             [
                 new AttributeSpec("group", AttrType.Whole, "0"),
+                new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
 
             // Spike

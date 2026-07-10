@@ -63,6 +63,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(120, obj.X);
             Assert.Equal(240, obj.Y);
             Assert.Equal("0", obj.GetAttr("group"));
+            Assert.Equal("0", obj.GetAttr("angle"));
         }
     }
 }
