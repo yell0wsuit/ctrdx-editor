@@ -146,7 +146,7 @@ namespace CtrDxEditor.Rendering
                 DrawPolylinePointHandles(context, v, selected);
             }
 
-            if (selected is not null && RotationTable.For(selected.Type) is { } rotSpec)
+            if (selected is not null && RotationTable.EditableFor(selected.Type) is { } rotSpec)
             {
                 RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
             }

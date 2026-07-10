@@ -163,5 +163,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.Null(RotationTable.For("grab"));
             Assert.False(RotationTable.IsRotatable("star"));
         }
+
+        /// <summary>DX's sock art has a fixed 90-degree turn but no editable angle attribute.</summary>
+        [Theory]
+        [InlineData("sock")]
+        [InlineData("sock_grouped")]
+        [InlineData("sock_xmas")]
+        [InlineData("sock_xmas_grouped")]
+        public void SockVisualKeysHaveFixedNonEditableRotation(string key)
+        {
+            RotationSpec spec = RotationTable.For(key)!;
+
+            Assert.Equal(90, spec.DisplayOffset);
+            Assert.False(spec.Editable);
+            Assert.False(RotationTable.IsRotatable(key));
+            Assert.Null(RotationTable.EditableFor(key));
+        }
     }
 }

@@ -81,7 +81,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The dial handle under the point, or <see cref="ObjectRotation.Handle.None"/>.</returns>
         private ObjectRotation.Handle HitRotationDial(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || RotationTable.For(obj.Type) is not { } spec)
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || RotationTable.EditableFor(obj.Type) is not { } spec)
             {
                 return ObjectRotation.Handle.None;
             }
@@ -487,7 +487,7 @@ namespace CtrDxEditor.Rendering
             // Grabbing the selected object's rotation dial (knob or ring) rotates it; takes priority over
             // object hit-testing so the dial wins over anything beneath it.
             if (HitRotationDial(levelPt) != ObjectRotation.Handle.None
-                && SelectedObject is { } rotObj && RotationTable.For(rotObj.Type) is { } rotSpec)
+                && SelectedObject is { } rotObj && RotationTable.EditableFor(rotObj.Type) is { } rotSpec)
             {
                 BeginDocumentEdit?.Invoke();
                 _rotating = true;
@@ -631,7 +631,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (_rotating && SelectedObject is { } rotObj && RotationTable.For(rotObj.Type) is { } rotSpec)
+            if (_rotating && SelectedObject is { } rotObj && RotationTable.EditableFor(rotObj.Type) is { } rotSpec)
             {
                 ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();

@@ -8,7 +8,11 @@ namespace CtrDxEditor.Core.Editing
     /// <c>+90</c>, rocket <c>-180</c>, most others <c>0</c>). Positive is clockwise, matching the game's
     /// Y-down projection and Avalonia's Y-down screen space.
     /// </summary>
-    public sealed record RotationSpec(double DisplayOffset, string AttributeName = "angle", double SnapStep = 15);
+    public sealed record RotationSpec(
+        double DisplayOffset,
+        string AttributeName = "angle",
+        double SnapStep = 15,
+        bool Editable = true);
 
     /// <summary>
     /// Registry of which editor objects carry a rotation dial, keyed by XML element name. Parallels
@@ -26,6 +30,12 @@ namespace CtrDxEditor.Core.Editing
             ["spike3"] = new RotationSpec(DisplayOffset: 0),
             ["spike4"] = new RotationSpec(DisplayOffset: 0),
             ["electro"] = new RotationSpec(DisplayOffset: 0),
+            // LoadSock turns both seasonal atlases by +90. The game does not read a sock angle attribute,
+            // so these specs affect drawing and bounds but never expose the rotation dial.
+            ["sock"] = new RotationSpec(DisplayOffset: 90, Editable: false),
+            ["sock_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),
+            ["sock_xmas"] = new RotationSpec(DisplayOffset: 90, Editable: false),
+            ["sock_xmas_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),
         };
 
         /// <summary>The rotation spec for <paramref name="element"/>, or null when it does not rotate.</summary>
@@ -37,7 +47,16 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Whether <paramref name="element"/> carries a rotation dial.</summary>
         public static bool IsRotatable(string element)
         {
-            return Specs.ContainsKey(element);
+            return EditableFor(element) is not null;
+        }
+
+        /// <summary>Returns an editable rotation spec, or null for fixed visual turns and unknown elements.</summary>
+        /// <param name="element">XML element or visual key to look up.</param>
+        /// <returns>The spec only when the canvas may write its angle attribute.</returns>
+        public static RotationSpec? EditableFor(string element)
+        {
+            RotationSpec? spec = For(element);
+            return spec?.Editable == true ? spec : null;
         }
     }
 }

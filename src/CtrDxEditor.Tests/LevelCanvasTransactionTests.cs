@@ -79,6 +79,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("DrawPolylinePointHandles", rendering, StringComparison.Ordinal);
         }
 
+        /// <summary>Fixed visual rotations do not expose or accept canvas rotation-dial gestures.</summary>
+        [Fact]
+        public void RotationDialUsesOnlyEditableRotationSpecs()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            string rendering = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Rendering.cs"));
+
+            Assert.Contains("RotationTable.EditableFor(obj.Type)", input, StringComparison.Ordinal);
+            Assert.Contains("RotationTable.EditableFor(rotObj.Type)", input, StringComparison.Ordinal);
+            Assert.Contains("RotationTable.EditableFor(selected.Type)", rendering, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;
