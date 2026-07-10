@@ -197,6 +197,7 @@ namespace CtrDxEditor.Rendering
             {
                 "candy" => LabelForGroup(obj, objects, "candy", "candyNumber"),
                 "lightBulb" or "lightbulb" => LabelForGroup(obj, objects, obj.Type, "bulbNumber"),
+                "sock" => SockObject.GroupLabel(obj, objects),
                 _ => null,
             };
         }
