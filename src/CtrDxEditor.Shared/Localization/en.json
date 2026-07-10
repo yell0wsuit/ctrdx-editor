@@ -177,7 +177,10 @@
     "Attr.spinSpeed": "Spin speed",
     "Attr.spinClockwise": "Spin clockwise",
     "Attr.spinOrbital": "Orbit object",
+    "Attr.movementMode": "Movement",
     "Attr.orbitRadius": "Orbit radius",
     "Attr.orbitSpeed": "Orbit speed",
-    "Attr.orbitClockwise": "Orbit clockwise"
+    "Attr.orbitClockwise": "Orbit clockwise",
+    "Attr.polylineSpeed": "Polyline speed",
+    "Attr.polylineLoop": "Loop path"
 }

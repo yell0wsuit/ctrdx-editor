@@ -5,6 +5,7 @@ using System.Globalization;
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.ViewModels
 {
@@ -41,8 +42,6 @@ namespace CtrDxEditor.ViewModels
 
             bool spinning = ObjectSpin.IsSpinning(value);
             bool spinClockwise = ObjectSpin.SpinClockwise(value);
-            bool orbital = ObjectSpin.IsOrbital(value);
-            bool orbitClockwise = ObjectSpin.OrbitClockwise(value);
 
             AttributeFieldViewModel spin = new(
                 "spin",
@@ -134,120 +133,211 @@ namespace CtrDxEditor.ViewModels
                     onChanging));
             }
 
+            BuildMovement(fields, value, onChanged, onChanging, rebuild);
+        }
+
+        private static void BuildMovement(
+            IList<AttributeFieldViewModel> fields,
+            LevelObject value,
+            Action onChanged,
+            Action onChanging,
+            Action rebuild)
+        {
+            void Structural()
+            {
+                onChanged();
+                rebuild();
+            }
+
+            string movementMode = MovementMode(value);
+            bool orbitClockwise = ObjectSpin.OrbitClockwise(value);
+
             fields.Add(new AttributeFieldViewModel(
-                "spinOrbital",
-                AttrType.Bool,
-                () => orbital ? "true" : "false",
+                "movementMode",
+                [
+                    new AttributeOptionViewModel("none", "none"),
+                    new AttributeOptionViewModel("orbit", "orbit"),
+                    new AttributeOptionViewModel("polyline", "polyline"),
+                ],
+                () => movementMode,
                 v =>
                 {
-                    bool enabled = v == "true";
-
-                    int orbitRadius = ObjectSpin.OrbitRadius(value);
-                    if (enabled && orbitRadius <= 0)
+                    switch (v)
                     {
-                        orbitRadius = ObjectSpin.DefaultOrbitRadius;
+                        case "orbit":
+                            ObjectSpin.SetOrbital(
+                                value,
+                                enabled: true,
+                                ObjectSpin.OrbitRadius(value),
+                                ObjectSpin.OrbitClockwise(value));
+                            break;
+                        case "polyline":
+                            SetPolyline(value);
+                            break;
+                        default:
+                            value.RemoveAttr("path");
+                            value.RemoveAttr("moveSpeed");
+                            break;
                     }
-
-                    ObjectSpin.SetOrbital(
-                        value,
-                        enabled,
-                        orbitRadius,
-                        orbitClockwise);
 
                     Structural();
                 },
                 Structural,
                 onChanging));
 
-            if (orbital)
+            if (movementMode == "orbit")
             {
-                fields.Add(new AttributeFieldViewModel(
-                    "orbitRadius",
-                    AttrType.Whole,
-                    () => OrbitRadiusValue(value),
-                    v =>
+                BuildOrbit(fields, value, onChanged, onChanging, orbitClockwise);
+            }
+            else if (movementMode == "polyline")
+            {
+                BuildPolyline(fields, value, onChanged, onChanging);
+            }
+        }
+
+        private static void BuildOrbit(
+            IList<AttributeFieldViewModel> fields,
+            LevelObject value,
+            Action onChanged,
+            Action onChanging,
+            bool orbitClockwise)
+        {
+            fields.Add(new AttributeFieldViewModel(
+                "orbitRadius",
+                AttrType.Whole,
+                () => OrbitRadiusValue(value),
+                v =>
+                {
+                    int radius = int.TryParse(
+                        v,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out int parsed)
+                            ? parsed
+                            : 0;
+
+                    if (radius <= 0)
                     {
-                        int radius = int.TryParse(
-                            v,
-                            NumberStyles.Integer,
-                            CultureInfo.InvariantCulture,
-                            out int parsed)
-                                ? parsed
-                                : 0;
+                        value.SetAttr("path", OrbitPrefix(orbitClockwise) + (v ?? string.Empty));
+                        return;
+                    }
 
-                        if (radius <= 0)
-                        {
-                            value.SetAttr("path", OrbitPrefix(orbitClockwise) + (v ?? string.Empty));
-                            return;
-                        }
+                    ObjectSpin.SetOrbital(
+                        value,
+                        enabled: true,
+                        radius,
+                        orbitClockwise);
+                },
+                onChanged,
+                onChanging));
 
+            fields.Add(new AttributeFieldViewModel(
+                "orbitSpeed",
+                AttrType.Whole,
+                () => MoveSpeedValue(value),
+                v =>
+                {
+                    int speed = int.TryParse(
+                        v,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out int parsed)
+                            ? parsed
+                            : 0;
+
+                    if (speed <= 0)
+                    {
+                        value.SetAttr("moveSpeed", v ?? string.Empty);
+                        return;
+                    }
+
+                    ObjectSpin.SetOrbitSpeed(value, speed);
+                },
+                onChanged,
+                onChanging));
+
+            fields.Add(new AttributeFieldViewModel(
+                "orbitClockwise",
+                AttrType.Bool,
+                () => orbitClockwise ? "true" : "false",
+                v =>
+                {
+                    orbitClockwise = v == "true";
+                    string radiusValue = OrbitRadiusValue(value);
+                    string speedValue = MoveSpeedValue(value);
+                    if (int.TryParse(radiusValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int radius) && radius > 0)
+                    {
                         ObjectSpin.SetOrbital(
                             value,
                             enabled: true,
                             radius,
-                            orbitClockwise);
-                    },
-                    onChanged,
-                    onChanging));
-
-                fields.Add(new AttributeFieldViewModel(
-                    "orbitSpeed",
-                    AttrType.Whole,
-                    () => OrbitSpeedValue(value),
-                    v =>
-                    {
-                        int speed = int.TryParse(
-                            v,
-                            NumberStyles.Integer,
-                            CultureInfo.InvariantCulture,
-                            out int parsed)
-                                ? parsed
-                                : 0;
-
-                        if (speed <= 0)
+                            clockwise: orbitClockwise);
+                        if (int.TryParse(speedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int speed) && speed > 0)
                         {
-                            value.SetAttr("moveSpeed", v ?? string.Empty);
-                            return;
-                        }
-
-                        ObjectSpin.SetOrbitSpeed(value, speed);
-                    },
-                    onChanged,
-                    onChanging));
-
-                fields.Add(new AttributeFieldViewModel(
-                    "orbitClockwise",
-                    AttrType.Bool,
-                    () => orbitClockwise ? "true" : "false",
-                    v =>
-                    {
-                        orbitClockwise = v == "true";
-                        string radiusValue = OrbitRadiusValue(value);
-                        string speedValue = OrbitSpeedValue(value);
-                        if (int.TryParse(radiusValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int radius) && radius > 0)
-                        {
-                            ObjectSpin.SetOrbital(
-                                value,
-                                enabled: true,
-                                radius,
-                                clockwise: orbitClockwise);
-                            if (int.TryParse(speedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int speed) && speed > 0)
-                            {
-                                ObjectSpin.SetOrbitSpeed(value, speed);
-                            }
-                            else
-                            {
-                                value.SetAttr("moveSpeed", speedValue);
-                            }
+                            ObjectSpin.SetOrbitSpeed(value, speed);
                         }
                         else
                         {
-                            value.SetAttr("path", OrbitPrefix(orbitClockwise) + radiusValue);
+                            value.SetAttr("moveSpeed", speedValue);
                         }
-                    },
-                    onChanged,
-                    onChanging));
-            }
+                    }
+                    else
+                    {
+                        value.SetAttr("path", OrbitPrefix(orbitClockwise) + radiusValue);
+                    }
+                },
+                onChanged,
+                onChanging));
+        }
+
+        private static void BuildPolyline(
+            IList<AttributeFieldViewModel> fields,
+            LevelObject value,
+            Action onChanged,
+            Action onChanging)
+        {
+            fields.Add(new AttributeFieldViewModel(
+                "polylineSpeed",
+                AttrType.Whole,
+                () => MoveSpeedValue(value),
+                v =>
+                {
+                    int speed = int.TryParse(
+                        v,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out int parsed)
+                            ? parsed
+                            : 0;
+
+                    if (speed <= 0)
+                    {
+                        value.SetAttr("moveSpeed", v ?? string.Empty);
+                        return;
+                    }
+
+                    ObjectSpin.SetOrbitSpeed(value, speed);
+                },
+                onChanged,
+                onChanging));
+
+            fields.Add(new AttributeFieldViewModel(
+                "polylineLoop",
+                AttrType.Bool,
+                () => "true",
+                v =>
+                {
+                    if (v != "false")
+                    {
+                        return;
+                    }
+
+                    Vec2 start = new(value.X, value.Y);
+                    Vec2[] points = MoverPath.Points(start, value.GetAttr("path"));
+                    value.SetAttr("path", MoverPath.SerializePlain(start, points, loop: false));
+                },
+                onChanged,
+                onChanging));
         }
 
         private static string SpinSpeedValue(LevelObject value)
@@ -266,7 +356,7 @@ namespace CtrDxEditor.ViewModels
                 : ObjectSpin.OrbitRadius(value).ToString(CultureInfo.InvariantCulture);
         }
 
-        private static string OrbitSpeedValue(LevelObject value)
+        private static string MoveSpeedValue(LevelObject value)
         {
             string? raw = value.GetAttr("moveSpeed");
             return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out double speed) && speed != 0
@@ -277,6 +367,39 @@ namespace CtrDxEditor.ViewModels
         private static string OrbitPrefix(bool clockwise)
         {
             return clockwise ? "RC" : "RW";
+        }
+
+        private static string MovementMode(LevelObject value)
+        {
+            string? path = value.GetAttr("path");
+            return string.IsNullOrWhiteSpace(path) ? "none" : IsOrbitEditingPath(path) ? "orbit" : "polyline";
+        }
+
+        private static bool IsOrbitEditingPath(string path)
+        {
+            return path.Length >= 2 && path[0] == 'R' && (path[1] == 'C' || path[1] == 'W');
+        }
+
+        private static void SetPolyline(LevelObject value)
+        {
+            if (string.IsNullOrWhiteSpace(value.GetAttr("path")) || IsOrbitEditingPath(value.GetAttr("path")!))
+            {
+                value.SetAttr("path", "100,0");
+            }
+
+            int moveSpeed = MoveSpeed(value);
+            if (moveSpeed == 0)
+            {
+                moveSpeed = ObjectSpin.SpinSpeed(value);
+            }
+            value.SetAttr("moveSpeed", (moveSpeed > 0 ? moveSpeed : ObjectSpin.DefaultSpeed).ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static int MoveSpeed(LevelObject value)
+        {
+            return double.TryParse(value.GetAttr("moveSpeed"), NumberStyles.Float, CultureInfo.InvariantCulture, out double speed)
+                ? Math.Abs((int)speed)
+                : 0;
         }
     }
 }
