@@ -61,7 +61,9 @@ namespace CtrDxEditor.Rendering
             // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
             string selectionKey = SpikeObject.IsSpike(obj.Type)
                 ? SpikeObject.SpriteKey(obj)
-                : GrabRenderer.RenderSpriteKey(obj);
+                : obj.Type == "sock"
+                    ? SockObject.SpriteKey(obj, SpecialEvents.IsXmas)
+                    : GrabRenderer.RenderSpriteKey(obj);
             ObjectSprite? sprite = sprites.GetSprite(SelectionSpriteKey(selectionKey, nightLevel), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
@@ -204,6 +206,7 @@ namespace CtrDxEditor.Rendering
             return obj.Type switch
             {
                 "electro" => ElectroAnimation.SpriteKey(obj, animationPreviewSeconds),
+                "sock" => SockObject.SpriteKey(obj, SpecialEvents.IsXmas),
                 _ when SpikeObject.IsSpike(obj.Type) => SpikeObject.SpriteKey(obj),
                 _ => GrabRenderer.SpriteKey(obj),
             };
@@ -243,7 +246,23 @@ namespace CtrDxEditor.Rendering
         /// <returns>The sprite key to draw.</returns>
         public static string CanvasSpriteKey(LevelObject obj, bool nightLevel)
         {
-            return CanvasSpriteKey(SpikeObject.IsSpike(obj.Type) ? SpikeObject.SpriteKey(obj) : GrabRenderer.SpriteKey(obj), nightLevel);
+            return CanvasSpriteKey(obj, nightLevel, SpecialEvents.IsXmas);
+        }
+
+        /// <summary>Resolves an object's sprite key with explicit level and seasonal state.</summary>
+        /// <param name="obj">Object whose state selects the base sprite.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <param name="isXmas">Whether DX's Christmas event is active.</param>
+        /// <returns>The fully resolved sprite key.</returns>
+        public static string CanvasSpriteKey(LevelObject obj, bool nightLevel, bool isXmas)
+        {
+            string key = obj.Type switch
+            {
+                "sock" => SockObject.SpriteKey(obj, isXmas),
+                _ when SpikeObject.IsSpike(obj.Type) => SpikeObject.SpriteKey(obj),
+                _ => GrabRenderer.SpriteKey(obj),
+            };
+            return CanvasSpriteKey(key, nightLevel);
         }
 
         /// <summary>Applies night-level variants to a sprite element key (e.g. sleeping Om Nom target).</summary>

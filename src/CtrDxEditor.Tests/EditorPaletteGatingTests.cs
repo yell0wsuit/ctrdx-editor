@@ -195,6 +195,21 @@ namespace CtrDxEditor.Tests
             Assert.False(PaletteHas(vm, "spike4"));
         }
 
+        /// <summary>The palette shows the normal hat or Christmas sock without changing the XML element.</summary>
+        [Theory]
+        [InlineData(false, "sock")]
+        [InlineData(true, "sock_xmas")]
+        public void MagicHatPaletteKeyUsesChristmasPeriod(bool isXmas, string expected)
+        {
+            MethodInfo? method = typeof(EditorViewModel).GetMethod(
+                "PaletteSpriteKey",
+                BindingFlags.Static | BindingFlags.NonPublic,
+                [typeof(string), typeof(bool)]);
+            Assert.NotNull(method);
+
+            Assert.Equal(expected, method.Invoke(null, ["sock", isXmas]));
+        }
+
         private static void SetPrivateField<T>(object target, string name, T value)
         {
             FieldInfo? field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);

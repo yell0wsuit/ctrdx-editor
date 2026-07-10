@@ -153,7 +153,9 @@ namespace CtrDxEditor.Rendering
 
             // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
             if (_ghostActive && _ghostElement is { } ghostElement
-                && sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(ghostElement, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
+                && sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
+                    ghostElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : ghostElement,
+                    doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
             {
                 using (context.PushOpacity(0.7))
                 {

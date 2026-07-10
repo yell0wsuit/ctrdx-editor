@@ -301,7 +301,12 @@ namespace CtrDxEditor.ViewModels
 
         private static string PaletteSpriteKey(string element)
         {
-            return element;
+            return PaletteSpriteKey(element, SpecialEvents.IsXmas);
+        }
+
+        private static string PaletteSpriteKey(string element, bool isXmas)
+        {
+            return element == "sock" && isXmas ? "sock_xmas" : element;
         }
 
         // Candy type follows twoParts. When no document is

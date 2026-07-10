@@ -142,6 +142,26 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, key);
         }
 
+        /// <summary>Magic-hat canvas keys combine the current Christmas event with the authored group.</summary>
+        [Theory]
+        [InlineData("0", false, "sock")]
+        [InlineData("2", false, "sock_grouped")]
+        [InlineData("0", true, "sock_xmas")]
+        [InlineData("2", true, "sock_xmas_grouped")]
+        public void CanvasSpriteKeyUsesSockSeasonAndGroup(string group, bool isXmas, string expected)
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "CanvasSpriteKey",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+                [typeof(LevelObject), typeof(bool), typeof(bool)]);
+            Assert.NotNull(method);
+            LevelObject sock = new(new XElement("sock", new XAttribute("group", group)));
+
+            string key = (string)method.Invoke(null, [sock, false, isXmas])!;
+
+            Assert.Equal(expected, key);
+        }
+
         /// <summary>Night star selection keeps the normal star marquee instead of the smaller night atlas canvas.</summary>
         [Fact]
         public void NightStarSelectionBoundsUseNormalStarBounds()
