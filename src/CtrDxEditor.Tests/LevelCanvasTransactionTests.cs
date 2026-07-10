@@ -1,5 +1,10 @@
 using System;
 using System.IO;
+using System.Reflection;
+using System.Xml.Linq;
+
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Rendering;
 
 using Xunit;
 
@@ -77,6 +82,23 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("MoverPath.TruncateCanonicalFrom", input, StringComparison.Ordinal);
             Assert.DoesNotContain("_altCloseHot", rendering, StringComparison.Ordinal);
             Assert.Contains("DrawPolylinePointHandles", rendering, StringComparison.Ordinal);
+        }
+
+        /// <summary>The canvas treats only real polyline movement—not spin's static path—as node-editable.</summary>
+        [Theory]
+        [InlineData("0,0", false)]
+        [InlineData("100,0", true)]
+        [InlineData("0,0,100,50", true)]
+        [InlineData("RC30", false)]
+        public void CanvasPolylineEditingRequiresRealPolylineMovement(string path, bool expected)
+        {
+            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+                "IsEditablePolyline",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+            LevelObject obj = new(XElement.Parse($"""<star x="0" y="0" path="{path}" />"""));
+
+            Assert.Equal(expected, method.Invoke(null, [obj]));
         }
 
         private static string SourcePath(params string[] parts)

@@ -74,10 +74,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
-        /// <summary>Whether the selected object has a non-circular polyline path with direct-edit handles.</summary>
+        /// <summary>Whether the selected object has real polyline movement with direct-edit handles.</summary>
         public bool CanEditPolyline => SelectedObject is { } obj
-            && !string.IsNullOrWhiteSpace(obj.GetAttr("path"))
-            && !MoverPath.IsCircularPath(obj.GetAttr("path"));
+            && MoverPath.IsPolylineMovement(obj.GetAttr("path"));
 
         /// <summary>True when an undo snapshot is available.</summary>
         public bool CanUndo => _undoStack.Count > 0;

@@ -64,6 +64,27 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.Fields.Single(f => f.Name == "spinClockwise").BoolValue);
         }
 
+        /// <summary>Spin's static mover path does not expose polyline nodes until Polyline is selected.</summary>
+        [Fact]
+        public void CheckingSpinDoesNotEnablePolylineEditing()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            LevelObject star = vm.Document!.Objects[0];
+            vm.SelectedObject = star;
+
+            vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
+
+            Assert.Equal("0,0", star.GetAttr("path"));
+            Assert.Equal("none", vm.Fields.Single(f => f.Name == "movementMode").Value);
+            Assert.False(vm.CanEditPolyline);
+
+            vm.Fields.Single(f => f.Name == "movementMode").Value = "polyline";
+
+            Assert.Equal("100,0", star.GetAttr("path"));
+            Assert.True(vm.CanEditPolyline);
+        }
+
         /// <summary>Orbit can be enabled without rotateSpeed and exposes radius/direction separately.</summary>
         [Fact]
         public void CheckingStarOrbitWithoutSpinWritesCircularPathRadius()

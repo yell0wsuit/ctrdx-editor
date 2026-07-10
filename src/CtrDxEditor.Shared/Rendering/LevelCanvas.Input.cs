@@ -208,11 +208,10 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Whether an object has a non-circular path that supports direct polyline editing.</summary>
+        /// <summary>Whether an object has real polyline movement that supports direct node editing.</summary>
         private static bool IsEditablePolyline(LevelObject obj)
         {
-            string? path = obj.GetAttr("path");
-            return !string.IsNullOrWhiteSpace(path) && !MoverPath.IsCircularPath(path);
+            return MoverPath.IsPolylineMovement(obj.GetAttr("path"));
         }
 
         /// <summary>Returns the selected canonical waypoint under a level point, or -1.</summary>

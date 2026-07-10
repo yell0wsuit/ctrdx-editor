@@ -193,12 +193,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Draws editable handles, segment inserts, and the append nub for the selected polyline path.</summary>
         private void DrawPolylinePointHandles(DrawingContext context, ViewTransform v, LevelObject obj)
         {
-            string? path = obj.GetAttr("path");
-            if (string.IsNullOrWhiteSpace(path) || MoverPath.IsCircularPath(path))
+            if (!IsEditablePolyline(obj))
             {
                 return;
             }
 
+            string path = obj.GetAttr("path")!;
             Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), path);
             if (points.Length < 2)
             {
