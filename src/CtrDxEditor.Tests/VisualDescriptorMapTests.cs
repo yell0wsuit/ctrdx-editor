@@ -123,6 +123,35 @@ namespace CtrDxEditor.Tests
             Assert.Equal(0, layer.Quad);
         }
 
+        /// <summary>Magic hats use DX's normal and Christmas atlases, group quads, and 0.7 object scale.</summary>
+        [Theory]
+        [InlineData("sock", "images/obj_hat.json", "images/obj_hat", 0)]
+        [InlineData("sock_grouped", "images/obj_hat.json", "images/obj_hat", 1)]
+        [InlineData("sock_xmas", "images/obj_sock_xmas.json", "images/obj_sock_xmas", 0)]
+        [InlineData("sock_xmas_grouped", "images/obj_sock_xmas.json", "images/obj_sock_xmas", 1)]
+        public void SockDescriptorsMatchDxAtlasSelection(string key, string json, string imageBase, int quad)
+        {
+            VisualDescriptor sock = VisualDescriptorMap.For(key)!;
+            SpriteLayer layer = Assert.Single(sock.Layers);
+
+            Assert.Equal(json, layer.AtlasJsonRelPath);
+            Assert.Equal(imageBase, layer.AtlasImageBasePath);
+            Assert.Equal(quad, layer.Quad);
+            Assert.Equal(0.7, sock.Scale);
+        }
+
+        /// <summary>Both seasonal atlases are installed so a date change cannot remove magic-hat art.</summary>
+        [Fact]
+        public void RequiredFilesCoverNormalAndChristmasSockAtlases()
+        {
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+
+            Assert.Contains("images/obj_hat.json", required);
+            Assert.Contains("images/obj_hat.webp", required);
+            Assert.Contains("images/obj_sock_xmas.json", required);
+            Assert.Contains("images/obj_sock_xmas.webp", required);
+        }
+
         /// <summary>Verifies static spikes use obj_spikes quads 8-11 and rotatable spikes use quads 0-3 plus their group buttons.</summary>
         [Theory]
         [InlineData("spike1", 8, 0, 4, 6)]

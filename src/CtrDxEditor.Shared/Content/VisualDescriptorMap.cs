@@ -26,6 +26,10 @@ namespace CtrDxEditor.Content
         private const string SpikesImageBase = "images/obj_spikes";
         private const string ElectrodesJson = "images/obj_electrodes.json";
         private const string ElectrodesImageBase = "images/obj_electrodes";
+        private const string HatJson = "images/obj_hat.json";
+        private const string HatImageBase = "images/obj_hat";
+        private const string XmasSockJson = "images/obj_sock_xmas.json";
+        private const string XmasSockImageBase = "images/obj_sock_xmas";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -208,6 +212,13 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(PumpJson, PumpImageBase, 0),
             ]),
+
+            // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
+            // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.
+            new("sock", [new SpriteLayer(HatJson, HatImageBase, 0)], Scale: 0.7),
+            new("sock_grouped", [new SpriteLayer(HatJson, HatImageBase, 1)], Scale: 0.7),
+            new("sock_xmas", [new SpriteLayer(XmasSockJson, XmasSockImageBase, 0)], Scale: 0.7),
+            new("sock_xmas_grouped", [new SpriteLayer(XmasSockJson, XmasSockImageBase, 1)], Scale: 0.7),
 
             // Static spike quads. Game Spikes.GetSpikeTextureAndQuad maps width 1-4 to obj_spikes quads 8-11.
             new("spike1", [new SpriteLayer(SpikesJson, SpikesImageBase, 8)]),
