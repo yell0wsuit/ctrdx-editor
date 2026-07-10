@@ -33,6 +33,20 @@ namespace CtrDxEditor.Core.Editing
             return IsCircularPath(path) ? CircularPoints(start, path) : PlainPoints(start, path);
         }
 
+        /// <summary>Returns the object point plus editable canonical waypoints; retrace paths expose their outbound half.</summary>
+        public static Vec2[] CanonicalPoints(Vec2 start, string? path)
+        {
+            Vec2[] full = Points(start, path);
+            if (!IsRetrace(path))
+            {
+                return full;
+            }
+
+            int storedPointCount = full.Length - 1;
+            int outboundPointCount = (storedPointCount + 1) / 2;
+            return full[..(outboundPointCount + 1)];
+        }
+
         /// <summary>Computes the live-preview position for a DX mover path.</summary>
         public static Vec2 PreviewPosition(Vec2 start, string? path, int moveSpeed, double elapsedSeconds)
         {
@@ -86,20 +100,20 @@ namespace CtrDxEditor.Core.Editing
             return PreviewPosition(new Vec2(obj.X, obj.Y), obj.GetAttr("path"), RawMoveSpeed(obj), elapsedSeconds);
         }
 
-        /// <summary>Serializes absolute points to a plain DX offset path, optionally mirroring back home.</summary>
-        public static string SerializePlain(Vec2 start, IReadOnlyList<Vec2> absolutePoints, bool loop)
+        /// <summary>Serializes canonical absolute points to a plain DX offset path; retrace appends the reversed interior.</summary>
+        public static string Serialize(Vec2 start, IReadOnlyList<Vec2> canonicalAbsolutePoints, bool retrace)
         {
-            if (absolutePoints.Count <= 1)
+            if (canonicalAbsolutePoints.Count <= 1)
             {
                 return "0,0";
             }
 
-            List<Vec2> stored = [.. absolutePoints.Skip(1)];
-            if (!loop && absolutePoints.Count > 2)
+            List<Vec2> stored = [.. canonicalAbsolutePoints.Skip(1)];
+            if (retrace && canonicalAbsolutePoints.Count > 2)
             {
-                for (int i = absolutePoints.Count - 2; i >= 1; i--)
+                for (int i = canonicalAbsolutePoints.Count - 2; i >= 1; i--)
                 {
-                    stored.Add(absolutePoints[i]);
+                    stored.Add(canonicalAbsolutePoints[i]);
                 }
             }
 
@@ -113,6 +127,124 @@ namespace CtrDxEditor.Core.Editing
                 Vec2 offset = new(p.X - start.X, p.Y - start.Y);
                 return new[] { Format(offset.X), Format(offset.Y) };
             }));
+        }
+
+        /// <summary>Compatibility wrapper for serializing a looping or out-and-back plain path.</summary>
+        public static string SerializePlain(Vec2 start, IReadOnlyList<Vec2> absolutePoints, bool loop)
+        {
+            return Serialize(start, absolutePoints, retrace: !loop);
+        }
+
+        /// <summary>Returns true when a plain path stores an odd palindrome of out-and-back offsets.</summary>
+        public static bool IsRetrace(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
+            {
+                return false;
+            }
+
+            Vec2[] points = Points(new Vec2(0, 0), path);
+            int storedPointCount = points.Length - 1;
+            if (storedPointCount < 3 || storedPointCount % 2 == 0)
+            {
+                return false;
+            }
+
+            for (int i = 1; i <= storedPointCount / 2; i++)
+            {
+                if (points[i] != points[^i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>Returns the canonical waypoint index (>= 1) under the point, or -1.</summary>
+        public static int HitCanonicalPoint(Vec2 start, string? path, Vec2 point, double tolerance)
+        {
+            if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
+            {
+                return -1;
+            }
+
+            Vec2[] pts = CanonicalPoints(start, path);
+            double toleranceSquared = tolerance * tolerance;
+            for (int i = 1; i < pts.Length; i++)
+            {
+                double dx = pts[i].X - point.X;
+                double dy = pts[i].Y - point.Y;
+                if ((dx * dx) + (dy * dy) <= toleranceSquared)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>Moves one canonical waypoint and re-serializes, preserving retrace/circuit state.</summary>
+        public static string MoveCanonicalPoint(Vec2 start, string? path, int index, Vec2 newPoint)
+        {
+            Vec2[] pts = CanonicalPoints(start, path);
+            if (index <= 0 || index >= pts.Length || IsCircularPath(path))
+            {
+                return path ?? string.Empty;
+            }
+
+            pts[index] = newPoint;
+            return Serialize(start, pts, IsRetrace(path));
+        }
+
+        /// <summary>Inserts a canonical waypoint after <paramref name="segmentIndex"/> and re-serializes.</summary>
+        public static string InsertCanonicalPoint(Vec2 start, string? path, int segmentIndex, Vec2 newPoint)
+        {
+            Vec2[] pts = CanonicalPoints(start, path);
+            if (segmentIndex < 0 || segmentIndex >= pts.Length - 1 || IsCircularPath(path))
+            {
+                return path ?? string.Empty;
+            }
+
+            List<Vec2> list = [.. pts];
+            list.Insert(segmentIndex + 1, newPoint);
+            return Serialize(start, list, IsRetrace(path));
+        }
+
+        /// <summary>Appends a canonical waypoint, preserving retrace/circuit state.</summary>
+        public static string AppendCanonicalPoint(Vec2 start, string? path, Vec2 newPoint)
+        {
+            if (IsCircularPath(path))
+            {
+                return path ?? string.Empty;
+            }
+
+            Vec2[] pts = CanonicalPoints(start, path);
+            List<Vec2> list = [.. pts];
+            list.Add(newPoint);
+            return Serialize(start, list, IsRetrace(path));
+        }
+
+        /// <summary>Removes a single canonical waypoint (index >= 1) and re-serializes, preserving retrace/circuit state.</summary>
+        public static string DeleteCanonicalPoint(Vec2 start, string? path, int index)
+        {
+            Vec2[] pts = CanonicalPoints(start, path);
+            if (index <= 0 || index >= pts.Length || IsCircularPath(path))
+            {
+                return path ?? string.Empty;
+            }
+
+            List<Vec2> list = [.. pts];
+            list.RemoveAt(index);
+            return Serialize(start, list, IsRetrace(path));
+        }
+
+        /// <summary>Re-serializes the canonical points as an out-and-back retrace or a plain circuit.</summary>
+        public static string SetRetrace(Vec2 start, string? path, bool retrace)
+        {
+            return string.IsNullOrWhiteSpace(path) || IsCircularPath(path)
+                ? path ?? string.Empty
+                : Serialize(start, CanonicalPoints(start, path), retrace);
         }
 
         /// <summary>Returns true when <paramref name="path"/> is DX circular movement syntax.</summary>
