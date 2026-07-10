@@ -99,5 +99,15 @@ namespace CtrDxEditor.Tests
             field.IsEnabled = false;
             Assert.True(notified);
         }
+
+        /// <summary>The magic-hat group spinner is a magnitude and cannot go negative.</summary>
+        [Fact]
+        public void GroupFieldMinimumIsZero()
+        {
+            LevelObject sock = new(XElement.Parse("""<sock group="0" />"""));
+            AttributeFieldViewModel field = new(sock, "group", AttrType.Whole, null, () => { });
+
+            Assert.Equal(0, field.NumericMinimum);
+        }
     }
 }
