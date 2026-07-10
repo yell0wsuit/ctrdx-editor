@@ -182,5 +182,5 @@
     "Attr.orbitSpeed": "Orbit speed",
     "Attr.orbitClockwise": "Orbit clockwise",
     "Attr.polylineSpeed": "Polyline speed",
-    "Attr.polylineLoop": "Loop path"
+    "Attr.polylineRetrace": "Bounce (out and back)"
 }

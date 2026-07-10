@@ -32,6 +32,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("vm.ShowMovementPaths = !vm.ShowMovementPaths;", codeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>Retrace is exposed as a polyline property field driven by SetRetrace.</summary>
+        [Fact]
+        public void RetraceIsExposedAsPolylineField()
+        {
+            string builder = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "ViewModels", "SpinFieldBuilder.cs"));
+
+            Assert.Contains("polylineRetrace", builder, StringComparison.Ordinal);
+            Assert.Contains("MoverPath.SetRetrace", builder, StringComparison.Ordinal);
+            Assert.Contains("MoverPath.IsRetrace", builder, StringComparison.Ordinal);
+            Assert.DoesNotContain("polylineLoop", builder, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

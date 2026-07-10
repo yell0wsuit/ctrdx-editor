@@ -232,7 +232,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("70", star.GetAttr("moveSpeed"));
             Assert.Equal("polyline", vm.Fields.Single(f => f.Name == "movementMode").Value);
             Assert.Contains(vm.Fields, f => f.Name == "polylineSpeed");
-            Assert.Contains(vm.Fields, f => f.Name == "polylineLoop");
+            Assert.Contains(vm.Fields, f => f.Name == "polylineRetrace");
             Assert.DoesNotContain(vm.Fields, f => f.Name == "orbitRadius");
 
             vm.Fields.Single(f => f.Name == "movementMode").Value = "none";

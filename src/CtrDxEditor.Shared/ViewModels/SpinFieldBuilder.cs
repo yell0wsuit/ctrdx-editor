@@ -322,19 +322,13 @@ namespace CtrDxEditor.ViewModels
                 onChanging));
 
             fields.Add(new AttributeFieldViewModel(
-                "polylineLoop",
+                "polylineRetrace",
                 AttrType.Bool,
-                () => "true",
+                () => MoverPath.IsRetrace(value.GetAttr("path")) ? "true" : "false",
                 v =>
                 {
-                    if (v != "false")
-                    {
-                        return;
-                    }
-
                     Vec2 start = new(value.X, value.Y);
-                    Vec2[] points = MoverPath.Points(start, value.GetAttr("path"));
-                    value.SetAttr("path", MoverPath.SerializePlain(start, points, loop: false));
+                    value.SetAttr("path", MoverPath.SetRetrace(start, value.GetAttr("path"), v == "true"));
                 },
                 onChanged,
                 onChanging));
