@@ -184,5 +184,6 @@
     "Attr.orbitSpeed": "Orbit speed",
     "Attr.orbitClockwise": "Orbit clockwise",
     "Attr.polylineSpeed": "Polyline speed",
-    "Attr.polylineRetrace": "Back and forth"
+    "Attr.polylineRetrace": "Back and forth",
+    "Attr.polylineClockwise": "Clockwise"
 }

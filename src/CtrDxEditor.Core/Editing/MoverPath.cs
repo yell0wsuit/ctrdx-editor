@@ -157,6 +157,15 @@ namespace CtrDxEditor.Core.Editing
             return true;
         }
 
+        /// <summary>
+        /// True when out-and-back retrace produces a different path from a plain circuit — i.e. the path has at
+        /// least two waypoints. A single straight segment is inherently back-and-forth, so retrace is a no-op.
+        /// </summary>
+        public static bool CanRetrace(Vec2 start, string? path)
+        {
+            return !IsCircularPath(path) && CanonicalPoints(start, path).Length >= 3;
+        }
+
         /// <summary>Returns the canonical waypoint index (>= 1) under the point, or -1.</summary>
         public static int HitCanonicalPoint(Vec2 start, string? path, Vec2 point, double tolerance)
         {
@@ -258,6 +267,74 @@ namespace CtrDxEditor.Core.Editing
             return retrace && points.Length > MaxCanonicalPointCount(retrace: true)
                 ? path
                 : Serialize(start, points, retrace);
+        }
+
+        /// <summary>
+        /// Returns true when a plain path forms a closed loop with a defined winding: not circular, not an
+        /// out-and-back retrace, and at least three non-collinear canonical points (so it encloses an area).
+        /// Travel direction is only meaningful for such loops.
+        /// </summary>
+        public static bool IsClosedLoop(Vec2 start, string? path)
+        {
+            if (IsCircularPath(path) || IsRetrace(path))
+            {
+                return false;
+            }
+
+            Vec2[] points = CanonicalPoints(start, path);
+            return points.Length >= 3 && Math.Abs(SignedArea(points)) > 0.0001;
+        }
+
+        /// <summary>Returns true when the closed loop winds clockwise on screen (level Y is screen-down).</summary>
+        public static bool IsClockwise(Vec2 start, string? path)
+        {
+            return IsClosedLoop(start, path) && SignedArea(CanonicalPoints(start, path)) > 0;
+        }
+
+        /// <summary>
+        /// Reverses the loop's traversal direction (the stored point order) when needed so it winds the
+        /// requested way, and re-serializes. The game has no direction flag, so direction is the point order.
+        /// </summary>
+        public static string SetClockwise(Vec2 start, string? path, bool clockwise)
+        {
+            if (!IsClosedLoop(start, path) || IsClockwise(start, path) == clockwise)
+            {
+                return path ?? string.Empty;
+            }
+
+            Vec2[] points = CanonicalPoints(start, path);
+            List<Vec2> reversed = [points[0]];
+            for (int i = points.Length - 1; i >= 1; i--)
+            {
+                reversed.Add(points[i]);
+            }
+
+            return Serialize(start, reversed, retrace: false);
+        }
+
+        /// <summary>
+        /// Winding used for the direction checkbox's displayed value: the signed area of the canonical points,
+        /// computed whether or not the path is currently a loop or an out-and-back. Because the canonical order
+        /// is preserved across a retrace toggle, the shown check state stays stable instead of flipping. A
+        /// degenerate (collinear) path defaults to clockwise.
+        /// </summary>
+        public static bool IsCanonicalClockwise(Vec2 start, string? path)
+        {
+            return IsCircularPath(path) || SignedArea(CanonicalPoints(start, path)) >= 0;
+        }
+
+        /// <summary>Signed polygon area (shoelace) of a closed loop; positive is clockwise in screen space.</summary>
+        private static double SignedArea(Vec2[] points)
+        {
+            double sum = 0.0;
+            for (int i = 0; i < points.Length; i++)
+            {
+                Vec2 a = points[i];
+                Vec2 b = points[(i + 1) % points.Length];
+                sum += (a.X * b.Y) - (b.X * a.Y);
+            }
+
+            return sum / 2.0;
         }
 
         private static int MaxCanonicalPointCount(bool retrace)

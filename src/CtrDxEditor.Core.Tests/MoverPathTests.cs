@@ -233,6 +233,88 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(retrace, MoverPath.AppendCanonicalPoint(start, retrace, new Vec2(51, 0)));
         }
 
+        /// <summary>Direction only applies to closed loops: not lines, retraces, or circular paths.</summary>
+        [Fact]
+        public void IsClosedLoopTrueForTriangleFalseForLineRetraceAndCircular()
+        {
+            Vec2 start = new(0, 0);
+
+            Assert.True(MoverPath.IsClosedLoop(start, "100,0,0,100"));
+            Assert.False(MoverPath.IsClosedLoop(start, "100,0"));
+            Assert.False(MoverPath.IsClosedLoop(start, "100,0,100,50,0,50,100,50,100,0"));
+            Assert.False(MoverPath.IsClosedLoop(start, "RC30"));
+        }
+
+        /// <summary>Winding reflects screen-space orientation (level Y is screen-down, so positive area is clockwise).</summary>
+        [Fact]
+        public void IsClockwiseReflectsScreenSpaceWinding()
+        {
+            Vec2 start = new(0, 0);
+
+            Assert.True(MoverPath.IsClockwise(start, "100,0,0,100"));
+            Assert.False(MoverPath.IsClockwise(start, "0,100,100,0"));
+        }
+
+        /// <summary>Flipping direction reverses the stored point order; matching the current winding is a no-op.</summary>
+        [Fact]
+        public void SetClockwiseReversesPointOrderWhenWindingDiffers()
+        {
+            Vec2 start = new(0, 0);
+            string clockwise = "100,0,0,100";
+
+            Assert.Equal(clockwise, MoverPath.SetClockwise(start, clockwise, clockwise: true));
+
+            string flipped = MoverPath.SetClockwise(start, clockwise, clockwise: false);
+            Assert.False(MoverPath.IsClockwise(start, flipped));
+            Assert.Equal(
+                [start, new Vec2(0, 100), new Vec2(100, 0)],
+                MoverPath.CanonicalPoints(start, flipped));
+        }
+
+        /// <summary>Direction is meaningless for non-loops, so setting it leaves the path untouched.</summary>
+        [Fact]
+        public void SetClockwiseNoOpForNonLoop()
+        {
+            Vec2 start = new(0, 0);
+
+            Assert.Equal("100,0", MoverPath.SetClockwise(start, "100,0", clockwise: false));
+        }
+
+        /// <summary>Retrace is only meaningful with two or more waypoints; a single straight segment cannot retrace.</summary>
+        [Fact]
+        public void CanRetraceRequiresAtLeastTwoWaypoints()
+        {
+            Vec2 start = new(0, 0);
+
+            Assert.False(MoverPath.CanRetrace(start, "100,0"));
+            Assert.True(MoverPath.CanRetrace(start, "100,0,100,50"));
+            Assert.True(MoverPath.CanRetrace(start, "100,0,100,50,0,50,100,50,100,0"));
+            Assert.False(MoverPath.CanRetrace(start, "RC30"));
+        }
+
+        /// <summary>The displayed direction stays put when toggling retrace, since the canonical order is preserved.</summary>
+        [Fact]
+        public void CanonicalClockwiseIsStableAcrossRetraceToggle()
+        {
+            Vec2 start = new(0, 0);
+            string counterClockwise = "0,100,100,0";
+
+            Assert.False(MoverPath.IsCanonicalClockwise(start, counterClockwise));
+
+            string asRetrace = MoverPath.SetRetrace(start, counterClockwise, retrace: true);
+            Assert.False(MoverPath.IsCanonicalClockwise(start, asRetrace));
+
+            string backToCircuit = MoverPath.SetRetrace(start, asRetrace, retrace: false);
+            Assert.False(MoverPath.IsCanonicalClockwise(start, backToCircuit));
+        }
+
+        /// <summary>A degenerate path (single line) defaults to clockwise for the disabled checkbox.</summary>
+        [Fact]
+        public void CanonicalClockwiseDefaultsClockwiseForSingleLine()
+        {
+            Assert.True(MoverPath.IsCanonicalClockwise(new Vec2(0, 0), "100,0"));
+        }
+
         private static Vec2[] PathPoints(int count)
         {
             Vec2[] points = new Vec2[count];

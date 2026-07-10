@@ -192,7 +192,7 @@ namespace CtrDxEditor.ViewModels
             }
             else if (movementMode == "polyline")
             {
-                BuildPolyline(fields, value, onChanged, onChanging);
+                BuildPolyline(fields, value, onChanged, onChanging, Structural);
             }
         }
 
@@ -295,7 +295,8 @@ namespace CtrDxEditor.ViewModels
             IList<AttributeFieldViewModel> fields,
             LevelObject value,
             Action onChanged,
-            Action onChanging)
+            Action onChanging,
+            Action structural)
         {
             fields.Add(new AttributeFieldViewModel(
                 "polylineSpeed",
@@ -322,6 +323,8 @@ namespace CtrDxEditor.ViewModels
                 onChanged,
                 onChanging));
 
+            // A single straight segment is inherently back-and-forth, so the retrace toggle is a no-op there
+            // and shows disabled; it becomes meaningful once the path has at least two waypoints.
             fields.Add(new AttributeFieldViewModel(
                 "polylineRetrace",
                 AttrType.Bool,
@@ -331,8 +334,25 @@ namespace CtrDxEditor.ViewModels
                     Vec2 start = new(value.X, value.Y);
                     value.SetAttr("path", MoverPath.SetRetrace(start, value.GetAttr("path"), v == "true"));
                 },
+                structural,
+                onChanging,
+                isEnabled: () => MoverPath.CanRetrace(new Vec2(value.X, value.Y), value.GetAttr("path"))));
+
+            // Direction is only meaningful for a closed loop; for lines/retraces the checkbox is greyed out
+            // (shown checked as the clockwise default). The game has no direction flag, so flipping it just
+            // reverses the stored point order.
+            fields.Add(new AttributeFieldViewModel(
+                "polylineClockwise",
+                AttrType.Bool,
+                () => MoverPath.IsCanonicalClockwise(new Vec2(value.X, value.Y), value.GetAttr("path")) ? "true" : "false",
+                v =>
+                {
+                    Vec2 start = new(value.X, value.Y);
+                    value.SetAttr("path", MoverPath.SetClockwise(start, value.GetAttr("path"), v == "true"));
+                },
                 onChanged,
-                onChanging));
+                onChanging,
+                isEnabled: () => MoverPath.IsClosedLoop(new Vec2(value.X, value.Y), value.GetAttr("path"))));
         }
 
         private static string SpinSpeedValue(LevelObject value)

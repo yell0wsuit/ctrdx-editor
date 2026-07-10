@@ -876,10 +876,41 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // Draw each traversal segment with a mid-segment chevron pointing the way the object travels,
+            // so the loop's winding (and the back-and-forth of a retrace) is legible like the orbit arrow.
             for (int i = 0; i < points.Length; i++)
             {
-                ctx.DrawLine(pathPen, points[i], points[(i + 1) % points.Length]);
+                Point a = points[i];
+                Point b = points[(i + 1) % points.Length];
+                ctx.DrawLine(pathPen, a, b);
+                DrawSegmentArrow(ctx, arrowPen, a, b);
             }
+        }
+
+        /// <summary>Draws a small chevron at the midpoint of <paramref name="a"/>→<paramref name="b"/> pointing toward b.</summary>
+        private static void DrawSegmentArrow(DrawingContext ctx, Pen arrowPen, Point a, Point b)
+        {
+            double dx = b.X - a.X;
+            double dy = b.Y - a.Y;
+            double length = Math.Sqrt((dx * dx) + (dy * dy));
+            if (length < 12.0)
+            {
+                return;
+            }
+
+            double ux = dx / length;
+            double uy = dy / length;
+            Point mid = new((a.X + b.X) / 2.0, (a.Y + b.Y) / 2.0);
+
+            const double barb = 6.0;
+            const double cos = 0.866; // 30° barb spread
+            const double sin = 0.5;
+            double rx = -ux;
+            double ry = -uy;
+            Point left = new(mid.X + (barb * ((rx * cos) - (ry * sin))), mid.Y + (barb * ((rx * sin) + (ry * cos))));
+            Point right = new(mid.X + (barb * ((rx * cos) + (ry * sin))), mid.Y + (barb * ((-rx * sin) + (ry * cos))));
+            ctx.DrawLine(arrowPen, mid, left);
+            ctx.DrawLine(arrowPen, mid, right);
         }
 
         /// <summary>Computes screen-space points for the active DX movement path.</summary>
