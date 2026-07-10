@@ -103,7 +103,12 @@ namespace CtrDxEditor.Core.Descriptors
             // Magic hat teleporter (Christmas sock during the seasonal event)
             new ObjectDescriptor("sock", "Magic Hat",
             [
-                new AttributeSpec("group", AttrType.Whole, "0"),
+                new AttributeSpec(
+                    "group",
+                    AttrType.Enum,
+                    "0",
+                    EnumValues: ["0", "1", "2"],
+                    LocalizationName: "sockGroup"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
 

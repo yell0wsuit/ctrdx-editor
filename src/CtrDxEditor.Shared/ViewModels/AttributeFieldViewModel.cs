@@ -28,15 +28,17 @@ namespace CtrDxEditor.ViewModels
             AttrType type,
             string[]? enumValues,
             Action onChanged,
-            Action? onChanging = null)
+            Action? onChanging = null,
+            string? labelName = null)
         {
             Name = name;
-            Label = Localizer.AttributeName(name);
+            string localizationName = labelName ?? name;
+            Label = Localizer.AttributeName(localizationName);
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
             EnumValues = enumValues;
-            EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(name, v))).ToArray();
+            EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(localizationName, v))).ToArray();
             _get = () => target.GetAttr(name);
             _set = v => target.SetAttr(name, v ?? string.Empty);
             _onChanging = onChanging ?? (() => { });

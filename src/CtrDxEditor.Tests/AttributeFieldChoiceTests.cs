@@ -1,6 +1,10 @@
 using System.Globalization;
 using System.Linq;
+using System.Xml.Linq;
 
+using CtrDxEditor.Core.Descriptors;
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Localization;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -29,6 +33,31 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("b", state);
             Assert.Equal("Option B", field.SelectedOption!.Label);
+        }
+
+        /// <summary>A descriptor field can localize under a UI-only key while writing its raw XML name.</summary>
+        [Fact]
+        public void AttributeChoiceSupportsSeparateLocalizationName()
+        {
+            LevelObject sock = new(XElement.Parse("""<sock group="0" />"""));
+            AttributeFieldViewModel field = new(
+                sock,
+                "group",
+                AttrType.Enum,
+                ["0", "1", "2"],
+                () => { },
+                labelName: "sockGroup");
+
+            Assert.Equal("group", field.Name);
+            Assert.Equal(Localizer.AttributeName("sockGroup"), field.Label);
+            Assert.NotEqual(Localizer.AttributeName("group"), field.Label);
+            AttributeOptionViewModel[] options = field.EnumOptions!;
+            Assert.Equal(["0", "1", "2"], options.Select(o => o.Value));
+
+            field.SelectedOption = options.Single(o => o.Value == "2");
+
+            Assert.Equal("2", sock.GetAttr("group"));
+            Assert.Null(sock.GetAttr("sockGroup"));
         }
 
         /// <summary>Synthetic bool fields can map checkbox state through arbitrary accessors.</summary>

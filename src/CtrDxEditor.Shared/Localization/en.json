@@ -174,7 +174,7 @@
     "Attr.onTime": "On time (s)",
     "Attr.toggled": "Toggled",
     "Attr.toggleGroup": "Group",
-    "Attr.group": "Teleport group",
+    "Attr.sockGroup": "Teleport group",
     "Attr.spin": "Spin object",
     "Attr.spinSpeed": "Spin speed",
     "Attr.spinClockwise": "Spin clockwise",

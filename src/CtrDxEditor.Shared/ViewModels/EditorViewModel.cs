@@ -501,7 +501,14 @@ namespace CtrDxEditor.ViewModels
                     {
                         continue;
                     }
-                    Fields.Add(new AttributeFieldViewModel(value, spec.Name, spec.Type, spec.EnumValues, Changed, Changing));
+                    Fields.Add(new AttributeFieldViewModel(
+                        value,
+                        spec.Name,
+                        spec.Type,
+                        spec.EnumValues,
+                        Changed,
+                        Changing,
+                        spec.LocalizationName));
                 }
 
                 SpinFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));

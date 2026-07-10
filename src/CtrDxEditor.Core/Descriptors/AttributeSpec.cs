@@ -6,5 +6,6 @@ namespace CtrDxEditor.Core.Descriptors
         AttrType Type,
         string? Default,
         string[]? EnumValues = null,
-        string? RefType = null);
+        string? RefType = null,
+        string? LocalizationName = null);
 }

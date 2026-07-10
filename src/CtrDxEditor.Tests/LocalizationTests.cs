@@ -30,7 +30,8 @@ namespace CtrDxEditor.Tests
                 File.ReadAllText(path))!;
 
             Assert.Equal("Magic hat", strings["Object.sock"]);
-            Assert.Equal("Teleport group", strings["Attr.group"]);
+            Assert.Equal("Teleport group", strings["Attr.sockGroup"]);
+            Assert.DoesNotContain("Attr.group", strings.Keys);
         }
 
         private static string FindRepositoryFile(string relativePath)
