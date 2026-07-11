@@ -31,7 +31,7 @@ namespace CtrDxEditor.ViewModels
                 rebuild();
             }
 
-            // The grab toggle is the radius driver: turning it on installs the default catch radius
+            // The grab toggle is also the radius driver: turning it on installs the default catch radius
             // (50) so the ring is visible; turning it off writes the -1 auto-rope sentinel. grab is a
             // real stored attribute (the game reads it independently), so we set both grab and radius.
             fields.Add(new AttributeFieldViewModel(
