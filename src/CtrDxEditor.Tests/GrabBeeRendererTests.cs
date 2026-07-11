@@ -96,6 +96,40 @@ namespace CtrDxEditor.Tests
             Assert.InRange(Math.Abs(later.Alpha - atZero.Alpha), 0.099999, 0.100001);
         }
 
+        /// <summary>The auto-catch radius ring follows the grab to its live preview position while it moves.</summary>
+        [Fact]
+        public void RadiusRingCenterFollowsMovingGrab()
+        {
+            LevelObject grab = Obj("100,0", "50");
+
+            Core.Geometry.Vec2 moving = RadiusRingCenter(grab, 1.0);
+            Core.Geometry.Vec2 authored = RadiusRingCenter(grab, null);
+
+            Assert.Equal(50, moving.X, precision: 6);
+            Assert.Equal(0, moving.Y, precision: 6);
+            Assert.Equal(0, authored.X, precision: 6);
+            Assert.Equal(0, authored.Y, precision: 6);
+        }
+
+        /// <summary>A stationary grab keeps its ring on the authored position even while preview time elapses.</summary>
+        [Fact]
+        public void RadiusRingCenterStaysPutForNonMovingGrab()
+        {
+            Core.Geometry.Vec2 center = RadiusRingCenter(Obj("0,0", "0"), 5.0);
+
+            Assert.Equal(0, center.X, precision: 6);
+            Assert.Equal(0, center.Y, precision: 6);
+        }
+
+        private static Core.Geometry.Vec2 RadiusRingCenter(LevelObject obj, double? previewSeconds)
+        {
+            System.Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            System.Reflection.MethodInfo method = grabRenderer.GetMethod(
+                "RadiusRingCenter",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)!;
+            return (Core.Geometry.Vec2)method.Invoke(null, [obj, previewSeconds])!;
+        }
+
         private static LevelObject Obj(string path, string moveSpeed, bool hidePath = false)
         {
             XElement element = new("grab",

@@ -36,10 +36,13 @@ namespace CtrDxEditor.Rendering
         /// tolerance (converted to level units by the current zoom).
         /// </summary>
         /// <param name="levelPt">The point to test, in level coordinates.</param>
-        /// <returns>True when the point is on the ring's edge and a grab with a radius is selected.</returns>
+        /// <returns>True when the point is on the ring's edge and a grab with a radius is selected and not animating.</returns>
         private bool OnRadiusEdge(Vec2 levelPt)
         {
-            return SelectedObject is { } g && View.Zoom > 0 && RadiusRing.Of(g) is { } ring
+            // A grab animating in preview draws its ring at the moving position, but the edge hit-test and drag
+            // math below use the authored center — so editing is disabled until the preview stops, matching how
+            // an animating object is unpickable.
+            return SelectedObject is { } g && !IsAnimatingInPreview(g) && View.Zoom > 0 && RadiusRing.Of(g) is { } ring
                 && GrabRadius.OnEdge(new Vec2(g.X, g.Y), ring.Radius, levelPt, 6 / View.Zoom);
         }
 

@@ -142,7 +142,13 @@ namespace CtrDxEditor.Rendering
         /// draws the grab circle blue in-play and the bulb reach as a soft glow; here the ring marks the
         /// draggable edge, resized by dragging the selected object's ring.
         /// </summary>
-        public static void DrawRadiusRings(DrawingContext ctx, ViewTransform v, IReadOnlyList<LevelObject> objects, Pen grabPen, Pen bulbPen)
+        public static void DrawRadiusRings(
+            DrawingContext ctx,
+            ViewTransform v,
+            IReadOnlyList<LevelObject> objects,
+            Pen grabPen,
+            Pen bulbPen,
+            Func<LevelObject, double?>? previewSeconds = null)
         {
             foreach (LevelObject obj in objects)
             {
@@ -150,11 +156,26 @@ namespace CtrDxEditor.Rendering
                 {
                     continue;
                 }
-                Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+                Vec2 c = v.LevelToScreen(RadiusRingCenter(obj, previewSeconds?.Invoke(obj)));
                 double screenR = ring.Radius * v.Zoom;
                 Pen pen = obj.Type == "lightBulb" ? bulbPen : grabPen;
                 ctx.DrawEllipse(null, pen, new Point(c.X, c.Y), screenR, screenR);
             }
+        }
+
+        /// <summary>
+        /// The level-space center a radius ring draws around. During animation preview a moving grab travels
+        /// along its mover path, so the ring must follow the grab to its live position; without a preview time
+        /// (or for a non-moving object) it stays on the authored position.
+        /// </summary>
+        /// <param name="obj">Object whose radius ring is centered.</param>
+        /// <param name="previewSeconds">Elapsed animation-preview time, or null for the authored position.</param>
+        /// <returns>The ring center in level coordinates.</returns>
+        internal static Vec2 RadiusRingCenter(LevelObject obj, double? previewSeconds)
+        {
+            return previewSeconds is double seconds
+                ? MoverPath.PreviewPosition(obj, seconds)
+                : new Vec2(obj.X, obj.Y);
         }
 
         /// <summary>

@@ -75,7 +75,7 @@ namespace CtrDxEditor.Rendering
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
 
-            GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius);
+            GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius, PreviewAnimationSeconds);
 
             foreach (LevelObject obj in objects)
             {
