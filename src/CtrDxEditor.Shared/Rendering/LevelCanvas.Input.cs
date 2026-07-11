@@ -42,8 +42,16 @@ namespace CtrDxEditor.Rendering
             // A grab animating in preview draws its ring at the moving position, but the edge hit-test and drag
             // math below use the authored center — so editing is disabled until the preview stops, matching how
             // an animating object is unpickable.
-            return SelectedObject is { } g && !IsAnimatingInPreview(g) && View.Zoom > 0 && RadiusRing.Of(g) is { } ring
-                && GrabRadius.OnEdge(new Vec2(g.X, g.Y), ring.Radius, levelPt, 6 / View.Zoom);
+            if (SelectedObject is not { } selected || IsAnimatingInPreview(selected) || View.Zoom <= 0)
+            {
+                return false;
+            }
+
+            double? radius = selected.Type == "ghost" && _ghostPreview.ShowsRadiusRing(selected)
+                ? GrabRadius.Of(selected)
+                : RadiusRing.Of(selected)?.Radius;
+            return radius is double r
+                && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), r, levelPt, 6 / View.Zoom);
         }
 
         /// <summary>What part of the selected movable grab's rail a level point is over, or <see cref="GrabRail.Handle.None"/>.</summary>
@@ -104,7 +112,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The dial handle under the point, or <see cref="ObjectRotation.Handle.None"/>.</returns>
         private ObjectRotation.Handle HitRotationDial(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || RotationTable.EditableFor(obj.Type) is not { } spec)
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || EditableRotationSpec(obj) is not { } spec)
             {
                 return ObjectRotation.Handle.None;
             }
@@ -114,6 +122,14 @@ namespace CtrDxEditor.Rendering
                 c, ObjectRotation.StoredAngle(obj, spec), spec, radius, levelPt,
                 ringTolerance: RotationDialRenderer.RingTolerancePx / View.Zoom,
                 knobTolerance: RotationDialRenderer.KnobTolerancePx / View.Zoom);
+        }
+
+        /// <summary>Resolves an object's ordinary rotation spec or the ghost's preview-only bouncer spec.</summary>
+        private RotationSpec? EditableRotationSpec(LevelObject obj)
+        {
+            return obj.Type == "ghost" && _ghostPreview.ShowsRotationDial(obj)
+                ? GhostBouncerRotation
+                : RotationTable.EditableFor(obj.Type);
         }
 
         /// <summary>
@@ -461,6 +477,20 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (SelectedObject is { Type: "ghost" } selectedGhost)
+            {
+                foreach ((Rect iconRect, GhostMorph morph) in _ghostIconHits)
+                {
+                    if (iconRect.Contains(p))
+                    {
+                        _ghostPreview.Set(selectedGhost, morph);
+                        InvalidateVisual();
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+
             // Grabbing the auto-catch ring resizes the radius; it takes priority over object hit-testing
             // (the ring can sit over other objects) but not over a middle-button pan.
             if (OnRadiusEdge(levelPt))
@@ -509,7 +539,7 @@ namespace CtrDxEditor.Rendering
             // Grabbing the selected object's rotation dial (knob or ring) rotates it; takes priority over
             // object hit-testing so the dial wins over anything beneath it.
             if (HitRotationDial(levelPt) != ObjectRotation.Handle.None
-                && SelectedObject is { } rotObj && RotationTable.EditableFor(rotObj.Type) is { } rotSpec)
+                && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
             {
                 BeginDocumentEdit?.Invoke();
                 _rotating = true;
@@ -628,10 +658,17 @@ namespace CtrDxEditor.Rendering
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
-            if (_resizingRadius && SelectedObject is { } g && RadiusRing.Of(g) is { } ring)
+            if (_resizingRadius && SelectedObject is { } g)
             {
+                string? attr = g.Type == "ghost" && _ghostPreview.ShowsRadiusRing(g)
+                    ? "radius"
+                    : RadiusRing.Of(g)?.Attr;
+                if (attr is null)
+                {
+                    return;
+                }
                 double r = GrabRadius.FromDrag(new Vec2(g.X, g.Y), levelPt);
-                g.SetAttr(ring.Attr, ((int)Math.Round(r)).ToString(CultureInfo.InvariantCulture));
+                g.SetAttr(attr, ((int)Math.Round(r)).ToString(CultureInfo.InvariantCulture));
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
@@ -653,7 +690,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (_rotating && SelectedObject is { } rotObj && RotationTable.EditableFor(rotObj.Type) is { } rotSpec)
+            if (_rotating && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
             {
                 ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();

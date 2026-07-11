@@ -71,6 +71,13 @@ namespace CtrDxEditor.Rendering
             }
 
             ViewTransform v = View;
+            _ghostIconHits.Clear();
+            if (SelectedObject is { Type: "ghost" } selectedGhost
+                && _ghostPreview.Active is { } activeMorph
+                && !GhostStates.Enabled(selectedGhost).Contains(activeMorph))
+            {
+                _ghostPreview.Clear();
+            }
             DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true, grabRadiusPen: null, useAnimationPreview: true);
 
             IReadOnlyList<LevelObject> objects = doc.Objects;
@@ -144,9 +151,26 @@ namespace CtrDxEditor.Rendering
                     context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
                 }
                 DrawPolylinePointHandles(context, v, selected);
+
+                if (selected.Type == "ghost")
+                {
+                    DrawGhostBadge(context, v, selected, points);
+                    if (_ghostPreview.ShowsRadiusRing(selected)
+                        && GrabRadius.Of(selected) is double ghostRadius)
+                    {
+                        Vec2 center = v.LevelToScreen(new Vec2(selected.X, selected.Y));
+                        double screenRadius = ghostRadius * v.Zoom;
+                        context.DrawEllipse(
+                            null,
+                            _palette.GrabRadius,
+                            new Point(center.X, center.Y),
+                            screenRadius,
+                            screenRadius);
+                    }
+                }
             }
 
-            if (selected is not null && RotationTable.EditableFor(selected.Type) is { } rotSpec)
+            if (selected is not null && EditableRotationSpec(selected) is { } rotSpec)
             {
                 RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
             }
@@ -173,6 +197,97 @@ namespace CtrDxEditor.Rendering
             {
                 DrawPolylineLimitHint(context, v, limitObj);
             }
+        }
+
+        /// <summary>Draws the selected ghost's enabled-state selector badge and records its hit targets.</summary>
+        private void DrawGhostBadge(DrawingContext context, ViewTransform v, LevelObject ghost, Point[] outline)
+        {
+            IReadOnlyList<GhostMorph> states = GhostStates.Enabled(ghost);
+            if (states.Count == 0)
+            {
+                return;
+            }
+
+            const double cellWidth = 34;
+            const double height = 26;
+            double separatorsWidth = Math.Max(0, states.Count - 1) * 10;
+            double width = (states.Count * cellWidth) + separatorsWidth + 12;
+            double centerX = v.LevelToScreen(new Vec2(ghost.X, ghost.Y)).X;
+            double top = outline.Min(p => p.Y) - height - 12;
+            Rect bubble = new(centerX - (width / 2), top, width, height);
+            context.FillRectangle(new SolidColorBrush(Color.FromArgb(225, 25, 29, 36)), bubble, 6);
+
+            double x = bubble.X + 6;
+            for (int i = 0; i < states.Count; i++)
+            {
+                GhostMorph morph = states[i];
+                Rect hit = new(x, top + 3, cellWidth, height - 6);
+                if (_ghostPreview.Active == morph)
+                {
+                    context.FillRectangle(new SolidColorBrush(Color.FromArgb(220, 46, 139, 255)), hit, 4);
+                }
+
+                string label = morph switch
+                {
+                    GhostMorph.Grab => "G",
+                    GhostMorph.Bubble => "Bu",
+                    GhostMorph.Bouncer => "Bo",
+                    _ => "?",
+                };
+                FormattedText text = new(
+                    label,
+                    CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(FontFamily.DefaultFontFamilyName, FontStyle.Normal, FontWeight.SemiBold),
+                    12,
+                    Brushes.White);
+                context.DrawText(text, new Point(hit.Center.X - (text.Width / 2), hit.Center.Y - (text.Height / 2)));
+                _ghostIconHits.Add((hit, morph));
+                x += cellWidth;
+
+                if (i < states.Count - 1)
+                {
+                    FormattedText separator = new(
+                        "|",
+                        CultureInfo.InvariantCulture,
+                        FlowDirection.LeftToRight,
+                        new Typeface(FontFamily.DefaultFontFamilyName),
+                        12,
+                        Brushes.LightGray);
+                    context.DrawText(separator, new Point(x + 2, top + ((height - separator.Height) / 2)));
+                    x += 10;
+                }
+            }
+        }
+
+        /// <summary>Draws the active ghost morph in place of the ordinary ghost sprite.</summary>
+        private void DrawGhostMorphPreview(
+            DrawingContext context,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject ghost)
+        {
+            if (_ghostPreview.MorphSpriteKey is not { } spriteKey
+                || sprites.GetSprite(spriteKey) is not { } sprite)
+            {
+                return;
+            }
+
+            if (_ghostPreview.Active == GhostMorph.Bouncer)
+            {
+                Vec2 center = v.LevelToScreen(new Vec2(ghost.X, ghost.Y));
+                double degrees = ObjectRotation.StoredAngle(ghost, GhostBouncerRotation);
+                Matrix transform = Matrix.CreateTranslation(-center.X, -center.Y)
+                    * Matrix.CreateRotation(degrees * Math.PI / 180.0)
+                    * Matrix.CreateTranslation(center.X, center.Y);
+                using (context.PushTransform(transform))
+                {
+                    LevelSceneRenderer.DrawSpritePreview(context, v, sprite, spriteKey, ghost.X, ghost.Y);
+                }
+                return;
+            }
+
+            LevelSceneRenderer.DrawSpritePreview(context, v, sprite, spriteKey, ghost.X, ghost.Y);
         }
 
         /// <summary>
@@ -404,6 +519,13 @@ namespace CtrDxEditor.Rendering
                     {
                         ropeSeed++;
                     }
+                }
+                else if (useAnimationPreview
+                         && obj.Type == "ghost"
+                         && Equals(obj, SelectedObject)
+                         && _ghostPreview.Active is not null)
+                {
+                    DrawGhostMorphPreview(context, v, sprites, obj);
                 }
                 else
                 {

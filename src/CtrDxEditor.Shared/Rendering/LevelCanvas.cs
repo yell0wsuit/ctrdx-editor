@@ -216,6 +216,15 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while dragging a grab's auto-catch radius ring to resize it.</summary>
         private bool _resizingRadius;
 
+        /// <summary>Rotation mapping used only while previewing a ghost's small-bouncer morph.</summary>
+        private static readonly RotationSpec GhostBouncerRotation = new(DisplayOffset: 0);
+
+        /// <summary>Ephemeral morph preview for the selected ghost, reset whenever selection changes.</summary>
+        private readonly GhostPreviewState _ghostPreview = new();
+
+        /// <summary>Screen-space state-selector hit targets populated while the ghost badge is drawn.</summary>
+        private readonly System.Collections.Generic.List<(Rect Rect, GhostMorph Morph)> _ghostIconHits = [];
+
         /// <summary>
         /// Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
         /// <see cref="GrabRail.Handle.None"/> when no rail drag is in progress. A <see cref="GrabRail.Handle.MoveBar"/>
@@ -347,8 +356,11 @@ namespace CtrDxEditor.Rendering
             }
             else if (change.Property == SelectedObjectProperty)
             {
+                _ghostPreview.Clear();
+                _ghostIconHits.Clear();
                 _polylinePointDrag = -1;
                 ResetPolylineHover();
+                InvalidateVisual();
             }
         }
 
