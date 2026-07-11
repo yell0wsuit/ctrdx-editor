@@ -27,8 +27,7 @@ namespace CtrDxEditor.Core.Editing
 
             int? smallestOpenPair = counts
                 .Where(kv => kv.Value % 2 == 1)
-                .Select(kv => (int?)kv.Key)
-                .Min();
+                .Min(kv => (int?)kv.Key);
             if (smallestOpenPair is int open)
             {
                 return open.ToString(CultureInfo.InvariantCulture);

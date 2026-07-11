@@ -12,6 +12,14 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public static class SockHitbox
     {
+        /// <summary>
+        /// Computes the mouth collision box in level units, centered on the hat at
+        /// (<paramref name="x"/>, <paramref name="y"/>).
+        /// </summary>
+        /// <param name="x">Hat center X, in level units.</param>
+        /// <param name="y">Hat center Y (mouth top edge), in level units.</param>
+        /// <param name="mapScale">World-to-level scale factor; defaults to <see cref="SpritePlacement.MapScale"/>.</param>
+        /// <returns>The pre-rotation mouth bounds in level units.</returns>
         public static LevelBounds Compute(double x, double y, double mapScale = SpritePlacement.MapScale)
         {
             double left = -90.0 / mapScale; // (x - sockWidth/2 - 20) world -> level
