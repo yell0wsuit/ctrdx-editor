@@ -36,6 +36,8 @@ namespace CtrDxEditor.Content
         private const string XmasSockImageBase = "images/obj_sock_xmas";
         private const string BeeJson = "images/obj_bee.json";
         private const string BeeImageBase = "images/obj_bee";
+        private const string VinylJson = "images/obj_vinil.json";
+        private const string VinylImageBase = "images/obj_vinil";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -272,6 +274,23 @@ namespace CtrDxEditor.Content
             new("electro_on_2", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 2)]),
             new("electro_on_3", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 3)]),
             new("electro_on_4", [new SpriteLayer(ElectrodesJson, ElectrodesImageBase, 4)]),
+
+            // Vinyl (rotatedCircle) = disc body (quad 0) + center spindle dot (quad 3). The DJ disc scales
+            // with its size attribute, so DrawVinyl applies a per-object scale rather than this fixed one;
+            // this descriptor drives the palette thumbnail and supplies the body/center art.
+            new("rotatedCircle",
+            [
+                new SpriteLayer(VinylJson, VinylImageBase, 0),
+                new SpriteLayer(VinylJson, VinylImageBase, 3),
+            ]),
+
+            // Vinyl highlight half (quad 1) and label half (quad 2). Each is one authored half; DrawVinyl
+            // draws it plus its horizontal mirror to form the full symmetric sheen / label. Not placeable.
+            new("vinyl_highlight", [new SpriteLayer(VinylJson, VinylImageBase, 1)]),
+            new("vinyl_sticker", [new SpriteLayer(VinylJson, VinylImageBase, 2)]),
+
+            // Vinyl handle (game controller, quad 5), drawn by DrawVinyl at each handle position. Not placeable.
+            new("vinyl_handle", [new SpriteLayer(VinylJson, VinylImageBase, 5)]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

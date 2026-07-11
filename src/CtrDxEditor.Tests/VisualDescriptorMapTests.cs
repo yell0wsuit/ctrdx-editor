@@ -241,6 +241,20 @@ namespace CtrDxEditor.Tests
                 });
         }
 
+        /// <summary>Vinyl descriptors map to the disc body/center, highlight, sticker, and handle quads of obj_vinil.</summary>
+        [Fact]
+        public void VinylDescriptorsUseVinylQuads()
+        {
+            Assert.Equal([0, 3], VisualDescriptorMap.For("rotatedCircle")!.Layers.Select(l => l.Quad));
+            Assert.Equal([1], VisualDescriptorMap.For("vinyl_highlight")!.Layers.Select(l => l.Quad));
+            Assert.Equal([2], VisualDescriptorMap.For("vinyl_sticker")!.Layers.Select(l => l.Quad));
+            Assert.Equal([5], VisualDescriptorMap.For("vinyl_handle")!.Layers.Select(l => l.Quad));
+
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+            Assert.Contains("images/obj_vinil.json", required);
+            Assert.Contains("images/obj_vinil.webp", required);
+        }
+
         /// <summary>Ghost draws body (quad 0) and face (quad 1) from obj_ghost.</summary>
         [Fact]
         public void GhostHasBodyAndFaceLayers()

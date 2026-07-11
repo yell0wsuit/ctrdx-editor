@@ -143,6 +143,7 @@
     "Object.sock": "Magic hat",
     "Object.bouncer": "Bouncer",
     "Object.ghost": "Ghost",
+    "Object.vinyl": "Vinyl",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -169,6 +170,8 @@
     "Attr.attachTo": "Attach to",
     "Attr.angle": "Angle",
     "Attr.size": "Size",
+    "Attr.handleAngle": "Handle angle",
+    "Attr.oneHandle": "Single handle",
     "Attr.sizeBig": "Big",
     "Attr.sizeSmall": "Small",
     "Attr.initialDelay": "Initial delay (s)",
