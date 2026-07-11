@@ -195,6 +195,17 @@ namespace CtrDxEditor.Tests
             Assert.False(PaletteHas(vm, "spike4"));
         }
 
+        /// <summary>The palette exposes one resizable bouncer item rather than duplicate width entries.</summary>
+        [Fact]
+        public void PaletteShowsSingleBouncerEntry()
+        {
+            EditorViewModel vm = Vm();
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.True(PaletteHas(vm, "bouncer1"));
+            Assert.False(PaletteHas(vm, "bouncer2"));
+        }
+
         /// <summary>The palette shows the normal hat or Christmas sock without changing the XML element.</summary>
         [Theory]
         [InlineData(false, "sock")]

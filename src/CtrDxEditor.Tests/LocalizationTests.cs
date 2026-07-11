@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
+using CtrDxEditor.Localization;
+
 using Xunit;
 
 namespace CtrDxEditor.Tests
@@ -32,6 +34,21 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Magic hat", strings["Object.sock"]);
             Assert.Equal("Teleport group", strings["Attr.sockGroup"]);
             Assert.DoesNotContain("Attr.group", strings.Keys);
+        }
+
+        /// <summary>Both XML width variants resolve through one family-level translation key.</summary>
+        [Fact]
+        public void BouncerVariantsAreLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Bouncer", strings["Object.bouncer"]);
+            Assert.DoesNotContain("Object.bouncer1", strings.Keys);
+            Assert.DoesNotContain("Object.bouncer2", strings.Keys);
+            Assert.Equal("Bouncer", Localizer.ObjectName("bouncer1"));
+            Assert.Equal("Bouncer", Localizer.ObjectName("bouncer2"));
         }
 
         private static string FindRepositoryFile(string relativePath)

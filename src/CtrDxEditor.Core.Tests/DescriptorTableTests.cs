@@ -39,11 +39,12 @@ namespace CtrDxEditor.Core.Tests
             ObjectDescriptor bouncer = DescriptorTable.Default.For(element)!;
 
             Assert.Equal("Bouncer", bouncer.DisplayName);
+            Assert.Equal("bouncer", bouncer.LocalizationName);
             Assert.Equal(int.MaxValue, bouncer.MaxCount);
             AttributeSpec sizeAttribute = Assert.Single(bouncer.Attributes, a => a.Name == "size");
             Assert.Equal(AttrType.Enum, sizeAttribute.Type);
             Assert.Equal(size, sizeAttribute.Default);
-            Assert.Equal([size], Assert.IsType<string[]>(sizeAttribute.EnumValues));
+            Assert.Equal(["1", "2"], Assert.IsType<string[]>(sizeAttribute.EnumValues));
             Assert.Contains(bouncer.Attributes, a =>
                 a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
         }

@@ -316,7 +316,7 @@ namespace CtrDxEditor.ViewModels
             {
                 "candy" => !doc.TwoParts,
                 "candyL" or "candyR" => doc.TwoParts,
-                "spike2" or "spike3" or "spike4" => false,
+                "spike2" or "spike3" or "spike4" or "bouncer2" => false,
                 _ => true,
             };
         }
@@ -488,6 +488,12 @@ namespace CtrDxEditor.ViewModels
             if (SpikeObject.IsSpike(value.Type))
             {
                 SpikeFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
+            if (BouncerObject.IsBouncer(value.Type))
+            {
+                BouncerFieldBuilder.Build(Fields, value, Changed, Changing);
                 return;
             }
 

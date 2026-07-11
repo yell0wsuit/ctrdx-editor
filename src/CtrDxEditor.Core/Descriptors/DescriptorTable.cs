@@ -114,14 +114,14 @@ namespace CtrDxEditor.Core.Descriptors
             // Bouncers
             new ObjectDescriptor("bouncer1", "Bouncer",
             [
-                new AttributeSpec("size", AttrType.Enum, "1", EnumValues: ["1"]),
+                new AttributeSpec("size", AttrType.Enum, "1", EnumValues: ["1", "2"]),
                 new AttributeSpec("angle", AttrType.Number, "0"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "bouncer"),
             new ObjectDescriptor("bouncer2", "Bouncer",
             [
-                new AttributeSpec("size", AttrType.Enum, "2", EnumValues: ["2"]),
+                new AttributeSpec("size", AttrType.Enum, "2", EnumValues: ["1", "2"]),
                 new AttributeSpec("angle", AttrType.Number, "0"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "bouncer"),
 
             // Gravity button
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),

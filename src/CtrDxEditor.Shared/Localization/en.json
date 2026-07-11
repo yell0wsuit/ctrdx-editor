@@ -144,6 +144,7 @@
     "Object.spike4": "Spike",
     "Object.electro": "Electric spark",
     "Object.sock": "Magic hat",
+    "Object.bouncer": "Bouncer",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",

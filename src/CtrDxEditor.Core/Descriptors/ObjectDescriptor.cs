@@ -7,5 +7,6 @@ namespace CtrDxEditor.Core.Descriptors
         string ElementName,
         string DisplayName,
         IReadOnlyList<AttributeSpec> Attributes,
-        int MaxCount);
+        int MaxCount,
+        string? LocalizationName = null);
 }
