@@ -164,6 +164,20 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(RotationTable.IsRotatable("star"));
         }
 
+        /// <summary>Bouncer XML angles map directly to editable canvas rotation for both widths.</summary>
+        [Theory]
+        [InlineData("bouncer1")]
+        [InlineData("bouncer2")]
+        public void BouncerRotationIsEditableWithoutDisplayOffset(string element)
+        {
+            RotationSpec spec = RotationTable.For(element)!;
+
+            Assert.Equal(0, spec.DisplayOffset);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.True(spec.Editable);
+            Assert.Same(spec, RotationTable.EditableFor(element));
+        }
+
         /// <summary>DX reads the sock angle through ParseMover, then adds the atlas's 90-degree turn.</summary>
         [Fact]
         public void SockRotationIsEditableWithNinetyDegreeDisplayOffset()

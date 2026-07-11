@@ -22,6 +22,8 @@ namespace CtrDxEditor.Content
         private const string LighterImageBase = "images/obj_lighter";
         private const string PumpJson = "images/obj_pump.json";
         private const string PumpImageBase = "images/obj_pump";
+        private const string BouncerJson = "images/obj_bouncer.json";
+        private const string BouncerImageBase = "images/obj_bouncer";
         private const string SpikesJson = "images/obj_spikes.json";
         private const string SpikesImageBase = "images/obj_spikes";
         private const string ElectrodesJson = "images/obj_electrodes.json";
@@ -212,6 +214,10 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(PumpJson, PumpImageBase, 0),
             ]),
+
+            // Bouncers animate over quads 0-4 (small) and 5-9 (large); use each range's resting frame.
+            new("bouncer1", [new SpriteLayer(BouncerJson, BouncerImageBase, 0)]),
+            new("bouncer2", [new SpriteLayer(BouncerJson, BouncerImageBase, 5)]),
 
             // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
             // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.

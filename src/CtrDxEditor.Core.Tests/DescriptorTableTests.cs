@@ -25,6 +25,27 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("spike4"));
             Assert.True(t.Knows("electro"));
             Assert.True(t.Knows("sock"));
+            Assert.True(t.Knows("bouncer1"));
+            Assert.True(t.Knows("bouncer2"));
+            Assert.False(t.Knows("bouncer"));
+        }
+
+        /// <summary>Verifies bouncer descriptors use the two XML names accepted by the game.</summary>
+        [Theory]
+        [InlineData("bouncer1", "1")]
+        [InlineData("bouncer2", "2")]
+        public void BouncersCarryTheirFixedSizeAndAngle(string element, string size)
+        {
+            ObjectDescriptor bouncer = DescriptorTable.Default.For(element)!;
+
+            Assert.Equal("Bouncer", bouncer.DisplayName);
+            Assert.Equal(int.MaxValue, bouncer.MaxCount);
+            AttributeSpec sizeAttribute = Assert.Single(bouncer.Attributes, a => a.Name == "size");
+            Assert.Equal(AttrType.Enum, sizeAttribute.Type);
+            Assert.Equal(size, sizeAttribute.Default);
+            Assert.Equal([size], Assert.IsType<string[]>(sizeAttribute.EnumValues));
+            Assert.Contains(bouncer.Attributes, a =>
+                a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
         }
 
         /// <summary>Verifies magic hats expose the transporter group as a free whole-number field.</summary>

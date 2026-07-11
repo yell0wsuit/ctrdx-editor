@@ -30,6 +30,8 @@ namespace CtrDxEditor.Core.Editing
             ["spike3"] = new RotationSpec(DisplayOffset: 0),
             ["spike4"] = new RotationSpec(DisplayOffset: 0),
             ["electro"] = new RotationSpec(DisplayOffset: 0),
+            ["bouncer1"] = new RotationSpec(DisplayOffset: 0),
+            ["bouncer2"] = new RotationSpec(DisplayOffset: 0),
             // CTRGameObject.ParseMover reads the authored sock angle, then LoadSock adds +90.
             // Derived visual keys are thumbnail-only and retain the fixed turn without becoming editable objects.
             ["sock"] = new RotationSpec(DisplayOffset: 90),

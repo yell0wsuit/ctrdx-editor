@@ -123,6 +123,30 @@ namespace CtrDxEditor.Tests
             Assert.Equal(0, layer.Quad);
         }
 
+        /// <summary>Bouncer width classes use the first resting frame of their respective animation ranges.</summary>
+        [Theory]
+        [InlineData("bouncer1", 0)]
+        [InlineData("bouncer2", 5)]
+        public void BouncersMapToTheirRestingAtlasQuads(string element, int quad)
+        {
+            VisualDescriptor bouncer = VisualDescriptorMap.For(element)!;
+            SpriteLayer layer = Assert.Single(bouncer.Layers);
+
+            Assert.Equal("images/obj_bouncer.json", layer.AtlasJsonRelPath);
+            Assert.Equal("images/obj_bouncer", layer.AtlasImageBasePath);
+            Assert.Equal(quad, layer.Quad);
+        }
+
+        /// <summary>The required bundle includes the bouncer atlas used by both width classes.</summary>
+        [Fact]
+        public void RequiredFilesCoverBouncerAtlas()
+        {
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+
+            Assert.Contains("images/obj_bouncer.json", required);
+            Assert.Contains("images/obj_bouncer.webp", required);
+        }
+
         /// <summary>Magic hats use DX's normal and Christmas atlases, group quads, and 0.7 object scale.</summary>
         [Theory]
         [InlineData("sock", "images/obj_hat.json", "images/obj_hat", 0)]
