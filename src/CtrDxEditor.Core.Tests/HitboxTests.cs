@@ -161,6 +161,20 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
         }
 
+        /// <summary>Bouncer collision uses the resting quad width and the game's five-unit half-height.</summary>
+        [Theory]
+        [InlineData("bouncer1", 196)]
+        [InlineData("bouncer2", 304)]
+        public void BouncerBoxMatchesDxRotatedCollisionRectangle(string element, int width)
+        {
+            LevelBounds? desktop = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop);
+            LevelBounds? phone = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Phone);
+
+            LevelBounds expected = new(-width / 2.0, -5, width, 10);
+            Assert.Equal(expected, desktop);
+            Assert.Equal(expected, phone);
+        }
+
         /// <summary>The magic hat returns its mouth box, ignoring scale and physics model.</summary>
         [Fact]
         public void SockBoxIsTheMagicHatMouth()

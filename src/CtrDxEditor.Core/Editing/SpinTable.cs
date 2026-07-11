@@ -14,6 +14,8 @@ namespace CtrDxEditor.Core.Editing
             "spike4",
             "electro",
             "sock",
+            "bouncer1",
+            "bouncer2",
         ];
 
         /// <summary>Whether <paramref name="element"/> can expose spin controls.</summary>

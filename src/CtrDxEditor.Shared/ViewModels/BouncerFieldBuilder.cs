@@ -20,7 +20,8 @@ namespace CtrDxEditor.ViewModels
             ObservableCollection<AttributeFieldViewModel> fields,
             LevelObject value,
             System.Action onChanged,
-            System.Action onChanging)
+            System.Action onChanging,
+            System.Action rebuild)
         {
             fields.Add(new AttributeFieldViewModel(value, "angle", AttrType.Number, null, onChanged, onChanging));
             fields.Add(new AttributeFieldViewModel(
@@ -30,6 +31,7 @@ namespace CtrDxEditor.ViewModels
                 v => BouncerObject.SetSize(value, v),
                 onChanged,
                 onChanging));
+            SpinFieldBuilder.Build(fields, value, onChanged, onChanging, rebuild);
         }
     }
 }

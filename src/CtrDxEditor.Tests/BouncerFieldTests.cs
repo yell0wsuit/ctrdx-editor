@@ -79,5 +79,17 @@ namespace CtrDxEditor.Tests
             Assert.True(angle.IsNumeric);
             Assert.Equal("15", angle.Value);
         }
+
+        /// <summary>DX parses bouncers as movers, so their panel exposes spin and movement controls.</summary>
+        [Fact]
+        public void BouncerExposesMoverFields()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(Level);
+            vm.SelectedObject = vm.Document!.Objects[0];
+
+            Assert.Contains(vm.Fields, f => f.Name == "spin" && f.IsBool);
+            Assert.Contains(vm.Fields, f => f.Name == "movementMode" && f.EnumOptions is not null);
+        }
     }
 }

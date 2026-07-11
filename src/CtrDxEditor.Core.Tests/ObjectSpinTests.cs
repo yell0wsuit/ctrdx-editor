@@ -38,6 +38,8 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(SpinTable.IsSpinnable("spike4"));
             Assert.True(SpinTable.IsSpinnable("electro"));
             Assert.True(SpinTable.IsSpinnable("sock"));
+            Assert.True(SpinTable.IsSpinnable("bouncer1"));
+            Assert.True(SpinTable.IsSpinnable("bouncer2"));
             Assert.False(SpinTable.IsSpinnable("grab"));
         }
 

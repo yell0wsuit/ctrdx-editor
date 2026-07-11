@@ -493,7 +493,7 @@ namespace CtrDxEditor.ViewModels
 
             if (BouncerObject.IsBouncer(value.Type))
             {
-                BouncerFieldBuilder.Build(Fields, value, Changed, Changing);
+                BouncerFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
                 return;
             }
 
