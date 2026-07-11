@@ -27,6 +27,20 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(70.0, position.Y, 6);
         }
 
+        /// <summary>
+        /// A spin-carrier path ("0,0") has zero traversable length. With moveSpeed &gt; 0 the object still
+        /// does not translate, so the preview must return the start rather than looping over coincident
+        /// points forever (the official spinner form used by bouncers: path="0,0" moveSpeed=50 rotateSpeed=…).
+        /// </summary>
+        [Fact]
+        public void PreviewPositionReturnsStartForZeroLengthSpinnerPath()
+        {
+            Vec2 start = new(246, 240);
+            Vec2 position = MoverPath.PreviewPosition(start, "0,0", moveSpeed: 50, elapsedSeconds: 3.0);
+
+            Assert.Equal(start, position);
+        }
+
         /// <summary>Looped serialization writes just the authored shape points relative to the object.</summary>
         [Fact]
         public void SerializePlainLoopWritesDrawnPointsOnly()

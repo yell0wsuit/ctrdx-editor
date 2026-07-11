@@ -93,6 +93,12 @@ namespace CtrDxEditor.Core.Editing
 
             double remaining = moveSpeed * elapsedSeconds;
             int index = 0;
+            // A spin-carrier path ("0,0"), or any run of coincident
+            // points, advances the target without moving. Count
+            // consecutive zero-length steps and stop after
+            // one full lap so the object stays put (only rotateSpeed spins it) instead of looping forever.
+            int noProgressSteps = 0;
+            int maxNoProgressSteps = points.Length + 1;
             while (remaining > 0)
             {
                 Vec2 point = points[index];
@@ -103,9 +109,14 @@ namespace CtrDxEditor.Core.Editing
                 if (distance <= 0)
                 {
                     index = (index + 1) % points.Length;
+                    if (++noProgressSteps > maxNoProgressSteps)
+                    {
+                        break;
+                    }
                     continue;
                 }
 
+                noProgressSteps = 0;
                 if (remaining <= distance)
                 {
                     double t = remaining / distance;
