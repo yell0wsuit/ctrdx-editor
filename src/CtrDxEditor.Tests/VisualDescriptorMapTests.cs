@@ -240,5 +240,25 @@ namespace CtrDxEditor.Tests
                     Assert.Equal("images/obj_electrodes", l.AtlasImageBasePath);
                 });
         }
+
+        /// <summary>Ghost draws body (quad 0) and face (quad 1) from obj_ghost.</summary>
+        [Fact]
+        public void GhostHasBodyAndFaceLayers()
+        {
+            VisualDescriptor ghost = VisualDescriptorMap.For("ghost")!;
+
+            Assert.Equal(2, ghost.Layers.Count);
+            Assert.All(ghost.Layers, l => Assert.Equal("images/obj_ghost", l.AtlasImageBasePath));
+            Assert.Equal(0, ghost.Layers[0].Quad);
+            Assert.Equal(1, ghost.Layers[1].Quad);
+        }
+
+        /// <summary>The ghost atlas is part of the required bundle files.</summary>
+        [Fact]
+        public void GhostAtlasIsRequired()
+        {
+            Assert.Contains("images/obj_ghost.png", VisualDescriptorMap.RequiredFiles(".png"));
+            Assert.Contains("images/obj_ghost.json", VisualDescriptorMap.RequiredFiles(".png"));
+        }
     }
 }
