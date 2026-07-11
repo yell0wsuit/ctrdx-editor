@@ -30,7 +30,7 @@ namespace CtrDxEditor.Tests
             s.Set(g, GhostMorph.Grab);
 
             Assert.Equal(GhostMorph.Grab, s.Active);
-            Assert.Equal("grab", s.MorphSpriteKey);
+            Assert.Equal("grab_auto", s.MorphSpriteKey);
             Assert.True(s.ShowsRadiusRing(g));
             Assert.Null(s.MorphHitboxElement); // a grab is a rope hook, no hitbox
         }

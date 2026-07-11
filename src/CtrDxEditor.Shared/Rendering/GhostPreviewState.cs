@@ -35,7 +35,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Gets the sprite key for the active morph, or null for the ghost body and face.</summary>
         public string? MorphSpriteKey => Active switch
         {
-            GhostMorph.Grab => "grab",
+            GhostMorph.Grab => "grab_auto",
             GhostMorph.Bubble => "bubble",
             GhostMorph.Bouncer => "bouncer1",
             _ => null,
