@@ -650,12 +650,13 @@ namespace CtrDxEditor.Rendering
             double? animationPreviewSeconds)
         {
             DrawPollen(ctx, v, sprites, obj, animationPreviewSeconds);
+            bool drawRope = GrabBeeRenderer.ShouldDrawRope(obj, animationPreviewSeconds);
             if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
             {
                 // Highlight the hook while it's hovered or being slid, matching the game's mover art.
                 bool active = hookHighlighted;
                 GrabRenderer.DrawMovableRail(ctx, v, sprites, rail);
-                if (rope is not null)
+                if (drawRope && rope is not null)
                 {
                     RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
@@ -674,13 +675,13 @@ namespace CtrDxEditor.Rendering
                 }
                 int back = Math.Min(GrabRenderer.BackLayerCount(obj), sprite.Layers.Count);
                 DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back, previewPosition);
-                if (rope is not null)
+                if (drawRope && rope is not null)
                 {
                     RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
                 DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count, previewPosition);
             }
-            else if (rope is not null)
+            else if (drawRope && rope is not null)
             {
                 RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
             }

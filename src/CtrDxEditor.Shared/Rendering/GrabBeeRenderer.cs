@@ -65,6 +65,15 @@ namespace CtrDxEditor.Rendering
             };
         }
 
+        /// <summary>Whether a grab's authored rope remains visible for the current preview state.</summary>
+        /// <param name="grab">Grab whose active movement state is inspected.</param>
+        /// <param name="animationPreviewSeconds">Elapsed preview time, or null when this grab is not previewing.</param>
+        /// <returns><see langword="false"/> only for an actively moving grab during its animation preview.</returns>
+        public static bool ShouldDrawRope(LevelObject grab, double? animationPreviewSeconds)
+        {
+            return animationPreviewSeconds is null || !MoverPath.HasActiveMovement(grab);
+        }
+
         /// <summary>Appends pollen particles at the game's fixed spacing along one path segment.</summary>
         /// <param name="result">Destination particle collection.</param>
         /// <param name="a">Segment start in level coordinates.</param>

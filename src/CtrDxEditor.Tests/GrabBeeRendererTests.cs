@@ -45,6 +45,21 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, GrabBeeRenderer.WingSpriteKey(seconds));
         }
 
+        /// <summary>A moving grab hides its rope only while its own animation preview is playing.</summary>
+        [Theory]
+        [InlineData("RC40", "50", null, true)]
+        [InlineData("RC40", "50", 0.0, false)]
+        [InlineData("100,0", "50", 1.0, false)]
+        [InlineData("100,0", "0", 1.0, true)]
+        public void RopeVisibilityFollowsActiveMovementPreview(
+            string path,
+            string moveSpeed,
+            double? seconds,
+            bool expected)
+        {
+            Assert.Equal(expected, GrabBeeRenderer.ShouldDrawRope(Obj(path, moveSpeed), seconds));
+        }
+
         private static LevelObject Obj(string path, string moveSpeed, bool hidePath = false)
         {
             XElement element = new("grab",
