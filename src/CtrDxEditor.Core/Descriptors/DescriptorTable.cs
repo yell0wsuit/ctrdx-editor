@@ -127,6 +127,15 @@ namespace CtrDxEditor.Core.Descriptors
             // Gravity button
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
 
+            // Vinyl (rotating disc / DJ disc). Game element rotatedCircle; size is the disc radius,
+            // handleAngle rotates the 1-2 handles, oneHandle hides the left handle.
+            new ObjectDescriptor("rotatedCircle", "Vinyl",
+            [
+                new AttributeSpec("size", AttrType.Whole, "110"),
+                new AttributeSpec("handleAngle", AttrType.Number, "0"),
+                new AttributeSpec("oneHandle", AttrType.Bool, "false"),
+            ], MaxCount: int.MaxValue, LocalizationName: "vinyl"),
+
             // Ghost
             new ObjectDescriptor("ghost", "Ghost",
             [

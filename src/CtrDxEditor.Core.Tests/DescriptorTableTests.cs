@@ -1,3 +1,5 @@
+using System.Linq;
+
 using CtrDxEditor.Core.Descriptors;
 
 using Xunit;
@@ -27,8 +29,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("sock"));
             Assert.True(t.Knows("bouncer1"));
             Assert.True(t.Knows("bouncer2"));
+            Assert.True(t.Knows("rotatedCircle"));
             Assert.True(t.Knows("ghost"));
             Assert.False(t.Knows("bouncer"));
+        }
+
+        /// <summary>The vinyl (rotatedCircle) descriptor exposes size, handle angle, and the one-handle toggle.</summary>
+        [Fact]
+        public void VinylCarriesSizeHandleAngleAndOneHandle()
+        {
+            ObjectDescriptor vinyl = DescriptorTable.Default.For("rotatedCircle")!;
+
+            Assert.Equal("vinyl", vinyl.LocalizationName);
+            Assert.Equal(int.MaxValue, vinyl.MaxCount);
+            Assert.Equal("110", vinyl.Attributes.Single(a => a.Name == "size").Default);
+            Assert.Equal(AttrType.Whole, vinyl.Attributes.Single(a => a.Name == "size").Type);
+            Assert.Equal("0", vinyl.Attributes.Single(a => a.Name == "handleAngle").Default);
+            Assert.Equal(AttrType.Number, vinyl.Attributes.Single(a => a.Name == "handleAngle").Type);
+            Assert.Equal("false", vinyl.Attributes.Single(a => a.Name == "oneHandle").Default);
+            Assert.Equal(AttrType.Bool, vinyl.Attributes.Single(a => a.Name == "oneHandle").Type);
         }
 
         /// <summary>The ghost descriptor exposes its three morph toggles plus radius and angle.</summary>
