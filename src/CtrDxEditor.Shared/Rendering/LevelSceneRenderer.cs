@@ -649,7 +649,6 @@ namespace CtrDxEditor.Rendering
             Vec2 previewPosition,
             double? animationPreviewSeconds)
         {
-            DrawPollen(ctx, v, sprites, obj, animationPreviewSeconds);
             bool drawRope = GrabBeeRenderer.ShouldDrawRope(obj, animationPreviewSeconds);
             if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
             {
@@ -748,35 +747,71 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Draws deterministic pollen particles behind a moving grab.</summary>
+        /// <summary>Draws one grab's deterministic pollen particles in the global pre-object pollen pass.</summary>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve pollen art.</param>
         /// <param name="obj">Grab whose movement path supplies pollen positions.</param>
         /// <param name="seconds">Elapsed animation-preview time, or null for static pollen.</param>
-        private static void DrawPollen(
-            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, double? seconds)
+        /// <param name="startIndex">First shared particle index, used for deterministic variation across grabs.</param>
+        /// <returns>The next shared particle index after this grab's pollen.</returns>
+        public static int DrawGrabPollen(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject obj,
+            double? seconds,
+            int startIndex = 0)
         {
             if (sprites.GetSprite("grab_pollen") is not { } pollen)
             {
-                return;
+                return startIndex;
             }
-            int index = 0;
+            int index = startIndex;
             foreach (Vec2 point in GrabBeeRenderer.PollenPoints(obj))
             {
-                double phase = seconds is double elapsed ? (elapsed + (index * 0.17)) % 1.4 / 1.4 : 0.5;
-                double pulse = phase <= 0.5 ? phase * 2 : (1 - phase) * 2;
-                double alpha = seconds is null ? 0.65 : 0.3 + (0.7 * pulse);
-                double scale = seconds is null ? 0.5 : 0.3 + (0.3 * pulse) + (index % 3 * 0.1);
-                using (ctx.PushOpacity(alpha))
+                GrabBeeRenderer.PollenVisual visual = GrabBeeRenderer.PollenVisualAt(index, seconds);
+                using (ctx.PushOpacity(visual.Alpha))
                 {
                     foreach (SpriteLayerDraw layer in pollen.Layers)
                     {
-                        DrawLayer(ctx, v, layer, point.X, point.Y, pollen.Scale * scale);
+                        DrawPollenLayer(ctx, v, layer, point, visual);
                     }
                 }
                 index++;
             }
+            return index;
+        }
+
+        /// <summary>Draws one pollen layer with the game's 1.5x base quad and independent axis scales.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="layer">Resolved pollen atlas layer.</param>
+        /// <param name="position">Particle center in level coordinates.</param>
+        /// <param name="visual">Current deterministic scale and alpha state.</param>
+        private static void DrawPollenLayer(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteLayerDraw layer,
+            Vec2 position,
+            GrabBeeRenderer.PollenVisual visual)
+        {
+            SpriteLayout layout = SpritePlacement.Compute(
+                layer.Frame,
+                position.X,
+                position.Y,
+                GrabBeeRenderer.PollenQuadScale);
+            double width = layout.Dest.W * visual.ScaleX;
+            double height = layout.Dest.H * visual.ScaleY;
+            Vec2 topLeft = v.LevelToScreen(new Vec2(position.X - (width / 2), position.Y - (height / 2)));
+            Vec2 bottomRight = v.LevelToScreen(new Vec2(position.X + (width / 2), position.Y + (height / 2)));
+            Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
+            Rect destination = new(
+                topLeft.X,
+                topLeft.Y,
+                bottomRight.X - topLeft.X,
+                bottomRight.Y - topLeft.Y);
+            ctx.DrawImage(layer.Bitmap, source, destination);
         }
 
         /// <summary>Draws every overlay sprite an object contributes (e.g. spider, Christmas lights).</summary>

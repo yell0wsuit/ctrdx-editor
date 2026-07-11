@@ -10,9 +10,18 @@ namespace CtrDxEditor.Rendering
     /// <summary>Deterministic DX bee animation and pollen geometry for moving rope hooks.</summary>
     public static class GrabBeeRenderer
     {
-        private const double PollenSpacing = 44.0;
+        private const double PollenSpacing = 44.0 / SpritePlacement.MapScale;
         private const double BeeAnchorX = -6.0 / SpritePlacement.MapScale;
         private const double BeeAnchorY = -58.0 / SpritePlacement.MapScale;
+
+        /// <summary>Base quad enlargement applied by the DX pollen drawer before particle scaling.</summary>
+        public const double PollenQuadScale = 1.5;
+
+        /// <summary>Current deterministic draw state for one pollen particle.</summary>
+        /// <param name="ScaleX">Horizontal particle scale.</param>
+        /// <param name="ScaleY">Vertical particle scale.</param>
+        /// <param name="Alpha">Particle opacity.</param>
+        public readonly record struct PollenVisual(double ScaleX, double ScaleY, double Alpha);
 
         /// <summary>Whether the game attaches a bee to this grab.</summary>
         /// <param name="grab">Grab whose mover state is inspected.</param>
@@ -34,10 +43,10 @@ namespace CtrDxEditor.Rendering
 
             Vec2[] points = MoverPath.Points(new Vec2(grab.X, grab.Y), grab.GetAttr("path"));
             List<Vec2> result = [];
-            bool retrace = MoverPath.IsRetrace(grab.GetAttr("path"));
+            bool sparse = grab.GetAttr("path")?.StartsWith('R') == true;
             for (int i = 0; i < points.Length - 1; i++)
             {
-                if (!retrace || i % 3 == 0)
+                if (!sparse || i % 3 == 0)
                 {
                     AddSegment(result, points[i], points[i + 1]);
                 }
@@ -82,6 +91,82 @@ namespace CtrDxEditor.Rendering
         public static Vec2 BeeAnchor(Vec2 grabPosition)
         {
             return new Vec2(grabPosition.X + BeeAnchorX, grabPosition.Y + BeeAnchorY);
+        }
+
+        /// <summary>Computes the game's scale and alpha motion using deterministic per-index initialization.</summary>
+        /// <param name="index">Stable particle index along all rendered grab paths.</param>
+        /// <param name="elapsedSeconds">Elapsed preview time, or null for the deterministic initial state.</param>
+        /// <returns>Independent axis scales and alpha for drawing the particle.</returns>
+        public static PollenVisual PollenVisualAt(int index, double? elapsedSeconds)
+        {
+            double[] options = [0.3, 0.3, 0.5, 0.5, 0.6];
+            double endScaleX = options[Math.Abs(index) % options.Length];
+            double endScaleY = endScaleX;
+            if ((index & 1) == 0)
+            {
+                endScaleX *= 1.1;
+            }
+            else
+            {
+                endScaleY *= 1.1;
+            }
+
+            double scaleOffset = Math.Min(1 - endScaleX, 1 - endScaleY);
+            double startScaleX = endScaleX + scaleOffset;
+            double startScaleY = endScaleY + scaleOffset;
+            double phase = DeterministicPhase(index);
+            double seconds = Math.Max(0, elapsedSeconds ?? 0);
+            double scaleX = PingPong(startScaleX * phase, endScaleX, startScaleX, seconds);
+            double scaleY = PingPong(startScaleY * phase, endScaleY, startScaleY, seconds);
+            double alpha = PingPong(0.3 + (0.7 * phase), 0.3, 1.0, seconds);
+            return new PollenVisual(scaleX, scaleY, alpha);
+        }
+
+        /// <summary>Derives a reproducible replacement for the game's random initial particle phase.</summary>
+        /// <param name="index">Stable particle index.</param>
+        /// <returns>A deterministic value in the half-open interval [0, 1).</returns>
+        private static double DeterministicPhase(int index)
+        {
+            double phase = 0.37 + (Math.Abs(index) * 0.6180339887498949);
+            return phase - Math.Floor(phase);
+        }
+
+        /// <summary>Advances one scalar through the game's initial target and subsequent ping-pong targets.</summary>
+        /// <param name="initial">Deterministic initial value.</param>
+        /// <param name="firstTarget">Target used by the particle's first update.</param>
+        /// <param name="otherTarget">Alternate target used after reaching <paramref name="firstTarget"/>.</param>
+        /// <param name="seconds">Elapsed time at one unit per second.</param>
+        /// <returns>The scalar value after the requested elapsed time.</returns>
+        private static double PingPong(double initial, double firstTarget, double otherTarget, double seconds)
+        {
+            double firstDistance = Math.Abs(firstTarget - initial);
+            if (seconds <= firstDistance)
+            {
+                return MoveTowards(initial, firstTarget, seconds);
+            }
+
+            seconds -= firstDistance;
+            double range = Math.Abs(otherTarget - firstTarget);
+            if (range <= 0)
+            {
+                return firstTarget;
+            }
+            double cycle = seconds % (range * 2);
+            return cycle <= range
+                ? MoveTowards(firstTarget, otherTarget, cycle)
+                : MoveTowards(otherTarget, firstTarget, cycle - range);
+        }
+
+        /// <summary>Moves a scalar toward a target without overshooting.</summary>
+        /// <param name="value">Starting value.</param>
+        /// <param name="target">Destination value.</param>
+        /// <param name="distance">Maximum absolute movement.</param>
+        /// <returns>The moved value, clamped to <paramref name="target"/>.</returns>
+        private static double MoveTowards(double value, double target, double distance)
+        {
+            return target >= value
+                ? Math.Min(target, value + distance)
+                : Math.Max(target, value - distance);
         }
 
         /// <summary>Appends pollen particles at the game's fixed spacing along one path segment.</summary>

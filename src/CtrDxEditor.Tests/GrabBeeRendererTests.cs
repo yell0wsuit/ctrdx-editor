@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
@@ -10,7 +11,7 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests deterministic moving-grab bee and pollen behavior.</summary>
     public class GrabBeeRendererTests
     {
-        /// <summary>Pollen is placed at the DX 44-unit spacing, including both segment endpoints.</summary>
+        /// <summary>DX's 44 world-pixel spacing is normalized by the editor's 3x map scale.</summary>
         [Fact]
         public void PollenUsesFortyFourUnitSpacing()
         {
@@ -19,8 +20,8 @@ namespace CtrDxEditor.Tests
             Core.Geometry.Vec2[] particles = [.. GrabBeeRenderer.PollenPoints(grab)];
 
             Assert.Contains(particles, p => p.X == 0 && p.Y == 0);
-            Assert.Contains(particles, p => p.X == 44 && p.Y == 0);
-            Assert.Contains(particles, p => p.X == 88 && p.Y == 0);
+            Assert.Contains(particles, p => Math.Abs(p.X - (44.0 / 3.0)) < 0.000001 && p.Y == 0);
+            Assert.Contains(particles, p => Math.Abs(p.X - (88.0 / 3.0)) < 0.000001 && p.Y == 0);
         }
 
         /// <summary>Hidden paths suppress pollen while active movement still selects bee art.</summary>
@@ -68,6 +69,31 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(98, anchor.X, precision: 6);
             Assert.Equal(100 - (58.0 / 3.0), anchor.Y, precision: 6);
+        }
+
+        /// <summary>Pollen uses the game's 1.5x quad size and independent deterministic axis scales.</summary>
+        [Fact]
+        public void PollenVisualUsesDxScaleAndAlphaRanges()
+        {
+            GrabBeeRenderer.PollenVisual visual = GrabBeeRenderer.PollenVisualAt(4, 0);
+
+            Assert.Equal(1.5, GrabBeeRenderer.PollenQuadScale);
+            Assert.InRange(visual.ScaleX, 0, 1);
+            Assert.InRange(visual.ScaleY, 0, 1);
+            Assert.NotEqual(visual.ScaleX, visual.ScaleY);
+            Assert.InRange(visual.Alpha, 0.3, 1.0);
+        }
+
+        /// <summary>The deterministic preview advances each pollen component at DX's one-unit-per-second rate.</summary>
+        [Fact]
+        public void PollenVisualMovesOneUnitPerSecondTowardDxTargets()
+        {
+            GrabBeeRenderer.PollenVisual atZero = GrabBeeRenderer.PollenVisualAt(2, 0);
+            GrabBeeRenderer.PollenVisual later = GrabBeeRenderer.PollenVisualAt(2, 0.1);
+
+            Assert.InRange(Math.Abs(later.ScaleX - atZero.ScaleX), 0, 0.100001);
+            Assert.InRange(Math.Abs(later.ScaleY - atZero.ScaleY), 0, 0.100001);
+            Assert.InRange(Math.Abs(later.Alpha - atZero.Alpha), 0.099999, 0.100001);
         }
 
         private static LevelObject Obj(string path, string moveSpeed, bool hidePath = false)

@@ -367,6 +367,20 @@ namespace CtrDxEditor.Rendering
                 context.Custom(new GlowDrawOperation(opBounds, v, glowLayer.Bitmap, glowLayer.Frame.Frame, glowBulbs));
             }
 
+            // DX batches every grab's pollen into one global pass before scene objects. Preserve object-list
+            // insertion order so deterministic particle indices match the game's shared pollen drawer.
+            int pollenIndex = 0;
+            foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
+            {
+                pollenIndex = LevelSceneRenderer.DrawGrabPollen(
+                    context,
+                    v,
+                    sprites,
+                    grab,
+                    useAnimationPreview && IsAnimationPreviewing(grab) ? AnimationPreviewElapsedSeconds : null,
+                    pollenIndex);
+            }
+
             // Draw in the game's fixed z-order (GameScene.Draw), a stable sort so same-layer objects keep list order.
             int ropeSeed = 0;
             foreach (LevelObject obj in objects.OrderBy(LevelSceneRenderer.GameDrawLayer))
