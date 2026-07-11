@@ -7,11 +7,11 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>
-    /// Canvas geometry for the vinyl (rotatedCircle) disc: its size, the on-canvas scale that makes the
-    /// drawn disc radius equal <c>size</c> level units, and the 1-2 handles ropes attach to. Mirrors the
+    /// Canvas geometry for the vinyl (rotatedCircle) disc: its size, game-authentic visual scales, and the
+    /// 1-2 handles ropes attach to. Mirrors the
     /// game's <c>LoadRotatedCircle</c>: handles sit at <c>center ± size</c> then rotate by <c>handleAngle</c>
     /// degrees (clockwise, Y-down); <c>oneHandle</c> keeps only the right handle. UI-free; all lengths in
-    /// level units. The disc-body atlas frame width (<see cref="BodyFrameWidth"/>) is a fixed property of
+    /// level units. Atlas dimensions used by the controller placement are fixed properties of
     /// <c>obj_vinil</c>, hardcoded here the same way <see cref="BouncerResize"/> hardcodes its quad widths.
     /// </summary>
     public static class VinylGeometry
@@ -27,6 +27,12 @@ namespace CtrDxEditor.Core.Editing
 
         /// <summary>Drawn width of the disc-body atlas frame (obj_vinil.json quad 0), in atlas pixels.</summary>
         public const double BodyFrameWidth = 1066.0;
+
+        /// <summary>Drawn width of one highlight half (obj_vinil.json quad 1), in atlas pixels.</summary>
+        public const double HighlightFrameWidth = 534.0;
+
+        /// <summary>Drawn width of a controller handle (obj_vinil.json quad 5), in atlas pixels.</summary>
+        public const double ControllerFrameWidth = 185.0;
 
         /// <summary>Which disc handle a hit or drag refers to.</summary>
         public enum Handle
@@ -76,12 +82,29 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The per-object sprite scale so the drawn disc-body radius equals <see cref="DiscRadius"/> level
-        /// units: body half-width is <c>BodyFrameWidth/2 * scale / mapScale</c>, set equal to size.
+        /// The game's base visual scale, shared by the body and highlight halves.
         /// </summary>
-        public static double LayerScale(LevelObject obj, double mapScale = SpritePlacement.MapScale)
+        public static double LayerScale(LevelObject obj)
         {
-            return Size(obj) * mapScale / (BodyFrameWidth / 2.0);
+            return Size(obj) / 167.0;
+        }
+
+        /// <summary>The sticker scale, floored at 0.4 like <c>RotatedCircle.SetSize</c>.</summary>
+        public static double StickerScale(LevelObject obj)
+        {
+            return Math.Max(LayerScale(obj), 0.4);
+        }
+
+        /// <summary>The controller scale, floored at 0.75 like <c>RotatedCircle.SetSize</c>.</summary>
+        public static double ControllerScale(LevelObject obj)
+        {
+            return Math.Max(LayerScale(obj), 0.75);
+        }
+
+        /// <summary>The center-cap scale derived from the sticker scale by <c>RotatedCircle.SetSize</c>.</summary>
+        public static double CenterScale(LevelObject obj)
+        {
+            return 1.0 - ((1.0 - StickerScale(obj)) * 0.5);
         }
 
         /// <summary>World-space position of a disc handle.</summary>
@@ -91,6 +114,20 @@ namespace CtrDxEditor.Core.Editing
             double rad = radial * Math.PI / 180.0;
             double r = DiscRadius(obj);
             return new Vec2(obj.X + (Math.Cos(rad) * r), obj.Y + (Math.Sin(rad) * r));
+        }
+
+        /// <summary>World-space center of the visible controller art, including the game's size-dependent inset.</summary>
+        public static Vec2 VisualHandlePosition(LevelObject obj, Handle h, double mapScale = SpritePlacement.MapScale)
+        {
+            double baseScale = LayerScale(obj);
+            double controllerScale = ControllerScale(obj);
+            double sizeInPixels = HighlightFrameWidth * baseScale;
+            double shift = 67.5 - (0.09 * Size(obj));
+            double scaleCorrection = (1.0 - controllerScale) * (ControllerFrameWidth / 2.0);
+            double offset = (sizeInPixels - shift + scaleCorrection) / mapScale;
+            double radial = HandleAngleDegrees(obj) + (h == Handle.Left ? 180.0 : 0.0);
+            double rad = radial * Math.PI / 180.0;
+            return new Vec2(obj.X + (Math.Cos(rad) * offset), obj.Y + (Math.Sin(rad) * offset));
         }
 
         /// <summary>The handle within <paramref name="tolerance"/> of <paramref name="point"/>, nearest first.</summary>

@@ -79,5 +79,28 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(VinylGeometry.Handle.None, VinylGeometry.HitTest(v, new Vec2(-100, 0), 10));
             Assert.Equal(VinylGeometry.Handle.Right, VinylGeometry.HitTest(v, new Vec2(100, 0), 10));
         }
+
+        /// <summary>Visual layers use the distinct scale floors from RotatedCircle.SetSize.</summary>
+        [Fact]
+        public void VisualScalesMatchGameFloors()
+        {
+            LevelObject small = Vinyl(0, 0, 50, 0, false);
+
+            Assert.Equal(50.0 / 167.0, VinylGeometry.LayerScale(small), 6);
+            Assert.Equal(0.4, VinylGeometry.StickerScale(small), 6);
+            Assert.Equal(0.75, VinylGeometry.ControllerScale(small), 6);
+            Assert.Equal(0.7, VinylGeometry.CenterScale(small), 6);
+        }
+
+        /// <summary>Controller art uses the game's visual inset rather than the rope handle's exact radius.</summary>
+        [Fact]
+        public void VisualHandlePositionMatchesGameControllerOffset()
+        {
+            LevelObject v = Vinyl(100, 200, 110, 90, false);
+            Vec2 right = VinylGeometry.VisualHandlePosition(v, VinylGeometry.Handle.Right);
+
+            Assert.Equal(100, right.X, 3);
+            Assert.Equal(305.754, right.Y, 3);
+        }
     }
 }

@@ -201,8 +201,8 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws a vinyl (rotatedCircle) disc at a scale that makes its radius equal its <c>size</c> level
-        /// units: the body + center (unrotated, radially symmetric), the highlight sheen and label as two
+        /// Draws a vinyl (rotatedCircle) using the distinct body, sticker, center, and controller scales from
+        /// the game's <c>RotatedCircle.SetSize</c>: the body + center (unrotated, radially symmetric), the highlight sheen and label as two
         /// mirrored halves (the label spins with <c>handleAngle</c>, the sheen is a fixed top light), then
         /// the handle sprite at each handle position (one when oneHandle is set), dome pointing outward.
         /// Mirrored halves and handle rotation use a <see cref="Matrix"/> pushed onto the context, the same
@@ -215,24 +215,26 @@ namespace CtrDxEditor.Rendering
         public static void DrawVinyl(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
         {
             Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
-            double s = VinylGeometry.LayerScale(obj) / SpritePlacement.MapScale * v.Zoom;
+            double baseScale = VinylGeometry.LayerScale(obj) / SpritePlacement.MapScale * v.Zoom;
+            double stickerScale = VinylGeometry.StickerScale(obj) / SpritePlacement.MapScale * v.Zoom;
+            double centerScale = VinylGeometry.CenterScale(obj) / SpritePlacement.MapScale * v.Zoom;
+            double controllerScale = VinylGeometry.ControllerScale(obj) / SpritePlacement.MapScale * v.Zoom;
 
             // Disc body (quad 0) + center spindle (quad 3): centered, unrotated.
             if (VinylLayer(sprites, "rotatedCircle", 0) is { } body)
             {
-                VinylDrawCentered(ctx, body, c, s);
+                VinylDrawCentered(ctx, body, c, baseScale);
             }
 
             // Highlight sheen (quad 1): a fixed top light, two halves mirrored across the centerline.
             if (VinylLayer(sprites, "vinyl_highlight", 0) is { } highlight)
             {
-                VinylDrawHalf(ctx, highlight, c, s, mirror: false);
-                VinylDrawHalf(ctx, highlight, c, s, mirror: true);
+                VinylDrawHighlightPair(ctx, highlight, c, baseScale);
             }
 
             if (VinylLayer(sprites, "rotatedCircle", 1) is { } center)
             {
-                VinylDrawCentered(ctx, center, c, s);
+                VinylDrawCentered(ctx, center, c, centerScale);
             }
 
             // Label sticker (quad 2): two mirrored halves that spin with the disc by handleAngle.
@@ -244,8 +246,7 @@ namespace CtrDxEditor.Rendering
                     * Matrix.CreateTranslation(c.X, c.Y);
                 using (ctx.PushTransform(rot))
                 {
-                    VinylDrawHalf(ctx, sticker, c, s, mirror: false);
-                    VinylDrawHalf(ctx, sticker, c, s, mirror: true);
+                    VinylDrawStickerPair(ctx, sticker, c, stickerScale, v.Zoom / SpritePlacement.MapScale);
                 }
             }
 
@@ -253,10 +254,10 @@ namespace CtrDxEditor.Rendering
             if (VinylLayer(sprites, "vinyl_handle", 0) is { } handle)
             {
                 double baseAngle = VinylGeometry.HandleAngleDegrees(obj);
-                VinylDrawHandle(ctx, v, handle, VinylGeometry.HandlePosition(obj, VinylGeometry.Handle.Right), s, baseAngle - 90.0);
+                VinylDrawHandle(ctx, v, handle, VinylGeometry.VisualHandlePosition(obj, VinylGeometry.Handle.Right), controllerScale, baseAngle - 90.0);
                 if (!VinylGeometry.OneHandle(obj))
                 {
-                    VinylDrawHandle(ctx, v, handle, VinylGeometry.HandlePosition(obj, VinylGeometry.Handle.Left), s, baseAngle + 90.0);
+                    VinylDrawHandle(ctx, v, handle, VinylGeometry.VisualHandlePosition(obj, VinylGeometry.Handle.Left), controllerScale, baseAngle + 90.0);
                 }
             }
         }
@@ -276,28 +277,42 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws one authored half (highlight or sticker) abutting the disc's vertical centerline;
-        /// <paramref name="mirror"/> reflects it across the centerline to form the opposite half.
+        /// Draws the highlight halves with the game's bottom-center seam (anchors 12 and 9).
         /// </summary>
-        private static void VinylDrawHalf(DrawingContext ctx, SpriteLayerDraw layer, Vec2 c, double s, bool mirror)
+        private static void VinylDrawHighlightPair(DrawingContext ctx, SpriteLayerDraw layer, Vec2 c, double s)
         {
             IntRect f = layer.Frame.Frame;
             double w = f.W * s, h = f.H * s;
             Rect src = new(f.X, f.Y, f.W, f.H);
-            Rect dest = new(c.X, c.Y - (h / 2), w, h);
-            if (mirror)
+            Rect left = new(c.X - w, c.Y, w, h);
+            ctx.DrawImage(layer.Bitmap, src, left);
+            Matrix flip = Matrix.CreateTranslation(-c.X, 0)
+                * Matrix.CreateScale(-1, 1)
+                * Matrix.CreateTranslation(c.X, 0);
+            using (ctx.PushTransform(flip))
             {
-                Matrix flip = Matrix.CreateTranslation(-c.X, 0)
-                    * Matrix.CreateScale(-1, 1)
-                    * Matrix.CreateTranslation(c.X, 0);
-                using (ctx.PushTransform(flip))
-                {
-                    ctx.DrawImage(layer.Bitmap, src, dest);
-                }
+                ctx.DrawImage(layer.Bitmap, src, left);
             }
-            else
+        }
+
+        /// <summary>Draws the label halves around their game-authored ±1 px center pivots.</summary>
+        private static void VinylDrawStickerPair(DrawingContext ctx, SpriteLayerDraw layer, Vec2 c, double s, double oneGamePixel)
+        {
+            IntRect f = layer.Frame.Frame;
+            double w = f.W * s, h = f.H * s;
+            Rect src = new(f.X, f.Y, f.W, f.H);
+
+            double leftPivot = c.X + oneGamePixel;
+            ctx.DrawImage(layer.Bitmap, src, new Rect(leftPivot - w, c.Y - (h / 2), w, h));
+
+            double rightPivot = c.X - oneGamePixel;
+            Rect rightSourceDest = new(rightPivot - w, c.Y - (h / 2), w, h);
+            Matrix flip = Matrix.CreateTranslation(-rightPivot, 0)
+                * Matrix.CreateScale(-1, 1)
+                * Matrix.CreateTranslation(rightPivot, 0);
+            using (ctx.PushTransform(flip))
             {
-                ctx.DrawImage(layer.Bitmap, src, dest);
+                ctx.DrawImage(layer.Bitmap, src, rightSourceDest);
             }
         }
 
