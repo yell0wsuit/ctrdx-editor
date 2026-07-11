@@ -142,6 +142,7 @@
     "Object.electro": "Electric spark",
     "Object.sock": "Magic hat",
     "Object.bouncer": "Bouncer",
+    "Object.ghost": "Ghost",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -189,6 +190,10 @@
     "Attr.polylineSpeed": "Polyline speed",
     "Attr.polylineRetrace": "Back and forth",
     "Attr.polylineClockwise": "Clockwise",
+
+    "Attr.grab": "Grab",
+    "Attr.bubble": "Bubble",
+    "Attr.bouncer": "Bouncer",
 
     "Hint.PolylinePointLimit": "Movement path is at its 99-point limit"
 }
