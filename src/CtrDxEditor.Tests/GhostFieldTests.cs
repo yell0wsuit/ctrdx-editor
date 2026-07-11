@@ -71,17 +71,31 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(off.Fields, f => f.Name == "angle");
         }
 
-        /// <summary>Toggling grab on rebuilds the panel so the radius field appears.</summary>
+        /// <summary>Toggling grab on rebuilds the panel, reveals radius, and defaults it to 50.</summary>
         [Fact]
-        public void TogglingGrabRevealsRadius()
+        public void TogglingGrabOnRevealsRadiusDefault50()
         {
-            EditorViewModel vm = Load("<ghost x='1' y='1' grab='false' bouncer='false' />");
+            EditorViewModel vm = Load("<ghost x='1' y='1' grab='false' bouncer='false' radius='-1' />");
             AttributeFieldViewModel grab = vm.Fields.Single(f => f.Name == "grab");
             Assert.DoesNotContain(vm.Fields, f => f.Name == "radius");
 
             grab.Value = "true";
 
             Assert.Contains(vm.Fields, f => f.Name == "radius");
+            Assert.Equal("50", vm.Document!.Objects[0].GetAttr("radius"));
+        }
+
+        /// <summary>Toggling grab off sets radius to the -1 auto-rope sentinel and hides the field.</summary>
+        [Fact]
+        public void TogglingGrabOffSetsRadiusMinusOne()
+        {
+            EditorViewModel vm = Load("<ghost x='1' y='1' grab='true' bouncer='false' radius='50' />");
+            AttributeFieldViewModel grab = vm.Fields.Single(f => f.Name == "grab");
+
+            grab.Value = "false";
+
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "radius");
+            Assert.Equal("-1", vm.Document!.Objects[0].GetAttr("radius"));
         }
     }
 }

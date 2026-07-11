@@ -32,6 +32,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(GhostMorph.Grab, s.Active);
             Assert.Equal("grab", s.MorphSpriteKey);
             Assert.True(s.ShowsRadiusRing(g));
+            Assert.Null(s.MorphHitboxElement); // a grab is a rope hook, no hitbox
         }
 
         /// <summary>Setting a disabled morph is ignored.</summary>
@@ -66,6 +67,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("bouncer1", s.MorphSpriteKey);
             Assert.True(s.ShowsRotationDial(g));
+            Assert.Equal("bouncer1", s.MorphHitboxElement);
         }
 
         /// <summary>Clear reverts to the plain ghost sprite.</summary>

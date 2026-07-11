@@ -41,6 +41,18 @@ namespace CtrDxEditor.Rendering
             _ => null,
         };
 
+        /// <summary>
+        /// Gets the element name whose hitbox the active morph collides with, or null when it has none.
+        /// A grab is a rope hook with no hitbox; bubble and bouncer1 both have HitboxTable rows.
+        /// </summary>
+        public string? MorphHitboxElement => Active switch
+        {
+            GhostMorph.Bubble => "bubble",
+            GhostMorph.Bouncer => "bouncer1",
+            GhostMorph.Grab => null,
+            _ => null,
+        };
+
         /// <summary>Determines whether the grab preview has a positive authored radius.</summary>
         /// <param name="ghost">The selected ghost.</param>
         /// <returns><see langword="true"/> when the radius ring should be drawn.</returns>

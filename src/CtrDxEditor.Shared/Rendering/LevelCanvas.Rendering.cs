@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Media;
@@ -111,6 +112,36 @@ namespace CtrDxEditor.Rendering
                     if (ShowMobileHitboxes)
                     {
                         LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _palette.HitboxPhone, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
+                    }
+                }
+
+                // A selected ghost previewing a bubble/bouncer morph shows that transformed object's
+                // hitbox. The ghost has no HitboxTable row, so render the morph's hitbox through a
+                // throwaway proxy of the morph's element type at the ghost's position (never persisted).
+                // DrawHitbox reads rotation from RotationTable keyed on the proxy's type, so copying the
+                // ghost's angle onto a bouncer1 proxy rotates its hitbox exactly like a real bouncer.
+                if (SelectedObject is { Type: "ghost" } hbGhost
+                    && _ghostPreview.MorphHitboxElement is { } hbElement)
+                {
+                    XElement proxyEl = new(hbElement);
+                    proxyEl.SetAttributeValue("x", hbGhost.X.ToString(CultureInfo.InvariantCulture));
+                    proxyEl.SetAttributeValue("y", hbGhost.Y.ToString(CultureInfo.InvariantCulture));
+                    if (hbElement == "bouncer1")
+                    {
+                        proxyEl.SetAttributeValue("angle", hbGhost.GetAttr("angle") ?? "0");
+                    }
+
+                    LevelObject proxy = new(proxyEl);
+                    if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(proxy, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } proxySprite)
+                    {
+                        if (ShowHitboxes)
+                        {
+                            LevelSceneRenderer.DrawHitbox(context, v, proxy, proxySprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop);
+                        }
+                        if (ShowMobileHitboxes)
+                        {
+                            LevelSceneRenderer.DrawHitbox(context, v, proxy, proxySprite.Scale, HitboxModel.Phone, _palette.HitboxPhone);
+                        }
                     }
                 }
             }

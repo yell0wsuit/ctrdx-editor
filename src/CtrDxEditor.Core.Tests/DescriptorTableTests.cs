@@ -46,7 +46,7 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Contains(ghost.Attributes, a => a.Name == "bubble" && a.Type == AttrType.Bool && a.Default == "false");
             Assert.Contains(ghost.Attributes, a => a.Name == "bouncer" && a.Type == AttrType.Bool && a.Default == "false");
-            Assert.Contains(ghost.Attributes, a => a.Name == "radius" && a.Type == AttrType.Whole && a.Default == "-1");
+            Assert.Contains(ghost.Attributes, a => a.Name == "radius" && a.Type == AttrType.Whole && a.Default == "50");
             Assert.Contains(ghost.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
             Assert.DoesNotContain(ghost.Attributes, a => a.Name == "size");
         }
