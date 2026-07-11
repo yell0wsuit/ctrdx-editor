@@ -577,6 +577,10 @@ namespace CtrDxEditor.Rendering
                 {
                     DrawGhostMorphPreview(context, v, sprites, obj);
                 }
+                else if (obj.Type == "rotatedCircle")
+                {
+                    LevelSceneRenderer.DrawVinyl(context, v, sprites, obj);
+                }
                 else
                 {
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,

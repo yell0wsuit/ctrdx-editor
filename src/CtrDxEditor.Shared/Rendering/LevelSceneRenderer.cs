@@ -56,6 +56,14 @@ namespace CtrDxEditor.Rendering
                 return GrabRenderer.RailBounds(rail);
             }
 
+            // The vinyl disc scales with its size attribute, so its click target is a size-derived box
+            // rather than the fixed-scale sprite bounds.
+            if (VinylGeometry.IsVinyl(obj.Type))
+            {
+                double r = VinylGeometry.DiscRadius(obj);
+                return new LevelBounds(obj.X - r, obj.Y - r, r * 2, r * 2);
+            }
+
             // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
             // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
             // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
@@ -190,6 +198,122 @@ namespace CtrDxEditor.Rendering
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);
             DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+        }
+
+        /// <summary>
+        /// Draws a vinyl (rotatedCircle) disc at a scale that makes its radius equal its <c>size</c> level
+        /// units: the body + center (unrotated, radially symmetric), the highlight sheen and label as two
+        /// mirrored halves (the label spins with <c>handleAngle</c>, the sheen is a fixed top light), then
+        /// the handle sprite at each handle position (one when oneHandle is set), dome pointing outward.
+        /// Mirrored halves and handle rotation use a <see cref="Matrix"/> pushed onto the context, the same
+        /// approach as the grab rail; the disc body/center draw unrotated like the game's RotatedCircle.Draw.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the disc, highlight, sticker, and handle art.</param>
+        /// <param name="obj">The vinyl object to draw.</param>
+        public static void DrawVinyl(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
+        {
+            Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+            double s = VinylGeometry.LayerScale(obj) / SpritePlacement.MapScale * v.Zoom;
+
+            // Disc body (quad 0) + center spindle (quad 3): centered, unrotated.
+            if (VinylLayer(sprites, "rotatedCircle", 0) is { } body)
+            {
+                VinylDrawCentered(ctx, body, c, s);
+            }
+
+            // Highlight sheen (quad 1): a fixed top light, two halves mirrored across the centerline.
+            if (VinylLayer(sprites, "vinyl_highlight", 0) is { } highlight)
+            {
+                VinylDrawHalf(ctx, highlight, c, s, mirror: false);
+                VinylDrawHalf(ctx, highlight, c, s, mirror: true);
+            }
+
+            if (VinylLayer(sprites, "rotatedCircle", 1) is { } center)
+            {
+                VinylDrawCentered(ctx, center, c, s);
+            }
+
+            // Label sticker (quad 2): two mirrored halves that spin with the disc by handleAngle.
+            if (VinylLayer(sprites, "vinyl_sticker", 0) is { } sticker)
+            {
+                double a = VinylGeometry.HandleAngleDegrees(obj) * Math.PI / 180.0;
+                Matrix rot = Matrix.CreateTranslation(-c.X, -c.Y)
+                    * Matrix.CreateRotation(a)
+                    * Matrix.CreateTranslation(c.X, c.Y);
+                using (ctx.PushTransform(rot))
+                {
+                    VinylDrawHalf(ctx, sticker, c, s, mirror: false);
+                    VinylDrawHalf(ctx, sticker, c, s, mirror: true);
+                }
+            }
+
+            // Handles (quad 5) at the handleAngle direction, dome pointing outward.
+            if (VinylLayer(sprites, "vinyl_handle", 0) is { } handle)
+            {
+                double baseAngle = VinylGeometry.HandleAngleDegrees(obj);
+                VinylDrawHandle(ctx, v, handle, VinylGeometry.HandlePosition(obj, VinylGeometry.Handle.Right), s, baseAngle - 90.0);
+                if (!VinylGeometry.OneHandle(obj))
+                {
+                    VinylDrawHandle(ctx, v, handle, VinylGeometry.HandlePosition(obj, VinylGeometry.Handle.Left), s, baseAngle + 90.0);
+                }
+            }
+        }
+
+        /// <summary>Resolves a single atlas layer of a vinyl sprite key, or null when unavailable.</summary>
+        private static SpriteLayerDraw? VinylLayer(SpriteCache sprites, string key, int index)
+        {
+            return sprites.GetSprite(key) is { } sprite && sprite.Layers.Count > index ? sprite.Layers[index] : null;
+        }
+
+        /// <summary>Draws a vinyl layer centered on the disc at screen scale <paramref name="s"/> (atlas px → screen px).</summary>
+        private static void VinylDrawCentered(DrawingContext ctx, SpriteLayerDraw layer, Vec2 c, double s)
+        {
+            IntRect f = layer.Frame.Frame;
+            double w = f.W * s, h = f.H * s;
+            ctx.DrawImage(layer.Bitmap, new Rect(f.X, f.Y, f.W, f.H), new Rect(c.X - (w / 2), c.Y - (h / 2), w, h));
+        }
+
+        /// <summary>
+        /// Draws one authored half (highlight or sticker) abutting the disc's vertical centerline;
+        /// <paramref name="mirror"/> reflects it across the centerline to form the opposite half.
+        /// </summary>
+        private static void VinylDrawHalf(DrawingContext ctx, SpriteLayerDraw layer, Vec2 c, double s, bool mirror)
+        {
+            IntRect f = layer.Frame.Frame;
+            double w = f.W * s, h = f.H * s;
+            Rect src = new(f.X, f.Y, f.W, f.H);
+            Rect dest = new(c.X, c.Y - (h / 2), w, h);
+            if (mirror)
+            {
+                Matrix flip = Matrix.CreateTranslation(-c.X, 0)
+                    * Matrix.CreateScale(-1, 1)
+                    * Matrix.CreateTranslation(c.X, 0);
+                using (ctx.PushTransform(flip))
+                {
+                    ctx.DrawImage(layer.Bitmap, src, dest);
+                }
+            }
+            else
+            {
+                ctx.DrawImage(layer.Bitmap, src, dest);
+            }
+        }
+
+        /// <summary>Draws the handle sprite centered on a handle position, rotated to point outward.</summary>
+        private static void VinylDrawHandle(DrawingContext ctx, ViewTransform v, SpriteLayerDraw layer, Vec2 levelPos, double s, double rotationDegrees)
+        {
+            IntRect f = layer.Frame.Frame;
+            Vec2 hp = v.LevelToScreen(levelPos);
+            double w = f.W * s, h = f.H * s;
+            Matrix rot = Matrix.CreateTranslation(-hp.X, -hp.Y)
+                * Matrix.CreateRotation(rotationDegrees * Math.PI / 180.0)
+                * Matrix.CreateTranslation(hp.X, hp.Y);
+            using (ctx.PushTransform(rot))
+            {
+                ctx.DrawImage(layer.Bitmap, new Rect(f.X, f.Y, f.W, f.H), new Rect(hp.X - (w / 2), hp.Y - (h / 2), w, h));
+            }
         }
 
         /// <summary>Returns the hidden binding id to show on a candy or bulb, or null when no label is needed.</summary>
