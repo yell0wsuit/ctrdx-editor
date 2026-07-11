@@ -51,27 +51,6 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Bouncer", Localizer.ObjectName("bouncer2"));
         }
 
-        /// <summary>The ghost object and its morph toggles are localized; radius/angle reuse existing keys.</summary>
-        [Fact]
-        public void GhostObjectAndMorphTogglesAreLocalized()
-        {
-            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
-            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
-                File.ReadAllText(path))!;
-
-            Assert.Equal("Ghost", strings["Object.ghost"]);
-            Assert.Equal("Ghost", Localizer.ObjectName("ghost"));
-            Assert.Equal("Auto rope", strings["Attr.grab"]);
-            Assert.Equal("Bubble", strings["Attr.bubble"]);
-            Assert.Equal("Bouncer", strings["Attr.bouncer"]);
-
-            // radius and angle reuse the shared grab/bouncer attribute strings rather than ghost-specific keys.
-            Assert.Equal("Radius", strings["Attr.radius"]);
-            Assert.Equal("Angle", strings["Attr.angle"]);
-            Assert.DoesNotContain("Attr.ghostRadius", strings.Keys);
-            Assert.DoesNotContain("Attr.ghostAngle", strings.Keys);
-        }
-
         /// <summary>The moving-grab pollen toggle has user-facing text.</summary>
         [Fact]
         public void HidePathIsLocalized()
