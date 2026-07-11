@@ -65,25 +65,25 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, "0"),
                 new AttributeSpec("size", AttrType.Enum, "1", EnumValues: ["1", "2", "3", "4"]),
                 new AttributeSpec("toggled", AttrType.Bool, "false"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "spike"),
             new ObjectDescriptor("spike2", "Spike",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
                 new AttributeSpec("size", AttrType.Enum, "2", EnumValues: ["1", "2", "3", "4"]),
                 new AttributeSpec("toggled", AttrType.Bool, "false"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "spike"),
             new ObjectDescriptor("spike3", "Spike",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
                 new AttributeSpec("size", AttrType.Enum, "3", EnumValues: ["1", "2", "3", "4"]),
                 new AttributeSpec("toggled", AttrType.Bool, "false"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "spike"),
             new ObjectDescriptor("spike4", "Spike",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
                 new AttributeSpec("size", AttrType.Enum, "4", EnumValues: ["1", "2", "3", "4"]),
                 new AttributeSpec("toggled", AttrType.Bool, "false"),
-            ], MaxCount: int.MaxValue),
+            ], MaxCount: int.MaxValue, LocalizationName: "spike"),
 
             // Air cushion
             new ObjectDescriptor("pump", "Pump",
