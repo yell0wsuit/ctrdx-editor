@@ -15,6 +15,7 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData("TestData/2_21.xml")]
         [InlineData("TestData/5_1.xml")]
+        [InlineData("TestData/16_5.xml")] // official level with spinner (path="0,0"+rotateSpeed) and plain bouncers
         public void LoadThenSaveIsSemanticallyIdentical(string path)
         {
             string original = File.ReadAllText(path);
