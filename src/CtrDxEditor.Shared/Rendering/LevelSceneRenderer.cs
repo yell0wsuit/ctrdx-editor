@@ -212,15 +212,31 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the disc, highlight, sticker, and handle art.</param>
         /// <param name="obj">The vinyl object to draw.</param>
-        public static void DrawVinyl(DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj)
+        /// <param name="activeHandle">The handle being dragged or hovered, which shows the active-controller glow and disc ring; None for no active handle.</param>
+        public static void DrawVinyl(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj,
+            VinylGeometry.Handle activeHandle = VinylGeometry.Handle.None)
         {
             Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
-            double baseScale = VinylGeometry.LayerScale(obj) / SpritePlacement.MapScale * v.Zoom;
-            double stickerScale = VinylGeometry.StickerScale(obj) / SpritePlacement.MapScale * v.Zoom;
-            double centerScale = VinylGeometry.CenterScale(obj) / SpritePlacement.MapScale * v.Zoom;
-            double controllerScale = VinylGeometry.ControllerScale(obj) / SpritePlacement.MapScale * v.Zoom;
+            double atlasToScreen = v.Zoom / SpritePlacement.MapScale;
+            double baseScale = VinylGeometry.LayerScale(obj) * atlasToScreen;
+            double stickerScale = VinylGeometry.StickerScale(obj) * atlasToScreen;
+            double centerScale = VinylGeometry.CenterScale(obj) * atlasToScreen;
+            double controllerScale = VinylGeometry.ControllerScale(obj) * atlasToScreen;
 
-            // Disc body (quad 0) + center spindle (quad 3): centered, unrotated.
+            // Active-handle state (game RotatedCircle.Draw): a white anti-aliased ring hugging the disc edge,
+            // drawn behind the body so only its outer rim shows. Radius = sizeInPixels + ACTIVE_CIRCLE_WIDTH,
+            // stroke = ACTIVE_CIRCLE_WIDTH + 3, both scaled by the controller scale (RTPD is identity here).
+            if (activeHandle != VinylGeometry.Handle.None)
+            {
+                double ctrl = VinylGeometry.ControllerScale(obj);
+                double sizeInPixels = VinylGeometry.HighlightFrameWidth * VinylGeometry.LayerScale(obj);
+                double ringRadius = (sizeInPixels + (9.0 * ctrl)) * atlasToScreen;
+                double ringStroke = 12.0 * ctrl * atlasToScreen;
+                ctx.DrawEllipse(null, new Pen(Brushes.White, ringStroke), new Point(c.X, c.Y), ringRadius, ringRadius);
+            }
+
+            // Disc body (quad 0): centered, unrotated.
             if (VinylLayer(sprites, "rotatedCircle", 0) is { } body)
             {
                 VinylDrawCentered(ctx, body, c, baseScale);
@@ -230,11 +246,6 @@ namespace CtrDxEditor.Rendering
             if (VinylLayer(sprites, "vinyl_highlight", 0) is { } highlight)
             {
                 VinylDrawHighlightPair(ctx, highlight, c, baseScale);
-            }
-
-            if (VinylLayer(sprites, "rotatedCircle", 1) is { } center)
-            {
-                VinylDrawCentered(ctx, center, c, centerScale);
             }
 
             // Label sticker (quad 2): two mirrored halves that spin with the disc by handleAngle.
@@ -250,15 +261,35 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            // Handles (quad 5) at the handleAngle direction, dome pointing outward.
+            // Handles (quad 5) at the handleAngle direction, dome pointing outward. The active handle also
+            // shows the larger controller glow (quad 4) behind it, matching vinilActiveController.
             if (VinylLayer(sprites, "vinyl_handle", 0) is { } handle)
             {
+                SpriteLayerDraw? glow = activeHandle != VinylGeometry.Handle.None
+                    ? VinylLayer(sprites, "vinyl_active_controller", 0)
+                    : null;
                 double baseAngle = VinylGeometry.HandleAngleDegrees(obj);
-                VinylDrawHandle(ctx, v, handle, VinylGeometry.VisualHandlePosition(obj, VinylGeometry.Handle.Right), controllerScale, baseAngle - 90.0);
+                DrawOneHandle(VinylGeometry.Handle.Right, baseAngle - 90.0);
                 if (!VinylGeometry.OneHandle(obj))
                 {
-                    VinylDrawHandle(ctx, v, handle, VinylGeometry.VisualHandlePosition(obj, VinylGeometry.Handle.Left), controllerScale, baseAngle + 90.0);
+                    DrawOneHandle(VinylGeometry.Handle.Left, baseAngle + 90.0);
                 }
+
+                void DrawOneHandle(VinylGeometry.Handle which, double rotationDegrees)
+                {
+                    Vec2 pos = VinylGeometry.VisualHandlePosition(obj, which);
+                    if (activeHandle == which && glow is { } activeGlow)
+                    {
+                        VinylDrawHandle(ctx, v, activeGlow, pos, controllerScale, rotationDegrees);
+                    }
+                    VinylDrawHandle(ctx, v, handle, pos, controllerScale, rotationDegrees);
+                }
+            }
+
+            // Center spindle (quad 3): drawn last so it sits over the label, matching RotatedCircle.Draw.
+            if (VinylLayer(sprites, "rotatedCircle", 1) is { } center)
+            {
+                VinylDrawCentered(ctx, center, c, centerScale);
             }
         }
 

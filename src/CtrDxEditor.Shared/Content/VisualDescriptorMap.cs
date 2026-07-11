@@ -291,6 +291,10 @@ namespace CtrDxEditor.Content
 
             // Vinyl handle (game controller, quad 5), drawn by DrawVinyl at each handle position. Not placeable.
             new("vinyl_handle", [new SpriteLayer(VinylJson, VinylImageBase, 5)]),
+
+            // Active/operated controller glow (quad 4), drawn behind the handle being dragged or hovered,
+            // matching the game's vinilActiveController. Not placeable.
+            new("vinyl_active_controller", [new SpriteLayer(VinylJson, VinylImageBase, 4)]),
         ];
 
         /// <summary>All visual descriptors keyed by object element name.</summary>

@@ -579,7 +579,10 @@ namespace CtrDxEditor.Rendering
                 }
                 else if (obj.Type == "rotatedCircle")
                 {
-                    LevelSceneRenderer.DrawVinyl(context, v, sprites, obj);
+                    VinylGeometry.Handle activeHandle = Equals(obj, SelectedObject)
+                        ? (_vinylHandleDrag != VinylGeometry.Handle.None ? _vinylHandleDrag : _vinylHandleHovered)
+                        : VinylGeometry.Handle.None;
+                    LevelSceneRenderer.DrawVinyl(context, v, sprites, obj, activeHandle);
                 }
                 else
                 {

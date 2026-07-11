@@ -238,6 +238,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Which vinyl disc handle the current drag is rotating, or <see cref="VinylGeometry.Handle.None"/>.</summary>
         private VinylGeometry.Handle _vinylHandleDrag;
 
+        /// <summary>Which selected vinyl handle the cursor is hovering, so it shows the game's active-controller
+        /// glow and disc ring before a drag begins.</summary>
+        private VinylGeometry.Handle _vinylHandleHovered;
+
         /// <summary>
         /// Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even before a
         /// drag begins (the game highlights the mover on interaction).

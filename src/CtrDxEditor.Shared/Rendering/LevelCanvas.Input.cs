@@ -255,6 +255,16 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Updates which vinyl handle is hovered, repainting on a change so its active glow/ring swaps in/out.</summary>
+        private void SetVinylHandleHovered(VinylGeometry.Handle hovered)
+        {
+            if (_vinylHandleHovered != hovered)
+            {
+                _vinylHandleHovered = hovered;
+                InvalidateVisual();
+            }
+        }
+
         /// <summary>Whether an object has real polyline movement that supports direct node editing.</summary>
         private static bool IsEditablePolyline(LevelObject obj)
         {
@@ -762,6 +772,7 @@ namespace CtrDxEditor.Rendering
                 SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
                 SpikeResize.Handle stripHandle = HitStripResize(levelPt);
                 VinylGeometry.Handle vinylHover = HitVinylHandle(levelPt);
+                SetVinylHandleHovered(vinylHover);
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
                 bool oldLimitHint = _polylineAtLimitHint;
@@ -845,6 +856,7 @@ namespace CtrDxEditor.Rendering
             base.OnPointerExited(e);
             SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
             SetDialKnobHovered(false); // nor the rotation knob
+            SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
         }
 
