@@ -161,7 +161,11 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
         }
 
-        /// <summary>Bouncer collision uses the resting quad width and the game's five-unit half-height.</summary>
+        /// <summary>
+        /// Bouncer collision uses the resting quad width (model-independent) and 2·BouncerHeight for its
+        /// height. BouncerHeight = SelectScaled(5, 5): desktop 5 → full height 10; phone ToWorld(5) = 15 →
+        /// full height 30. So the phone box is 3× taller than desktop, not equal to it.
+        /// </summary>
         [Theory]
         [InlineData("bouncer1", 196)]
         [InlineData("bouncer2", 304)]
@@ -170,9 +174,8 @@ namespace CtrDxEditor.Core.Tests
             LevelBounds? desktop = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop);
             LevelBounds? phone = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Phone);
 
-            LevelBounds expected = new(-width / 2.0, -5, width, 10);
-            Assert.Equal(expected, desktop);
-            Assert.Equal(expected, phone);
+            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), desktop);
+            Assert.Equal(new LevelBounds(-width / 2.0, -15, width, 30), phone);
         }
 
         /// <summary>The magic hat returns its mouth box, ignoring scale and physics model.</summary>
