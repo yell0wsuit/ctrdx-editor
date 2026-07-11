@@ -124,10 +124,10 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, LocalizationName: "bouncer"),
 
-            // Ghost: a morphing object. grab/bubble/bouncer are the states it may cycle into
-            // (idle is implicit). radius feeds the grab morph; the grab toggle drives it (50 when on,
-            // -1 = auto-rope when off), so it defaults to 50 since grab defaults on. angle feeds the
-            // bouncer morph (always small, so no size). Matches LoadGhosts / Ghost.cs.
+            // Gravity button
+            new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
+
+            // Ghost
             new ObjectDescriptor("ghost", "Ghost",
             [
                 new AttributeSpec("grab", AttrType.Bool, "true"),
@@ -136,9 +136,6 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("radius", AttrType.Whole, "50"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
-
-            // Gravity button
-            new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
 
             // Light bulb
             new ObjectDescriptor("lightBulb", "Light Bulb",
