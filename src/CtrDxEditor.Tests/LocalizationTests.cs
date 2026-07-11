@@ -61,7 +61,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("Ghost", strings["Object.ghost"]);
             Assert.Equal("Ghost", Localizer.ObjectName("ghost"));
-            Assert.Equal("Grab", strings["Attr.grab"]);
+            Assert.Equal("Auto rope", strings["Attr.grab"]);
             Assert.Equal("Bubble", strings["Attr.bubble"]);
             Assert.Equal("Bouncer", strings["Attr.bouncer"]);
 
