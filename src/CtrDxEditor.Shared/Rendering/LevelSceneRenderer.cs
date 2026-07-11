@@ -100,9 +100,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>The object's fixed draw layer in the game's z-order.</summary>
         /// <remarks>
         /// The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
-        /// gravity button, Om Nom + support, bubbles, bungee ropes, stars, candy, then light-bulb bottles.
-        /// Same-layer objects keep their list order because OrderBy is stable. Unknown types sit with the
-        /// grabs (mid-stack) as a neutral default.
+        /// gravity button, Om Nom + support, vinyl discs, bubbles, bungee ropes, stars, candy, then
+        /// light-bulb bottles. The vinyl (rotatedCircle) is drawn early (right after Om Nom, before bubbles
+        /// and grabs), so ropes, hooks, and candy sit on top of it. Same-layer objects keep their list order
+        /// because OrderBy is stable. Unknown types sit with the grabs (mid-stack) as a neutral default.
         /// </remarks>
         /// <param name="obj">The object to classify.</param>
         /// <returns>The z-order layer index (lower draws first / further back).</returns>
@@ -112,12 +113,13 @@ namespace CtrDxEditor.Rendering
             {
                 "gravitySwitch" => 0,
                 "target" => 1,
-                "bubble" => 2,
-                "grab" => 3,
-                "star" => 4,
-                "candy" or "candyL" or "candyR" => 5,
-                "lightBulb" => 6,
-                _ => 3,
+                "rotatedCircle" => 2,
+                "bubble" => 3,
+                "grab" => 4,
+                "star" => 5,
+                "candy" or "candyL" or "candyR" => 6,
+                "lightBulb" => 7,
+                _ => 4,
             };
         }
 
