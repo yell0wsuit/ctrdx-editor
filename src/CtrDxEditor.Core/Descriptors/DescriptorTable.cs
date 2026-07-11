@@ -124,6 +124,18 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, LocalizationName: "bouncer"),
 
+            // Ghost: a morphing object. grab/bubble/bouncer are the states it may cycle into
+            // (idle is implicit). radius feeds the grab morph (-1 = auto-rope); angle feeds the
+            // bouncer morph (always small, so no size). Matches LoadGhosts / Ghost.cs.
+            new ObjectDescriptor("ghost", "Ghost",
+            [
+                new AttributeSpec("grab", AttrType.Bool, "true"),
+                new AttributeSpec("bubble", AttrType.Bool, "false"),
+                new AttributeSpec("bouncer", AttrType.Bool, "false"),
+                new AttributeSpec("radius", AttrType.Whole, "-1"),
+                new AttributeSpec("angle", AttrType.Number, "0"),
+            ], MaxCount: int.MaxValue),
+
             // Gravity button
             new ObjectDescriptor("gravitySwitch", "Gravity Switch", [], MaxCount: int.MaxValue),
 

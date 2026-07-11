@@ -27,7 +27,28 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("sock"));
             Assert.True(t.Knows("bouncer1"));
             Assert.True(t.Knows("bouncer2"));
+            Assert.True(t.Knows("ghost"));
             Assert.False(t.Knows("bouncer"));
+        }
+
+        /// <summary>The ghost descriptor exposes its three morph toggles plus radius and angle.</summary>
+        [Fact]
+        public void GhostCarriesMorphTogglesRadiusAndAngle()
+        {
+            ObjectDescriptor ghost = DescriptorTable.Default.For("ghost")!;
+
+            Assert.Equal("Ghost", ghost.DisplayName);
+            Assert.Equal(int.MaxValue, ghost.MaxCount);
+
+            AttributeSpec grab = Assert.Single(ghost.Attributes, a => a.Name == "grab");
+            Assert.Equal(AttrType.Bool, grab.Type);
+            Assert.Equal("true", grab.Default);
+
+            Assert.Contains(ghost.Attributes, a => a.Name == "bubble" && a.Type == AttrType.Bool && a.Default == "false");
+            Assert.Contains(ghost.Attributes, a => a.Name == "bouncer" && a.Type == AttrType.Bool && a.Default == "false");
+            Assert.Contains(ghost.Attributes, a => a.Name == "radius" && a.Type == AttrType.Whole && a.Default == "-1");
+            Assert.Contains(ghost.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
+            Assert.DoesNotContain(ghost.Attributes, a => a.Name == "size");
         }
 
         /// <summary>Verifies bouncer descriptors use the two XML names accepted by the game.</summary>
