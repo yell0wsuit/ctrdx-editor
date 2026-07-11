@@ -53,6 +53,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("spider", AttrType.Bool, "false"),
                 new AttributeSpec("kickable", AttrType.Bool, "false"),
                 new AttributeSpec("kicked", AttrType.Bool, "false"),
+                new AttributeSpec("hidePath", AttrType.Bool, "false"),
                 new AttributeSpec("invisible", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
 

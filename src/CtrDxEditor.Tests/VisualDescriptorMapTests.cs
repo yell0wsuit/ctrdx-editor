@@ -10,6 +10,21 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests for the built-in visual descriptor set.</summary>
     public class VisualDescriptorMapTests
     {
+        /// <summary>Moving-grab bee parts map to the authoritative DX atlas quads.</summary>
+        [Fact]
+        public void BeeDescriptorsUseBodyWingsAndPollenQuads()
+        {
+            Assert.Equal([1], VisualDescriptorMap.For("grab_bee_body")!.Layers.Select(l => l.Quad));
+            Assert.Equal([2], VisualDescriptorMap.For("grab_bee_wing_0")!.Layers.Select(l => l.Quad));
+            Assert.Equal([3], VisualDescriptorMap.For("grab_bee_wing_1")!.Layers.Select(l => l.Quad));
+            Assert.Equal([4], VisualDescriptorMap.For("grab_bee_wing_2")!.Layers.Select(l => l.Quad));
+            Assert.Equal([5], VisualDescriptorMap.For("grab_pollen")!.Layers.Select(l => l.Quad));
+            Assert.Equal(0.77, VisualDescriptorMap.For("grab_bee_body")!.Scale);
+
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+            Assert.Contains("images/obj_bee.json", required);
+            Assert.Contains("images/obj_bee.webp", required);
+        }
         private static readonly string[] ElectroSpriteKeys =
         [
             "electro",

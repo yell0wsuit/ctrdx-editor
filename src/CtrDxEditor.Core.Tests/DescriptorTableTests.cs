@@ -114,6 +114,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(grab.Attributes, a => a.Name == "kicked" && a.Type == AttrType.Bool);
         }
 
+        /// <summary>Moving grabs can suppress their pollen path without changing movement.</summary>
+        [Fact]
+        public void GrabHasHidePathAttribute()
+        {
+            AttributeSpec hidePath = Assert.Single(
+                DescriptorTable.Default.For("grab")!.Attributes,
+                a => a.Name == "hidePath");
+            Assert.Equal(AttrType.Bool, hidePath.Type);
+            Assert.Equal("false", hidePath.Default);
+        }
+
         /// <summary>Verifies the pump exposes a single float angle attribute defaulting to 0.</summary>
         [Fact]
         public void PumpHasAngleAttributeDefaultingToZero()

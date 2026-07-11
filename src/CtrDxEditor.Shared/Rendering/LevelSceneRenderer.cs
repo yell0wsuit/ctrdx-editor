@@ -578,6 +578,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
         /// <param name="hookHighlighted">Whether to light the movable hook (hovered or being slid).</param>
+        /// <param name="animationPreviewSeconds">Elapsed mover-preview time, or null for authored position.</param>
         public static void DrawGrab(
             DrawingContext ctx,
             ViewTransform v,
@@ -588,8 +589,10 @@ namespace CtrDxEditor.Rendering
             RopeVisual? rope,
             int ropeSeed,
             Rect opBounds,
-            bool hookHighlighted)
+            bool hookHighlighted,
+            double? animationPreviewSeconds = null)
         {
+            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
             // The hook art and Christmas lights are DrawImage calls that PushOpacity fades; the rope is a
             // Skia custom draw op that PushOpacity does not reach, so its alpha is passed through explicitly.
             double opacity = IsInvisible(obj) ? InvisibleGrabOpacity : 1.0;
@@ -597,12 +600,12 @@ namespace CtrDxEditor.Rendering
             {
                 using (ctx.PushOpacity(opacity))
                 {
-                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted);
+                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
                 }
             }
             else
             {
-                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted);
+                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
             }
         }
 
@@ -629,6 +632,8 @@ namespace CtrDxEditor.Rendering
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
         /// <param name="ropeOpacity">Rope alpha, passed explicitly since <c>PushOpacity</c> doesn't reach the custom op.</param>
         /// <param name="hookHighlighted">Whether to light the movable hook (hovered or being slid).</param>
+        /// <param name="previewPosition">Preview-aware hook anchor.</param>
+        /// <param name="animationPreviewSeconds">Elapsed mover-preview time, or null for static art.</param>
         private static void DrawGrabContent(
             DrawingContext ctx,
             ViewTransform v,
@@ -640,8 +645,11 @@ namespace CtrDxEditor.Rendering
             int ropeSeed,
             Rect opBounds,
             double ropeOpacity,
-            bool hookHighlighted)
+            bool hookHighlighted,
+            Vec2 previewPosition,
+            double? animationPreviewSeconds)
         {
+            DrawPollen(ctx, v, sprites, obj, animationPreviewSeconds);
             if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)
             {
                 // Highlight the hook while it's hovered or being slid, matching the game's mover art.
@@ -662,21 +670,22 @@ namespace CtrDxEditor.Rendering
             {
                 if (sprite.Variants.Count > 0)
                 {
-                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], obj.X, obj.Y, sprite.Scale);
+                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], previewPosition.X, previewPosition.Y, sprite.Scale);
                 }
                 int back = Math.Min(GrabRenderer.BackLayerCount(obj), sprite.Layers.Count);
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back);
+                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back, previewPosition);
                 if (rope is not null)
                 {
                     RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count);
+                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count, previewPosition);
             }
             else if (rope is not null)
             {
                 RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
             }
-            DrawOverlays(ctx, v, sprites, obj, obj.X, obj.Y);
+            DrawOverlays(ctx, v, sprites, obj, previewPosition.X, previewPosition.Y);
+            DrawBee(ctx, v, sprites, obj, previewPosition, animationPreviewSeconds);
         }
 
         /// <summary>
@@ -691,6 +700,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
         /// <param name="from">First layer index to draw (inclusive).</param>
         /// <param name="to">Last layer index to draw (exclusive).</param>
+        /// <param name="position">Preview-aware layer anchor.</param>
         private static void DrawGrabLayers(
             DrawingContext ctx,
             ViewTransform v,
@@ -699,7 +709,8 @@ namespace CtrDxEditor.Rendering
             IReadOnlyList<LevelObject> objects,
             bool twoParts,
             int from,
-            int to)
+            int to,
+            Vec2 position)
         {
             double? gunAim = sprite.Layers.Count >= 3
                 ? GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts)
@@ -707,7 +718,62 @@ namespace CtrDxEditor.Rendering
             for (int i = from; i < to; i++)
             {
                 double? rotation = gunAim is double deg && i == 1 ? deg : null;
-                DrawLayer(ctx, v, sprite.Layers[i], obj.X, obj.Y, sprite.Scale, rotation);
+                DrawLayer(ctx, v, sprite.Layers[i], position.X, position.Y, sprite.Scale, rotation);
+            }
+        }
+
+        /// <summary>Draws the bee body and current wing frame for an actively moving grab.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve bee art.</param>
+        /// <param name="obj">Grab whose movement state controls bee visibility.</param>
+        /// <param name="position">Preview-aware bee anchor in level coordinates.</param>
+        /// <param name="seconds">Elapsed animation-preview time, or null for static wings.</param>
+        private static void DrawBee(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, Vec2 position, double? seconds)
+        {
+            if (!GrabBeeRenderer.HasBee(obj))
+            {
+                return;
+            }
+            if (sprites.GetSprite("grab_bee_body") is { } body)
+            {
+                DrawSprite(ctx, v, body, position.X, position.Y);
+            }
+            if (sprites.GetSprite(GrabBeeRenderer.WingSpriteKey(seconds)) is { } wings)
+            {
+                DrawSprite(ctx, v, wings, position.X, position.Y);
+            }
+        }
+
+        /// <summary>Draws deterministic pollen particles behind a moving grab.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve pollen art.</param>
+        /// <param name="obj">Grab whose movement path supplies pollen positions.</param>
+        /// <param name="seconds">Elapsed animation-preview time, or null for static pollen.</param>
+        private static void DrawPollen(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj, double? seconds)
+        {
+            if (sprites.GetSprite("grab_pollen") is not { } pollen)
+            {
+                return;
+            }
+            int index = 0;
+            foreach (Vec2 point in GrabBeeRenderer.PollenPoints(obj))
+            {
+                double phase = seconds is double elapsed ? (elapsed + (index * 0.17)) % 1.4 / 1.4 : 0.5;
+                double pulse = phase <= 0.5 ? phase * 2 : (1 - phase) * 2;
+                double alpha = seconds is null ? 0.65 : 0.3 + (0.7 * pulse);
+                double scale = seconds is null ? 0.5 : 0.3 + (0.3 * pulse) + (index % 3 * 0.1);
+                using (ctx.PushOpacity(alpha))
+                {
+                    foreach (SpriteLayerDraw layer in pollen.Layers)
+                    {
+                        DrawLayer(ctx, v, layer, point.X, point.Y, pollen.Scale * scale);
+                    }
+                }
+                index++;
             }
         }
 

@@ -137,12 +137,20 @@ namespace CtrDxEditor.ViewModels
             BuildMovement(fields, value, onChanged, onChanging, rebuild);
         }
 
-        private static void BuildMovement(
+        /// <summary>Adds mover-backed None, Orbit, and Polyline controls without adding self-spin controls.</summary>
+        /// <param name="fields">Property field collection to append to.</param>
+        /// <param name="value">Selected object whose mover attributes are edited.</param>
+        /// <param name="onChanged">Callback invoked after a field writes to the document.</param>
+        /// <param name="onChanging">Callback invoked before a field writes to the document.</param>
+        /// <param name="rebuild">Callback that rebuilds fields after movement disclosure changes.</param>
+        /// <param name="beforeEnable">Optional normalization performed before Orbit or Polyline is enabled.</param>
+        public static void BuildMovement(
             IList<AttributeFieldViewModel> fields,
             LevelObject value,
             Action onChanged,
             Action onChanging,
-            Action rebuild)
+            Action rebuild,
+            Action? beforeEnable = null)
         {
             void Structural()
             {
@@ -166,6 +174,7 @@ namespace CtrDxEditor.ViewModels
                     switch (v)
                     {
                         case "orbit":
+                            beforeEnable?.Invoke();
                             ObjectSpin.SetOrbital(
                                 value,
                                 enabled: true,
@@ -173,6 +182,7 @@ namespace CtrDxEditor.ViewModels
                                 ObjectSpin.OrbitClockwise(value));
                             break;
                         case "polyline":
+                            beforeEnable?.Invoke();
                             SetPolyline(value);
                             break;
                         default:

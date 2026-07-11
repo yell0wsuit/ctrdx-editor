@@ -51,6 +51,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Bouncer", Localizer.ObjectName("bouncer2"));
         }
 
+        /// <summary>The moving-grab pollen toggle has user-facing text.</summary>
+        [Fact]
+        public void HidePathIsLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Hide pollen path", strings["Attr.hidePath"]);
+        }
+
         private static string FindRepositoryFile(string relativePath)
         {
             DirectoryInfo? dir = new(AppContext.BaseDirectory);

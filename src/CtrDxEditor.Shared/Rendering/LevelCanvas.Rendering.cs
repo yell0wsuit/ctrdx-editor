@@ -377,7 +377,9 @@ namespace CtrDxEditor.Rendering
                     // The movable hook lights up while the selected grab's hook is hovered or being slid.
                     bool hookHighlighted =
                         (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
-                    LevelSceneRenderer.DrawGrab(context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds, hookHighlighted);
+                    LevelSceneRenderer.DrawGrab(
+                        context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds, hookHighlighted,
+                        useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null);
                     if (rope is not null)
                     {
                         ropeSeed++;
@@ -425,8 +427,8 @@ namespace CtrDxEditor.Rendering
 
         private bool IsAnimationPreviewing(LevelObject obj)
         {
-            return AnimationPreviewMode == CtrDxEditor.ViewModels.AnimationPreviewMode.All
-                || (AnimationPreviewMode == CtrDxEditor.ViewModels.AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj));
+            return AnimationPreviewMode == ViewModels.AnimationPreviewMode.All
+                || (AnimationPreviewMode == ViewModels.AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj));
         }
 
         /// <summary>

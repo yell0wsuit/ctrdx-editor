@@ -60,6 +60,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(["4.5", "0"], timeouts);
         }
 
+        /// <summary>Optional pollen visibility remains absent unless authored and preserves an authored value.</summary>
+        [Fact]
+        public void GrabHidePathRoundTripsWithoutInjectingDefault()
+        {
+            const string original =
+                "<level width='640' height='480'>" +
+                "<grab x='100' y='120' path='100,0' moveSpeed='50' />" +
+                "<grab x='200' y='220' path='RC40' moveSpeed='50' hidePath='true' />" +
+                "</level>";
+
+            XDocument after = XDocument.Parse(LevelDocument.Parse(original).Save());
+            XElement[] grabs = [.. after.Root!.Elements("grab")];
+
+            Assert.Null(grabs[0].Attribute("hidePath"));
+            Assert.Equal("true", (string?)grabs[1].Attribute("hidePath"));
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {

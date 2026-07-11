@@ -158,6 +158,7 @@
     "Attr.spider": "Spider",
     "Attr.kickable": "Suction cup",
     "Attr.kicked": "Detached",
+    "Attr.hidePath": "Hide pollen path",
     "Attr.invisible": "Invisible",
     "Attr.autoCatch": "Auto rope",
     "Attr.movable": "Movable rail",

@@ -32,6 +32,8 @@ namespace CtrDxEditor.Content
         private const string HatImageBase = "images/obj_hat";
         private const string XmasSockJson = "images/obj_sock_xmas.json";
         private const string XmasSockImageBase = "images/obj_sock_xmas";
+        private const string BeeJson = "images/obj_bee.json";
+        private const string BeeImageBase = "images/obj_bee";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -114,6 +116,12 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(SpiderJson, SpiderImageBase, 0),
             ]),
+
+            new("grab_bee_body", [new SpriteLayer(BeeJson, BeeImageBase, 1)], Scale: 0.77),
+            new("grab_bee_wing_0", [new SpriteLayer(BeeJson, BeeImageBase, 2)], Scale: 0.77),
+            new("grab_bee_wing_1", [new SpriteLayer(BeeJson, BeeImageBase, 3)], Scale: 0.77),
+            new("grab_bee_wing_2", [new SpriteLayer(BeeJson, BeeImageBase, 4)], Scale: 0.77),
+            new("grab_pollen", [new SpriteLayer(BeeJson, BeeImageBase, 5)]),
 
             // Suction cup grab = sticker cup. Kicked=false uses quads 3/4; kicked=true uses
             // quads 1/2 after updateKickState detaches the cup.

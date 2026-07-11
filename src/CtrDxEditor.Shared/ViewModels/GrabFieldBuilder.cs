@@ -31,6 +31,7 @@ namespace CtrDxEditor.ViewModels
             bool kickable = Bool(grab, "kickable");
             bool autoCatch = Int(grab, "radius") > 0;
             bool movable = Int(grab, "moveLength") > 0;
+            bool moving = MoverPath.HasActiveMovement(grab);
             bool twoParts = document.TwoParts;
 
             void Structural()
@@ -58,7 +59,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             bool geomEnabled = !gun;
-            bool railEnabled = !gun && !wheel && !kickable;
+            bool railEnabled = !gun && !wheel && !kickable && !moving;
 
             // The Auto-catch toggle comes first, then length XOR radius fill the same slot beneath
             // it. Because exactly one of the two is always shown, toggling swaps the row in place
@@ -77,7 +78,14 @@ namespace CtrDxEditor.ViewModels
             fields.Add(Synthetic(
                 "movable",
                 () => movable,
-                on => grab.SetAttr("moveLength", on ? "100" : "-1"),
+                on =>
+                {
+                    grab.SetAttr("moveLength", on ? "100" : "-1");
+                    if (on)
+                    {
+                        ClearMovement(grab);
+                    }
+                },
                 Structural,
                 onChanging,
                 railEnabled));
@@ -92,7 +100,17 @@ namespace CtrDxEditor.ViewModels
             fields.Add(BoolAttr(grab, "gun", Structural, onChanging, !(wheel || spider || kickable || movable), ClearMoveRail));
 
             fields.Add(Attr(grab, "spider", AttrType.Bool, Structural, onChanging, !gun));
-            fields.Add(BoolAttr(grab, "kickable", Structural, onChanging, !(gun || movable), ClearMoveRail));
+            fields.Add(BoolAttr(
+                grab,
+                "kickable",
+                Structural,
+                onChanging,
+                !(gun || movable || moving),
+                g =>
+                {
+                    ClearMoveRail(g);
+                    ClearMovement(g);
+                }));
             if (kickable)
             {
                 fields.Add(Attr(grab, "kicked", AttrType.Bool, onChanged, onChanging, !gun));
@@ -101,6 +119,22 @@ namespace CtrDxEditor.ViewModels
             // The game hides an invisible grab (and its rope) entirely; the editor keeps it visible but
             // pale so it stays selectable. Works for every grab type, so it is never gated.
             fields.Add(Attr(grab, "invisible", AttrType.Bool, onChanged, onChanging, true));
+
+            SpinFieldBuilder.BuildMovement(
+                fields,
+                grab,
+                onChanged,
+                onChanging,
+                rebuild,
+                () =>
+                {
+                    ClearMoveRail(grab);
+                    grab.SetAttr("kickable", "false");
+                });
+            if (moving)
+            {
+                fields.Add(Attr(grab, "hidePath", AttrType.Bool, onChanged, onChanging, true));
+            }
         }
 
         private static AttributeFieldViewModel Attr(
@@ -146,6 +180,12 @@ namespace CtrDxEditor.ViewModels
         private static void ClearMoveRail(LevelObject grab)
         {
             grab.SetAttr("moveLength", "-1");
+        }
+
+        private static void ClearMovement(LevelObject grab)
+        {
+            grab.RemoveAttr("path");
+            grab.RemoveAttr("moveSpeed");
         }
 
         private static bool Bool(LevelObject grab, string name)
