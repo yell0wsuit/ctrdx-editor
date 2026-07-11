@@ -235,6 +235,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Which selected spike end is being dragged to choose a new spike size.</summary>
         private SpikeResize.Handle _stripResizeDrag;
 
+        /// <summary>Which vinyl disc handle the current drag is rotating, or <see cref="VinylGeometry.Handle.None"/>.</summary>
+        private VinylGeometry.Handle _vinylHandleDrag;
+
         /// <summary>
         /// Whether the pointer is hovering the selected grab's hook, so it shows the highlight art even before a
         /// drag begins (the game highlights the mover on interaction).

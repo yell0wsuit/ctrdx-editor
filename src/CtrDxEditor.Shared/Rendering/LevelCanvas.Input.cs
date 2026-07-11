@@ -90,6 +90,14 @@ namespace CtrDxEditor.Rendering
                     : SpikeResize.Handle.None;
         }
 
+        /// <summary>Which vinyl handle a level point is over, or <see cref="VinylGeometry.Handle.None"/>.</summary>
+        private VinylGeometry.Handle HitVinylHandle(Vec2 levelPt)
+        {
+            return SelectedObject is { Type: "rotatedCircle" } vinyl && View.Zoom > 0
+                ? VinylGeometry.HitTest(vinyl, levelPt, 18 / View.Zoom)
+                : VinylGeometry.Handle.None;
+        }
+
         /// <summary>Applies a strip resize drag to the object, dispatching to the spike or bouncer helper.</summary>
         private void ApplyStripResize(LevelObject obj, Vec2 levelPt)
         {
@@ -491,6 +499,20 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // A vinyl handle drag rotates the disc; it takes priority over the size ring since both sit on
+            // the disc edge (the ring wins everywhere except the two handle spots).
+            VinylGeometry.Handle vinylHandle = HitVinylHandle(levelPt);
+            if (vinylHandle != VinylGeometry.Handle.None && SelectedObject is { } vinylObj)
+            {
+                BeginDocumentEdit?.Invoke();
+                _vinylHandleDrag = vinylHandle;
+                vinylObj.SetAttr("handleAngle", Whole(VinylGeometry.AngleFor(vinylObj, vinylHandle, levelPt)));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Pointer.Capture(this);
+                return;
+            }
+
             // Grabbing the auto-catch ring resizes the radius; it takes priority over object hit-testing
             // (the ring can sit over other objects) but not over a middle-button pan.
             if (OnRadiusEdge(levelPt))
@@ -658,6 +680,14 @@ namespace CtrDxEditor.Rendering
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
+            if (_vinylHandleDrag != VinylGeometry.Handle.None && SelectedObject is { } vinylDrag)
+            {
+                vinylDrag.SetAttr("handleAngle", Whole(VinylGeometry.AngleFor(vinylDrag, _vinylHandleDrag, levelPt)));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_resizingRadius && SelectedObject is { } g)
             {
                 string? attr = g.Type == "ghost" && _ghostPreview.ShowsRadiusRing(g)
@@ -731,6 +761,7 @@ namespace CtrDxEditor.Rendering
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
                 SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
                 SpikeResize.Handle stripHandle = HitStripResize(levelPt);
+                VinylGeometry.Handle vinylHover = HitVinylHandle(levelPt);
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
                 bool oldLimitHint = _polylineAtLimitHint;
@@ -742,7 +773,8 @@ namespace CtrDxEditor.Rendering
                 {
                     InvalidateVisual();
                 }
-                Cursor = _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
+                Cursor = vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
+                    : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
                     ? new Cursor(StandardCursorType.Hand)
                     : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
@@ -782,19 +814,21 @@ namespace CtrDxEditor.Rendering
             // progress; skip the resets and completion callback unless a gesture is actually active.
             bool gestureActive = _dragging || _panning || _resizingRadius || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
-                || _rotating || _hookHovered;
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered;
             if (!gestureActive)
             {
                 return;
             }
 
             bool editedDocument = _dragging || _resizingRadius || _polylinePointDrag > 0
-                || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None || _rotating;
+                || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
             _stripResizeDrag = SpikeResize.Handle.None;
+            _vinylHandleDrag = VinylGeometry.Handle.None;
             _rotating = false;
             _polylinePointDrag = -1;
             if (editedDocument)
