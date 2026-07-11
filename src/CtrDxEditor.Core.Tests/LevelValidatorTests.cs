@@ -140,5 +140,27 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("bulbNumber", StringComparison.OrdinalIgnoreCase));
         }
+
+        /// <summary>A ghost with all morph states off warns that it does nothing.</summary>
+        [Fact]
+        public void IdleOnlyGhostWarns()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />" +
+                "<ghost x=\"5\" y=\"5\" grab=\"false\" bubble=\"false\" bouncer=\"false\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("no enabled states"));
+        }
+
+        /// <summary>A ghost with at least one state produces no idle warning.</summary>
+        [Fact]
+        public void GhostWithAStateHasNoIdleWarning()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />" +
+                "<ghost x=\"5\" y=\"5\" grab=\"true\" bubble=\"false\" bouncer=\"false\" />");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Contains("no enabled states"));
+        }
     }
 }

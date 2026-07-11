@@ -105,6 +105,14 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
+            foreach (LevelObject ghost in objects.Where(o => o.Type == "ghost"))
+            {
+                if (GhostStates.IsIdleOnly(ghost))
+                {
+                    warnings.Add("A ghost has no enabled states (grab/bubble/bouncer); it will sit idle and do nothing.");
+                }
+            }
+
             return warnings;
         }
 
