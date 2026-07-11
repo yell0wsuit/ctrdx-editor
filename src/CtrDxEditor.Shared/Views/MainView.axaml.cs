@@ -274,7 +274,7 @@ namespace CtrDxEditor.Views
                 _paletteDragging = true;
             }
 
-            // Show the ghost only while over the canvas; hide it when the cursor leaves.
+            // Show the drag preview only while over the canvas; hide it when the cursor leaves.
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
             Point onCanvas = e.GetPosition(canvas);
             if (new Rect(canvas.Bounds.Size).Contains(onCanvas))

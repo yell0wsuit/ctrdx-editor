@@ -7,7 +7,7 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Rendering
 {
-    /// <summary>Palette placement: drag-ghost preview and dropping / adding objects.</summary>
+    /// <summary>Palette placement: drag preview and dropping / adding objects.</summary>
     public sealed partial class LevelCanvas
     {
         /// <summary>Shows a translucent preview of <paramref name="element"/> at the snapped drop position.</summary>
@@ -17,19 +17,19 @@ namespace CtrDxEditor.Rendering
         {
             Vec2 levelPt = View.ScreenToLevel(new Vec2(screenPoint.X, screenPoint.Y));
             (int gx, int gy) = Snap(levelPt);
-            _ghostElement = element;
-            _ghostLevel = new Vec2(gx, gy);
-            _ghostActive = true;
+            _dragPreviewElement = element;
+            _dragPreviewLevel = new Vec2(gx, gy);
+            _dragPreviewActive = true;
             InvalidateVisual();
         }
 
         /// <summary>Clears the drag preview, if any.</summary>
         public void HideGhost()
         {
-            if (_ghostActive)
+            if (_dragPreviewActive)
             {
-                _ghostActive = false;
-                _ghostElement = null;
+                _dragPreviewActive = false;
+                _dragPreviewElement = null;
                 InvalidateVisual();
             }
         }

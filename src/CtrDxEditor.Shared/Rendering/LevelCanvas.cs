@@ -268,14 +268,14 @@ namespace CtrDxEditor.Rendering
         /// <summary>True when a fit-to-view is queued, waiting for the control to be laid out with non-zero bounds.</summary>
         private bool _pendingFit;
 
-        /// <summary>True while a translucent palette drag-ghost is being shown.</summary>
-        private bool _ghostActive;
+        /// <summary>True while a translucent palette drag preview is being shown.</summary>
+        private bool _dragPreviewActive;
 
-        /// <summary>Element id of the palette drag-ghost, or null when none is active.</summary>
-        private string? _ghostElement;
+        /// <summary>Element id of the palette drag preview, or null when none is active.</summary>
+        private string? _dragPreviewElement;
 
-        /// <summary>Snapped level-space position of the drag-ghost.</summary>
-        private Vec2 _ghostLevel;
+        /// <summary>Snapped level-space position of the drag preview.</summary>
+        private Vec2 _dragPreviewLevel;
 
         /// <summary>Editor-chrome brushes/pens resolved from the theme once per theme change, not per Render.</summary>
         private readonly CanvasPalette _palette = new();

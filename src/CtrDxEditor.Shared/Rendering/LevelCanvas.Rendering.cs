@@ -151,15 +151,21 @@ namespace CtrDxEditor.Rendering
                 RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
             }
 
-            // Translucent ghost of the object being dragged from the palette, at its snapped drop spot.
-            if (_ghostActive && _ghostElement is { } ghostElement
+            // Translucent preview of the object being dragged from the palette, at its snapped drop spot.
+            if (_dragPreviewActive && _dragPreviewElement is { } dragPreviewElement
                 && sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
-                    ghostElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : ghostElement,
-                    doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } ghostSprite)
+                    dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
+                    doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)
             {
                 using (context.PushOpacity(0.7))
                 {
-                    LevelSceneRenderer.DrawSpritePreview(context, v, ghostSprite, ghostElement, _ghostLevel.X, _ghostLevel.Y);
+                    LevelSceneRenderer.DrawSpritePreview(
+                        context,
+                        v,
+                        dragPreviewSprite,
+                        dragPreviewElement,
+                        _dragPreviewLevel.X,
+                        _dragPreviewLevel.Y);
                 }
             }
 
