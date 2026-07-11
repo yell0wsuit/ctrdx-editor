@@ -60,6 +60,16 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, GrabBeeRenderer.ShouldDrawRope(Obj(path, moveSpeed), seconds));
         }
 
+        /// <summary>The bee sits above the carried hook using the fallback anchor from DX SetBee.</summary>
+        [Fact]
+        public void BeeAnchorLeavesCarriedHookVisible()
+        {
+            Core.Geometry.Vec2 anchor = GrabBeeRenderer.BeeAnchor(new Core.Geometry.Vec2(100, 100));
+
+            Assert.Equal(98, anchor.X, precision: 6);
+            Assert.Equal(100 - (58.0 / 3.0), anchor.Y, precision: 6);
+        }
+
         private static LevelObject Obj(string path, string moveSpeed, bool hidePath = false)
         {
             XElement element = new("grab",

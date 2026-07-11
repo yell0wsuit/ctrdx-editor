@@ -737,13 +737,14 @@ namespace CtrDxEditor.Rendering
             {
                 return;
             }
+            Vec2 beePosition = GrabBeeRenderer.BeeAnchor(position);
             if (sprites.GetSprite("grab_bee_body") is { } body)
             {
-                DrawSprite(ctx, v, body, position.X, position.Y);
+                DrawSprite(ctx, v, body, beePosition.X, beePosition.Y);
             }
             if (sprites.GetSprite(GrabBeeRenderer.WingSpriteKey(seconds)) is { } wings)
             {
-                DrawSprite(ctx, v, wings, position.X, position.Y);
+                DrawSprite(ctx, v, wings, beePosition.X, beePosition.Y);
             }
         }
 

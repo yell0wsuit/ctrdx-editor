@@ -11,6 +11,8 @@ namespace CtrDxEditor.Rendering
     public static class GrabBeeRenderer
     {
         private const double PollenSpacing = 44.0;
+        private const double BeeAnchorX = -6.0 / SpritePlacement.MapScale;
+        private const double BeeAnchorY = -58.0 / SpritePlacement.MapScale;
 
         /// <summary>Whether the game attaches a bee to this grab.</summary>
         /// <param name="grab">Grab whose mover state is inspected.</param>
@@ -72,6 +74,14 @@ namespace CtrDxEditor.Rendering
         public static bool ShouldDrawRope(LevelObject grab, double? animationPreviewSeconds)
         {
             return animationPreviewSeconds is null || !MoverPath.HasActiveMovement(grab);
+        }
+
+        /// <summary>Offsets the bee above the grab point so its parent hook remains visible beneath it.</summary>
+        /// <param name="grabPosition">Preview-aware grab position in level coordinates.</param>
+        /// <returns>The bee anchor derived from the fallback offset used by DX <c>Grab.SetBee</c>.</returns>
+        public static Vec2 BeeAnchor(Vec2 grabPosition)
+        {
+            return new Vec2(grabPosition.X + BeeAnchorX, grabPosition.Y + BeeAnchorY);
         }
 
         /// <summary>Appends pollen particles at the game's fixed spacing along one path segment.</summary>
