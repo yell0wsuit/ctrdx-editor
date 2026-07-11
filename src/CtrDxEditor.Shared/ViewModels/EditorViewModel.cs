@@ -497,6 +497,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (value.Type == "ghost")
+            {
+                GhostFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
             ObjectDescriptor? d = _descriptors.For(value.Type);
             if (d is not null)
             {
