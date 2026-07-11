@@ -20,6 +20,7 @@ namespace CtrDxEditor.Core.Editing
             {
                 "grab" => GrabRadius.Of(obj) is double r ? (r, "radius") : null,
                 "lightBulb" => Lit(obj) is double lr ? (lr, "litRadius") : null,
+                "rotatedCircle" => (VinylGeometry.DiscRadius(obj), "size"),
                 _ => null,
             };
         }
