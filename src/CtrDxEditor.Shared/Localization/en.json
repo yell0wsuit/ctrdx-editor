@@ -170,6 +170,8 @@
     "Attr.attachTo": "Attach to",
     "Attr.angle": "Angle",
     "Attr.size": "Size",
+    "Attr.sizeBig": "Big",
+    "Attr.sizeSmall": "Small",
     "Attr.initialDelay": "Initial delay (s)",
     "Attr.offTime": "Off time (s)",
     "Attr.onTime": "On time (s)",
