@@ -60,16 +60,36 @@ namespace CtrDxEditor.Rendering
                 : GrabRail.Handle.None;
         }
 
-        /// <summary>What part of the selected spike resize affordance a level point is over.</summary>
+        /// <summary>What part of the selected spike/bouncer resize affordance a level point is over.</summary>
         /// <param name="levelPt">The point to test, in level coordinates.</param>
-        /// <returns>The spike resize handle under the point, or <see cref="SpikeResize.Handle.None"/>.</returns>
-        private SpikeResize.Handle HitSpikeResize(Vec2 levelPt)
+        /// <returns>The strip resize handle under the point, or <see cref="SpikeResize.Handle.None"/>.</returns>
+        private SpikeResize.Handle HitStripResize(Vec2 levelPt)
         {
-            return SelectedObject is { } sel
-                && View.Zoom > 0
-                && SpikeObject.IsSpike(sel.Type)
-                ? SpikeResize.HitTest(sel, levelPt, SpikeSpriteScale(sel), tolerance: 9 / View.Zoom, thickness: 12 / View.Zoom)
-                : SpikeResize.Handle.None;
+            if (SelectedObject is not { } sel || View.Zoom <= 0)
+            {
+                return SpikeResize.Handle.None;
+            }
+
+            double tol = 9 / View.Zoom;
+            double thickness = 12 / View.Zoom;
+            return SpikeObject.IsSpike(sel.Type)
+                ? SpikeResize.HitTest(sel, levelPt, StripSpriteScale(sel), tol, thickness)
+                : BouncerObject.IsBouncer(sel.Type)
+                    ? BouncerResize.HitTest(sel, levelPt, StripSpriteScale(sel), tol, thickness)
+                    : SpikeResize.Handle.None;
+        }
+
+        /// <summary>Applies a strip resize drag to the object, dispatching to the spike or bouncer helper.</summary>
+        private void ApplyStripResize(LevelObject obj, Vec2 levelPt)
+        {
+            if (SpikeObject.IsSpike(obj.Type))
+            {
+                SpikeResize.ApplyDrag(obj, levelPt, StripSpriteScale(obj));
+            }
+            else if (BouncerObject.IsBouncer(obj.Type))
+            {
+                BouncerResize.ApplyDrag(obj, levelPt, StripSpriteScale(obj));
+            }
         }
 
         /// <summary>What part of the selected rotatable object's dial a level point is over, or <see cref="ObjectRotation.Handle.None"/>.</summary>
@@ -174,15 +194,15 @@ namespace CtrDxEditor.Rendering
             };
         }
 
-        /// <summary>Cursor for a spike resize handle based on the spike's current rotation.</summary>
-        private Cursor CursorForSpikeResize()
+        /// <summary>Cursor for a strip resize handle based on the object's current rotation.</summary>
+        private Cursor CursorForStripResize()
         {
-            if (SelectedObject is not { } spike || RotationTable.For(spike.Type) is not { } spec)
+            if (SelectedObject is not { } obj || RotationTable.For(obj.Type) is not { } spec)
             {
                 return ResizeCursor;
             }
 
-            double deg = Math.Abs(ObjectRotation.Normalize(ObjectRotation.DisplayDegrees(spike, spec)));
+            double deg = Math.Abs(ObjectRotation.Normalize(ObjectRotation.DisplayDegrees(obj, spec)));
             return deg is > 45 and < 135 ? VResizeCursor : ResizeCursor;
         }
 
@@ -471,12 +491,12 @@ namespace CtrDxEditor.Rendering
                     break;
             }
 
-            SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
-            if (spikeHandle != SpikeResize.Handle.None && SelectedObject is { } spikeResizeObj)
+            SpikeResize.Handle stripHandle = HitStripResize(levelPt);
+            if (stripHandle != SpikeResize.Handle.None && SelectedObject is { } stripResizeObj)
             {
                 BeginDocumentEdit?.Invoke();
-                _spikeResizeDrag = spikeHandle;
-                SpikeResize.ApplyDrag(spikeResizeObj, levelPt, SpikeSpriteScale(spikeResizeObj));
+                _stripResizeDrag = stripHandle;
+                ApplyStripResize(stripResizeObj, levelPt);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Pointer.Capture(this);
@@ -622,9 +642,9 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (_spikeResizeDrag != SpikeResize.Handle.None && SelectedObject is { } spikeObj)
+            if (_stripResizeDrag != SpikeResize.Handle.None && SelectedObject is { } stripObj)
             {
-                SpikeResize.ApplyDrag(spikeObj, levelPt, SpikeSpriteScale(spikeObj));
+                ApplyStripResize(stripObj, levelPt);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
@@ -670,7 +690,7 @@ namespace CtrDxEditor.Rendering
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
                 SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
-                SpikeResize.Handle spikeHandle = HitSpikeResize(levelPt);
+                SpikeResize.Handle stripHandle = HitStripResize(levelPt);
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
                 bool oldLimitHint = _polylineAtLimitHint;
@@ -685,7 +705,7 @@ namespace CtrDxEditor.Rendering
                 Cursor = _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
                     ? new Cursor(StandardCursorType.Hand)
                     : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
-                    : spikeHandle != SpikeResize.Handle.None ? CursorForSpikeResize()
+                    : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
                     : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
                 return;
             }
@@ -721,7 +741,7 @@ namespace CtrDxEditor.Rendering
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
             bool gestureActive = _dragging || _panning || _resizingRadius || _polylinePointDrag > 0
-                || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None
+                || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _rotating || _hookHovered;
             if (!gestureActive)
             {
@@ -729,12 +749,12 @@ namespace CtrDxEditor.Rendering
             }
 
             bool editedDocument = _dragging || _resizingRadius || _polylinePointDrag > 0
-                || _railDrag != GrabRail.Handle.None || _spikeResizeDrag != SpikeResize.Handle.None || _rotating;
+                || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None || _rotating;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
             _railDrag = GrabRail.Handle.None;
-            _spikeResizeDrag = SpikeResize.Handle.None;
+            _stripResizeDrag = SpikeResize.Handle.None;
             _rotating = false;
             _polylinePointDrag = -1;
             if (editedDocument)
@@ -821,10 +841,10 @@ namespace CtrDxEditor.Rendering
             e.Handled = true;
         }
 
-        private double SpikeSpriteScale(LevelObject spike)
+        private double StripSpriteScale(LevelObject obj)
         {
             return Document is { } doc
-                && Sprites?.GetSprite(LevelSceneRenderer.CanvasSpriteKey(spike, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } sprite
+                && Sprites?.GetSprite(LevelSceneRenderer.CanvasSpriteKey(obj, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } sprite
                 ? sprite.Scale
                 : 1.0;
         }
