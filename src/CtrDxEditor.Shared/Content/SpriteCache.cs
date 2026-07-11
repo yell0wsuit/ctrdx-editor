@@ -256,8 +256,22 @@ namespace CtrDxEditor.Content
         /// below this a frame is a placeholder that would only distort the crop bounds.</summary>
         private const int MinThumbnailFrameSide = 8;
 
+        /// <summary>Bitmap side (px) for the composited vinyl thumbnail; the palette scales it down to 28 px.</summary>
+        private const int VinylThumbnailPx = 64;
+
         private RenderTargetBitmap? BuildThumbnail(string element, int candySkin, int omNomSupport)
         {
+            // The vinyl disc scales with its size and composes mirrored halves + handles, which the generic
+            // centered layout can't reproduce, so render the real composited disc at its default size. Only
+            // when its art is loaded, so a bundle-less host (tests) returns null like the generic path below
+            // instead of allocating a render target.
+            if (element == VinylGeometry.Element)
+            {
+                return GetSprite(element, candySkin, omNomSupport) is null
+                    ? null
+                    : Rendering.LevelSceneRenderer.RenderVinylThumbnail(this, VinylThumbnailPx);
+            }
+
             ObjectSprite? sprite = GetSprite(element, candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {

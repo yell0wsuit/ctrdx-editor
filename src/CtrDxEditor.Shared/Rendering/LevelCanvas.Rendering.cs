@@ -207,20 +207,31 @@ namespace CtrDxEditor.Rendering
             }
 
             // Translucent preview of the object being dragged from the palette, at its snapped drop spot.
-            if (_dragPreviewActive && _dragPreviewElement is { } dragPreviewElement
-                && sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
+            if (_dragPreviewActive && _dragPreviewElement is { } dragPreviewElement)
+            {
+                // The vinyl scales with its size, so preview the real composited disc at its default size
+                // rather than the fixed-scale sprite, which would render an oversized disc.
+                if (dragPreviewElement == "rotatedCircle")
+                {
+                    using (context.PushOpacity(0.7))
+                    {
+                        LevelSceneRenderer.DrawVinylPreview(context, v, sprites, _dragPreviewLevel);
+                    }
+                }
+                else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
                     doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)
-            {
-                using (context.PushOpacity(0.7))
                 {
-                    LevelSceneRenderer.DrawSpritePreview(
-                        context,
-                        v,
-                        dragPreviewSprite,
-                        dragPreviewElement,
-                        _dragPreviewLevel.X,
-                        _dragPreviewLevel.Y);
+                    using (context.PushOpacity(0.7))
+                    {
+                        LevelSceneRenderer.DrawSpritePreview(
+                            context,
+                            v,
+                            dragPreviewSprite,
+                            dragPreviewElement,
+                            _dragPreviewLevel.X,
+                            _dragPreviewLevel.Y);
+                    }
                 }
             }
 

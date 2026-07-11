@@ -116,18 +116,31 @@ namespace CtrDxEditor.Core.Editing
             return new Vec2(obj.X + (Math.Cos(rad) * r), obj.Y + (Math.Sin(rad) * r));
         }
 
+        /// <summary>
+        /// Radial distance in level units from the disc center to a controller handle's center, matching the
+        /// game's <c>controllerXOffset</c> in <c>RotatedCircle.UpdateChildPositions</c> (RTPD is identity on desktop).
+        /// </summary>
+        public static double VisualHandleOffset(LevelObject obj, double mapScale = SpritePlacement.MapScale)
+        {
+            double sizeInPixels = HighlightFrameWidth * LayerScale(obj);
+            double shift = 67.5 - (0.09 * Size(obj));
+            double scaleCorrection = (1.0 - ControllerScale(obj)) * (ControllerFrameWidth / 2.0);
+            return (sizeInPixels - shift + scaleCorrection) / mapScale;
+        }
+
         /// <summary>World-space center of the visible controller art, including the game's size-dependent inset.</summary>
         public static Vec2 VisualHandlePosition(LevelObject obj, Handle h, double mapScale = SpritePlacement.MapScale)
         {
-            double baseScale = LayerScale(obj);
-            double controllerScale = ControllerScale(obj);
-            double sizeInPixels = HighlightFrameWidth * baseScale;
-            double shift = 67.5 - (0.09 * Size(obj));
-            double scaleCorrection = (1.0 - controllerScale) * (ControllerFrameWidth / 2.0);
-            double offset = (sizeInPixels - shift + scaleCorrection) / mapScale;
+            double offset = VisualHandleOffset(obj, mapScale);
             double radial = HandleAngleDegrees(obj) + (h == Handle.Left ? 180.0 : 0.0);
             double rad = radial * Math.PI / 180.0;
             return new Vec2(obj.X + (Math.Cos(rad) * offset), obj.Y + (Math.Sin(rad) * offset));
+        }
+
+        /// <summary>The level-unit radius of the drawn disc body, for framing a preview thumbnail around it.</summary>
+        public static double BodyRadius(LevelObject obj, double mapScale = SpritePlacement.MapScale)
+        {
+            return BodyFrameWidth / 2.0 * LayerScale(obj) / mapScale;
         }
 
         /// <summary>The handle within <paramref name="tolerance"/> of <paramref name="point"/>, nearest first.</summary>

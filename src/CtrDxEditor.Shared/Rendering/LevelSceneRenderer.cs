@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -213,9 +215,11 @@ namespace CtrDxEditor.Rendering
         /// <param name="sprites">Sprite cache used to resolve the disc, highlight, sticker, and handle art.</param>
         /// <param name="obj">The vinyl object to draw.</param>
         /// <param name="activeHandle">The handle being dragged or hovered, which shows the active-controller glow and disc ring; None for no active handle.</param>
+        /// <param name="includeHandles">Whether to draw the controller handles; false for the palette thumbnail, which shows the bare disc.</param>
         public static void DrawVinyl(
             DrawingContext ctx, ViewTransform v, SpriteCache sprites, LevelObject obj,
-            VinylGeometry.Handle activeHandle = VinylGeometry.Handle.None)
+            VinylGeometry.Handle activeHandle = VinylGeometry.Handle.None,
+            bool includeHandles = true)
         {
             Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
             double atlasToScreen = v.Zoom / SpritePlacement.MapScale;
@@ -263,7 +267,7 @@ namespace CtrDxEditor.Rendering
 
             // Handles (quad 5) at the handleAngle direction, dome pointing outward. The active handle also
             // shows the larger controller glow (quad 4) behind it, matching vinilActiveController.
-            if (VinylLayer(sprites, "vinyl_handle", 0) is { } handle)
+            if (includeHandles && VinylLayer(sprites, "vinyl_handle", 0) is { } handle)
             {
                 SpriteLayerDraw? glow = activeHandle != VinylGeometry.Handle.None
                     ? VinylLayer(sprites, "vinyl_active_controller", 0)
@@ -291,6 +295,55 @@ namespace CtrDxEditor.Rendering
             {
                 VinylDrawCentered(ctx, center, c, centerScale);
             }
+        }
+
+        /// <summary>A default-size vinyl object at (<paramref name="x"/>, <paramref name="y"/>), for previews and thumbnails.</summary>
+        private static LevelObject DefaultVinyl(int x, int y)
+        {
+            return new LevelObject(new XElement(
+                VinylGeometry.Element,
+                new XAttribute("x", x.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("y", y.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("size", VinylGeometry.DefaultSize.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("handleAngle", "0"),
+                new XAttribute("oneHandle", "false")));
+        }
+
+        /// <summary>Draws the palette drag preview for a vinyl: the real composited disc at its default size.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the vinyl art.</param>
+        /// <param name="level">Snapped drop position in level coordinates.</param>
+        public static void DrawVinylPreview(DrawingContext ctx, ViewTransform v, SpriteCache sprites, Vec2 level)
+        {
+            DrawVinyl(ctx, v, sprites, DefaultVinyl((int)Math.Round(level.X), (int)Math.Round(level.Y)));
+        }
+
+        /// <summary>
+        /// Renders a palette thumbnail of the composited vinyl disc (body, highlight, label, center — no
+        /// handles) at its default size into a <paramref name="px"/>×<paramref name="px"/> bitmap.
+        /// </summary>
+        /// <param name="sprites">Sprite cache used to resolve the vinyl art.</param>
+        /// <param name="px">Square bitmap side in pixels.</param>
+        /// <returns>The rendered thumbnail, or null when the sprite scale collapses.</returns>
+        public static RenderTargetBitmap? RenderVinylThumbnail(SpriteCache sprites, int px)
+        {
+            LevelObject obj = DefaultVinyl(0, 0);
+            double radius = VinylGeometry.BodyRadius(obj);
+            if (radius <= 0 || px <= 0)
+            {
+                return null;
+            }
+
+            const double margin = 1.5;
+            double zoom = ((px / 2.0) - margin) / radius;
+            ViewTransform v = new(zoom, px / 2.0, px / 2.0);
+            RenderTargetBitmap rtb = new(new PixelSize(px, px), new Vector(96, 96));
+            using (DrawingContext ctx = rtb.CreateDrawingContext())
+            {
+                DrawVinyl(ctx, v, sprites, obj, includeHandles: false);
+            }
+            return rtb;
         }
 
         /// <summary>Resolves a single atlas layer of a vinyl sprite key, or null when unavailable.</summary>
