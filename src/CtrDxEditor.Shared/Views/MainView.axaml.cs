@@ -78,6 +78,30 @@ namespace CtrDxEditor.Views
 #pragma warning disable IDE0010
                 switch (e.Key)
                 {
+                    case Key.N when ctrl && !shift:
+                        New_Click(this, e);
+                        e.Handled = true;
+                        break;
+                    case Key.O when ctrl && !shift:
+                        Open_Click(this, e);
+                        e.Handled = true;
+                        break;
+                    case Key.S when ctrl && !shift && DataContext is EditorViewModel { HasDocument: true }:
+                        Save_Click(this, e);
+                        e.Handled = true;
+                        break;
+                    case Key.S when ctrl && shift && DataContext is EditorViewModel { HasDocument: true }:
+                        SaveAs_Click(this, e);
+                        e.Handled = true;
+                        break;
+                    case Key.P when ctrl && shift && DataContext is EditorViewModel { HasDocument: true }:
+                        Screenshot_Click(this, e);
+                        e.Handled = true;
+                        break;
+                    case Key.W when ctrl && !shift && DataContext is EditorViewModel { HasDocument: true }:
+                        Close_Click(this, e);
+                        e.Handled = true;
+                        break;
                     case Key.Z when ctrl && !shift && DataContext is EditorViewModel { CanUndo: true } undoVm:
                         undoVm.Undo();
                         e.Handled = true;

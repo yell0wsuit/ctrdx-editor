@@ -15,41 +15,73 @@
   <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="{loc:Tr Menu.File}">
-        <MenuItem Header="{loc:Tr Menu.File.New}" Click="New_Click">
+        <MenuItem Click="New_Click">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="FilePlusOutline" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.New}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.New}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
-        <MenuItem Header="{loc:Tr Menu.File.Open}" Click="Open_Click">
+        <MenuItem Click="Open_Click">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="FolderOpenOutline" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.Open}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Open}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
-        <MenuItem Header="{loc:Tr Menu.File.Save}" Click="Save_Click"
-                  IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="Save_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentSave" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.Save}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Save}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
-        <MenuItem Header="{loc:Tr Menu.File.SaveAs}" Click="SaveAs_Click"
-                  IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="SaveAs_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentSaveEdit" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.SaveAs}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.SaveAs}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Header="{loc:Tr Menu.File.Screenshot}" Click="Screenshot_Click"
-                  IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="Screenshot_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="Camera" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.Screenshot}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Screenshot}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Header="{loc:Tr Menu.File.Close}" Click="Close_Click"
-                  IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="Close_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="CloseBoxOutline" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.Close}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Close}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
       </MenuItem>
       <MenuItem Header="{loc:Tr Menu.Edit}">

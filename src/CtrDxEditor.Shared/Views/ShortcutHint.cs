@@ -10,6 +10,24 @@ namespace CtrDxEditor.Views
     {
         private static readonly string Mod = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl";
 
+        /// <summary>Localized platform shortcut text for creating a new level.</summary>
+        public static string New { get; } = $"{Mod} N";
+
+        /// <summary>Localized platform shortcut text for opening a level.</summary>
+        public static string Open { get; } = $"{Mod} O";
+
+        /// <summary>Localized platform shortcut text for saving the level.</summary>
+        public static string Save { get; } = $"{Mod} S";
+
+        /// <summary>Localized platform shortcut text for saving the level under a new name.</summary>
+        public static string SaveAs { get; } = $"{Mod} Shift S";
+
+        /// <summary>Localized platform shortcut text for taking a screenshot.</summary>
+        public static string Screenshot { get; } = $"{Mod} Shift P";
+
+        /// <summary>Localized platform shortcut text for closing the level.</summary>
+        public static string Close { get; } = $"{Mod} W";
+
         /// <summary>Localized platform shortcut text for zooming in.</summary>
         public static string ZoomIn { get; } = $"{Mod} +";
 
