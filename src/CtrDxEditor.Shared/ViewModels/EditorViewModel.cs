@@ -557,6 +557,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (value.Type == "lantern")
+            {
+                LanternFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
             if (SpikeObject.IsSpike(value.Type))
             {
                 SpikeFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
