@@ -7,6 +7,9 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests inner-candy frame resolution for the lantern, matching the game's skin rule.</summary>
     public class LanternInnerCandyTests
     {
+        /// <summary>Built-in candy skins use the dedicated frames baked into the lantern atlas.</summary>
+        /// <param name="skin">Candy skin index.</param>
+        /// <param name="expectedQuad">Expected lantern-atlas quad.</param>
         [Theory]
         [InlineData(0, 3)]
         [InlineData(1, 4)]
@@ -19,6 +22,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expectedQuad, frame.Quad);
         }
 
+        /// <summary>The fourth skin resolves its lantern frame from its own candy atlas.</summary>
         [Fact]
         public void Skin3UsesItsCandyAtlasQuad10()
         {
@@ -28,6 +32,8 @@ namespace CtrDxEditor.Tests
             Assert.Equal(10, frame.Quad);
         }
 
+        /// <summary>Invalid skin indices fall back to the default lantern candy frame.</summary>
+        /// <param name="skin">Out-of-range candy skin index.</param>
         [Theory]
         [InlineData(-1)]
         [InlineData(999)]

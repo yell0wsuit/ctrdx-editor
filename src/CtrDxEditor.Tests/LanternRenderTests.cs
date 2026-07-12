@@ -12,6 +12,7 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests lantern draw-order classification.</summary>
     public class LanternRenderTests
     {
+        /// <summary>Lanterns share the candy draw layer in the game's fixed z-order.</summary>
         [Fact]
         public void LanternDrawsOnTheCandyLayer()
         {

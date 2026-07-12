@@ -16,6 +16,7 @@ namespace CtrDxEditor.Core.Tests
             return new(XElement.Parse(xml));
         }
 
+        /// <summary>Capture state is true only for lanterns whose capture attribute parses as true.</summary>
         [Fact]
         public void IsCapturedReadsAttribute()
         {
@@ -25,6 +26,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(LanternObject.IsCaptured(Obj("""<candy x="0" y="0" />""")));
         }
 
+        /// <summary>The sprite key switches between idle and active art based on capture state.</summary>
         [Fact]
         public void SpriteKeyReflectsCaptureState()
         {
@@ -32,6 +34,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("lantern", LanternObject.SpriteKey(Obj("""<lantern x="0" y="0" candyCaptured="false" />""")));
         }
 
+        /// <summary>The level-wide helper detects whether any lantern currently holds the candy.</summary>
         [Fact]
         public void AnyCapturedScansTheLevel()
         {
@@ -50,6 +53,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(LanternObject.AnyCaptured(none));
         }
 
+        /// <summary>Only the first candy in document order is treated as the primary candy.</summary>
         [Fact]
         public void IsPrimaryCandyIsFirstCandyInDocumentOrder()
         {

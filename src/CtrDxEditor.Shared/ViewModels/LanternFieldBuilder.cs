@@ -14,6 +14,11 @@ namespace CtrDxEditor.ViewModels
     public static class LanternFieldBuilder
     {
         /// <summary>Appends the lantern's fields, in panel order, to <paramref name="fields"/>.</summary>
+        /// <param name="fields">Destination property-field collection.</param>
+        /// <param name="lantern">Lantern object whose attributes are edited.</param>
+        /// <param name="onChanged">Callback invoked after a field changes.</param>
+        /// <param name="onChanging">Callback invoked before a field changes.</param>
+        /// <param name="rebuild">Callback that rebuilds fields after movement-mode changes.</param>
         public static void Build(
             IList<AttributeFieldViewModel> fields,
             LevelObject lantern,

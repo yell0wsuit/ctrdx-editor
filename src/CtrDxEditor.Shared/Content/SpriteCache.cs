@@ -109,6 +109,8 @@ namespace CtrDxEditor.Content
         /// loaded. Skins 0–2 come from the preloaded obj_lantern atlas; skins 3+ load their candy atlas on
         /// demand (shared with the candy skin cache). Follows the active <paramref name="skin"/>.
         /// </summary>
+        /// <param name="skin">Active candy skin index.</param>
+        /// <returns>The resolved inner-candy layer, or <see langword="null"/> when its content is unavailable.</returns>
         public SpriteLayerDraw? GetLanternInnerCandy(int skin)
         {
             LanternInnerCandyFrame f = LanternInnerCandy.Resolve(skin);

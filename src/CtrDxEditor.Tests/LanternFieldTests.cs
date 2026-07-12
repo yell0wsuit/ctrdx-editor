@@ -47,6 +47,7 @@ namespace CtrDxEditor.Tests
         </map>
         """;
 
+        /// <summary>The lantern panel exposes its authored candy-capture state as a toggle.</summary>
         [Fact]
         public void LanternExposesCandyCapturedToggle()
         {
@@ -57,6 +58,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains(vm.Fields, f => f.Name == "candyCaptured" && f.IsBool);
         }
 
+        /// <summary>The lantern panel reuses the shared mover-path mode controls.</summary>
         [Fact]
         public void LanternExposesMovementControls()
         {

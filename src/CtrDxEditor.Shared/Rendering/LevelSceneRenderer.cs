@@ -271,6 +271,14 @@ namespace CtrDxEditor.Rendering
             DrawBindingIdLabel(ctx, v, obj, objects, x, y);
         }
 
+        /// <summary>Draws a generic sprite's selected back-layer variant followed by its main layers.</summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">Object used to select a stable decorative variant.</param>
+        /// <param name="sprite">Resolved sprite to draw.</param>
+        /// <param name="x">Level-space X coordinate.</param>
+        /// <param name="y">Level-space Y coordinate.</param>
+        /// <param name="spinRotation">Optional live-preview rotation in degrees.</param>
         private static void DrawGenericSprite(
             DrawingContext ctx,
             ViewTransform v,
