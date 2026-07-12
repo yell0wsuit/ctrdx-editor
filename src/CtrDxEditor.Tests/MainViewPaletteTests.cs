@@ -21,12 +21,15 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void InterruptedPaletteDragUsesSharedCleanup()
         {
-            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string controller = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteDragController.cs"));
 
-            Assert.Contains("PointerCaptureLostEvent, PaletteItem_PointerCaptureLost", source, StringComparison.Ordinal);
-            Assert.Contains("private void CancelPaletteDrag()", source, StringComparison.Ordinal);
-            Assert.Contains("private void PaletteItem_PointerCaptureLost", source, StringComparison.Ordinal);
-            Assert.Contains("CancelPaletteDrag();", source, StringComparison.Ordinal);
+            // The view routes lost capture to the controller and funnels detachment through the same Cancel().
+            Assert.Contains("PointerCaptureLostEvent, _paletteDrag.OnPointerCaptureLost", view, StringComparison.Ordinal);
+            Assert.Contains("_paletteDrag.Cancel();", view, StringComparison.Ordinal);
+            // The controller's capture-lost handler and its cleanup share the same Cancel() entry point.
+            Assert.Contains("public void OnPointerCaptureLost", controller, StringComparison.Ordinal);
+            Assert.Contains("public void Cancel()", controller, StringComparison.Ordinal);
         }
 
         private static string SourcePath(params string[] parts)

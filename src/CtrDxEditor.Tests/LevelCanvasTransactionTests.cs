@@ -29,7 +29,7 @@ namespace CtrDxEditor.Tests
         public void ViewMenuWiresMovementPathToggleToCanvas()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
-            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
 
             Assert.Contains("ShowMovementPathsToggle_Click", view, StringComparison.Ordinal);
             Assert.Contains("Menu.View.ShowMovementPaths", view, StringComparison.Ordinal);
