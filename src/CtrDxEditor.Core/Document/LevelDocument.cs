@@ -74,6 +74,9 @@ namespace CtrDxEditor.Core.Document
 
         private XElement? GameDesign => Layer("settings")?.Element("gameDesign");
 
+        /// <summary>The gameDesign settings element, or null when the document has none.</summary>
+        public XElement? GameDesignElement => GameDesign;
+
         /// <summary>The level grid size in map units, defaulting to 32 when absent.</summary>
         public int GridSize => ReadInt(SettingsMap, "gridSize", 32);
 

@@ -1,6 +1,7 @@
 using System.Linq;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -41,6 +42,43 @@ namespace CtrDxEditor.Tests
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
 
             vm.LoadLevelXml(SpikeLevel("spike3", "3"));
+
+            Assert.False(vm.IsModified);
+        }
+
+        private static string CandyLevel(string x, string y) => $"""
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings">
+                <map gridSize="32" width="640" height="480" />
+            </layer>
+            <layer name="Objects">
+                <candy x="{x}" y="{y}" />
+            </layer>
+        </map>
+        """;
+
+        /// <summary>A level authored with decimal coordinates loads truncated and pending save.</summary>
+        [Fact]
+        public void LoadingDecimalCoordinatesTruncatesLiveAndMarksModified()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml(CandyLevel("100.9", "-40.5"));
+
+            LevelObject candy = vm.Document!.Objects.First();
+            Assert.Equal("100", candy.GetAttr("x"));
+            Assert.Equal("-40", candy.GetAttr("y"));
+            Assert.True(vm.IsModified);
+        }
+
+        /// <summary>A level with integer coordinates loads clean.</summary>
+        [Fact]
+        public void LoadingIntegerCoordinatesIsNotModified()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml(CandyLevel("100", "-40"));
 
             Assert.False(vm.IsModified);
         }

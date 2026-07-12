@@ -137,7 +137,11 @@ namespace CtrDxEditor.ViewModels
             // disagree with their size attribute loads as a pending (savable) change, while a
             // consistent level stays clean. See LevelObjectPolicy.NormalizeSizedElements.
             _savedBaselineXml = ToXml();
-            if (LevelObjectPolicy.NormalizeSizedElements(Document))
+            bool normalized = LevelObjectPolicy.NormalizeSizedElements(Document);
+            // The game truncates x/y (and gameDesign mapOffsetX/Y) to ints, so a level authored
+            // with decimals loads auto-fixed and pending save, matching what the game would load.
+            normalized |= LevelObjectPolicy.DropCoordinateDecimals(Document);
+            if (normalized)
             {
                 RefreshObjectList();
             }

@@ -69,6 +69,52 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
+        /// Drops fractional parts from object <c>x</c>/<c>y</c> coordinates and the gameDesign
+        /// <c>mapOffsetX</c>/<c>mapOffsetY</c>, truncating toward zero to match the game's
+        /// <c>ParseCoordinateIntOrZero</c> (e.g. <c>"-12.9"</c> becomes <c>"-12"</c>). Integer,
+        /// missing, and unparseable or out-of-range values are left untouched. Returns whether any
+        /// value was rewritten.
+        /// </summary>
+        public static bool DropCoordinateDecimals(LevelDocument document)
+        {
+            bool changed = false;
+            foreach (LevelObject obj in document.Objects)
+            {
+                changed |= TruncateCoordinate(obj, "x");
+                changed |= TruncateCoordinate(obj, "y");
+            }
+
+            if (document.GameDesignElement is { } gameDesign)
+            {
+                LevelObject design = new(gameDesign);
+                changed |= TruncateCoordinate(design, "mapOffsetX");
+                changed |= TruncateCoordinate(design, "mapOffsetY");
+            }
+
+            return changed;
+        }
+
+        private static bool TruncateCoordinate(LevelObject obj, string attribute)
+        {
+            if (obj.GetAttr(attribute) is not { } raw
+                || !decimal.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal value)
+                || value < int.MinValue
+                || value > int.MaxValue)
+            {
+                return false;
+            }
+
+            string truncated = decimal.ToInt32(decimal.Truncate(value)).ToString(CultureInfo.InvariantCulture);
+            if (truncated == raw)
+            {
+                return false;
+            }
+
+            obj.SetAttr(attribute, truncated);
+            return true;
+        }
+
+        /// <summary>
         /// Reassigns hidden candy and bulb ids from zero in object order, updating grab references
         /// that pointed at matching legacy keys.
         /// </summary>
