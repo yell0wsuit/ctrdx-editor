@@ -235,6 +235,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Which selected spike end is being dragged to choose a new spike size.</summary>
         private SpikeResize.Handle _stripResizeDrag;
 
+        /// <summary>Which selected conveyor handle the current drag is manipulating (far end or width),
+        /// or <see cref="ConveyorGeometry.Handle.None"/> when no conveyor drag is in progress.</summary>
+        private ConveyorGeometry.Handle _conveyorDrag;
+
         /// <summary>Which vinyl disc handle the current drag is rotating, or <see cref="VinylGeometry.Handle.None"/>.</summary>
         private VinylGeometry.Handle _vinylHandleDrag;
 

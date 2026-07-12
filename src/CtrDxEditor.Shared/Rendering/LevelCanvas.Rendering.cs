@@ -202,6 +202,11 @@ namespace CtrDxEditor.Rendering
                 }
                 DrawPolylinePointHandles(context, v, selected);
 
+                if (selected.Type == "transporter")
+                {
+                    ConveyorRenderer.DrawHandles(context, v, selected, _palette.OrbitPathArrow);
+                }
+
                 if (selected.Type == "ghost")
                 {
                     DrawGhostBadge(context, v, selected, points);
