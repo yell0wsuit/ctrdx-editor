@@ -22,7 +22,7 @@ namespace CtrDxEditor.Content
         /// <summary>Resolves the inner-candy frame for a candy skin index.</summary>
         public static LanternInnerCandyFrame Resolve(int skin)
         {
-            if (skin < 0 || skin >= CandySkins.Count)
+            if (skin is < 0 or >= CandySkins.Count)
             {
                 skin = 0;
             }
