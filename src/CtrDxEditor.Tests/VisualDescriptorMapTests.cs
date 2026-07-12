@@ -337,5 +337,14 @@ namespace CtrDxEditor.Tests
             Assert.Contains("images/obj_mouse.png", VisualDescriptorMap.RequiredFiles(".png"));
             Assert.Contains("images/obj_mouse.json", VisualDescriptorMap.RequiredFiles(".png"));
         }
+
+        /// <summary>The conveyor palette thumbnail and the seven belt pieces are both registered.</summary>
+        [Fact]
+        public void TransporterAndBeltPiecesAreRegistered()
+        {
+            Assert.NotNull(VisualDescriptorMap.For("transporter"));
+            VisualDescriptor belt = VisualDescriptorMap.For("transporter_belt")!;
+            Assert.Equal(7, belt.Layers.Count);
+        }
     }
 }

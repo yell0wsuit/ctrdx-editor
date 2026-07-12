@@ -44,6 +44,8 @@ namespace CtrDxEditor.Content
         private const string LanternImageBase = "images/obj_lantern";
         private const string MouseJson = "images/obj_mouse.json";
         private const string MouseImageBase = "images/obj_mouse";
+        private const string ConveyorJson = "images/obj_conveyor.json";
+        private const string ConveyorImageBase = "images/obj_conveyor";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -246,6 +248,32 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(MouseJson, MouseImageBase, 0),
                 new SpriteLayer(MouseJson, MouseImageBase, 14)
+            ]),
+
+            // Conveyor palette thumbnail (game element `transporter`). A short belt segment: middle
+            // background (quad 2) + moving plate (4) + directional arrow (5) + highlight (6). The belt is
+            // custom-rendered on the canvas by ConveyorRenderer from `transporter_belt` below, so this
+            // descriptor exists only to give the palette a recognizable icon.
+            new("transporter",
+            [
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 2),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 4),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 5),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 6),
+            ]),
+
+            // Conveyor belt pieces for ConveyorRenderer (not placeable). Ordered to match the quad indices
+            // in the game's ConveyorBelt.cs so the renderer indexes them directly:
+            // 0 end, 1 end-side, 2 middle, 3 middle-side, 4 plate, 5 plate-arrow, 6 highlight.
+            new("transporter_belt",
+            [
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 0),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 1),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 2),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 3),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 4),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 5),
+                new SpriteLayer(ConveyorJson, ConveyorImageBase, 6),
             ]),
 
             // Pump object
