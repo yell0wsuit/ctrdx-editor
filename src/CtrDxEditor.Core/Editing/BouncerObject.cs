@@ -30,6 +30,25 @@ namespace CtrDxEditor.Core.Editing
             obj.SetAttr("size", size!);
         }
 
+        /// <summary>
+        /// Renames the element to bouncerN so the tag matches its authoritative size attribute.
+        /// The game reads size only from the attribute, so this is behavior-preserving. Elements
+        /// without a valid size attribute are left untouched.
+        /// </summary>
+        public static void NormalizeElementName(LevelObject obj)
+        {
+            if (!IsBouncer(obj.Type))
+            {
+                return;
+            }
+
+            string? size = obj.GetAttr("size");
+            if (IsValidSize(size) && obj.Type != $"bouncer{size}")
+            {
+                obj.Element.Name = $"bouncer{size}";
+            }
+        }
+
         private static bool IsValidSize(string? size)
         {
             return size is "1" or "2";

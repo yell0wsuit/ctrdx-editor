@@ -37,6 +37,25 @@ namespace CtrDxEditor.Core.Editing
             obj.SetAttr("size", size!);
         }
 
+        /// <summary>
+        /// Renames the element to spikeN so the tag matches its authoritative size attribute.
+        /// The game reads size only from the attribute, so this is behavior-preserving. Elements
+        /// without a valid size attribute (bare spikes, electro, out-of-range) are left untouched.
+        /// </summary>
+        public static void NormalizeElementName(LevelObject obj)
+        {
+            if (!IsSpike(obj.Type))
+            {
+                return;
+            }
+
+            string? size = obj.GetAttr("size");
+            if (IsValidSize(size) && obj.Type != $"spike{size}")
+            {
+                obj.Element.Name = $"spike{size}";
+            }
+        }
+
         /// <summary>Whether this spike uses rotatable spike state. Group 0 is rotatable but has no embedded button.</summary>
         public static bool IsToggled(LevelObject obj)
         {

@@ -5,11 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
+using CtrDxEditor.Core.Editing;
+
 namespace CtrDxEditor.Core.Document
 {
     /// <summary>
     /// Owns the parsed level XML tree. Unknown layers, elements, and attributes are retained
-    /// verbatim on the underlying XDocument so a no-edit save round-trips losslessly.
+    /// verbatim on the underlying XDocument so a no-edit save round-trips losslessly. The one
+    /// exception is that spike/bouncer tags are normalized on load to match their authoritative
+    /// size attribute (e.g. spike2 size="3" becomes spike3), which the game treats identically.
     /// </summary>
     public sealed class LevelDocument
     {
@@ -18,6 +22,19 @@ namespace CtrDxEditor.Core.Document
         private LevelDocument(XDocument doc)
         {
             _doc = doc;
+            NormalizeSizedElements();
+        }
+
+        // Spikes (spike1-4) and bouncers (bouncer1/2) derive their size purely from the size
+        // attribute in-game; the tag suffix is ignored. Align the suffix to the attribute so the
+        // editor's stored XML is self-consistent. Lossless in game behavior.
+        private void NormalizeSizedElements()
+        {
+            foreach (LevelObject obj in Objects)
+            {
+                SpikeObject.NormalizeElementName(obj);
+                BouncerObject.NormalizeElementName(obj);
+            }
         }
 
         /// <summary>Parses a level document from an XML string.</summary>
