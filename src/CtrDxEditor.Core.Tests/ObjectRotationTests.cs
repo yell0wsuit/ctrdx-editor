@@ -164,6 +164,18 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(RotationTable.IsRotatable("star"));
         }
 
+        /// <summary>The mouse (gap) uses its XML angle directly and exposes the standard editor dial.</summary>
+        [Fact]
+        public void GapRotationIsEditableWithoutDisplayOffset()
+        {
+            RotationSpec spec = RotationTable.For("gap")!;
+
+            Assert.Equal(0, spec.DisplayOffset);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.True(spec.Editable);
+            Assert.Same(spec, RotationTable.EditableFor("gap"));
+        }
+
         /// <summary>SteamTube uses its XML angle directly and exposes the standard editor dial.</summary>
         [Fact]
         public void SteamTubeRotationIsEditableWithoutDisplayOffset()
