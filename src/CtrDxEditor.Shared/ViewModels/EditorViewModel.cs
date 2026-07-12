@@ -81,6 +81,12 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
+        /// <summary>
+        /// True when the palette's game-name header should show: a level is open and no
+        /// search is active (the header is hidden while searching to reduce clutter).
+        /// </summary>
+        public bool ShowGameName => HasDocument && string.IsNullOrWhiteSpace(PaletteSearchText);
+
         /// <summary>Whether the selected object has real polyline movement with direct-edit handles.</summary>
         public bool CanEditPolyline => SelectedObject is { } obj
             && MoverPath.IsPolylineMovement(obj.GetAttr("path"));
@@ -310,6 +316,7 @@ namespace CtrDxEditor.ViewModels
         partial void OnPaletteSearchTextChanged(string value)
         {
             RebuildPaletteView();
+            OnPropertyChanged(nameof(ShowGameName));
         }
 
         /// <summary>Repopulates <see cref="PaletteView"/> from <see cref="Palette"/> and the search text.</summary>
@@ -452,6 +459,7 @@ namespace CtrDxEditor.ViewModels
         partial void OnDocumentChanged(LevelDocument? value)
         {
             OnPropertyChanged(nameof(HasDocument));
+            OnPropertyChanged(nameof(ShowGameName));
         }
 
         partial void OnAnimationPreviewModeChanged(AnimationPreviewMode value)

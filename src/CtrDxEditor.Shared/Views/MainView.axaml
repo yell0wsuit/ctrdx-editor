@@ -219,6 +219,7 @@
       <Border Grid.Column="0" Background="{DynamicResource EditorBrush.Surface.Panel}">
         <Grid RowDefinitions="Auto,Auto,*">
           <TextBox Grid.Row="0" Margin="6,6,6,4"
+                   IsVisible="{Binding HasDocument, FallbackValue=False}"
                    Text="{Binding PaletteSearchText, Mode=TwoWay}"
                    PlaceholderText="{loc:Tr Palette.SearchPlaceholder}">
             <TextBox.InnerLeftContent>
@@ -227,6 +228,7 @@
             </TextBox.InnerLeftContent>
           </TextBox>
           <TextBlock Grid.Row="1" Text="{Binding CurrentGameName}" FontWeight="Bold"
+                     IsVisible="{Binding ShowGameName, FallbackValue=False}"
                      Margin="8,6,8,4" />
           <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
