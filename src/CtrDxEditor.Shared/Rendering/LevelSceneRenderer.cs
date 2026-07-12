@@ -149,6 +149,8 @@ namespace CtrDxEditor.Rendering
                 "pump" => 4,
                 "spike1" or "spike2" or "spike3" or "spike4" or "electro" => 5,
                 "bouncer1" or "bouncer2" => 6,
+                // Mice bodies draw via DrawMice() after the bouncers and just before the socks.
+                "gap" => 7,
                 "sock" => 7,
                 "steamTube" => 8,
                 "ghost" => 9,
@@ -222,6 +224,25 @@ namespace CtrDxEditor.Rendering
                 if (LanternObject.IsCaptured(obj) && sprites.GetLanternInnerCandy(candySkin) is { } innerCandy)
                 {
                     DrawLayer(ctx, v, innerCandy, x, y, 1.0, spinRotation, LanternInnerCandyOffsetY);
+                }
+                DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                return;
+            }
+
+            if (obj.Type == "gap")
+            {
+                if (sprites.GetSprite(CanvasSpriteKey("gap", nightLevel), candySkin, omNomSupport) is { } mouseSprite
+                    && mouseSprite.Layers.Count > 0)
+                {
+                    // The hole (layer 0) stays upright, matching the game's DrawHole; the body (layer 1)
+                    // rotates by the authored angle, as Mouse.Update rotates the body container not the hole.
+                    DrawLayer(ctx, v, mouseSprite.Layers[0], x, y, mouseSprite.Scale, null);
+                    if (mouseSprite.Layers.Count > 1)
+                    {
+                        double deg = ObjectRotation.DisplayDegrees(obj, RotationTable.For("gap")!) + (spinRotation ?? 0.0);
+                        DrawLayer(ctx, v, mouseSprite.Layers[1], x, y, mouseSprite.Scale, deg);
+                    }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
                 DrawBindingIdLabel(ctx, v, obj, objects, x, y);

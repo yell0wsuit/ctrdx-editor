@@ -42,6 +42,8 @@ namespace CtrDxEditor.Content
         private const string VinylImageBase = "images/obj_vinil";
         private const string LanternJson = "images/obj_lantern.json";
         private const string LanternImageBase = "images/obj_lantern";
+        private const string MouseJson = "images/obj_mouse.json";
+        private const string MouseImageBase = "images/obj_mouse";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -234,6 +236,15 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(LanternJson, LanternImageBase, 0),
                 new SpriteLayer(LanternJson, LanternImageBase, 1),
+            ]),
+
+            // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
+            // upright; layer 1 is the idle mouse body (Mouse.IdleQuad) that DrawObject rotates by the
+            // authored angle, matching Mouse.Update which rotates the body container but not the hole.
+            new("gap",
+            [
+                new SpriteLayer(MouseJson, MouseImageBase, 0),
+                new SpriteLayer(MouseJson, MouseImageBase, 4),
             ]),
 
             // Pump object
