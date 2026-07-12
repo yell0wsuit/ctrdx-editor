@@ -1,15 +1,16 @@
 using System.Linq;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 
 using Xunit;
 
 namespace CtrDxEditor.Tests
 {
     /// <summary>
-    /// Verifies that on load, spike/bouncer tag names are normalized to match a valid
-    /// <c>size</c> attribute. The game reads size only from the attribute, so renaming the
-    /// tag to match is behavior-preserving (see Spikes.GetSpikeTextureAndQuad / Bouncer).
+    /// Verifies that spike/bouncer tag names are normalized to match a valid <c>size</c>
+    /// attribute. The game reads size only from the attribute, so renaming the tag to match is
+    /// behavior-preserving (see Spikes.GetSpikeTextureAndQuad / Bouncer).
     /// </summary>
     public class SizedElementNormalizationTests
     {
@@ -18,7 +19,9 @@ namespace CtrDxEditor.Tests
             string xml =
                 "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"100\" height=\"80\" /></layer>" +
                 "<layer name=\"Objects\">" + objectsXml + "</layer></map>";
-            return LevelDocument.Parse(xml);
+            LevelDocument doc = LevelDocument.Parse(xml);
+            _ = LevelObjectPolicy.NormalizeSizedElements(doc);
+            return doc;
         }
 
         private static string TypeOfFirst(LevelDocument doc)
@@ -83,6 +86,29 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<bouncer2 x=\"10\" y=\"20\" size=\"5\" />");
 
             Assert.Equal("bouncer2", TypeOfFirst(doc));
+        }
+
+        [Fact]
+        public void ReportsChangedWhenATagIsRenamed()
+        {
+            LevelDocument doc = ParseWithoutNormalizing("<spike2 x=\"10\" y=\"20\" size=\"3\" />");
+
+            Assert.True(LevelObjectPolicy.NormalizeSizedElements(doc));
+        }
+
+        [Fact]
+        public void ReportsUnchangedWhenAllTagsAlreadyMatch()
+        {
+            LevelDocument doc = ParseWithoutNormalizing("<spike3 x=\"10\" y=\"20\" size=\"3\" /><electro x=\"5\" y=\"5\" size=\"5\" />");
+
+            Assert.False(LevelObjectPolicy.NormalizeSizedElements(doc));
+        }
+
+        private static LevelDocument ParseWithoutNormalizing(string objectsXml)
+        {
+            return LevelDocument.Parse(
+                "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"100\" height=\"80\" /></layer>" +
+                "<layer name=\"Objects\">" + objectsXml + "</layer></map>");
         }
     }
 }

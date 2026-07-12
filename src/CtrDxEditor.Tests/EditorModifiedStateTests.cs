@@ -1,3 +1,5 @@
+using System.Linq;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.ViewModels;
 
@@ -8,6 +10,40 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the unsaved-changes signal that gates the new/open/close discard prompts.</summary>
     public class EditorModifiedStateTests
     {
+        private static string SpikeLevel(string element, string size) => $"""
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings">
+                <map gridSize="32" width="640" height="480" />
+            </layer>
+            <layer name="Objects">
+                <{element} x="100" y="100" size="{size}" />
+            </layer>
+        </map>
+        """;
+
+        /// <summary>A level whose spike tag disagrees with its size attribute loads normalized and pending save.</summary>
+        [Fact]
+        public void LoadingMismatchedSpikeTagNormalizesLiveAndMarksModified()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml(SpikeLevel("spike2", "3"));
+
+            Assert.Equal("spike3", vm.Document!.Objects.First().Type);
+            Assert.True(vm.IsModified);
+        }
+
+        /// <summary>A level whose spike tag already matches its size attribute loads clean.</summary>
+        [Fact]
+        public void LoadingConsistentSpikeTagIsNotModified()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml(SpikeLevel("spike3", "3"));
+
+            Assert.False(vm.IsModified);
+        }
         private const string Level = """
         <?xml version='1.0' encoding='utf-8'?>
         <map>

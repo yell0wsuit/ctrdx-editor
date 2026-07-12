@@ -133,7 +133,14 @@ namespace CtrDxEditor.ViewModels
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
+            // Baseline captured before size normalization so a level whose spike/bouncer tags
+            // disagree with their size attribute loads as a pending (savable) change, while a
+            // consistent level stays clean. See LevelObjectPolicy.NormalizeSizedElements.
             _savedBaselineXml = ToXml();
+            if (LevelObjectPolicy.NormalizeSizedElements(Document))
+            {
+                RefreshObjectList();
+            }
             LevelLoaded?.Invoke();
         }
 

@@ -49,6 +49,26 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
+        /// Aligns each spike/bouncer element name with its authoritative <c>size</c> attribute
+        /// (e.g. <c>spike2 size="3"</c> becomes <c>spike3</c>). The game reads size only from the
+        /// attribute, so this is behavior-preserving; electro, missing-size, and out-of-range
+        /// sizes are left untouched. Returns whether any element was renamed.
+        /// </summary>
+        public static bool NormalizeSizedElements(LevelDocument document)
+        {
+            bool changed = false;
+            foreach (LevelObject obj in document.Objects)
+            {
+                string before = obj.Type;
+                SpikeObject.NormalizeElementName(obj);
+                BouncerObject.NormalizeElementName(obj);
+                changed |= obj.Type != before;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
         /// Reassigns hidden candy and bulb ids from zero in object order, updating grab references
         /// that pointed at matching legacy keys.
         /// </summary>
