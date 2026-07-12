@@ -26,6 +26,9 @@ AppBuilder BuildAvaloniaApp()
         SpriteImageExtension = ".webp",
         DownloadSizeLabel = "30 MB",
         ManualDownloadUrl = ContentDownloader.WebpAssetsUrl,
+        // The asset host doesn't send CORS headers, so an in-app fetch fails in the browser;
+        // offer only manual download + zip upload there.
+        AllowDirectDownload = false,
         ResolveInstalled = async () =>
             await contentStore.IsPopulatedAsync() ? contentStore : null,
     };

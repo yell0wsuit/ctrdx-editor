@@ -28,5 +28,8 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Direct download URL for this platform's asset bundle, opened in the browser by Download Manually.</summary>
         public required string ManualDownloadUrl { get; init; }
+
+        /// <summary>Whether the in-app direct download is offered; false where a cross-origin fetch is blocked (the browser), leaving only manual download + zip upload.</summary>
+        public bool AllowDirectDownload { get; init; } = true;
     }
 }

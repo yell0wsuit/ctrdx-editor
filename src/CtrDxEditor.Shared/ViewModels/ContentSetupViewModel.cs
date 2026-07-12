@@ -40,7 +40,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
 
-        /// <summary>Whether the Download Manually button is shown (desktop opens the bundle's direct URL in the browser).</summary>
+        /// <summary>Whether the in-app Download button is shown; false where a cross-origin fetch is blocked (the browser), leaving only manual download and zip upload.</summary>
+        public bool AllowDownload { get; }
+
+        /// <summary>Whether the Download Manually button is shown (opens the bundle's direct URL in a new tab / the default browser).</summary>
         public bool AllowManualDownload { get; }
 
         /// <summary>Direct download URL opened in the browser when the user clicks Download Manually.</summary>
@@ -49,8 +52,8 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Approximate size of the platform's asset bundle (e.g. "336 MB"), or empty to show nothing.</summary>
         public string DownloadSizeLabel { get; }
 
-        /// <summary>Whether the download-size disclosure should be shown: idle, and a label was supplied.</summary>
-        public bool ShowDownloadSizeLabel => !IsBusy && !string.IsNullOrEmpty(DownloadSizeLabel);
+        /// <summary>Whether the download-size disclosure should be shown: idle, direct download available, and a label was supplied.</summary>
+        public bool ShowDownloadSizeLabel => !IsBusy && AllowDownload && !string.IsNullOrEmpty(DownloadSizeLabel);
 
         /// <summary>Raised once content setup succeeds, so the view can close.</summary>
         public event Action? Completed;
@@ -61,13 +64,14 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Creates a content setup view model.</summary>
         public ContentSetupViewModel(
             IContentInstaller installer, Func<Task> onInstalled,
-            bool allowQuit = true, bool allowManualDownload = true, string downloadSizeLabel = "",
-            string manualDownloadUrl = ContentDownloader.AssetsUrl)
+            bool allowQuit = true, bool allowManualDownload = true, bool allowDownload = true,
+            string downloadSizeLabel = "", string manualDownloadUrl = ContentDownloader.AssetsUrl)
         {
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
             AllowManualDownload = allowManualDownload;
+            AllowDownload = allowDownload;
             DownloadSizeLabel = downloadSizeLabel;
             ManualDownloadUrl = manualDownloadUrl;
             // AsyncRelayCommand disallows concurrent executions by default, so re-clicks are ignored while busy.

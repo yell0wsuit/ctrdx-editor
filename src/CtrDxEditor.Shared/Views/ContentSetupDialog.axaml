@@ -48,8 +48,10 @@
 
       <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
                   IsVisible="{Binding !IsBusy}">
-        <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}" />
-        <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click" />
+        <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}"
+                IsVisible="{Binding AllowDownload}" />
+        <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click"
+                IsVisible="{Binding AllowManualDownload}" />
         <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
         <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
       </StackPanel>

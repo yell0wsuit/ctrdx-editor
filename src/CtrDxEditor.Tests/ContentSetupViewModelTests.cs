@@ -28,25 +28,40 @@ namespace CtrDxEditor.Tests
             }
         }
 
-        /// <summary>Verifies allowQuit/allowManualDownload default to true, matching today's always-shown buttons.</summary>
+        /// <summary>Verifies the button-visibility flags default to true, matching today's always-shown buttons.</summary>
         [Fact]
-        public void AllowQuitAndAllowManualDownloadDefaultToTrue()
+        public void ButtonFlagsDefaultToTrue()
         {
             ContentSetupViewModel vm = new(new FakeInstaller(), () => Task.CompletedTask);
 
             Assert.True(vm.AllowQuit);
             Assert.True(vm.AllowManualDownload);
+            Assert.True(vm.AllowDownload);
         }
 
-        /// <summary>Verifies allowQuit/allowManualDownload can each be disabled independently (the browser's setup).</summary>
+        /// <summary>Verifies the button-visibility flags can each be disabled independently.</summary>
         [Fact]
-        public void AllowQuitAndAllowManualDownloadCanBeDisabledIndependently()
+        public void ButtonFlagsCanBeDisabledIndependently()
         {
             ContentSetupViewModel vm = new(
                 new FakeInstaller(), () => Task.CompletedTask, allowQuit: false, allowManualDownload: true);
 
             Assert.False(vm.AllowQuit);
             Assert.True(vm.AllowManualDownload);
+        }
+
+        /// <summary>The browser setup hides the in-app download (CORS-blocked) and its size disclosure, keeping manual download.</summary>
+        [Fact]
+        public void BrowserSetupHidesDirectDownloadButKeepsManual()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask,
+                allowQuit: false, allowManualDownload: true, allowDownload: false, downloadSizeLabel: "30 MB");
+
+            Assert.False(vm.AllowDownload);
+            Assert.True(vm.AllowManualDownload);
+            // The size disclosure is tied to the in-app download, so it hides too even with a label supplied.
+            Assert.False(vm.ShowDownloadSizeLabel);
         }
 
         /// <summary>Verifies the download-size disclosure is hidden by default (no label supplied).</summary>

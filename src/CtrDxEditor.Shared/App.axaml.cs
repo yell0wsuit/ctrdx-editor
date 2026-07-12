@@ -73,7 +73,8 @@ namespace CtrDxEditor
                 _startup.Installer,
                 async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
                 allowQuit: allowQuit,
-                allowManualDownload: allowQuit,
+                allowManualDownload: true,
+                allowDownload: _startup.AllowDirectDownload,
                 downloadSizeLabel: _startup.DownloadSizeLabel,
                 manualDownloadUrl: _startup.ManualDownloadUrl);
             ContentSetupDialog dialog = new() { DataContext = vm };
