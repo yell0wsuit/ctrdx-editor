@@ -215,7 +215,7 @@
         </MenuItem>
       </MenuItem>
     </Menu>
-    <Grid ColumnDefinitions="160,1,*,1,280">
+    <Grid ColumnDefinitions="200,1,*,1,280">
       <Border Grid.Column="0" Background="{DynamicResource EditorBrush.Surface.Panel}">
         <Grid RowDefinitions="Auto,Auto,*">
           <TextBox Grid.Row="0" Margin="6,6,6,4"
