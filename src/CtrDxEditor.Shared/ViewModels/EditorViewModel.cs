@@ -122,6 +122,7 @@ namespace CtrDxEditor.ViewModels
             LockedObject = null;
             ClearHistory();
             Palette.Clear();
+            RebuildPaletteView();
             ObjectList.Clear();
             Fields.Clear();
         }

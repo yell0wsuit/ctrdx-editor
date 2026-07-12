@@ -66,6 +66,8 @@ namespace CtrDxEditor.Views
                 PointerMovedEvent, PaletteItem_PointerMoved, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
                 PointerReleasedEvent, PaletteItem_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
+            paletteList.AddHandler(
+                PointerCaptureLostEvent, PaletteItem_PointerCaptureLost, RoutingStrategies.Bubble, handledEventsToo: true);
             // Menu hint text (⌘/Ctrl) is bound in XAML via ShortcutHint; here we only handle the keys.
             // MenuItem.InputGesture only renders text and wouldn't trigger Click-driven items anyway.
             KeyModifiers cmdModifier = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
@@ -241,8 +243,7 @@ namespace CtrDxEditor.Views
         private void PaletteItem_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             // Arm a placement on left-press and capture the pointer; the gesture resolves on release.
-            _palettePendingElement = null;
-            _paletteDragging = false;
+            CancelPaletteDrag();
             if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 return;
@@ -321,6 +322,17 @@ namespace CtrDxEditor.Views
             }
 
             e.Pointer.Capture(null);
+            CancelPaletteDrag();
+        }
+
+        private void PaletteItem_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+        {
+            CancelPaletteDrag();
+        }
+
+        private void CancelPaletteDrag()
+        {
+            this.FindControl<LevelCanvas>("Canvas")?.HideGhost();
             _palettePendingElement = null;
             _paletteDragging = false;
             if (_draggingItem is { } draggingItem)
@@ -701,6 +713,7 @@ namespace CtrDxEditor.Views
         /// <inheritdoc />
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
+            CancelPaletteDrag();
             _animationPreviewTimer.Stop();
             if (_mutatedSubscription is not null)
             {

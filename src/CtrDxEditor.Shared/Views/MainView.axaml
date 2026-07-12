@@ -234,6 +234,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Button Margin="0,3" Padding="8,6" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Stretch"
                           IsEnabled="{Binding Enabled}"
                           Tag="{Binding Element}">
                     <Grid ColumnDefinitions="*,Auto">

@@ -26,6 +26,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal(vm.Palette.Count, vm.PaletteView.Count);
         }
 
+        /// <summary>A whitespace-only search leaves every source palette item visible.</summary>
+        [Fact]
+        public void WhitespaceSearchShowsEveryPaletteItem()
+        {
+            EditorViewModel vm = Vm();
+
+            vm.PaletteSearchText = " \t ";
+
+            Assert.Equal(vm.Palette.Count, vm.PaletteView.Count);
+        }
+
         /// <summary>Search matches display-name substrings without regard to case.</summary>
         [Fact]
         public void SearchFiltersByDisplayNameCaseInsensitively()
@@ -60,6 +71,7 @@ namespace CtrDxEditor.Tests
 
             vm.RefreshPalette();
 
+            Assert.NotEmpty(vm.PaletteView);
             Assert.All(vm.PaletteView, i =>
                 Assert.Contains(needle, i.DisplayName, System.StringComparison.OrdinalIgnoreCase));
         }
@@ -69,6 +81,19 @@ namespace CtrDxEditor.Tests
         public void CurrentGameNameIsCutTheRope()
         {
             Assert.Equal("Cut the Rope", Vm().CurrentGameName);
+        }
+
+        /// <summary>Closing a level clears both the source palette and its filtered view.</summary>
+        [Fact]
+        public void CloseLevelClearsPaletteView()
+        {
+            EditorViewModel vm = Vm();
+            Assert.NotEmpty(vm.PaletteView);
+
+            vm.CloseLevel();
+
+            Assert.Empty(vm.Palette);
+            Assert.Empty(vm.PaletteView);
         }
     }
 }
