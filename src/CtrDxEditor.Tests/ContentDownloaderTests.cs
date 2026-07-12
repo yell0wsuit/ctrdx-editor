@@ -41,7 +41,7 @@ namespace CtrDxEditor.Tests
         public void WebpAssetsUrlIsDistinctFromDesktopAssetsUrl()
         {
             Assert.NotEqual(ContentDownloader.AssetsUrl, ContentDownloader.WebpAssetsUrl);
-            Assert.EndsWith("/webp-assets.zip", ContentDownloader.WebpAssetsUrl);
+            Assert.EndsWith("/ctrdx-webp.zip", ContentDownloader.WebpAssetsUrl);
             Assert.StartsWith("https://github.com/yell0wsuit/ctrdx-assets/releases/", ContentDownloader.WebpAssetsUrl);
         }
     }
