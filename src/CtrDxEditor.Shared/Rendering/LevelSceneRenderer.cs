@@ -25,6 +25,13 @@ namespace CtrDxEditor.Rendering
         /// <summary>Opacity of the editor-only frozen steam plume; hardware remains fully opaque.</summary>
         public const double SteamPuffOpacity = 0.55;
 
+        /// <summary>Level-space Y offset for the lantern's inner candy (game innerCandy.y = -4 px).</summary>
+        private const double LanternInnerCandyOffsetY = -4.0 / SpritePlacement.MapScale;
+
+        /// <summary>Opacity for the primary candy while a lantern holds it (it is transparent in-game,
+        /// but the editor keeps it faintly visible so it stays selectable and editable).</summary>
+        private const double CapturedPrimaryCandyOpacity = 0.3;
+
         /// <summary>Maps a level-space rectangle to its axis-aligned screen rectangle.</summary>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="x">Left edge of the rectangle in level units.</param>
@@ -95,7 +102,9 @@ namespace CtrDxEditor.Rendering
                 ? SpikeObject.SpriteKey(obj)
                 : obj.Type == "sock"
                     ? SockObject.SpriteKey(obj, SpecialEvents.IsXmas)
-                    : GrabRenderer.RenderSpriteKey(obj);
+                    : LanternObject.IsLantern(obj.Type)
+                        ? LanternObject.SpriteKey(obj)
+                        : GrabRenderer.RenderSpriteKey(obj);
             ObjectSprite? sprite = sprites.GetSprite(SelectionSpriteKey(selectionKey, nightLevel), candySkin, omNomSupport);
             if (sprite is null || sprite.Layers.Count == 0)
             {
@@ -146,6 +155,7 @@ namespace CtrDxEditor.Rendering
                 "grab" => 10,
                 "star" => 11,
                 "candy" or "candyL" or "candyR" => 12,
+                "lantern" => 12,
                 "lightBulb" => 13,
                 _ => 10,
             };
@@ -203,6 +213,21 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (obj.Type == LanternObject.Element)
+            {
+                if (sprites.GetSprite(LanternObject.SpriteKey(obj), candySkin, omNomSupport) is { } lanternBody)
+                {
+                    DrawSprite(ctx, v, lanternBody, x, y, spinRotation);
+                }
+                if (LanternObject.IsCaptured(obj) && sprites.GetLanternInnerCandy(candySkin) is { } innerCandy)
+                {
+                    DrawLayer(ctx, v, innerCandy, x, y, 1.0, spinRotation, LanternInnerCandyOffsetY);
+                }
+                DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                return;
+            }
+
             if (RotationTable.For(obj.Type) is { } rotSpec)
             {
                 string rotKey = PreviewSpriteKey(obj, animationPreviewSeconds);
@@ -225,16 +250,41 @@ namespace CtrDxEditor.Rendering
 
             string spriteKey = PreviewSpriteKey(obj, animationPreviewSeconds);
             ObjectSprite? sprite = sprites.GetSprite(CanvasSpriteKey(spriteKey, nightLevel), candySkin, omNomSupport);
+            bool candyCaptured = obj.Type == "candy"
+                && LanternObject.IsPrimaryCandy(obj, objects)
+                && LanternObject.AnyCaptured(objects);
             if (sprite is not null)
             {
-                if (sprite.Variants.Count > 0)
+                if (candyCaptured)
                 {
-                    DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], x, y, sprite.Scale, spinRotation);
+                    using (ctx.PushOpacity(CapturedPrimaryCandyOpacity))
+                    {
+                        DrawGenericSprite(ctx, v, obj, sprite, x, y, spinRotation);
+                    }
                 }
-                DrawSprite(ctx, v, sprite, x, y, spinRotation);
+                else
+                {
+                    DrawGenericSprite(ctx, v, obj, sprite, x, y, spinRotation);
+                }
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);
             DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+        }
+
+        private static void DrawGenericSprite(
+            DrawingContext ctx,
+            ViewTransform v,
+            LevelObject obj,
+            ObjectSprite sprite,
+            double x,
+            double y,
+            double? spinRotation)
+        {
+            if (sprite.Variants.Count > 0)
+            {
+                DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], x, y, sprite.Scale, spinRotation);
+            }
+            DrawSprite(ctx, v, sprite, x, y, spinRotation);
         }
 
         /// <summary>
