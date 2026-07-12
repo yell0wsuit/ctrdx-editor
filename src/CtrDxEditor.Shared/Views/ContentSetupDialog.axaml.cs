@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Interactivity;
@@ -21,7 +20,7 @@ namespace CtrDxEditor.Views
     public partial class ContentSetupDialog : BaseDialog<string>
     {
         private ContentSetupViewModel? _vm;
-        private TwofoldDialog? _cancelConfirm;
+        private ConfirmDialog? _cancelConfirm;
 
         /// <summary>Creates the content setup dialog and wires view-model completion handling.</summary>
         public ContentSetupDialog()
@@ -107,13 +106,10 @@ namespace CtrDxEditor.Views
 
             // Confirm before aborting; the download keeps running behind this nested dialog.
             // Tracked so OnCompleted can dismiss it if the download finishes first.
-            _cancelConfirm = new TwofoldDialog
+            _cancelConfirm = new ConfirmDialog
             {
-                // TwofoldDialog defaults to a narrow 300px width with two equal columns, which
-                // clips longer button labels; widen it and tighten the button margins so they fit.
-                Width = 420,
-                ButtonMargin = new Thickness(4, 12, 4, 0),
-                Message = Localizer.Get("Dialog.ContentSetup.CancelConfirm"),
+                Header = Localizer.Get("Dialog.ContentSetup.CancelConfirm"),
+                Message = Localizer.Get("Dialog.ContentSetup.CancelConfirm.Body"),
                 PositiveText = Localizer.Get("Dialog.ContentSetup.CancelConfirm.Yes"),
                 NegativeText = Localizer.Get("Dialog.ContentSetup.CancelConfirm.No"),
             };

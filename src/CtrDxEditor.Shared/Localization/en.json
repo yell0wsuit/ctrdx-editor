@@ -62,6 +62,7 @@
     "Dialog.ContentSetup.PickZip": "Browse zip…",
     "Dialog.ContentSetup.Cancel": "Cancel",
     "Dialog.ContentSetup.CancelConfirm": "Cancel the download?",
+    "Dialog.ContentSetup.CancelConfirm.Body": "Any downloaded progress will be lost.",
     "Dialog.ContentSetup.CancelConfirm.Yes": "Yes, cancel",
     "Dialog.ContentSetup.CancelConfirm.No": "Keep downloading",
     "Dialog.ContentSetup.Error.DownloadFailed": "Download failed: ",
@@ -120,7 +121,8 @@
     "Dialog.LevelSettings.Create": "Create",
     "Dialog.LevelSettings.Save": "Save",
 
-    "Dialog.Validation.Body": "This level may not be playable:",
+    "Dialog.Validation.Header": "This level may not be playable",
+    "Dialog.Validation.Body": "Reasons:",
     "Dialog.Validation.SavePrompt": "Save it anyway?",
     "Dialog.Validation.SaveProceed": "Save anyway",
     "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
