@@ -86,6 +86,32 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("1", sock.GetAttr("group"));
         }
 
+        /// <summary>The first mouse placed is numbered index one (mice activate in index order).</summary>
+        [Fact]
+        public void FirstGapDefaultsToIndexOne()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject gap = new(new XElement("gap"));
+
+            LevelObjectPolicy.ApplyDefaults(gap, doc);
+
+            Assert.Equal("1", gap.GetAttr("index"));
+        }
+
+        /// <summary>A new mouse takes one past the highest existing index, not the count.</summary>
+        [Fact]
+        public void GapIndexTakesMaxExistingPlusOne()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "1"))));
+            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "3"))));
+            LevelObject gap = new(new XElement("gap"));
+
+            LevelObjectPolicy.ApplyDefaults(gap, doc);
+
+            Assert.Equal("4", gap.GetAttr("index"));
+        }
+
         /// <summary>Decimal x/y coordinates are truncated toward zero, matching the game loader.</summary>
         [Theory]
         [InlineData("12.9", "12")]

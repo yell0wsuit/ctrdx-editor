@@ -46,6 +46,19 @@ namespace CtrDxEditor.Core.Editing
                 obj.SetAttr("group", SockGrouping.NextGroup(
                     document.Objects.Where(o => o.Type == "sock").Select(o => o.GetAttr("group"))));
             }
+
+            // Mice activate in ascending index order; a new mouse takes one past the highest existing
+            // index (max+1, not count+1, so it stays unique after a mouse is deleted). The game itself
+            // falls back to mice.Count+1 only when index is absent, so an explicit value never collides.
+            if (obj.Type == "gap")
+            {
+                int max = document.Objects
+                    .Where(o => o.Type == "gap")
+                    .Select(o => int.TryParse(o.GetAttr("index"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int i) ? i : 0)
+                    .DefaultIfEmpty(0)
+                    .Max();
+                obj.SetAttr("index", (max + 1).ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         /// <summary>
