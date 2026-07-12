@@ -4,10 +4,8 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Avalonia.VisualTree;
 
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
@@ -52,88 +50,10 @@ namespace CtrDxEditor.Views
                 PointerReleasedEvent, _paletteDrag.OnPointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
                 PointerCaptureLostEvent, _paletteDrag.OnPointerCaptureLost, RoutingStrategies.Bubble, handledEventsToo: true);
-            // Menu hint text (⌘/Ctrl) is bound in XAML via ShortcutHint; here we only handle the keys.
-            // MenuItem.InputGesture only renders text and wouldn't trigger Click-driven items anyway.
-            KeyModifiers cmdModifier = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
-            KeyDown += (_, e) =>
-            {
-                bool ctrl = e.KeyModifiers.HasFlag(cmdModifier);
-                bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-#pragma warning disable IDE0010
-                switch (e.Key)
-                {
-                    case Key.N when ctrl && !shift:
-                        New_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.O when ctrl && !shift:
-                        Open_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.S when ctrl && !shift && DataContext is EditorViewModel { HasDocument: true }:
-                        Save_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.S when ctrl && shift && DataContext is EditorViewModel { HasDocument: true }:
-                        SaveAs_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.P when ctrl && shift && DataContext is EditorViewModel { HasDocument: true }:
-                        Screenshot_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.W when ctrl && !shift && DataContext is EditorViewModel { HasDocument: true }:
-                        Close_Click(this, new RoutedEventArgs());
-                        e.Handled = true;
-                        break;
-                    case Key.Z when ctrl && !shift && DataContext is EditorViewModel { CanUndo: true } undoVm:
-                        undoVm.Undo();
-                        e.Handled = true;
-                        break;
-                    case Key.Z when ctrl && shift && DataContext is EditorViewModel { CanRedo: true } redoVm:
-                        redoVm.Redo();
-                        e.Handled = true;
-                        break;
-                    case Key.Y when ctrl && !OperatingSystem.IsMacOS() && DataContext is EditorViewModel { CanRedo: true } redoVm:
-                        redoVm.Redo();
-                        e.Handled = true;
-                        break;
-                    case Key.Delete when DataContext is EditorViewModel vm:
-                        vm.DeleteSelected();
-                        canvas.InvalidateVisual();
-                        e.Handled = true;
-                        break;
-                    case Key.OemPlus or Key.Add when ctrl:
-                        if (DataContext is EditorViewModel { HasDocument: true })
-                        {
-                            canvas.ZoomBy(1.2);
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.OemMinus or Key.Subtract when ctrl:
-                        if (DataContext is EditorViewModel { HasDocument: true })
-                        {
-                            canvas.ZoomBy(1 / 1.2);
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.D0 or Key.NumPad0 when ctrl:
-                        if (DataContext is EditorViewModel { HasDocument: true })
-                        {
-                            canvas.FitToView();
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Space when !ctrl && !shift && e.KeyModifiers == KeyModifiers.None:
-                        if (!IsTextInputFocused(e.Source) && DataContext is EditorViewModel { HasDocument: true } previewVm)
-                        {
-                            previewVm.ToggleAnimationPreviewAll();
-                            e.Handled = true;
-                        }
-                        break;
-                }
-#pragma warning restore IDE0010
-            };
+            // Delete and Space are focus-gated on the bubble path; the Cmd/Ctrl menu chords are handled
+            // globally at the TopLevel (see MainView.Shortcuts.cs). Menu hint text is bound in XAML via
+            // ShortcutHint.
+            WireLocalShortcuts();
         }
 
         private void WireObjectMutated()
@@ -166,11 +86,6 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private static bool IsTextInputFocused(object? source)
-        {
-            return (source as Visual)?.FindAncestorOfType<TextBox>(includeSelf: true) is not null;
-        }
-
         private void FocusCanvasAfterLevelLoaded()
         {
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
@@ -186,11 +101,13 @@ namespace CtrDxEditor.Views
             // the first save. A manager constructed at the first Show() call drops that first notification
             // (it is not yet in the visual tree), which is why the initial "Saving…" toast went missing.
             _ = Notifications();
+            RegisterGlobalShortcuts();
         }
 
         /// <inheritdoc />
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
+            UnregisterGlobalShortcuts();
             _paletteDrag.Cancel();
             _animationPreviewTimer.Stop();
             if (_mutatedSubscription is not null)
