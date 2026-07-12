@@ -319,7 +319,10 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(ShowGameName));
         }
 
-        /// <summary>Repopulates <see cref="PaletteView"/> from <see cref="Palette"/> and the search text.</summary>
+        /// <summary>
+        /// Repopulates <see cref="PaletteView"/> from <see cref="Palette"/> and the search text,
+        /// matching against both the display name and the raw XML element name.
+        /// </summary>
         public void RebuildPaletteView()
         {
             PaletteView.Clear();
@@ -327,7 +330,8 @@ namespace CtrDxEditor.ViewModels
             foreach (PaletteItemViewModel item in Palette)
             {
                 if (needle.Length == 0
-                    || item.DisplayName.Contains(needle, StringComparison.OrdinalIgnoreCase))
+                    || item.DisplayName.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                    || item.Element.Contains(needle, StringComparison.OrdinalIgnoreCase))
                 {
                     PaletteView.Add(item);
                 }

@@ -52,6 +52,21 @@ namespace CtrDxEditor.Tests
                 Assert.Contains(needle, i.DisplayName, System.StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>Search also matches the raw XML element name, not just the display name.</summary>
+        [Fact]
+        public void SearchMatchesXmlElementName()
+        {
+            EditorViewModel vm = Vm();
+
+            // "bouncer1" is the element name; its display name has no digit, so a match here
+            // can only come from the element-name comparison.
+            vm.PaletteSearchText = "bouncer1";
+
+            Assert.Contains(vm.PaletteView, i => i.Element == "bouncer1");
+            Assert.All(vm.PaletteView, i =>
+                Assert.Contains("bouncer1", i.Element, System.StringComparison.OrdinalIgnoreCase));
+        }
+
         /// <summary>A search with no display-name match produces an empty view.</summary>
         [Fact]
         public void NonMatchingSearchYieldsEmptyView()
