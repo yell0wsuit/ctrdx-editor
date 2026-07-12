@@ -157,6 +157,14 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec("litRadius", AttrType.Whole, "50"),
             ], MaxCount: int.MaxValue),
+
+            // Lantern: captures the single (primary) candy and holds it in a lit state. candyCaptured
+            // starts the level with the candy already inside the lantern (game LoadLanterns.cs). Mover
+            // attributes (path/moveSpeed/rotateSpeed) are edited through the shared movement controls.
+            new ObjectDescriptor("lantern", "Lantern",
+            [
+                new AttributeSpec("candyCaptured", AttrType.Bool, "false"),
+            ], MaxCount: int.MaxValue),
         ]);
     }
 }
