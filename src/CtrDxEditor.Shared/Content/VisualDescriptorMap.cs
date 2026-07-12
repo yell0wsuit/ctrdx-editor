@@ -40,6 +40,8 @@ namespace CtrDxEditor.Content
         private const string BeeImageBase = "images/obj_bee";
         private const string VinylJson = "images/obj_vinil.json";
         private const string VinylImageBase = "images/obj_vinil";
+        private const string LanternJson = "images/obj_lantern.json";
+        private const string LanternImageBase = "images/obj_lantern";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -221,6 +223,17 @@ namespace CtrDxEditor.Content
             new("lightBulb_glow",
             [
                 new SpriteLayer(LighterJson, LighterImageBase, 0),
+            ]),
+
+            // Idle lantern body (lantern_start, quad 2). Palette thumbnail + empty-lantern canvas art.
+            new("lantern", [new SpriteLayer(LanternJson, LanternImageBase, 2)]),
+
+            // Active lantern: fire glow (quad 0) behind the lit body (lantern_end, quad 1). The skinned
+            // inner candy is drawn separately by GetLanternInnerCandy (skin-dependent), not composited here.
+            new("lantern_active",
+            [
+                new SpriteLayer(LanternJson, LanternImageBase, 0),
+                new SpriteLayer(LanternJson, LanternImageBase, 1),
             ]),
 
             // Pump object
