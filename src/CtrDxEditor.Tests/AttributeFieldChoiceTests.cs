@@ -67,7 +67,7 @@ namespace CtrDxEditor.Tests
             string state = "-1";
             AttributeFieldViewModel field = new(
                 "autoCatch",
-                Core.Descriptors.AttrType.Bool,
+                AttrType.Bool,
                 () => int.Parse(state, CultureInfo.InvariantCulture) > 0 ? "true" : "false",
                 v => state = v == "true" ? "100" : "-1",
                 () => { });
@@ -85,7 +85,7 @@ namespace CtrDxEditor.Tests
         {
             string state = "0";
             AttributeFieldViewModel field = new(
-                "wheel", Core.Descriptors.AttrType.Bool, () => state, v => state = v ?? "", () => { });
+                "wheel", AttrType.Bool, () => state, v => state = v ?? "", () => { });
 
             Assert.True(field.IsEnabled);
             bool notified = false;

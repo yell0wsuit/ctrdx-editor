@@ -123,7 +123,7 @@ namespace CtrDxEditor.Tests
 
         private static Core.Geometry.Vec2 RadiusRingCenter(LevelObject obj, double? previewSeconds)
         {
-            System.Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
+            Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
             System.Reflection.MethodInfo method = grabRenderer.GetMethod(
                 "RadiusRingCenter",
                 System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)!;

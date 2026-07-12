@@ -1,7 +1,7 @@
+using System.Linq;
+
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
-
-using System.Linq;
 
 using Xunit;
 

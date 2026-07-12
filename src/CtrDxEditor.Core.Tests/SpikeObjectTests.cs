@@ -90,7 +90,7 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelObject spike = new(XElement.Parse("""<spike4 x="100" y="200" angle="90" size="4" toggled="false" />"""));
 
-            SpikeResize.Handle handle = SpikeResize.HitTest(spike, new Core.Geometry.Vec2(100, 200 + (568 / 6.0)), 1, 4, 8);
+            SpikeResize.Handle handle = SpikeResize.HitTest(spike, new Geometry.Vec2(100, 200 + (568 / 6.0)), 1, 4, 8);
 
             Assert.Equal(SpikeResize.Handle.ResizeEnd, handle);
         }
@@ -101,7 +101,7 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelObject spike = new(XElement.Parse("""<spike1 x="100" y="200" angle="0" size="1" toggled="false" />"""));
 
-            SpikeResize.ApplyDrag(spike, new Core.Geometry.Vec2(100 + (568 / 6.0), 200), 1);
+            SpikeResize.ApplyDrag(spike, new Geometry.Vec2(100 + (568 / 6.0), 200), 1);
 
             Assert.Equal("spike4", spike.Type);
             Assert.Equal("4", spike.GetAttr("size"));
@@ -113,7 +113,7 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelObject spike = new(XElement.Parse("""<spike1 x="100" y="200" angle="0" size="1" toggled="1" />"""));
 
-            SpikeResize.ApplyDrag(spike, new Core.Geometry.Vec2(100 + (446 / 6.0), 200), 1);
+            SpikeResize.ApplyDrag(spike, new Geometry.Vec2(100 + (446 / 6.0), 200), 1);
 
             Assert.Equal("spike3", spike.Type);
             Assert.Equal("3", spike.GetAttr("size"));
