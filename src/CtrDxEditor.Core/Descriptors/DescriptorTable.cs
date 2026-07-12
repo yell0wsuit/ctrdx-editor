@@ -158,6 +158,15 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("candyCaptured", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue),
 
+             // Mouse
+            new ObjectDescriptor("gap", "Mouse",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
+                new AttributeSpec("radius", AttrType.Number, "50"),
+                new AttributeSpec("activeTime", AttrType.Number, "1.0"),
+                new AttributeSpec("index", AttrType.Whole, null),
+            ], MaxCount: int.MaxValue),
+
             // Light bulb
             new ObjectDescriptor("lightBulb", "Light bulb",
             [
