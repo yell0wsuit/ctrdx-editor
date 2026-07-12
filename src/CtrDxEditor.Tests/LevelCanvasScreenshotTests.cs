@@ -487,6 +487,18 @@ namespace CtrDxEditor.Tests
             Assert.Equal(200 + puff.LocalX, right.Y, 6);
         }
 
+        /// <summary>The static plume is faded to reduce canvas clutter without fading pipe hardware.</summary>
+        [Fact]
+        public void SteamPuffOpacityIsFiftyFivePercent()
+        {
+            FieldInfo? field = SceneRenderer.GetField(
+                "SteamPuffOpacity",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(field);
+            Assert.Equal(0.55, (double)field.GetRawConstantValue()!, 6);
+        }
+
         private static SpriteCache SeedStarAtlases()
         {
             SpriteCache cache = new(new FakeStore());

@@ -22,6 +22,9 @@ namespace CtrDxEditor.Rendering
     /// </summary>
     internal static class LevelSceneRenderer
     {
+        /// <summary>Opacity of the editor-only frozen steam plume; hardware remains fully opaque.</summary>
+        public const double SteamPuffOpacity = 0.55;
+
         /// <summary>Maps a level-space rectangle to its axis-aligned screen rectangle.</summary>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="x">Left edge of the rectangle in level units.</param>
@@ -1213,21 +1216,24 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            foreach (SteamPuffSpec puff in SteamTubeGeometry.MaximumPlume())
+            using (ctx.PushOpacity(SteamPuffOpacity))
             {
-                if (puff.Front != front)
+                foreach (SteamPuffSpec puff in SteamTubeGeometry.MaximumPlume())
                 {
-                    continue;
+                    if (puff.Front != front)
+                    {
+                        continue;
+                    }
+                    Vec2 center = ComputeSteamPuffCenter(origin, rotationDegrees, puff);
+                    DrawLayer(
+                        ctx,
+                        v,
+                        atlas.Layers[puff.Quad - 2],
+                        center.X,
+                        center.Y,
+                        atlas.Scale * puff.Scale,
+                        rotationDegrees);
                 }
-                Vec2 center = ComputeSteamPuffCenter(origin, rotationDegrees, puff);
-                DrawLayer(
-                    ctx,
-                    v,
-                    atlas.Layers[puff.Quad - 2],
-                    center.X,
-                    center.Y,
-                    atlas.Scale * puff.Scale,
-                    rotationDegrees);
             }
         }
 
