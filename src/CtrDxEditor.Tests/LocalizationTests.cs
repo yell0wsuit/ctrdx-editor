@@ -52,6 +52,21 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Bouncer", Localizer.ObjectName("bouncer2"));
         }
 
+        /// <summary>The mouse and its active-time and index fields have user-facing English text.</summary>
+        [Fact]
+        public void MouseObjectAndFieldsAreLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Mouse", strings["Object.gap"]);
+            Assert.Equal("Mouse", Localizer.ObjectName("gap"));
+            Assert.Equal("Active time (s)", strings["Attr.activeTime"]);
+            Assert.Equal("Index", strings["Attr.index"]);
+            Assert.DoesNotContain("Object.mouse", strings.Keys);
+        }
+
         /// <summary>The moving-grab pollen toggle has user-facing text.</summary>
         [Fact]
         public void HidePathIsLocalized()

@@ -156,6 +156,7 @@
     "Object.ghost": "Ghost",
     "Object.steamTube": "Steam pipe",
     "Object.vinyl": "Vinyl",
+    "Object.gap": "Mouse",
 
     "Attr.timed": "Timed",
     "Attr.timeout": "Duration (s)",
@@ -166,6 +167,8 @@
     "Attr.wheel": "Wheel",
     "Attr.gun": "Gun",
     "Attr.radius": "Radius",
+    "Attr.activeTime": "Active time (s)",
+    "Attr.index": "Index",
     "Attr.moveLength": "Rail length",
     "Attr.moveVertical": "Vertical rail",
     "Attr.moveOffset": "Start offset",
