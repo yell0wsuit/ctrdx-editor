@@ -236,6 +236,7 @@ namespace CtrDxEditor.Views
         private string? _palettePendingElement;
         private Point _palettePressPos;
         private bool _paletteDragging;
+        private PaletteItemViewModel? _draggingItem;
 
         private void PaletteItem_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -251,6 +252,11 @@ namespace CtrDxEditor.Views
             if (button is { Tag: string element, IsEnabled: true })
             {
                 _palettePendingElement = element;
+                if (button.DataContext is PaletteItemViewModel pressed)
+                {
+                    _draggingItem = pressed;
+                    pressed.IsDragging = true;
+                }
                 _palettePressPos = e.GetPosition(this);
                 e.Pointer.Capture(sender as IInputElement);
             }
@@ -317,6 +323,11 @@ namespace CtrDxEditor.Views
             e.Pointer.Capture(null);
             _palettePendingElement = null;
             _paletteDragging = false;
+            if (_draggingItem is { } draggingItem)
+            {
+                draggingItem.IsDragging = false;
+            }
+            _draggingItem = null;
         }
 
         private void WireObjectMutated()

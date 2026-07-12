@@ -6,6 +6,7 @@
         xmlns:core="using:CtrDxEditor.Core.Document"
         xmlns:conv="using:CtrDxEditor.Converters"
         xmlns:loc="using:CtrDxEditor.Localization"
+        xmlns:ctl="using:CtrDxEditor.Controls"
         xmlns:icons="using:Material.Icons.Avalonia"
         xmlns:dialogs="using:AvaloniaDialogs.Views"
         x:Class="CtrDxEditor.Views.MainView"
@@ -216,21 +217,38 @@
     </Menu>
     <Grid ColumnDefinitions="160,1,*,1,280">
       <Border Grid.Column="0" Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <ItemsControl x:Name="PaletteList" ItemsSource="{Binding Palette}" Margin="6,6,6,10">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Button Margin="0,3" Padding="8,6" HorizontalAlignment="Stretch"
-                      IsEnabled="{Binding Enabled}"
-                      Tag="{Binding Element}">
-                <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Grid.Column="0" Text="{Binding DisplayName}" VerticalAlignment="Center" />
-                  <Image Grid.Column="1" Source="{Binding Icon}" Width="28" Height="28"
-                         Stretch="Uniform" Margin="6,0,0,0" />
-                </Grid>
-              </Button>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Grid RowDefinitions="Auto,Auto,*">
+          <TextBox Grid.Row="0" Margin="6,6,6,4"
+                   Text="{Binding PaletteSearchText, Mode=TwoWay}"
+                   PlaceholderText="{loc:Tr Palette.SearchPlaceholder}">
+            <TextBox.InnerLeftContent>
+              <icons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="6,0,0,0"
+                                  Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+            </TextBox.InnerLeftContent>
+          </TextBox>
+          <TextBlock Grid.Row="1" Text="{Binding CurrentGameName}" FontWeight="Bold"
+                     Margin="8,6,8,4" />
+          <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="PaletteList" ItemsSource="{Binding PaletteView}" Margin="6,0,6,10">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Margin="0,3" Padding="8,6" HorizontalAlignment="Stretch"
+                          IsEnabled="{Binding Enabled}"
+                          Tag="{Binding Element}">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <ctl:MarqueeTextBlock Grid.Column="0" Text="{Binding DisplayName}"
+                                            ForceActive="{Binding IsDragging}"
+                                            VerticalAlignment="Center" />
+                      <Image Grid.Column="1" Source="{Binding Icon}" Width="28" Height="28"
+                             Stretch="Uniform" Margin="6,0,0,0" />
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
       </Border>
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">

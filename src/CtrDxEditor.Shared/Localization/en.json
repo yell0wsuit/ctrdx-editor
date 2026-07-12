@@ -29,6 +29,7 @@
 
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",
+    "Palette.SearchPlaceholder": "Search objects…",
 
     "Dialog.Open.Title": "Open level XML",
     "Dialog.Save.Title": "Save level XML",
