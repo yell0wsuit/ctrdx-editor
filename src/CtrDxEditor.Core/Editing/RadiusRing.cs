@@ -21,6 +21,8 @@ namespace CtrDxEditor.Core.Editing
                 "grab" => GrabRadius.Of(obj) is double r ? (r, "radius") : null,
                 "lightBulb" => Lit(obj) is double lr ? (lr, "litRadius") : null,
                 "rotatedCircle" => (VinylGeometry.DiscRadius(obj), "size"),
+                // The mouse's grab reach; the ring resizes the "radius" attribute like a grab's.
+                "gap" => Positive(obj, "radius") is double gr ? (gr, "radius") : null,
                 _ => null,
             };
         }
@@ -28,8 +30,14 @@ namespace CtrDxEditor.Core.Editing
         // The bulb's lit radius, or null when missing / non-positive (the game emits no glow then).
         private static double? Lit(LevelObject bulb)
         {
+            return Positive(bulb, "litRadius");
+        }
+
+        // A positive float attribute value, or null when missing / non-positive.
+        private static double? Positive(LevelObject obj, string attribute)
+        {
             return double.TryParse(
-                       bulb.GetAttr("litRadius"), NumberStyles.Float, CultureInfo.InvariantCulture, out double r)
+                       obj.GetAttr(attribute), NumberStyles.Float, CultureInfo.InvariantCulture, out double r)
                    && r > 0
                 ? r
                 : null;

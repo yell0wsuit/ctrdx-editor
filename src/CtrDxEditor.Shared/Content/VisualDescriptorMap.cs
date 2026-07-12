@@ -239,12 +239,13 @@ namespace CtrDxEditor.Content
             ]),
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
-            // upright; layer 1 is the idle mouse body (Mouse.IdleQuad) that DrawObject rotates by the
-            // authored angle, matching Mouse.Update which rotates the body container but not the hole.
+            // upright; layers 1-2 are the idle mouse body (Mouse.IdleQuad) and its open eyes
+            // (Mouse.EyesStartQuad) that DrawObject rotates together by the authored angle, matching
+            // Mouse.Update which rotates the body/eyes container but not the hole.
             new("gap",
             [
                 new SpriteLayer(MouseJson, MouseImageBase, 0),
-                new SpriteLayer(MouseJson, MouseImageBase, 4),
+                new SpriteLayer(MouseJson, MouseImageBase, 14)
             ]),
 
             // Pump object

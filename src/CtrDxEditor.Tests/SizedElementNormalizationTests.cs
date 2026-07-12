@@ -1,5 +1,3 @@
-using System.Linq;
-
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 
@@ -26,7 +24,7 @@ namespace CtrDxEditor.Tests
 
         private static string TypeOfFirst(LevelDocument doc)
         {
-            return doc.Objects.First().Type;
+            return doc.Objects[0].Type;
         }
 
         /// <inheritdoc/>
@@ -36,7 +34,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<spike2 x=\"10\" y=\"20\" size=\"3\" />");
 
             Assert.Equal("spike3", TypeOfFirst(doc));
-            Assert.Equal("3", doc.Objects.First().GetAttr("size"));
+            Assert.Equal("3", doc.Objects[0].GetAttr("size"));
         }
 
         /// <inheritdoc/>
@@ -46,7 +44,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<bouncer1 x=\"10\" y=\"20\" size=\"2\" />");
 
             Assert.Equal("bouncer2", TypeOfFirst(doc));
-            Assert.Equal("2", doc.Objects.First().GetAttr("size"));
+            Assert.Equal("2", doc.Objects[0].GetAttr("size"));
         }
 
         /// <inheritdoc/>
@@ -74,7 +72,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<spike3 x=\"10\" y=\"20\" />");
 
             Assert.Equal("spike3", TypeOfFirst(doc));
-            Assert.Null(doc.Objects.First().GetAttr("size"));
+            Assert.Null(doc.Objects[0].GetAttr("size"));
         }
 
         /// <inheritdoc/>

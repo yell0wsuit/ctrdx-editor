@@ -191,6 +191,13 @@ namespace CtrDxEditor.Core.Editing
                 return false;
             }
 
+            // The mouse's activation index is auto-numbered on placement and shown as an on-canvas
+            // label, so it is not exposed as an editable field.
+            if (element == "gap" && attribute == "index")
+            {
+                return false;
+            }
+
             // Binding keys are authored internally and selected through grab "Attach to".
             return (element != "candy" || attribute != "candyNumber")
                 && (element is not ("lightBulb" or "lightbulb") || attribute != "bulbNumber");

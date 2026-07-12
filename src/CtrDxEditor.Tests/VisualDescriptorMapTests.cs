@@ -314,14 +314,15 @@ namespace CtrDxEditor.Tests
 
         /// <summary>
         /// The mouse (gap) draws the static hole (obj_mouse quad 0, Mouse.HoleQuad) behind the idle
-        /// body (quad 4, Mouse.IdleQuad). The renderer keeps the hole upright and rotates the body.
+        /// body (quad 4, Mouse.IdleQuad) and its eyes (quad 5, Mouse.EyesStartQuad open frame). The
+        /// renderer keeps the hole upright and rotates the body and eyes together by the angle.
         /// </summary>
         [Fact]
-        public void GapHasHoleAndBodyLayers()
+        public void GapHasHoleBodyAndEyesLayers()
         {
             VisualDescriptor gap = VisualDescriptorMap.For("gap")!;
 
-            Assert.Equal([0, 4], gap.Layers.Select(l => l.Quad));
+            Assert.Equal([0, 14], gap.Layers.Select(l => l.Quad));
             Assert.All(gap.Layers, l =>
             {
                 Assert.Equal("images/obj_mouse.json", l.AtlasJsonRelPath);

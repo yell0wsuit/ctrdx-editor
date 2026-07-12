@@ -235,13 +235,14 @@ namespace CtrDxEditor.Rendering
                 if (sprites.GetSprite(CanvasSpriteKey("gap", nightLevel), candySkin, omNomSupport) is { } mouseSprite
                     && mouseSprite.Layers.Count > 0)
                 {
-                    // The hole (layer 0) stays upright, matching the game's DrawHole; the body (layer 1)
-                    // rotates by the authored angle, as Mouse.Update rotates the body container not the hole.
+                    // The hole (layer 0) stays upright, matching the game's DrawHole; the body and eyes
+                    // (layers 1+) rotate by the authored angle, as Mouse.Update rotates the body/eyes
+                    // container but not the hole.
                     DrawLayer(ctx, v, mouseSprite.Layers[0], x, y, mouseSprite.Scale, null);
-                    if (mouseSprite.Layers.Count > 1)
+                    double deg = ObjectRotation.DisplayDegrees(obj, RotationTable.For("gap")!) + (spinRotation ?? 0.0);
+                    for (int i = 1; i < mouseSprite.Layers.Count; i++)
                     {
-                        double deg = ObjectRotation.DisplayDegrees(obj, RotationTable.For("gap")!) + (spinRotation ?? 0.0);
-                        DrawLayer(ctx, v, mouseSprite.Layers[1], x, y, mouseSprite.Scale, deg);
+                        DrawLayer(ctx, v, mouseSprite.Layers[i], x, y, mouseSprite.Scale, deg);
                     }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
@@ -540,6 +541,8 @@ namespace CtrDxEditor.Rendering
                 "candy" => LabelForGroup(obj, objects, "candy", "candyNumber"),
                 "lightBulb" or "lightbulb" => LabelForGroup(obj, objects, obj.Type, "bulbNumber"),
                 "sock" => SockObject.GroupLabel(obj, objects),
+                // The mouse's activation index (auto-numbered, hidden from the field panel).
+                "gap" => obj.GetAttr("index"),
                 _ => null,
             };
         }

@@ -98,6 +98,18 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("1", gap.GetAttr("index"));
         }
 
+        /// <summary>The auto-numbered index is hidden from the property panel; the other mouse fields show.</summary>
+        [Fact]
+        public void GapIndexFieldIsHidden()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.False(LevelObjectPolicy.IsAttributeVisible("gap", "index", doc));
+            Assert.True(LevelObjectPolicy.IsAttributeVisible("gap", "radius", doc));
+            Assert.True(LevelObjectPolicy.IsAttributeVisible("gap", "activeTime", doc));
+            Assert.True(LevelObjectPolicy.IsAttributeVisible("gap", "angle", doc));
+        }
+
         /// <summary>A new mouse takes one past the highest existing index, not the count.</summary>
         [Fact]
         public void GapIndexTakesMaxExistingPlusOne()
