@@ -127,6 +127,7 @@
     "Dialog.Unsaved.Close": "Discard and close",
     "Dialog.Unsaved.Open": "Discard and open",
     "Dialog.Unsaved.New": "Discard and continue",
+    "Dialog.Unsaved.Quit": "Discard and quit",
 
     "Tooltip.ObjectLock": "Lock or unlock this object\nYou can also double click this object on the level canvas to lock/unlock it",
     "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation",

@@ -46,7 +46,7 @@ namespace CtrDxEditor.Views
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
-                if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.New"))
+                if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.New"))
                 {
                     return;
                 }
@@ -153,21 +153,6 @@ namespace CtrDxEditor.Views
             return confirmed.GetValueOrDefault();
         }
 
-        // Shared unsaved-changes prompt for the actions that discard the open level (new/open/close). The
-        // proceed button text is action-specific; returns true when the user chooses to discard.
-        private static async Task<bool> ConfirmDiscardAsync(string proceedKey)
-        {
-            ConfirmDialog dialog = new()
-            {
-                Header = Localizer.Get("Dialog.Unsaved.Header"),
-                Message = Localizer.Get("Dialog.Unsaved.Body"),
-                PositiveText = Localizer.Get(proceedKey),
-                NegativeText = Localizer.Get("Dialog.Common.Cancel"),
-            };
-            Optional<bool> confirmed = await dialog.ShowAsync();
-            return confirmed.GetValueOrDefault();
-        }
-
         private async void Open_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm)
@@ -195,7 +180,7 @@ namespace CtrDxEditor.Views
                 {
                     return;
                 }
-                if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.Open"))
+                if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.Open"))
                 {
                     return;
                 }
@@ -211,7 +196,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.Close"))
+            if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.Close"))
             {
                 return;
             }
