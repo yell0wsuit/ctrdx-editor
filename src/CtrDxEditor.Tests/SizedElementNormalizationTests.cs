@@ -29,6 +29,7 @@ namespace CtrDxEditor.Tests
             return doc.Objects.First().Type;
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void SpikeTagRenamedToMatchSizeAttribute()
         {
@@ -38,6 +39,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("3", doc.Objects.First().GetAttr("size"));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void BouncerTagRenamedToMatchSizeAttribute()
         {
@@ -47,6 +49,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("2", doc.Objects.First().GetAttr("size"));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void MatchingSpikeTagLeftUnchanged()
         {
@@ -55,6 +58,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("spike3", TypeOfFirst(doc));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void ElectroTagLeftUnchanged()
         {
@@ -63,6 +67,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("electro", TypeOfFirst(doc));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void SpikeWithoutSizeAttributeLeftUnchanged()
         {
@@ -72,6 +77,7 @@ namespace CtrDxEditor.Tests
             Assert.Null(doc.Objects.First().GetAttr("size"));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void SpikeWithOutOfRangeSizeLeftUnchanged()
         {
@@ -80,6 +86,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("spike2", TypeOfFirst(doc));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void BouncerWithOutOfRangeSizeLeftUnchanged()
         {
@@ -88,6 +95,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("bouncer2", TypeOfFirst(doc));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void ReportsChangedWhenATagIsRenamed()
         {
@@ -96,6 +104,7 @@ namespace CtrDxEditor.Tests
             Assert.True(LevelObjectPolicy.NormalizeSizedElements(doc));
         }
 
+        /// <inheritdoc/>
         [Fact]
         public void ReportsUnchangedWhenAllTagsAlreadyMatch()
         {
