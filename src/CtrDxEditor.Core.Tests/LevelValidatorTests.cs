@@ -85,6 +85,26 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(warnings, w => w.Contains("Om Nom"));
         }
 
+        /// <summary>A captured lantern supplies the implicit primary candy, so no "no candy" warning fires.</summary>
+        [Fact]
+        public void CapturedLanternSatisfiesCandyPresence()
+        {
+            LevelDocument doc = Doc("twoParts=\"false\"",
+                "<target x=\"1\" y=\"1\" /><lantern x=\"2\" y=\"2\" candyCaptured=\"true\" />");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Contains("no candy", StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>An idle lantern feeds nothing, so a candy-less level still warns.</summary>
+        [Fact]
+        public void IdleLanternDoesNotSatisfyCandyPresence()
+        {
+            LevelDocument doc = Doc("twoParts=\"false\"",
+                "<target x=\"1\" y=\"1\" /><lantern x=\"2\" y=\"2\" candyCaptured=\"false\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("no candy", StringComparison.OrdinalIgnoreCase));
+        }
+
         /// <summary>Levels below the supported resolution floor produce a size warning.</summary>
         [Fact]
         public void UndersizedResolutionWarns()

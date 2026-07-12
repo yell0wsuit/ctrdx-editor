@@ -51,7 +51,8 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add("Night level has no light bulb; it will render fully dark.");
             }
 
-            if (!hasCandy && !hasLeft && !hasRight)
+            bool capturedLantern = document.Objects.Any(LanternObject.IsCaptured);
+            if (!hasCandy && !hasLeft && !hasRight && !capturedLantern)
             {
                 warnings.Add("Level has no candy.");
             }
