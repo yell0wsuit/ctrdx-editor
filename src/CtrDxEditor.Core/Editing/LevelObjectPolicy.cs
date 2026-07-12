@@ -69,6 +69,26 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
+        /// Renames the legacy <c>mouse</c> tag to <c>gap</c>. The game dispatches both tags to the
+        /// same LoadMouse loader (GameScene.LoadObjects), so this is behavior-preserving and lets the
+        /// editor treat the mouse as a single registered object. Returns whether any tag was renamed.
+        /// </summary>
+        public static bool NormalizeMouseAlias(LevelDocument document)
+        {
+            bool changed = false;
+            foreach (LevelObject obj in document.Objects)
+            {
+                if (obj.Type == "mouse")
+                {
+                    obj.Element.Name = "gap";
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        /// <summary>
         /// Drops fractional parts from object <c>x</c>/<c>y</c> coordinates and the gameDesign
         /// <c>mapOffsetX</c>/<c>mapOffsetY</c>, truncating toward zero to match the game's
         /// <c>ParseCoordinateIntOrZero</c> (e.g. <c>"-12.9"</c> becomes <c>"-12"</c>). Integer,

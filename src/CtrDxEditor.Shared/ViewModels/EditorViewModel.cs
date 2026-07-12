@@ -138,6 +138,9 @@ namespace CtrDxEditor.ViewModels
             // consistent level stays clean. See LevelObjectPolicy.NormalizeSizedElements.
             _savedBaselineXml = ToXml();
             bool normalized = LevelObjectPolicy.NormalizeSizedElements(Document);
+            // The legacy `mouse` tag is an alias for `gap` (same game loader), so it loads renamed
+            // to `gap` and pending save, matching what the game would load.
+            normalized |= LevelObjectPolicy.NormalizeMouseAlias(Document);
             // The game truncates x/y (and gameDesign mapOffsetX/Y) to ints, so a level authored
             // with decimals loads auto-fixed and pending save, matching what the game would load.
             normalized |= LevelObjectPolicy.DropCoordinateDecimals(Document);
