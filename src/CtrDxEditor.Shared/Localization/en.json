@@ -70,11 +70,14 @@
     "Dialog.LevelSettings.TitleNew": "New level",
     "Dialog.LevelSettings.TitleEdit": "Level settings",
     "Dialog.LevelSettings.Resolution": "Resolution",
+    "Dialog.LevelSettings.Custom": "Custom...",
     "Dialog.LevelSettings.Width": "Width",
     "Dialog.LevelSettings.Height": "Height",
     "Dialog.LevelSettings.RopePhysicsSpeed": "Rope physics speed",
     "Dialog.LevelSettings.Special": "Special tutorial prompt",
     "Dialog.LevelSettings.SpecialTooltip": "Staging id for the game's built-in tutorial prompts. Might have no effect in custom levels.",
+    "Dialog.LevelSettings.Special.None": "None",
+    "Dialog.LevelSettings.Special.Default": "Default",
     "Dialog.LevelSettings.EnterNumber": "Enter a number",
     "Dialog.LevelSettings.HalfCandy": "Half candy",
     "Dialog.LevelSettings.NightLevel": "Night level",
@@ -122,6 +125,7 @@
     "Dialog.Validation.SaveProceed": "Save anyway",
     "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
     "Dialog.Validation.EditProceed": "Edit anyway",
+
     "Dialog.Unsaved.Header": "Unsaved changes",
     "Dialog.Unsaved.Body": "You have unsaved changes that will be lost.",
     "Dialog.Unsaved.Close": "Discard and close",
@@ -205,5 +209,17 @@
     "Attr.bubble": "Bubble",
     "Attr.bouncer": "Bouncer",
 
-    "Hint.PolylinePointLimit": "Movement path is at its 99-point limit"
+    "Hint.PolylinePointLimit": "Movement path is at its 99-point limit",
+
+    "Validation.TwoPartMissingHalf": "Two-part level is missing a candy half.",
+    "Validation.TwoPartHasPlainCandy": "Two-part level shouldn't contain a plain candy.",
+    "Validation.SingleCandyHasHalves": "Single-candy level shouldn't contain candyL/candyR.",
+    "Validation.NightNoBulb": "Night level has no light bulb.",
+    "Validation.NoCandy": "Level has no candy.",
+    "Validation.NoTarget": "Level has no Om Nom.",
+    "Validation.ResolutionTooSmall": "Level resolution is smaller than 320x480.",
+    "Validation.DuplicateCandyNumber": "Duplicate candyNumber values found; grabs cannot tell those candies apart.",
+    "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
+    "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
+    "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing."
 }

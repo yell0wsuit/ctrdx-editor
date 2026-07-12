@@ -8,6 +8,7 @@ using Avalonia.Platform;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
+using CtrDxEditor.Core.Editing;
 
 namespace CtrDxEditor.Localization
 {
@@ -70,6 +71,15 @@ namespace CtrDxEditor.Localization
         public static string Get(string key)
         {
             return Strings.TryGetValue(key, out string? value) ? value : key;
+        }
+
+        /// <summary>Resolves a validator <see cref="LevelWarning"/> to its localized, formatted message.</summary>
+        public static string Format(LevelWarning warning)
+        {
+            string template = Get(warning.Key);
+            return warning.Args.Length == 0
+                ? template
+                : string.Format(CultureInfo.CurrentCulture, template, warning.Args);
         }
 
         /// <summary>Display name for a level element, falling back to its descriptor then its raw id.</summary>

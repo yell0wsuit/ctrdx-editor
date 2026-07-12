@@ -136,10 +136,10 @@ namespace CtrDxEditor.Views
 
         // Shows the non-blocking validation warning; returns true when the user chooses to proceed.
         private static async Task<bool> ConfirmValidationAsync(
-            IReadOnlyList<string> warnings, string promptKey, string proceedKey)
+            IReadOnlyList<LevelWarning> warnings, string promptKey, string proceedKey)
         {
             string body = Localizer.Get("Dialog.Validation.Body") + "\n\n"
-                + string.Join("\n", warnings.Select(w => "- " + w)) + "\n\n"
+                + string.Join("\n", warnings.Select(w => "- " + Localizer.Format(w))) + "\n\n"
                 + Localizer.Get(promptKey);
             TwofoldDialog dialog = new()
             {
@@ -174,7 +174,7 @@ namespace CtrDxEditor.Views
                 using StreamReader reader = new(stream);
                 string xml = await reader.ReadToEndAsync();
 
-                IReadOnlyList<string> warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
+                IReadOnlyList<LevelWarning> warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
                 if (warnings.Count > 0
                     && !await ConfirmValidationAsync(warnings, "Dialog.Validation.EditPrompt", "Dialog.Validation.EditProceed"))
                 {
@@ -344,7 +344,7 @@ namespace CtrDxEditor.Views
         {
             if (vm.Document is { } doc)
             {
-                IReadOnlyList<string> warnings = LevelValidator.Validate(doc);
+                IReadOnlyList<LevelWarning> warnings = LevelValidator.Validate(doc);
                 if (warnings.Count > 0
                     && !await ConfirmValidationAsync(warnings, "Dialog.Validation.SavePrompt", "Dialog.Validation.SaveProceed"))
                 {

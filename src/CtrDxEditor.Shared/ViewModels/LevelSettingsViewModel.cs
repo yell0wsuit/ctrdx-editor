@@ -109,7 +109,7 @@ namespace CtrDxEditor.ViewModels
             new("640 x 480", 640, 480, false),
             new("320 x 960", 320, 960, false),
             new("640 x 960", 640, 960, false),
-            new("Custom...", 0, 0, true),
+            new(Localizer.Get("Dialog.LevelSettings.Custom"), 0, 0, true),
         ];
 
         [ObservableProperty]
@@ -124,9 +124,9 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public ObservableCollection<SpecialOption> SpecialOptions { get; } =
         [
-            new("None", 0),
-            new("Default", 1),
-            new("Custom...", 0, IsCustom: true),
+            new(Localizer.Get("Dialog.LevelSettings.Special.None"), 0),
+            new(Localizer.Get("Dialog.LevelSettings.Special.Default"), 1),
+            new(Localizer.Get("Dialog.LevelSettings.Custom"), 0, IsCustom: true),
         ];
 
         // NumericUpDown.Value is decimal?, so these bind as decimal? (an exact match avoids the

@@ -7,15 +7,15 @@ using CtrDxEditor.Core.Document;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>
-    /// Non-blocking structural checks for a level. Returns human-readable warnings describing
-    /// states that make the level crash or play incorrectly in Cut the Rope: DX.
+    /// Non-blocking structural checks for a level. Returns keyed warnings describing states that
+    /// make the level crash or play incorrectly in Cut the Rope: DX; the UI layer localizes them.
     /// </summary>
     public static class LevelValidator
     {
         /// <summary>Returns the level's structural warnings, or an empty list when it looks playable.</summary>
-        public static IReadOnlyList<string> Validate(LevelDocument document)
+        public static IReadOnlyList<LevelWarning> Validate(LevelDocument document)
         {
-            List<string> warnings = [];
+            List<LevelWarning> warnings = [];
 
             IReadOnlyList<LevelObject> objects = document.Objects;
             bool HasType(string type)
@@ -31,42 +31,42 @@ namespace CtrDxEditor.Core.Editing
             {
                 if (!hasLeft || !hasRight)
                 {
-                    warnings.Add("Two-part level is missing a candy half - DX will crash without both candyL and candyR.");
+                    warnings.Add(new LevelWarning("Validation.TwoPartMissingHalf"));
                 }
                 if (hasCandy)
                 {
-                    warnings.Add("Two-part level shouldn't contain a plain candy.");
+                    warnings.Add(new LevelWarning("Validation.TwoPartHasPlainCandy"));
                 }
             }
             else
             {
                 if (hasLeft || hasRight)
                 {
-                    warnings.Add("Single-candy level shouldn't contain candyL/candyR.");
+                    warnings.Add(new LevelWarning("Validation.SingleCandyHasHalves"));
                 }
             }
 
             if (document.NightLevel && !HasType("lightBulb"))
             {
-                warnings.Add("Night level has no light bulb; it will render fully dark.");
+                warnings.Add(new LevelWarning("Validation.NightNoBulb"));
             }
 
             bool capturedLantern = document.Objects.Any(LanternObject.IsCaptured);
             if (!hasCandy && !hasLeft && !hasRight && !capturedLantern)
             {
-                warnings.Add("Level has no candy.");
+                warnings.Add(new LevelWarning("Validation.NoCandy"));
             }
 
             if (!HasType("target"))
             {
-                warnings.Add("Level has no Om Nom (target).");
+                warnings.Add(new LevelWarning("Validation.NoTarget"));
             }
 
             // Sizes below the smallest real level (320x480) are almost certainly a hand-edit mistake.
             // Warn only - auto-defaulting the size would break the lossless XML round-trip.
             if (document.Width < 320 || document.Height < 480)
             {
-                warnings.Add("Level resolution is smaller than 320x480.");
+                warnings.Add(new LevelWarning("Validation.ResolutionTooSmall"));
             }
 
             // Duplicate candy keys collide under string-identity matching.
@@ -80,7 +80,7 @@ namespace CtrDxEditor.Core.Editing
             ];
             if (candyKeys.Count != candyKeys.Distinct(StringComparer.OrdinalIgnoreCase).Count())
             {
-                warnings.Add("Duplicate candyNumber values found; grabs cannot tell those candies apart.");
+                warnings.Add(new LevelWarning("Validation.DuplicateCandyNumber"));
             }
 
             foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
@@ -89,7 +89,7 @@ namespace CtrDxEditor.Core.Editing
                 if (candyNumber is not null
                     && !candyKeys.Any(k => string.Equals(k, candyNumber.Trim(), StringComparison.OrdinalIgnoreCase)))
                 {
-                    warnings.Add($"A grab references candyNumber '{candyNumber}', which no candy has; it will bind to the primary candy.");
+                    warnings.Add(new LevelWarning("Validation.GrabUnmatchedCandyNumber", candyNumber));
                 }
 
                 if (IsTrueAttr(grab, "bindBulb"))
@@ -101,7 +101,7 @@ namespace CtrDxEditor.Core.Editing
                         && string.Equals(o.GetAttr("bulbNumber")?.Trim(), bulbNumber.Trim(), StringComparison.OrdinalIgnoreCase));
                     if (!anyBulbMatches)
                     {
-                        warnings.Add($"A grab binds to bulbNumber '{bulbNumber}', which no light bulb has.");
+                        warnings.Add(new LevelWarning("Validation.GrabUnmatchedBulbNumber", bulbNumber ?? string.Empty));
                     }
                 }
             }
@@ -110,7 +110,7 @@ namespace CtrDxEditor.Core.Editing
             {
                 if (GhostStates.IsIdleOnly(ghost))
                 {
-                    warnings.Add("A ghost has no enabled states (grab/bubble/bouncer); it will sit idle and do nothing.");
+                    warnings.Add(new LevelWarning("Validation.GhostIdle"));
                 }
             }
 

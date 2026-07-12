@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
@@ -41,7 +41,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"true\"",
                 "<candyL x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("candy half"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.TwoPartMissingHalf");
         }
 
         /// <summary>Two-part levels warn when they also contain a plain candy.</summary>
@@ -51,7 +51,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"true\"",
                 "<candyL x=\"1\" y=\"1\" /><candyR x=\"2\" y=\"2\" /><candy x=\"9\" y=\"9\" /><target x=\"3\" y=\"3\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("plain candy"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.TwoPartHasPlainCandy");
         }
 
         /// <summary>Single-candy levels warn when split-candy objects are present.</summary>
@@ -61,7 +61,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<candy x=\"1\" y=\"1\" /><candyL x=\"5\" y=\"5\" /><target x=\"3\" y=\"3\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("candyL/candyR"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.SingleCandyHasHalves");
         }
 
         /// <summary>Night levels warn when no light bulb exists.</summary>
@@ -71,7 +71,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("nightLevel=\"true\"",
                 "<candy x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("light bulb"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.NightNoBulb");
         }
 
         /// <summary>Levels warn when they are missing candy and Om Nom target objects.</summary>
@@ -80,9 +80,9 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelDocument doc = Doc("twoParts=\"false\"", "");
 
-            IReadOnlyList<string> warnings = LevelValidator.Validate(doc);
-            Assert.Contains(warnings, w => w.Contains("no candy"));
-            Assert.Contains(warnings, w => w.Contains("Om Nom"));
+            IReadOnlyList<LevelWarning> warnings = LevelValidator.Validate(doc);
+            Assert.Contains(warnings, w => w.Key == "Validation.NoCandy");
+            Assert.Contains(warnings, w => w.Key == "Validation.NoTarget");
         }
 
         /// <summary>A captured lantern supplies the implicit primary candy, so no "no candy" warning fires.</summary>
@@ -92,7 +92,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><lantern x=\"2\" y=\"2\" candyCaptured=\"true\" />");
 
-            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Contains("no candy", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.NoCandy");
         }
 
         /// <summary>An idle lantern feeds nothing, so a candy-less level still warns.</summary>
@@ -102,7 +102,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><lantern x=\"2\" y=\"2\" candyCaptured=\"false\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("no candy", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.NoCandy");
         }
 
         /// <summary>Levels below the supported resolution floor produce a size warning.</summary>
@@ -119,7 +119,7 @@ namespace CtrDxEditor.Core.Tests
                 </map>
                 """);
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("smaller than 320"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.ResolutionTooSmall");
         }
 
         /// <summary>Normal level resolutions do not produce size warnings.</summary>
@@ -128,7 +128,7 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelDocument doc = Doc("twoParts=\"false\"", "<candy x=\"1\" y=\"1\" /><target x=\"2\" y=\"2\" />");
 
-            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Contains("smaller than"));
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.ResolutionTooSmall");
         }
 
         /// <summary>Duplicate candyNumber values produce a validation warning.</summary>
@@ -138,7 +138,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><candy x=\"2\" y=\"2\" candyNumber=\"0\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("duplicate", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.DuplicateCandyNumber");
         }
 
         /// <summary>Grabs with a candyNumber that no candy has produce a warning.</summary>
@@ -148,7 +148,8 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><grab x=\"3\" y=\"3\" length=\"10\" candyNumber=\"7\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("candyNumber", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabUnmatchedCandyNumber" && w.Args.Contains("7"));
         }
 
         /// <summary>Bulb-bound grabs warn when their bulbNumber has no matching bulb.</summary>
@@ -158,7 +159,8 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = Doc("twoParts=\"false\"",
                 "<target x=\"1\" y=\"1\" /><candy x=\"1\" y=\"1\" candyNumber=\"0\" /><grab x=\"3\" y=\"3\" bindBulb=\"true\" bulbNumber=\"5\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("bulbNumber", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabUnmatchedBulbNumber" && w.Args.Contains("5"));
         }
 
         /// <summary>A ghost with all morph states off warns that it does nothing.</summary>
@@ -169,7 +171,7 @@ namespace CtrDxEditor.Core.Tests
                 "<candy x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />" +
                 "<ghost x=\"5\" y=\"5\" grab=\"false\" bubble=\"false\" bouncer=\"false\" />");
 
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Contains("no enabled states"));
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.GhostIdle");
         }
 
         /// <summary>A ghost with at least one state produces no idle warning.</summary>
@@ -180,7 +182,7 @@ namespace CtrDxEditor.Core.Tests
                 "<candy x=\"1\" y=\"1\" /><target x=\"3\" y=\"3\" />" +
                 "<ghost x=\"5\" y=\"5\" grab=\"true\" bubble=\"false\" bouncer=\"false\" />");
 
-            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Contains("no enabled states"));
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.GhostIdle");
         }
     }
 }
