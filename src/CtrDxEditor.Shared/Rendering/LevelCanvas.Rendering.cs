@@ -108,6 +108,17 @@ namespace CtrDxEditor.Rendering
                     if (ShowHitboxes)
                     {
                         LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
+                        if (obj.Type == "steamTube")
+                        {
+                            LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y);
+                            Vec2 center = v.LevelToScreen(new Vec2(body.X + (body.W / 2), body.Y + (body.H / 2)));
+                            context.DrawEllipse(
+                                null,
+                                _palette.HitboxDesktop,
+                                new Point(center.X, center.Y),
+                                body.W * v.Zoom / 2,
+                                body.H * v.Zoom / 2);
+                        }
                     }
                     if (ShowMobileHitboxes)
                     {
@@ -163,8 +174,15 @@ namespace CtrDxEditor.Rendering
                         continue;
                     }
                     double dir = (ObjectRotation.DisplayDegrees(obj, forceSpec) + field.DirectionOffset) * Math.PI / 180.0;
-                    double reach = field.Reach * sprite.Scale / SpritePlacement.MapScale;
-                    LevelSceneRenderer.DrawForceArrow(context, v, new Vec2(obj.X, obj.Y), dir, reach, _palette.ForceArrow);
+                    double reach = field.LevelReach(sprite.Scale);
+                    LevelSceneRenderer.DrawForceArrow(
+                        context,
+                        v,
+                        new Vec2(obj.X, obj.Y),
+                        dir,
+                        reach,
+                        _palette.ForceArrow,
+                        field.LevelMarkDistances(sprite.Scale));
                 }
             }
 
@@ -224,13 +242,21 @@ namespace CtrDxEditor.Rendering
                 {
                     using (context.PushOpacity(0.7))
                     {
-                        LevelSceneRenderer.DrawSpritePreview(
-                            context,
-                            v,
-                            dragPreviewSprite,
-                            dragPreviewElement,
-                            _dragPreviewLevel.X,
-                            _dragPreviewLevel.Y);
+                        if (dragPreviewElement == "steamTube")
+                        {
+                            LevelSceneRenderer.DrawSteamTube(
+                                context, v, sprites, _dragPreviewLevel.X, _dragPreviewLevel.Y, 0);
+                        }
+                        else
+                        {
+                            LevelSceneRenderer.DrawSpritePreview(
+                                context,
+                                v,
+                                dragPreviewSprite,
+                                dragPreviewElement,
+                                _dragPreviewLevel.X,
+                                _dragPreviewLevel.Y);
+                        }
                     }
                 }
             }

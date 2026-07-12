@@ -274,5 +274,39 @@ namespace CtrDxEditor.Tests
             Assert.Contains("images/obj_ghost.png", VisualDescriptorMap.RequiredFiles(".png"));
             Assert.Contains("images/obj_ghost.json", VisualDescriptorMap.RequiredFiles(".png"));
         }
+
+        /// <summary>The palette-safe Steam Pipe contains only its body and valve.</summary>
+        [Fact]
+        public void SteamTubeHasBodyAndValveWithoutPuff()
+        {
+            VisualDescriptor steamTube = VisualDescriptorMap.For("steamTube")!;
+
+            Assert.Equal([0, 1], steamTube.Layers.Select(l => l.Quad));
+            Assert.All(steamTube.Layers, l =>
+            {
+                Assert.Equal("images/obj_pipe.json", l.AtlasJsonRelPath);
+                Assert.Equal("images/obj_pipe", l.AtlasImageBasePath);
+            });
+        }
+
+        /// <summary>The canvas puff is a separate fixed, full frame from the game's third puff loop.</summary>
+        [Fact]
+        public void SteamTubePuffIsSeparateStaticAtlasFrame()
+        {
+            SpriteLayer puff = Assert.Single(VisualDescriptorMap.For("steamTube_puff")!.Layers);
+
+            Assert.Equal("images/obj_pipe.json", puff.AtlasJsonRelPath);
+            Assert.Equal("images/obj_pipe", puff.AtlasImageBasePath);
+            Assert.Equal(29, puff.Quad);
+            Assert.DoesNotContain(VisualDescriptorMap.For("steamTube")!.Layers, l => l.Quad == puff.Quad);
+        }
+
+        /// <summary>The Steam Pipe atlas is included in installed content bundles.</summary>
+        [Fact]
+        public void SteamTubeAtlasIsRequired()
+        {
+            Assert.Contains("images/obj_pipe.png", VisualDescriptorMap.RequiredFiles(".png"));
+            Assert.Contains("images/obj_pipe.json", VisualDescriptorMap.RequiredFiles(".png"));
+        }
     }
 }

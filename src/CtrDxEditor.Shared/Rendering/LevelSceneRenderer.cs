@@ -115,11 +115,17 @@ namespace CtrDxEditor.Rendering
                 "target" => 1,
                 "rotatedCircle" => 2,
                 "bubble" => 3,
-                "grab" => 4,
-                "star" => 5,
-                "candy" or "candyL" or "candyR" => 6,
-                "lightBulb" => 7,
-                _ => 4,
+                "pump" => 4,
+                "spike1" or "spike2" or "spike3" or "spike4" or "electro" => 5,
+                "bouncer1" or "bouncer2" => 6,
+                "sock" => 7,
+                "steamTube" => 8,
+                "ghost" => 9,
+                "grab" => 10,
+                "star" => 11,
+                "candy" or "candyL" or "candyR" => 12,
+                "lightBulb" => 13,
+                _ => 10,
             };
         }
 
@@ -154,6 +160,11 @@ namespace CtrDxEditor.Rendering
             double x = previewPosition.X;
             double y = previewPosition.Y;
             double? spinRotation = SpinPreviewRotation(obj, animationPreviewSeconds);
+            if (obj.Type == "steamTube")
+            {
+                DrawSteamTube(ctx, v, sprites, x, y, ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!));
+                return;
+            }
             if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
             {
                 if (sprites.GetSprite("star_timed") is { } timed)
@@ -1096,6 +1107,46 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Computes the tube-art, valve, and maximum-puff centers after parent rotation.</summary>
+        public static Vec2[] ComputeSteamTubePartCenters(Vec2 origin, double rotationDegrees)
+        {
+            double radians = rotationDegrees * Math.PI / 180.0;
+            double sin = Math.Sin(radians);
+            double cos = Math.Cos(radians);
+            Vec2 RotateOffset(double localY)
+            {
+                return new Vec2(origin.X - (sin * localY), origin.Y + (cos * localY));
+            }
+
+            return
+            [
+                RotateOffset(SteamTubeGeometry.BodyDrawCenterOffset()),
+                RotateOffset(SteamTubeGeometry.ValveDrawOffset),
+                RotateOffset(-SteamTubeGeometry.MaximumSteamHeight),
+            ];
+        }
+
+        /// <summary>Draws the top-anchored tube, offset valve, and one static maximum back puff.</summary>
+        public static void DrawSteamTube(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            double x,
+            double y,
+            double rotationDegrees)
+        {
+            if (sprites.GetSprite("steamTube") is not { Layers.Count: >= 2 } pipe
+                || sprites.GetSprite("steamTube_puff") is not { Layers.Count: >= 1 } puff)
+            {
+                return;
+            }
+
+            Vec2[] centers = ComputeSteamTubePartCenters(new Vec2(x, y), rotationDegrees);
+            DrawLayer(ctx, v, pipe.Layers[0], centers[0].X, centers[0].Y, pipe.Scale, rotationDegrees);
+            DrawLayer(ctx, v, pipe.Layers[1], centers[1].X, centers[1].Y, pipe.Scale, rotationDegrees);
+            DrawLayer(ctx, v, puff.Layers[0], centers[2].X, centers[2].Y, puff.Scale * 1.5, rotationDegrees);
+        }
+
         /// <summary>The rotation used by palette previews and drag ghosts for raw sprite art.</summary>
         private static double PreviewRotationDegrees(string element)
         {
@@ -1403,13 +1454,15 @@ namespace CtrDxEditor.Rendering
         /// <param name="directionRadians">Push direction, clockwise-positive in the shared Y-down space.</param>
         /// <param name="lengthLevel">Shaft length in level units.</param>
         /// <param name="pen">Pen for the shaft and head.</param>
+        /// <param name="levelMarks">Optional distances from the tail where transverse ticks are drawn.</param>
         public static void DrawForceArrow(
             DrawingContext ctx,
             ViewTransform v,
             Vec2 centerLevel,
             double directionRadians,
             double lengthLevel,
-            Pen pen)
+            Pen pen,
+            IReadOnlyList<double>? levelMarks = null)
         {
             Vec2 tipLevel = new(
                 centerLevel.X + (Math.Cos(directionRadians) * lengthLevel),
@@ -1417,6 +1470,13 @@ namespace CtrDxEditor.Rendering
             Vec2 tail = v.LevelToScreen(centerLevel);
             Vec2 tip = v.LevelToScreen(tipLevel);
             ctx.DrawLine(pen, new Point(tail.X, tail.Y), new Point(tip.X, tip.Y));
+
+            Point[] markPoints = ComputeForceLevelMarkPoints(
+                v, centerLevel, directionRadians, levelMarks ?? [], tickWidthScreen: 10.0);
+            for (int i = 0; i < markPoints.Length; i += 2)
+            {
+                ctx.DrawLine(pen, markPoints[i], markPoints[i + 1]);
+            }
 
             // V arrowhead swept back from the tip, sized to the on-screen shaft so it tracks zoom.
             double shaft = GrabRadius.Distance(tail, tip);
@@ -1432,6 +1492,29 @@ namespace CtrDxEditor.Rendering
                 ctx.DrawLine(pen, new Point(tip.X, tip.Y),
                     new Point(tip.X + (Math.Cos(barb) * head), tip.Y + (Math.Sin(barb) * head)));
             }
+        }
+
+        /// <summary>Computes transverse screen-space tick endpoints along a directional force shaft.</summary>
+        public static Point[] ComputeForceLevelMarkPoints(
+            ViewTransform v,
+            Vec2 centerLevel,
+            double directionRadians,
+            IReadOnlyList<double> levelMarks,
+            double tickWidthScreen)
+        {
+            Point[] points = new Point[levelMarks.Count * 2];
+            double half = tickWidthScreen / 2.0;
+            double perpX = -Math.Sin(directionRadians);
+            double perpY = Math.Cos(directionRadians);
+            for (int i = 0; i < levelMarks.Count; i++)
+            {
+                Vec2 center = v.LevelToScreen(new Vec2(
+                    centerLevel.X + (Math.Cos(directionRadians) * levelMarks[i]),
+                    centerLevel.Y + (Math.Sin(directionRadians) * levelMarks[i])));
+                points[i * 2] = new Point(center.X - (perpX * half), center.Y - (perpY * half));
+                points[(i * 2) + 1] = new Point(center.X + (perpX * half), center.Y + (perpY * half));
+            }
+            return points;
         }
 
         /// <summary>Draws a curved arrow around an object with active rotateSpeed-backed spin.</summary>

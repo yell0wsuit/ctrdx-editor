@@ -147,6 +147,7 @@
     "Object.sock": "Magic hat",
     "Object.bouncer": "Bouncer",
     "Object.ghost": "Ghost",
+    "Object.steamTube": "Steam pipe",
     "Object.vinyl": "Vinyl",
 
     "Attr.timed": "Timed",

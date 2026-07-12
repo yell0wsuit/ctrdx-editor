@@ -31,6 +31,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(t.Knows("bouncer2"));
             Assert.True(t.Knows("rotatedCircle"));
             Assert.True(t.Knows("ghost"));
+            Assert.True(t.Knows("steamTube"));
             Assert.False(t.Knows("bouncer"));
         }
 
@@ -68,6 +69,24 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(ghost.Attributes, a => a.Name == "radius" && a.Type == AttrType.Whole && a.Default == "50");
             Assert.Contains(ghost.Attributes, a => a.Name == "angle" && a.Type == AttrType.Number && a.Default == "0");
             Assert.DoesNotContain(ghost.Attributes, a => a.Name == "size");
+        }
+
+        /// <summary>Steam Pipe follows Ghost in the palette and exposes only its game angle.</summary>
+        [Fact]
+        public void SteamTubeFollowsGhostAndCarriesAngle()
+        {
+            DescriptorTable table = DescriptorTable.Default;
+            ObjectDescriptor steamTube = table.For("steamTube")!;
+
+            Assert.Equal("Steam Pipe", steamTube.DisplayName);
+            Assert.Equal(int.MaxValue, steamTube.MaxCount);
+            AttributeSpec angle = Assert.Single(steamTube.Attributes);
+            Assert.Equal("angle", angle.Name);
+            Assert.Equal(AttrType.Number, angle.Type);
+            Assert.Equal("0", angle.Default);
+
+            string[] order = [.. table.ByElement.Keys];
+            Assert.Equal("steamTube", order[System.Array.IndexOf(order, "ghost") + 1]);
         }
 
         /// <summary>Verifies bouncer descriptors use the two XML names accepted by the game.</summary>

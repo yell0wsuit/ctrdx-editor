@@ -25,6 +25,8 @@ namespace CtrDxEditor.Core.Editing
         {
             // Pump: game LoadPumps sets rotation = angle + DEG_90.
             ["pump"] = new RotationSpec(DisplayOffset: 90),
+            // SteamTube.InitWithPositionAngle stores and renders the authored angle directly.
+            ["steamTube"] = new RotationSpec(DisplayOffset: 0),
             ["spike1"] = new RotationSpec(DisplayOffset: 0),
             ["spike2"] = new RotationSpec(DisplayOffset: 0),
             ["spike3"] = new RotationSpec(DisplayOffset: 0),

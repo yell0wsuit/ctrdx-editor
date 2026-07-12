@@ -164,6 +164,18 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(RotationTable.IsRotatable("star"));
         }
 
+        /// <summary>SteamTube uses its XML angle directly and exposes the standard editor dial.</summary>
+        [Fact]
+        public void SteamTubeRotationIsEditableWithoutDisplayOffset()
+        {
+            RotationSpec spec = RotationTable.For("steamTube")!;
+
+            Assert.Equal(0, spec.DisplayOffset);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.True(spec.Editable);
+            Assert.Same(spec, RotationTable.EditableFor("steamTube"));
+        }
+
         /// <summary>Bouncer XML angles map directly to editable canvas rotation for both widths.</summary>
         [Theory]
         [InlineData("bouncer1")]

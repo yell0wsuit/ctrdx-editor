@@ -146,6 +146,12 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue),
 
+            // Steam Pipe
+            new ObjectDescriptor("steamTube", "Steam Pipe",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
+            ], MaxCount: int.MaxValue),
+
             // Light bulb
             new ObjectDescriptor("lightBulb", "Light Bulb",
             [

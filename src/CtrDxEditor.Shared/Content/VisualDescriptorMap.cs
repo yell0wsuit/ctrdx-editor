@@ -26,6 +26,8 @@ namespace CtrDxEditor.Content
         private const string BouncerImageBase = "images/obj_bouncer";
         private const string GhostJson = "images/obj_ghost.json";
         private const string GhostImageBase = "images/obj_ghost";
+        private const string PipeJson = "images/obj_pipe.json";
+        private const string PipeImageBase = "images/obj_pipe";
         private const string SpikesJson = "images/obj_spikes.json";
         private const string SpikesImageBase = "images/obj_spikes";
         private const string ElectrodesJson = "images/obj_electrodes.json";
@@ -238,6 +240,17 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(GhostJson, GhostImageBase, 0),
                 new SpriteLayer(GhostJson, GhostImageBase, 1),
             ]),
+
+            // Steam Pipe palette sprite: body and valve only. The renderer applies the valve's game offset;
+            // the separate fixed puff is canvas-only so thumbnails never include steam.
+            new("steamTube",
+            [
+                new SpriteLayer(PipeJson, PipeImageBase, 0),
+                new SpriteLayer(PipeJson, PipeImageBase, 1),
+            ]),
+
+            // Fullest frame (quad 29, particle_3_0005) of the third 24-34 puff loop used by AdjustSteam.
+            new("steamTube_puff", [new SpriteLayer(PipeJson, PipeImageBase, 29)]),
 
             // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
             // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.
