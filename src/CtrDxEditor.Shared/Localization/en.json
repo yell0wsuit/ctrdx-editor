@@ -1,5 +1,5 @@
 {
-    "Window.Title": "Cut the Rope: DX - Level Editor",
+    "Window.Title": "Cut the Rope DX: Level Editor",
 
     "Menu.File": "_File",
     "Menu.File.New": "_New...",
@@ -52,7 +52,7 @@
     "Dialog.ContentSetup.TitleDownloading": "Downloading assets",
     "Dialog.ContentSetup.TitleVerifying": "Verifying assets",
     "Dialog.ContentSetup.TitleInstallingZip": "Installing assets",
-    "Dialog.ContentSetup.Description": "Cut the Rope: DX - Level Editor needs assets before it can open. You can download them now, or upload a zip file you already have.",
+    "Dialog.ContentSetup.Description": "Cut the Rope DX: Level Editor needs assets before it can open. You can download them now, or upload a zip file you already have.",
     "Dialog.ContentSetup.DownloadSize": "The download size will be {0}.",
     "Dialog.ContentSetup.Downloading": "{0:P0}",
     "Dialog.ContentSetup.Verifying": "Extracting and verifying the downloaded assets…",
