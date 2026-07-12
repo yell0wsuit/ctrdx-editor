@@ -60,7 +60,6 @@ namespace CtrDxEditor.Views
         // Handled only then and otherwise keeps routing to the focused element.
         private bool TryRunShortcut(EditorShortcut shortcut)
         {
-#pragma warning disable IDE0010
             switch (shortcut)
             {
                 case EditorShortcut.New:
@@ -103,10 +102,21 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.ToggleAnimationPreview when DataContext is EditorViewModel { HasDocument: true } previewVm:
                     previewVm.ToggleAnimationPreviewAll();
                     return true;
+                case EditorShortcut.None:
+                case EditorShortcut.Save:
+                case EditorShortcut.SaveAs:
+                case EditorShortcut.Screenshot:
+                case EditorShortcut.Close:
+                case EditorShortcut.Undo:
+                case EditorShortcut.Redo:
+                case EditorShortcut.ZoomIn:
+                case EditorShortcut.ZoomOut:
+                case EditorShortcut.ZoomFit:
+                case EditorShortcut.Delete:
+                case EditorShortcut.ToggleAnimationPreview:
                 default:
                     return false;
             }
-#pragma warning restore IDE0010
         }
 
         private static bool IsTextInputFocused(object? source)
