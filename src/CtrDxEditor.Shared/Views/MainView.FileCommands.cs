@@ -46,6 +46,10 @@ namespace CtrDxEditor.Views
             Optional<LevelSettings> result = await dialog.ShowAsync();
             if (result.GetValueOrDefault() is { } settings)
             {
+                if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.New"))
+                {
+                    return;
+                }
                 _currentLevelFile = null;
                 (int ropeSkin, int background, int candySkin, int omNomSupport) = dialogVm.ResolveDecoration(Random.Shared);
                 vm.NewLevel(settings, ropeSkin, background, candySkin, omNomSupport);
@@ -149,13 +153,15 @@ namespace CtrDxEditor.Views
             return confirmed.GetValueOrDefault();
         }
 
-        private static async Task<bool> ConfirmCloseAsync()
+        // Shared unsaved-changes prompt for the actions that discard the open level (new/open/close). The
+        // proceed button text is action-specific; returns true when the user chooses to discard.
+        private static async Task<bool> ConfirmDiscardAsync(string proceedKey)
         {
             ConfirmDialog dialog = new()
             {
-                Header = Localizer.Get("Dialog.Close.Header"),
-                Message = Localizer.Get("Dialog.Close.Body"),
-                PositiveText = Localizer.Get("Dialog.Close.Proceed"),
+                Header = Localizer.Get("Dialog.Unsaved.Header"),
+                Message = Localizer.Get("Dialog.Unsaved.Body"),
+                PositiveText = Localizer.Get(proceedKey),
                 NegativeText = Localizer.Get("Dialog.Common.Cancel"),
             };
             Optional<bool> confirmed = await dialog.ShowAsync();
@@ -189,6 +195,10 @@ namespace CtrDxEditor.Views
                 {
                     return;
                 }
+                if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.Open"))
+                {
+                    return;
+                }
                 vm.LoadLevelXml(xml);
                 _currentLevelFile = files[0];
             }
@@ -201,12 +211,14 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (await ConfirmCloseAsync())
+            if (vm.IsModified && !await ConfirmDiscardAsync("Dialog.Unsaved.Close"))
             {
-                vm.CloseLevel();
-                _currentLevelFile = null;
-                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+                return;
             }
+
+            vm.CloseLevel();
+            _currentLevelFile = null;
+            this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
         }
 
         private async void Save_Click(object? sender, RoutedEventArgs e)
@@ -225,6 +237,7 @@ namespace CtrDxEditor.Views
             if (await CanSaveAsync(vm) && vm.ToXml() is { } xml)
             {
                 await WriteXmlAsync(_currentLevelFile, xml);
+                vm.MarkSaved();
             }
         }
 
@@ -338,6 +351,7 @@ namespace CtrDxEditor.Views
             {
                 await WriteXmlAsync(file, xml);
                 _currentLevelFile = file;
+                vm.MarkSaved();
             }
         }
 

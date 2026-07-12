@@ -26,6 +26,11 @@ namespace CtrDxEditor.ViewModels
         private readonly List<HistoryState> _redoStack = [];
         private HistoryState? _pendingUndoTransaction;
 
+        // Serialized level XML as of the last load/new/save. Null when no level is open. Compared against
+        // the live document to detect unsaved changes (see IsModified); reusing ToXml keeps the comparison
+        // identical to what a save actually writes, so decoration/zoom/selection never count as edits.
+        private string? _savedBaselineXml;
+
         /// <summary>Persisted editor settings store, for reading/writing decoration defaults; null when unavailable.</summary>
         public ISettingsStore? Settings { get; } = settings;
 
@@ -82,6 +87,18 @@ namespace CtrDxEditor.ViewModels
         public bool HasDocument => Document is not null;
 
         /// <summary>
+        /// True when the open level has edits that differ from the last load, new, or save. Undoing all the
+        /// way back to the saved state clears it; decoration, zoom, and selection changes never set it.
+        /// </summary>
+        public bool IsModified => Document is not null && ToXml() != _savedBaselineXml;
+
+        /// <summary>Marks the current document as saved, so it no longer counts as modified until the next edit.</summary>
+        public void MarkSaved()
+        {
+            _savedBaselineXml = ToXml();
+        }
+
+        /// <summary>
         /// True when the palette's game-name header should show: a level is open and no
         /// search is active (the header is hidden while searching to reduce clutter).
         /// </summary>
@@ -116,6 +133,7 @@ namespace CtrDxEditor.ViewModels
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
+            _savedBaselineXml = ToXml();
             LevelLoaded?.Invoke();
         }
 
@@ -126,6 +144,7 @@ namespace CtrDxEditor.ViewModels
             Document = null;
             SelectedObject = null;
             LockedObject = null;
+            _savedBaselineXml = null;
             ClearHistory();
             Palette.Clear();
             RebuildPaletteView();
@@ -159,6 +178,7 @@ namespace CtrDxEditor.ViewModels
             ClearHistory();
             RefreshPalette();
             RefreshObjectList();
+            _savedBaselineXml = ToXml();
             LevelLoaded?.Invoke();
         }
 

@@ -12,15 +12,16 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests localized UI strings that are easy to miss during dialog wiring.</summary>
     public class LocalizationTests
     {
-        /// <summary>Verifies the close confirmation dialog has a visible action-confirmation header.</summary>
+        /// <summary>Verifies the unsaved-changes confirmation dialog has a visible header.</summary>
         [Fact]
-        public void CloseConfirmationHeaderIsLocalized()
+        public void UnsavedChangesHeaderIsLocalized()
         {
             string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
             Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 File.ReadAllText(path))!;
 
-            Assert.Equal("Confirm your action", strings["Dialog.Close.Header"]);
+            Assert.Equal("Unsaved changes", strings["Dialog.Unsaved.Header"]);
+            Assert.DoesNotContain("Dialog.Close.Header", strings.Keys);
         }
 
         /// <summary>Verifies the magic hat and its pairing field have user-facing English text.</summary>
