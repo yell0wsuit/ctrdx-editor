@@ -21,5 +21,12 @@ namespace CtrDxEditor.ViewModels
             get;
             set => SetProperty(ref field, value);
         } = enabled;
+
+        /// <summary>True while this item is the one being dragged from the palette.</summary>
+        public bool IsDragging
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
     }
 }
