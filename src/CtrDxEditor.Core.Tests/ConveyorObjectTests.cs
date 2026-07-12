@@ -20,18 +20,21 @@ namespace CtrDxEditor.Core.Tests
             return new LevelObject(e);
         }
 
+        /// <summary>A belt with no type attribute is automatic.</summary>
         [Fact]
         public void AbsentTypeIsAutomatic()
         {
             Assert.True(ConveyorObject.IsAuto(Belt(("velocity", "10"))));
         }
 
+        /// <summary>A belt with type="manual" is not automatic.</summary>
         [Fact]
         public void ManualTypeIsNotAutomatic()
         {
             Assert.False(ConveyorObject.IsAuto(Belt(("type", "manual"))));
         }
 
+        /// <summary>Setting automatic removes the type attribute.</summary>
         [Fact]
         public void SetAutoTrueRemovesTypeAttribute()
         {
@@ -41,6 +44,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(ConveyorObject.IsAuto(belt));
         }
 
+        /// <summary>Clearing automatic writes type="manual".</summary>
         [Fact]
         public void SetAutoFalseWritesManual()
         {
@@ -49,12 +53,14 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("manual", belt.GetAttr("type"));
         }
 
+        /// <summary>A manual belt shows no arrow (sign 0).</summary>
         [Fact]
         public void ManualBeltHasNoArrow()
         {
             Assert.Equal(0, ConveyorObject.ArrowSign(Belt(("type", "manual"), ("velocity", "10"), ("direction", "forward"))));
         }
 
+        /// <summary>A forward automatic belt's arrow points negative (game adjustedVelocity).</summary>
         [Fact]
         public void ForwardAutoArrowIsNegative()
         {
@@ -62,6 +68,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(-1, ConveyorObject.ArrowSign(Belt(("velocity", "10"), ("direction", "forward"))));
         }
 
+        /// <summary>A backward automatic belt's arrow points positive.</summary>
         [Fact]
         public void BackwardAutoArrowIsPositive()
         {

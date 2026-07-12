@@ -23,12 +23,14 @@ namespace CtrDxEditor.Core.Tests
             return new LevelObject(e);
         }
 
+        /// <summary>Of returns null for a non-transporter object.</summary>
         [Fact]
         public void OfReturnsNullForNonTransporter()
         {
             Assert.Null(ConveyorGeometry.Of(new LevelObject(new XElement("grab"))));
         }
 
+        /// <summary>At angle 0 the belt extends along +X.</summary>
         [Fact]
         public void FarEndAtAngleZeroExtendsAlongPositiveX()
         {
@@ -39,6 +41,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(200, s.Far.Y, 3);   // 200 - 250*sin0
         }
 
+        /// <summary>At angle 90 the belt extends upward on screen (smaller y).</summary>
         [Fact]
         public void FarEndAtAngle90ExtendsUpwardOnScreen()
         {
@@ -47,6 +50,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(-50, s.Far.Y, 3);   // 200 - 250*sin90 (up = smaller y)
         }
 
+        /// <summary>Bounds cover both ends grown by half the width to each side.</summary>
         [Fact]
         public void BoundsCoverBothEndsPlusHalfWidth()
         {
@@ -58,6 +62,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, b.H, 3);
         }
 
+        /// <summary>Hit-testing the far end returns the FarEnd handle.</summary>
         [Fact]
         public void HitTestFindsFarEndHandle()
         {
@@ -66,6 +71,7 @@ namespace CtrDxEditor.Core.Tests
                 ConveyorGeometry.HitTest(s, new Vec2(350, 200), endTolerance: 10, widthTolerance: 10));
         }
 
+        /// <summary>Hit-testing a side midpoint returns the Width handle.</summary>
         [Fact]
         public void HitTestFindsWidthHandleAtSideMidpoint()
         {
@@ -75,6 +81,7 @@ namespace CtrDxEditor.Core.Tests
                 ConveyorGeometry.HitTest(s, new Vec2(225, 225), endTolerance: 10, widthTolerance: 10));
         }
 
+        /// <summary>Hit-testing far from any handle returns None.</summary>
         [Fact]
         public void HitTestReturnsNoneAwayFromHandles()
         {
@@ -83,6 +90,7 @@ namespace CtrDxEditor.Core.Tests
                 ConveyorGeometry.HitTest(s, new Vec2(-500, -500), endTolerance: 10, widthTolerance: 10));
         }
 
+        /// <summary>Dragging the far end rewrites length and angle together.</summary>
         [Fact]
         public void FarEndDragRewritesLengthAndAngle()
         {
@@ -92,6 +100,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("90", belt.GetAttr("angle"));
         }
 
+        /// <summary>A width drag rewrites width from twice the perpendicular distance.</summary>
         [Fact]
         public void WidthDragRewritesWidthFromPerpendicularDistance()
         {
@@ -100,6 +109,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("80", belt.GetAttr("width"));
         }
 
+        /// <summary>A width drag clamps the width to a minimum of 1.</summary>
         [Fact]
         public void WidthDragClampsToMinimumOne()
         {

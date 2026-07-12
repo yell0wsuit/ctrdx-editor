@@ -25,6 +25,7 @@ namespace CtrDxEditor.Tests
             return (fields, belt);
         }
 
+        /// <summary>The builder emits auto, direction, then the numeric size fields in order.</summary>
         [Fact]
         public void BuildsAutoDirectionAndNumericFields()
         {
@@ -33,6 +34,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["auto", "direction", "velocity", "length", "width", "angle"], names);
         }
 
+        /// <summary>The auto checkbox is checked when the belt has no type attribute.</summary>
         [Fact]
         public void AutoFieldReflectsAbsentType()
         {
@@ -41,6 +43,7 @@ namespace CtrDxEditor.Tests
             Assert.True(auto.BoolValue);
         }
 
+        /// <summary>Unchecking auto writes type="manual".</summary>
         [Fact]
         public void UncheckingAutoWritesManual()
         {
@@ -50,6 +53,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("manual", belt.GetAttr("type"));
         }
 
+        /// <summary>Checking auto removes the type attribute.</summary>
         [Fact]
         public void CheckingAutoRemovesType()
         {

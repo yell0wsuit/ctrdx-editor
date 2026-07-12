@@ -76,6 +76,11 @@ namespace CtrDxEditor.Rendering
                 return new LevelBounds(obj.X - r, obj.Y - r, r * 2, r * 2);
             }
 
+            if (ConveyorGeometry.Of(obj) is { } beltShape)
+            {
+                return ConveyorGeometry.Bounds(beltShape);
+            }
+
             if (obj.Type == "steamTube")
             {
                 double mapScale = SpritePlacement.MapScale;
@@ -145,6 +150,9 @@ namespace CtrDxEditor.Rendering
                 "gravitySwitch" => 0,
                 "target" => 1,
                 "rotatedCircle" => 2,
+                // Conveyors draw right after the vinyl discs and before bubbles (GameScene.Draw), so they
+                // share the vinyl tier: behind bubbles, pumps, spikes, bouncers, mice, grabs, and candy.
+                "transporter" => 2,
                 "bubble" => 3,
                 "pump" => 4,
                 "spike1" or "spike2" or "spike3" or "spike4" or "electro" => 5,
@@ -226,6 +234,13 @@ namespace CtrDxEditor.Rendering
                     DrawLayer(ctx, v, innerCandy, x, y, 1.0, spinRotation, LanternInnerCandyOffsetY);
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                return;
+            }
+
+            if (obj.Type == "transporter")
+            {
+                ConveyorRenderer.Draw(ctx, v, sprites, obj);
                 DrawBindingIdLabel(ctx, v, obj, objects, x, y);
                 return;
             }

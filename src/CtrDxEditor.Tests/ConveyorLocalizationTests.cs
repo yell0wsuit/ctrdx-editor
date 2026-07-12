@@ -20,12 +20,14 @@ namespace CtrDxEditor.Tests
             return JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path))!;
         }
 
+        /// <summary>The conveyor object name is localized.</summary>
         [Fact]
         public void ConveyorObjectNameIsLocalized()
         {
             Assert.Equal("Conveyor", Strings()["Object.transporter"]);
         }
 
+        /// <summary>The conveyor attribute labels are localized.</summary>
         [Fact]
         public void ConveyorAttributeLabelsAreLocalized()
         {
@@ -36,6 +38,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Automatic", strings["Attr.auto"]);
         }
 
+        /// <summary>The direction option labels are localized.</summary>
         [Fact]
         public void DirectionOptionsAreLocalized()
         {

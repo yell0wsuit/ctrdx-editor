@@ -9,6 +9,7 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Tests the conveyor (transporter) object descriptor.</summary>
     public class ConveyorDescriptorTests
     {
+        /// <summary>The transporter descriptor is registered as an unbounded "Conveyor".</summary>
         [Fact]
         public void TransporterIsRegistered()
         {
@@ -18,6 +19,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(int.MaxValue, d.MaxCount);
         }
 
+        /// <summary>The transporter exposes the game's velocity/direction/length/width/angle with defaults.</summary>
         [Fact]
         public void TransporterExposesGameAttributesWithDefaults()
         {
@@ -30,13 +32,14 @@ namespace CtrDxEditor.Core.Tests
             AttributeSpec direction = d.Attributes.Single(a => a.Name == "direction");
             Assert.Equal(AttrType.Enum, direction.Type);
             Assert.Equal("forward", direction.Default);
-            Assert.Equal(["forward", "backward"], direction.EnumValues);
+            Assert.Equal(["forward", "backward"], direction.EnumValues!);
 
             Assert.Equal("250", d.Attributes.Single(a => a.Name == "length").Default);
             Assert.Equal("50", d.Attributes.Single(a => a.Name == "width").Default);
             Assert.Equal("0", d.Attributes.Single(a => a.Name == "angle").Default);
         }
 
+        /// <summary>The type attribute has no default so freshly placed belts are automatic.</summary>
         [Fact]
         public void TransporterTypeAttributeHasNoDefaultSoNewBeltsAreAutomatic()
         {
