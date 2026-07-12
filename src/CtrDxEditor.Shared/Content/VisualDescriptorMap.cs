@@ -249,8 +249,9 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(PipeJson, PipeImageBase, 1),
             ]),
 
-            // Fullest frame (quad 29, particle_3_0005) of the third 24-34 puff loop used by AdjustSteam.
-            new("steamTube_puff", [new SpriteLayer(PipeJson, PipeImageBase, 29)]),
+            // All three 11-frame puff loops (2-12, 13-23, 24-34). The canvas freezes a steady-state
+            // 20-puff maximum plume by indexing these layers; none are part of the palette thumbnail.
+            new("steamTube_puffs", PipePuffLayers()),
 
             // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
             // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.
@@ -309,6 +310,11 @@ namespace CtrDxEditor.Content
             // matching the game's vinilActiveController. Not placeable.
             new("vinyl_active_controller", [new SpriteLayer(VinylJson, VinylImageBase, 4)]),
         ];
+
+        private static IReadOnlyList<SpriteLayer> PipePuffLayers()
+        {
+            return [.. Enumerable.Range(2, 33).Select(quad => new SpriteLayer(PipeJson, PipeImageBase, quad))];
+        }
 
         /// <summary>All visual descriptors keyed by object element name.</summary>
         public static IReadOnlyDictionary<string, VisualDescriptor> ByElement { get; } =

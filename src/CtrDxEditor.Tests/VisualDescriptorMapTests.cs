@@ -289,16 +289,19 @@ namespace CtrDxEditor.Tests
             });
         }
 
-        /// <summary>The canvas puff is a separate fixed, full frame from the game's third puff loop.</summary>
+        /// <summary>Canvas puffs expose every frame in the game's three loops, separate from the thumbnail.</summary>
         [Fact]
-        public void SteamTubePuffIsSeparateStaticAtlasFrame()
+        public void SteamTubePuffsAreSeparateStaticAtlasFrames()
         {
-            SpriteLayer puff = Assert.Single(VisualDescriptorMap.For("steamTube_puff")!.Layers);
+            VisualDescriptor puffs = VisualDescriptorMap.For("steamTube_puffs")!;
 
-            Assert.Equal("images/obj_pipe.json", puff.AtlasJsonRelPath);
-            Assert.Equal("images/obj_pipe", puff.AtlasImageBasePath);
-            Assert.Equal(29, puff.Quad);
-            Assert.DoesNotContain(VisualDescriptorMap.For("steamTube")!.Layers, l => l.Quad == puff.Quad);
+            Assert.Equal(Enumerable.Range(2, 33), puffs.Layers.Select(l => l.Quad));
+            Assert.All(puffs.Layers, puff =>
+            {
+                Assert.Equal("images/obj_pipe.json", puff.AtlasJsonRelPath);
+                Assert.Equal("images/obj_pipe", puff.AtlasImageBasePath);
+            });
+            Assert.DoesNotContain(VisualDescriptorMap.For("steamTube")!.Layers, l => l.Quad >= 2);
         }
 
         /// <summary>The Steam Pipe atlas is included in installed content bundles.</summary>

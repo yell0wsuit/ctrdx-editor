@@ -630,6 +630,18 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // GameScene.DrawFront renders the thirteen side puffs after the late bottle/candy pass.
+            foreach (LevelObject steamTube in objects.Where(o => o.Type == "steamTube"))
+            {
+                LevelSceneRenderer.DrawSteamTubeFront(
+                    context,
+                    v,
+                    sprites,
+                    steamTube.X,
+                    steamTube.Y,
+                    ObjectRotation.StoredAngle(steamTube, RotationTable.For("steamTube")!));
+            }
+
             if (grabRadiusPen is not null)
             {
                 GrabRenderer.DrawGrabRadiusRings(context, v, objects, grabRadiusPen);

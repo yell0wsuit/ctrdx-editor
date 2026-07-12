@@ -446,7 +446,7 @@ namespace CtrDxEditor.Tests
             Assert.True(ghost < grab);
         }
 
-        /// <summary>Valve and static back puff follow SteamTube's exact local offsets and parent rotation.</summary>
+        /// <summary>Tube art and valve follow SteamTube's exact local offsets and parent rotation.</summary>
         [Fact]
         public void SteamTubePartCentersMatchGameTransform()
         {
@@ -456,18 +456,35 @@ namespace CtrDxEditor.Tests
             Assert.NotNull(method);
 
             Vec2[] upright = (Vec2[])method.Invoke(null, [new Vec2(100, 200), 0.0])!;
+            Assert.Equal(2, upright.Length);
             Assert.Equal(100, upright[0].X, 6);
             Assert.Equal(200 + SteamTubeGeometry.BodyDrawCenterOffset(), upright[0].Y, 6);
             Assert.Equal(new Vec2(100, 227), upright[1]);
-            Assert.Equal(new Vec2(100, 59), upright[2]);
 
             Vec2[] right = (Vec2[])method.Invoke(null, [new Vec2(100, 200), 90.0])!;
             Assert.Equal(100 - SteamTubeGeometry.BodyDrawCenterOffset(), right[0].X, 6);
             Assert.Equal(200, right[0].Y, 6);
             Assert.Equal(73, right[1].X, 6);
             Assert.Equal(200, right[1].Y, 6);
-            Assert.Equal(241, right[2].X, 6);
-            Assert.Equal(200, right[2].Y, 6);
+        }
+
+        /// <summary>Every frozen puff's local plume position rotates with the SteamTube parent.</summary>
+        [Fact]
+        public void SteamPuffCentersRotateWithPipe()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeSteamPuffCenter",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            SteamPuffSpec puff = SteamTubeGeometry.MaximumPlume()[0];
+
+            Vec2 upright = (Vec2)method.Invoke(null, [new Vec2(100, 200), 0.0, puff])!;
+            Vec2 right = (Vec2)method.Invoke(null, [new Vec2(100, 200), 90.0, puff])!;
+
+            Assert.Equal(100 + puff.LocalX, upright.X, 6);
+            Assert.Equal(200 + puff.LocalY, upright.Y, 6);
+            Assert.Equal(100 - puff.LocalY, right.X, 6);
+            Assert.Equal(200 + puff.LocalX, right.Y, 6);
         }
 
         private static SpriteCache SeedStarAtlases()

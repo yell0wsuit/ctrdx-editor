@@ -162,7 +162,7 @@ namespace CtrDxEditor.Rendering
             double? spinRotation = SpinPreviewRotation(obj, animationPreviewSeconds);
             if (obj.Type == "steamTube")
             {
-                DrawSteamTube(ctx, v, sprites, x, y, ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!));
+                DrawSteamTubeBack(ctx, v, sprites, x, y, ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!));
                 return;
             }
             if (obj.Type == "star" && StarTimeout(obj) is double timeout && timeout > 0)
@@ -1107,7 +1107,7 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Computes the tube-art, valve, and maximum-puff centers after parent rotation.</summary>
+        /// <summary>Computes the tube-art and valve centers after parent rotation.</summary>
         public static Vec2[] ComputeSteamTubePartCenters(Vec2 origin, double rotationDegrees)
         {
             double radians = rotationDegrees * Math.PI / 180.0;
@@ -1122,11 +1122,53 @@ namespace CtrDxEditor.Rendering
             [
                 RotateOffset(SteamTubeGeometry.BodyDrawCenterOffset()),
                 RotateOffset(SteamTubeGeometry.ValveDrawOffset),
-                RotateOffset(-SteamTubeGeometry.MaximumSteamHeight),
             ];
         }
 
-        /// <summary>Draws the top-anchored tube, offset valve, and one static maximum back puff.</summary>
+        /// <summary>Rotates a frozen puff's local timeline position around the SteamTube origin.</summary>
+        public static Vec2 ComputeSteamPuffCenter(Vec2 origin, double rotationDegrees, SteamPuffSpec puff)
+        {
+            double radians = rotationDegrees * Math.PI / 180.0;
+            double sin = Math.Sin(radians);
+            double cos = Math.Cos(radians);
+            return new Vec2(
+                origin.X + (puff.LocalX * cos) - (puff.LocalY * sin),
+                origin.Y + (puff.LocalX * sin) + (puff.LocalY * cos));
+        }
+
+        /// <summary>Draws the tube and the game's seven back-layer maximum-state puffs.</summary>
+        public static void DrawSteamTubeBack(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            double x,
+            double y,
+            double rotationDegrees)
+        {
+            if (sprites.GetSprite("steamTube") is not { Layers.Count: >= 2 } pipe)
+            {
+                return;
+            }
+
+            Vec2[] centers = ComputeSteamTubePartCenters(new Vec2(x, y), rotationDegrees);
+            DrawLayer(ctx, v, pipe.Layers[0], centers[0].X, centers[0].Y, pipe.Scale, rotationDegrees);
+            DrawLayer(ctx, v, pipe.Layers[1], centers[1].X, centers[1].Y, pipe.Scale, rotationDegrees);
+            DrawSteamPuffs(ctx, v, sprites, new Vec2(x, y), rotationDegrees, front: false);
+        }
+
+        /// <summary>Draws the game's thirteen front-layer maximum-state puffs.</summary>
+        public static void DrawSteamTubeFront(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            double x,
+            double y,
+            double rotationDegrees)
+        {
+            DrawSteamPuffs(ctx, v, sprites, new Vec2(x, y), rotationDegrees, front: true);
+        }
+
+        /// <summary>Draws both passes together for the editor's topmost translucent drag preview.</summary>
         public static void DrawSteamTube(
             DrawingContext ctx,
             ViewTransform v,
@@ -1135,16 +1177,39 @@ namespace CtrDxEditor.Rendering
             double y,
             double rotationDegrees)
         {
-            if (sprites.GetSprite("steamTube") is not { Layers.Count: >= 2 } pipe
-                || sprites.GetSprite("steamTube_puff") is not { Layers.Count: >= 1 } puff)
+            DrawSteamTubeBack(ctx, v, sprites, x, y, rotationDegrees);
+            DrawSteamTubeFront(ctx, v, sprites, x, y, rotationDegrees);
+        }
+
+        private static void DrawSteamPuffs(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            Vec2 origin,
+            double rotationDegrees,
+            bool front)
+        {
+            if (sprites.GetSprite("steamTube_puffs") is not { Layers.Count: 33 } atlas)
             {
                 return;
             }
 
-            Vec2[] centers = ComputeSteamTubePartCenters(new Vec2(x, y), rotationDegrees);
-            DrawLayer(ctx, v, pipe.Layers[0], centers[0].X, centers[0].Y, pipe.Scale, rotationDegrees);
-            DrawLayer(ctx, v, pipe.Layers[1], centers[1].X, centers[1].Y, pipe.Scale, rotationDegrees);
-            DrawLayer(ctx, v, puff.Layers[0], centers[2].X, centers[2].Y, puff.Scale * 1.5, rotationDegrees);
+            foreach (SteamPuffSpec puff in SteamTubeGeometry.MaximumPlume())
+            {
+                if (puff.Front != front)
+                {
+                    continue;
+                }
+                Vec2 center = ComputeSteamPuffCenter(origin, rotationDegrees, puff);
+                DrawLayer(
+                    ctx,
+                    v,
+                    atlas.Layers[puff.Quad - 2],
+                    center.X,
+                    center.Y,
+                    atlas.Scale * puff.Scale,
+                    rotationDegrees);
+            }
         }
 
         /// <summary>The rotation used by palette previews and drag ghosts for raw sprite art.</summary>
