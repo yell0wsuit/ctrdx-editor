@@ -458,11 +458,11 @@ namespace CtrDxEditor.Tests
             Vec2[] upright = (Vec2[])method.Invoke(null, [new Vec2(100, 200), 0.0])!;
             Assert.Equal(2, upright.Length);
             Assert.Equal(100, upright[0].X, 6);
-            Assert.Equal(200 + SteamTubeGeometry.BodyDrawCenterOffset(), upright[0].Y, 6);
+            Assert.Equal(200 + 28, upright[0].Y, 6);
             Assert.Equal(new Vec2(100, 227), upright[1]);
 
             Vec2[] right = (Vec2[])method.Invoke(null, [new Vec2(100, 200), 90.0])!;
-            Assert.Equal(100 - SteamTubeGeometry.BodyDrawCenterOffset(), right[0].X, 6);
+            Assert.Equal(100 - 28, right[0].X, 6);
             Assert.Equal(200, right[0].Y, 6);
             Assert.Equal(73, right[1].X, 6);
             Assert.Equal(200, right[1].Y, 6);

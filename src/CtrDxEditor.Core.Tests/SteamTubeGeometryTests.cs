@@ -27,9 +27,22 @@ namespace CtrDxEditor.Core.Tests
             LevelBounds bounds = SteamTubeGeometry.BodyBounds(100, 200);
 
             Assert.Equal(82.5, bounds.X);
-            Assert.Equal(182.5, bounds.Y);
+            Assert.Equal(207.7, bounds.Y, 6);
             Assert.Equal(35, bounds.W);
             Assert.Equal(35, bounds.H);
+        }
+
+        /// <summary>The conveyor collision circle is centered at SteamTube.BindPoint, not XML x/y.</summary>
+        [Fact]
+        public void BodyBindPointUsesTrimmedTubeHeightAndRotation()
+        {
+            Vec2 down = SteamTubeGeometry.BodyBindPoint(100, 200, rotationDegrees: 0);
+            Vec2 left = SteamTubeGeometry.BodyBindPoint(100, 200, rotationDegrees: 90);
+
+            Assert.Equal(new Vec2(100, 225.2), down);
+            Assert.Equal(74.8, left.X, 6);
+            Assert.Equal(200, left.Y, 6);
+            Assert.Equal(31.5, SteamTubeGeometry.ConveyorPickupRadius);
         }
 
         /// <summary>Maximum steam freezes the game's 20 staggered puffs across its three frame loops.</summary>

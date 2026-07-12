@@ -300,7 +300,7 @@ namespace CtrDxEditor.Content
             for (int i = 0; i < drawn.Count; i++)
             {
                 SpriteLayerDraw layer = drawn[i];
-                double offsetY = SteamTubeThumbnailOffsetY(element, i);
+                double offsetY = SteamTubeThumbnailOffsetY(element, i, layer);
                 LevelBounds d = SpritePlacement.Compute(layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0).Dest;
                 minX = Math.Min(minX, d.X);
                 minY = Math.Min(minY, d.Y);
@@ -338,7 +338,7 @@ namespace CtrDxEditor.Content
                 for (int i = 0; i < drawn.Count; i++)
                 {
                     SpriteLayerDraw layer = drawn[i];
-                    double offsetY = SteamTubeThumbnailOffsetY(element, i);
+                    double offsetY = SteamTubeThumbnailOffsetY(element, i, layer);
                     SpriteLayout layout = SpritePlacement.Compute(layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0);
                     Rect src = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
                     Rect dst = new(layout.Dest.X, layout.Dest.Y, layout.Dest.W, layout.Dest.H);
@@ -349,7 +349,10 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>Game-space layer offsets used only by the puff-free Steam Pipe thumbnail.</summary>
-        private static double SteamTubeThumbnailOffsetY(string element, int layerIndex)
+        private static double SteamTubeThumbnailOffsetY(
+            string element,
+            int layerIndex,
+            SpriteLayerDraw layer)
         {
             if (element != "steamTube")
             {
@@ -358,7 +361,7 @@ namespace CtrDxEditor.Content
 
             // Body anchor 10 is top-center; valve anchor 18 sits at 27 * heightScale (3 on desktop).
             return layerIndex == 0
-                ? SteamTubeGeometry.BodySourceHeight / 2.0
+                ? (layer.Frame.SourceSize.H / 2.0) - layer.Frame.SpriteSource.Y
                 : SteamTubeGeometry.ValveDrawOffset * SpritePlacement.MapScale;
         }
 

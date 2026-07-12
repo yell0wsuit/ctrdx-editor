@@ -110,7 +110,8 @@ namespace CtrDxEditor.Rendering
                         LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
                         if (obj.Type == "steamTube")
                         {
-                            LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y);
+                            double angle = ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!);
+                            LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y, angle);
                             Vec2 center = v.LevelToScreen(new Vec2(body.X + (body.W / 2), body.Y + (body.H / 2)));
                             context.DrawEllipse(
                                 null,

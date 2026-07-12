@@ -66,6 +66,25 @@ namespace CtrDxEditor.Rendering
                 return new LevelBounds(obj.X - r, obj.Y - r, r * 2, r * 2);
             }
 
+            if (obj.Type == "steamTube")
+            {
+                double mapScale = SpritePlacement.MapScale;
+                double bodyW = 143 / mapScale;
+                double bodyH = SteamTubeGeometry.BodyQuadHeight / mapScale;
+                double valveW = 108 / mapScale;
+                double valveH = 107 / mapScale;
+                double valveY = obj.Y + SteamTubeGeometry.ValveDrawOffset;
+                double steamMinX = Math.Min(obj.X - (bodyW / 2), obj.X - (valveW / 2));
+                double steamMinY = Math.Min(obj.Y, valveY - (valveH / 2));
+                double steamMaxX = Math.Max(obj.X + (bodyW / 2), obj.X + (valveW / 2));
+                double steamMaxY = Math.Max(obj.Y + bodyH, valveY + (valveH / 2));
+                return new LevelBounds(
+                    steamMinX,
+                    steamMinY,
+                    steamMaxX - steamMinX,
+                    steamMaxY - steamMinY);
+            }
+
             // Pass the active decoration so the box matches the drawn art (candy skins and Om Nom
             // platforms vary in trimmed size, which would otherwise mis-size the marquee / hit box).
             // RenderSpriteKey (not SpriteKey) so a fixed hook's box matches whichever random quad pair it drew.
@@ -1151,8 +1170,8 @@ namespace CtrDxEditor.Rendering
             }
 
             Vec2[] centers = ComputeSteamTubePartCenters(new Vec2(x, y), rotationDegrees);
-            DrawLayer(ctx, v, pipe.Layers[0], centers[0].X, centers[0].Y, pipe.Scale, rotationDegrees);
-            DrawLayer(ctx, v, pipe.Layers[1], centers[1].X, centers[1].Y, pipe.Scale, rotationDegrees);
+            DrawTrimmedLayer(ctx, v, pipe.Layers[0], centers[0].X, centers[0].Y, pipe.Scale, rotationDegrees);
+            DrawTrimmedLayer(ctx, v, pipe.Layers[1], centers[1].X, centers[1].Y, pipe.Scale, rotationDegrees);
             DrawSteamPuffs(ctx, v, sprites, new Vec2(x, y), rotationDegrees, front: false);
         }
 
@@ -1258,6 +1277,38 @@ namespace CtrDxEditor.Rendering
                 }
             }
             else
+            {
+                ctx.DrawImage(layer.Bitmap, source, dest);
+            }
+        }
+
+        /// <summary>Draws a TexturePacker quad by its trimmed dimensions, matching Image without restoreCutTransparency.</summary>
+        private static void DrawTrimmedLayer(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteLayerDraw layer,
+            double centerX,
+            double centerY,
+            double scale,
+            double rotationDegrees)
+        {
+            double w = layer.Frame.Frame.W * scale / SpritePlacement.MapScale;
+            double h = layer.Frame.Frame.H * scale / SpritePlacement.MapScale;
+            Vec2 tl = v.LevelToScreen(new Vec2(centerX - (w / 2), centerY - (h / 2)));
+            Vec2 br = v.LevelToScreen(new Vec2(centerX + (w / 2), centerY + (h / 2)));
+            Rect source = new(layer.Frame.Frame.X, layer.Frame.Frame.Y, layer.Frame.Frame.W, layer.Frame.Frame.H);
+            Rect dest = new(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+            if (rotationDegrees == 0)
+            {
+                ctx.DrawImage(layer.Bitmap, source, dest);
+                return;
+            }
+
+            Vec2 center = v.LevelToScreen(new Vec2(centerX, centerY));
+            Matrix transform = Matrix.CreateTranslation(-center.X, -center.Y)
+                * Matrix.CreateRotation(rotationDegrees * Math.PI / 180.0)
+                * Matrix.CreateTranslation(center.X, center.Y);
+            using (ctx.PushTransform(transform))
             {
                 ctx.DrawImage(layer.Bitmap, source, dest);
             }
