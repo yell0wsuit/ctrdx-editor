@@ -1,5 +1,3 @@
-using System.Linq;
-
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
@@ -34,7 +32,7 @@ namespace CtrDxEditor.Tests
 
             vm.LoadLevelXml(SpikeLevel("spike2", "3"));
 
-            Assert.Equal("spike3", vm.Document!.Objects.First().Type);
+            Assert.Equal("spike3", vm.Document!.Objects[0].Type);
             Assert.True(vm.IsModified);
         }
 
@@ -72,7 +70,8 @@ namespace CtrDxEditor.Tests
 
             vm.LoadLevelXml(CandyLevel("100.9", "-40.5"));
 
-            LevelObject candy = vm.Document!.Objects.First();
+            LevelDocument document = Assert.IsType<LevelDocument>(vm.Document);
+            LevelObject candy = document.Objects[0];
             Assert.Equal("100", candy.GetAttr("x"));
             Assert.Equal("-40", candy.GetAttr("y"));
             Assert.True(vm.IsModified);
