@@ -390,7 +390,9 @@ namespace CtrDxEditor.ViewModels
             {
                 "candy" => !doc.TwoParts,
                 "candyL" or "candyR" => doc.TwoParts,
-                "spike2" or "spike3" or "spike4" or "bouncer2" => false,
+                "spike2" or "spike3" or "spike4" or "bouncer2"
+                    or "tutorial02" or "tutorial03" or "tutorial04" or "tutorial05" or "tutorial06"
+                    or "tutorial07" or "tutorial08" or "tutorial09" or "tutorial10" or "tutorial11" => false,
                 _ => true,
             };
         }
