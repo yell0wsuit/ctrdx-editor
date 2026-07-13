@@ -2,6 +2,16 @@ using System.Collections.Generic;
 
 namespace CtrDxEditor.Core.Editing
 {
+    /// <summary>How an object's rotation pivot is resolved from its authored geometry.</summary>
+    public enum RotationCenterKind
+    {
+        /// <summary>Use the object's XML <c>(x,y)</c> anchor.</summary>
+        ObjectAnchor,
+
+        /// <summary>Use the midpoint between a conveyor's anchored and far ends.</summary>
+        ConveyorMidpoint,
+    }
+
     /// <summary>
     /// How a rotatable object's <c>angle</c> attribute maps to its on-screen rotation. The game stores
     /// an angle in degrees and renders the object rotated by <c>angle + DisplayOffset</c> (e.g. pump
@@ -12,7 +22,9 @@ namespace CtrDxEditor.Core.Editing
         double DisplayOffset,
         string AttributeName = "angle",
         double SnapStep = 15,
-        bool Editable = true);
+        bool Editable = true,
+        double StoredAngleSign = 1,
+        RotationCenterKind CenterKind = RotationCenterKind.ObjectAnchor);
 
     /// <summary>
     /// Registry of which editor objects carry a rotation dial, keyed by XML element name. Parallels
@@ -37,6 +49,11 @@ namespace CtrDxEditor.Core.Editing
             ["electro"] = new RotationSpec(DisplayOffset: 0),
             ["bouncer1"] = new RotationSpec(DisplayOffset: 0),
             ["bouncer2"] = new RotationSpec(DisplayOffset: 0),
+            // ConveyorBelt stores positive angles counter-clockwise and renders with rotation = -angle.
+            ["transporter"] = new RotationSpec(
+                DisplayOffset: 0,
+                StoredAngleSign: -1,
+                CenterKind: RotationCenterKind.ConveyorMidpoint),
             // CTRGameObject.ParseMover reads the authored sock angle, then LoadSock adds +90.
             // Derived visual keys are thumbnail-only and retain the fixed turn without becoming editable objects.
             ["sock"] = new RotationSpec(DisplayOffset: 90),

@@ -10,9 +10,8 @@ namespace CtrDxEditor.Core.Editing
     /// Pure canvas geometry and resize/rotate hit-testing for conveyor belts. (x,y) is the centre of one
     /// end (the anchor); the belt extends <c>length</c> along (cos a, -sin a) with <c>a = angle</c> in
     /// radians (level space is y-down, so a positive angle points upward on screen). Modeled on
-    /// <see cref="SpikeResize"/> and <see cref="GrabRail"/>. Rotation is handled here (not the generic
-    /// rotation dial) because the belt's angle is counter-clockwise while a RotationSpec offset is
-    /// clockwise-only.
+    /// <see cref="SpikeResize"/> and <see cref="GrabRail"/>. The far handle resizes only the length;
+    /// rotation uses the shared dial with a counter-clockwise <see cref="RotationSpec"/>.
     /// </summary>
     public static class ConveyorGeometry
     {
@@ -84,6 +83,19 @@ namespace CtrDxEditor.Core.Editing
             return new LevelBounds(minX, minY, maxX - minX, maxY - minY);
         }
 
+        /// <summary>
+        /// Unrotated length-by-width box centered on the belt midpoint. The shared selection renderer rotates
+        /// this once around the same midpoint as the dial, avoiding the double rotation of <see cref="Bounds"/>.
+        /// </summary>
+        /// <param name="s">The belt shape.</param>
+        /// <returns>An axis-aligned pre-rotation selection box.</returns>
+        public static LevelBounds DialSelectionBounds(Shape s)
+        {
+            double centerX = (s.Anchor.X + s.Far.X) / 2;
+            double centerY = (s.Anchor.Y + s.Far.Y) / 2;
+            return new LevelBounds(centerX - (s.Length / 2), centerY - (s.Width / 2), s.Length, s.Width);
+        }
+
         /// <summary>Classifies whether <paramref name="point"/> is over the far-end or a width handle.</summary>
         /// <param name="s">The belt shape.</param>
         /// <param name="point">The level-space point to classify.</param>
@@ -104,18 +116,36 @@ namespace CtrDxEditor.Core.Editing
             return nearMid && Math.Abs(Math.Abs(perp) - hw) <= widthTolerance ? Handle.Width : Handle.None;
         }
 
-        /// <summary>Rewrites <c>length</c> and <c>angle</c> from a far-end drag, pivoting on the anchor.</summary>
+        /// <summary>Rewrites only <c>length</c> from the pointer projection onto the current belt axis.</summary>
         /// <param name="belt">The conveyor object to modify.</param>
         /// <param name="point">The new far-end position in level space.</param>
         public static void ApplyFarEndDrag(LevelObject belt, Vec2 point)
         {
-            double dx = point.X - belt.X;
-            double dy = point.Y - belt.Y;
-            double length = Math.Sqrt((dx * dx) + (dy * dy));
-            // Level space is y-down; angle is measured CCW so negate dy.
-            double angleDeg = Math.Atan2(-dy, dx) * 180.0 / Math.PI;
-            belt.SetAttr("length", Whole(length));
-            belt.SetAttr("angle", Whole(Normalize(angleDeg)));
+            if (Of(belt) is not { } s)
+            {
+                return;
+            }
+            (double along, _) = Local(s, point);
+            belt.SetAttr("length", Whole(Math.Max(1, along)));
+        }
+
+        /// <summary>Applies a new angle while moving the XML end anchor to preserve a fixed visual midpoint.</summary>
+        /// <param name="belt">The conveyor object to rotate.</param>
+        /// <param name="angleDeg">New stored counter-clockwise angle in degrees.</param>
+        /// <param name="center">Visual midpoint that must remain fixed throughout the gesture.</param>
+        public static void ApplyRotationAroundCenter(LevelObject belt, double angleDeg, Vec2 center)
+        {
+            if (Of(belt) is not { } s)
+            {
+                return;
+            }
+
+            double radians = angleDeg * Math.PI / 180;
+            double halfDx = s.Length * Math.Cos(radians) / 2;
+            double halfDy = -s.Length * Math.Sin(radians) / 2;
+            belt.X = (int)Math.Round(center.X - halfDx);
+            belt.Y = (int)Math.Round(center.Y - halfDy);
+            belt.SetAttr("angle", ObjectRotation.Format(angleDeg));
         }
 
         /// <summary>Rewrites <c>width</c> from a side drag (perpendicular distance x2, min 1).</summary>
@@ -156,16 +186,6 @@ namespace CtrDxEditor.Core.Editing
         private static double Attr(LevelObject belt, string name)
         {
             return double.TryParse(belt.GetAttr(name), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) ? v : 0;
-        }
-
-        private static double Normalize(double deg)
-        {
-            double d = deg % 360.0;
-            if (d < 0)
-            {
-                d += 360.0;
-            }
-            return d;
         }
 
         private static string Whole(double value)

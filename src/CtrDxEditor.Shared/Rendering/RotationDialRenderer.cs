@@ -43,7 +43,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            Vec2 c = new(obj.X, obj.Y);
+            Vec2 c = ObjectRotation.Center(obj, spec);
             double radius = RadiusPx / v.Zoom;
             Vec2 cs = v.LevelToScreen(c);
             const double rs = RadiusPx; // screen radius = level radius * zoom = px constant

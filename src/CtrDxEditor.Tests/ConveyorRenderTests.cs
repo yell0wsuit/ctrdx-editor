@@ -174,5 +174,26 @@ namespace CtrDxEditor.Tests
             Assert.True((bool)method.Invoke(null, ["transporter"])!);
             Assert.False((bool)method.Invoke(null, ["bubble"])!);
         }
+
+        /// <summary>The selected conveyor outline rotates once around the belt midpoint.</summary>
+        [Fact]
+        public void ConveyorSelectionOutlineMatchesRotatedBeltCorners()
+        {
+            LevelObject belt = Belt(100, 50, 90);
+            belt.X = 100;
+            belt.Y = 200;
+            LevelBounds bounds = ConveyorGeometry.DialSelectionBounds(ConveyorGeometry.Of(belt)!.Value);
+            System.Type renderer = typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            MethodInfo method = renderer.GetMethod("SelectionOutlinePoints", BindingFlags.Public | BindingFlags.Static)!;
+
+            Avalonia.Point[] points = (Avalonia.Point[])method.Invoke(null, [ViewTransform.Identity, belt, bounds])!;
+
+            Assert.Equal(75, points[0].X, 3);
+            Assert.Equal(200, points[0].Y, 3);
+            Assert.Equal(75, points[1].X, 3);
+            Assert.Equal(100, points[1].Y, 3);
+            Assert.Equal(125, points[2].X, 3);
+            Assert.Equal(100, points[2].Y, 3);
+        }
     }
 }

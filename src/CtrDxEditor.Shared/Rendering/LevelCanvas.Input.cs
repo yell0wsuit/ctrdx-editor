@@ -153,7 +153,7 @@ namespace CtrDxEditor.Rendering
             {
                 return ObjectRotation.Handle.None;
             }
-            Vec2 c = new(obj.X, obj.Y);
+            Vec2 c = ObjectRotation.Center(obj, spec);
             double radius = RotationDialRenderer.RadiusPx / View.Zoom;
             return ObjectRotation.HitTest(
                 c, ObjectRotation.StoredAngle(obj, spec), spec, radius, levelPt,
@@ -175,13 +175,22 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         /// <param name="obj">The rotatable object being edited.</param>
         /// <param name="spec">Rotation spec describing the object's angle attribute and snap step.</param>
+        /// <param name="center">Stable pivot captured when the dial gesture began.</param>
         /// <param name="levelPt">The pointer position in level coordinates.</param>
         /// <param name="mods">Active keyboard modifiers; Alt enables snapping.</param>
-        private static void ApplyRotation(LevelObject obj, RotationSpec spec, Vec2 levelPt, KeyModifiers mods)
+        private static void ApplyRotation(
+            LevelObject obj, RotationSpec spec, Vec2 center, Vec2 levelPt, KeyModifiers mods)
         {
             bool snap = mods.HasFlag(KeyModifiers.Alt);
-            double angle = ObjectRotation.AngleFromPoint(new Vec2(obj.X, obj.Y), levelPt, spec, snap);
-            obj.SetAttr(spec.AttributeName, ObjectRotation.Format(angle));
+            double angle = ObjectRotation.AngleFromPoint(center, levelPt, spec, snap);
+            if (spec.CenterKind == RotationCenterKind.ConveyorMidpoint)
+            {
+                ConveyorGeometry.ApplyRotationAroundCenter(obj, angle, center);
+            }
+            else
+            {
+                obj.SetAttr(spec.AttributeName, ObjectRotation.Format(angle));
+            }
         }
 
         /// <summary>
@@ -597,8 +606,8 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            // Grabbing the selected conveyor's far-end (length+angle) or width handle. Rotation lives here,
-            // not on the generic dial, because the belt's angle is CCW while a rotation-dial offset is CW-only.
+            // Grabbing the selected conveyor's far-end resizes length only; the side handle resizes width.
+            // Rotation is handled separately by the generic dial through the conveyor's CCW rotation spec.
             ConveyorGeometry.Handle conveyorHandle = HitConveyor(levelPt);
             if (conveyorHandle != ConveyorGeometry.Handle.None && SelectedObject is { } conveyorObj)
             {
@@ -617,8 +626,9 @@ namespace CtrDxEditor.Rendering
                 && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
             {
                 BeginDocumentEdit?.Invoke();
+                _rotationDragCenter = ObjectRotation.Center(rotObj, rotSpec);
                 _rotating = true;
-                ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
+                ApplyRotation(rotObj, rotSpec, _rotationDragCenter, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Pointer.Capture(this);
@@ -783,7 +793,7 @@ namespace CtrDxEditor.Rendering
 
             if (_rotating && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
             {
-                ApplyRotation(rotObj, rotSpec, levelPt, e.KeyModifiers);
+                ApplyRotation(rotObj, rotSpec, _rotationDragCenter, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
@@ -897,6 +907,7 @@ namespace CtrDxEditor.Rendering
             _conveyorDrag = ConveyorGeometry.Handle.None;
             _vinylHandleDrag = VinylGeometry.Handle.None;
             _rotating = false;
+            _rotationDragCenter = default;
             _polylinePointDrag = -1;
             if (editedDocument)
             {

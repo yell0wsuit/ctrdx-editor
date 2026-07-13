@@ -62,6 +62,18 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, b.H, 3);
         }
 
+        /// <summary>The dial selection box is unrotated around the belt midpoint for one shared rotation pass.</summary>
+        [Fact]
+        public void DialSelectionBoundsCenterOnBeltMidpoint()
+        {
+            ConveyorGeometry.Shape s = ConveyorGeometry.Of(Belt(100, 200, 100, 50, 90))!.Value;
+            LevelBounds b = ConveyorGeometry.DialSelectionBounds(s);
+            Assert.Equal(50, b.X, 3);
+            Assert.Equal(125, b.Y, 3);
+            Assert.Equal(100, b.W, 3);
+            Assert.Equal(50, b.H, 3);
+        }
+
         /// <summary>Hit-testing the far end returns the FarEnd handle.</summary>
         [Fact]
         public void HitTestFindsFarEndHandle()
@@ -90,14 +102,39 @@ namespace CtrDxEditor.Core.Tests
                 ConveyorGeometry.HitTest(s, new Vec2(-500, -500), endTolerance: 10, widthTolerance: 10));
         }
 
-        /// <summary>Dragging the far end rewrites length and angle together.</summary>
+        /// <summary>Dragging the far end changes only length, projected onto the current belt axis.</summary>
         [Fact]
-        public void FarEndDragRewritesLengthAndAngle()
+        public void FarEndDragRewritesLengthWithoutChangingAngle()
         {
-            LevelObject belt = Belt(100, 200, 250, 50, 0);
-            ConveyorGeometry.ApplyFarEndDrag(belt, new Vec2(100, 100)); // straight up: length 100, angle 90
+            LevelObject belt = Belt(100, 200, 250, 50, 90);
+            ConveyorGeometry.ApplyFarEndDrag(belt, new Vec2(150, 100)); // off-axis; projection is 100
             Assert.Equal("100", belt.GetAttr("length"));
             Assert.Equal("90", belt.GetAttr("angle"));
+        }
+
+        /// <summary>Dragging behind the anchor clamps length without flipping conveyor rotation.</summary>
+        [Fact]
+        public void FarEndDragClampsLengthInsteadOfFlippingAngle()
+        {
+            LevelObject belt = Belt(100, 200, 250, 50, 0);
+            ConveyorGeometry.ApplyFarEndDrag(belt, new Vec2(50, 200));
+            Assert.Equal("1", belt.GetAttr("length"));
+            Assert.Equal("0", belt.GetAttr("angle"));
+        }
+
+        /// <summary>Dial rotation rewrites the anchored end so the visible belt midpoint stays fixed.</summary>
+        [Fact]
+        public void ApplyRotationAroundCenterKeepsMidpointFixed()
+        {
+            LevelObject belt = Belt(0, 0, 100, 50, 0);
+            Vec2 center = new(50, 0);
+
+            ConveyorGeometry.ApplyRotationAroundCenter(belt, angleDeg: 90, center);
+
+            Assert.Equal("90", belt.GetAttr("angle"));
+            Assert.Equal(50, belt.X);
+            Assert.Equal(50, belt.Y);
+            Assert.Equal(center, ObjectRotation.Center(belt, RotationTable.For("transporter")!));
         }
 
         /// <summary>A width drag rewrites width from twice the perpendicular distance.</summary>

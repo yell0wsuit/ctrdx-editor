@@ -1,6 +1,7 @@
 using System.Linq;
 
 using CtrDxEditor.Core.Descriptors;
+using CtrDxEditor.Core.Editing;
 
 using Xunit;
 
@@ -46,6 +47,17 @@ namespace CtrDxEditor.Core.Tests
             ObjectDescriptor d = DescriptorTable.CtrObjects.For("transporter")!;
             AttributeSpec type = d.Attributes.Single(a => a.Name == "type");
             Assert.Equal("manual", type.Default);
+        }
+
+        /// <summary>The conveyor uses the shared dial with counter-clockwise stored game angles.</summary>
+        [Fact]
+        public void TransporterRotationDialUsesCounterClockwiseStorage()
+        {
+            RotationSpec spec = RotationTable.EditableFor("transporter")!;
+            Assert.NotNull(spec);
+            Assert.Equal(-1, spec.StoredAngleSign);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.Equal(RotationCenterKind.ConveyorMidpoint, spec.CenterKind);
         }
     }
 }

@@ -12,13 +12,26 @@ namespace CtrDxEditor.Core.Editing
     /// and UI-free, like <see cref="GrabRadius"/> / <see cref="GrabRail"/>. Object-agnostic: the per-object
     /// attribute name, display offset, and snap step come from a <see cref="RotationSpec"/>.
     ///
-    /// The game stores the angle in degrees and renders the object rotated by <c>angle + DisplayOffset</c>.
-    /// Positive is clockwise in the game's Y-down projection, which Avalonia's Y-down screen space matches.
-    /// Level space is likewise Y-down, so a screen-direction angle from <see cref="Math.Atan2"/> is
-    /// clockwise-positive here too.
+    /// Most game objects render <c>angle + DisplayOffset</c>, with positive clockwise in the Y-down
+    /// projection. A spec may set <see cref="RotationSpec.StoredAngleSign"/> to -1 for an object such as the
+    /// conveyor whose XML stores positive angles counter-clockwise. Level and screen space remain Y-down.
     /// </summary>
     public static class ObjectRotation
     {
+        /// <summary>Resolves the pivot shared by dial drawing, hit-testing, and pointer angle conversion.</summary>
+        /// <param name="obj">The rotatable object.</param>
+        /// <param name="spec">Its rotation mapping and center policy.</param>
+        /// <returns>The rotation center in level coordinates.</returns>
+        public static Vec2 Center(LevelObject obj, RotationSpec spec)
+        {
+            return spec.CenterKind == RotationCenterKind.ConveyorMidpoint
+                && ConveyorGeometry.Of(obj) is { } belt
+                ? new Vec2(
+                    (belt.Anchor.X + belt.Far.X) / 2,
+                    (belt.Anchor.Y + belt.Far.Y) / 2)
+                : new Vec2(obj.X, obj.Y);
+        }
+
         /// <summary>What part of the dial a point is over, so the canvas can route a drag.</summary>
         public enum Handle
         {
@@ -41,10 +54,10 @@ namespace CtrDxEditor.Core.Editing
                 : 0;
         }
 
-        /// <summary>The object's on-screen rotation in degrees (<see cref="StoredAngle"/> + display offset).</summary>
+        /// <summary>The object's on-screen rotation in degrees (stored × sign + display offset).</summary>
         public static double DisplayDegrees(LevelObject obj, RotationSpec spec)
         {
-            return StoredAngle(obj, spec) + spec.DisplayOffset;
+            return (StoredAngle(obj, spec) * spec.StoredAngleSign) + spec.DisplayOffset;
         }
 
         /// <summary>Wraps <paramref name="deg"/> into the half-open signed range (-180, 180].</summary>
@@ -77,7 +90,7 @@ namespace CtrDxEditor.Core.Editing
         public static double AngleFromPoint(Vec2 center, Vec2 point, RotationSpec spec, bool snap)
         {
             double dir = Math.Atan2(point.Y - center.Y, point.X - center.X) * 180 / Math.PI;
-            double stored = dir - spec.DisplayOffset;
+            double stored = (dir - spec.DisplayOffset) / spec.StoredAngleSign;
             stored = snap ? Snap(stored, spec.SnapStep) : Math.Round(stored);
             return Normalize(stored);
         }
@@ -85,7 +98,7 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>The knob's level-space position for a stored angle and ring radius.</summary>
         public static Vec2 KnobPosition(Vec2 center, double storedAngle, RotationSpec spec, double radius)
         {
-            double dir = (storedAngle + spec.DisplayOffset) * Math.PI / 180;
+            double dir = ((storedAngle * spec.StoredAngleSign) + spec.DisplayOffset) * Math.PI / 180;
             return new Vec2(center.X + (radius * Math.Cos(dir)), center.Y + (radius * Math.Sin(dir)));
         }
 

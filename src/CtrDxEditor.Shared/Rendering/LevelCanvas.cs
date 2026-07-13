@@ -213,6 +213,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while dragging the selected object's rotation dial.</summary>
         private bool _rotating;
 
+        /// <summary>Stable level-space pivot captured when a rotation-dial gesture begins.</summary>
+        private Vec2 _rotationDragCenter;
+
         /// <summary>True while dragging a grab's auto-catch radius ring to resize it.</summary>
         private bool _resizingRadius;
 

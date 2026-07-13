@@ -14,6 +14,7 @@ namespace CtrDxEditor.Core.Tests
         // The pump spec exercises a non-zero display offset (+90); a plain spec covers the zero-offset case.
         private static readonly RotationSpec PumpSpec = new(DisplayOffset: 90);
         private static readonly RotationSpec ZeroSpec = new(DisplayOffset: 0);
+        private static readonly RotationSpec CounterClockwiseSpec = new(DisplayOffset: 0, StoredAngleSign: -1);
 
         private static LevelObject Obj(string? angle, string attr = "angle")
         {
@@ -49,6 +50,13 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(90, ObjectRotation.DisplayDegrees(Obj("0"), PumpSpec));
             Assert.Equal(360, ObjectRotation.DisplayDegrees(Obj("270"), PumpSpec));
             Assert.Equal(45, ObjectRotation.DisplayDegrees(Obj("45"), ZeroSpec));
+        }
+
+        /// <summary>Counter-clockwise stored angles negate into the Y-down clockwise display space.</summary>
+        [Fact]
+        public void DisplayDegreesHonorsStoredAngleSign()
+        {
+            Assert.Equal(-90, ObjectRotation.DisplayDegrees(Obj("90"), CounterClockwiseSpec));
         }
 
         /// <summary>Verifies angles wrap into the signed half-turn range (-180, 180].</summary>
@@ -98,6 +106,15 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0, ObjectRotation.AngleFromPoint(c, new Vec2(100, 0), ZeroSpec, snap: true));
         }
 
+        /// <summary>Dragging upward writes +90 for the conveyor's counter-clockwise game convention.</summary>
+        [Fact]
+        public void AngleFromPointSupportsCounterClockwiseStoredAngles()
+        {
+            Vec2 c = new(0, 0);
+            Assert.Equal(90,
+                ObjectRotation.AngleFromPoint(c, new Vec2(0, -100), CounterClockwiseSpec, snap: true));
+        }
+
         /// <summary>Verifies a free (unsnapped) drag still produces whole-degree angles.</summary>
         [Fact]
         public void AngleFromPointFreeRoundsToWholeDegrees()
@@ -116,6 +133,43 @@ namespace CtrDxEditor.Core.Tests
             Vec2 knob = ObjectRotation.KnobPosition(c, storedAngle: 0, PumpSpec, radius: 50);
             Assert.Equal(0, knob.X, 3);
             Assert.Equal(50, knob.Y, 3);
+        }
+
+        /// <summary>A +90 counter-clockwise stored angle places the dial knob above the object.</summary>
+        [Fact]
+        public void KnobPositionSupportsCounterClockwiseStoredAngles()
+        {
+            Vec2 knob = ObjectRotation.KnobPosition(
+                new Vec2(0, 0), storedAngle: 90, CounterClockwiseSpec, radius: 50);
+            Assert.Equal(0, knob.X, 3);
+            Assert.Equal(-50, knob.Y, 3);
+        }
+
+        /// <summary>Ordinary rotation specs keep the XML object anchor as their dial center.</summary>
+        [Fact]
+        public void CenterDefaultsToObjectAnchor()
+        {
+            LevelObject obj = new(new XElement("pump", new XAttribute("x", "40"), new XAttribute("y", "60")));
+            Assert.Equal(new Vec2(40, 60), ObjectRotation.Center(obj, ZeroSpec));
+        }
+
+        /// <summary>The conveyor rotation policy centers the dial halfway between its two ends.</summary>
+        [Fact]
+        public void CenterSupportsConveyorMidpoint()
+        {
+            LevelObject belt = new(new XElement(
+                "transporter",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("length", "100"),
+                new XAttribute("width", "50"),
+                new XAttribute("angle", "90")));
+            RotationSpec spec = new(
+                DisplayOffset: 0,
+                StoredAngleSign: -1,
+                CenterKind: RotationCenterKind.ConveyorMidpoint);
+
+            Assert.Equal(new Vec2(100, 150), ObjectRotation.Center(belt, spec));
         }
 
         /// <summary>Verifies ring hit-testing accepts points near the edge and rejects interior points.</summary>

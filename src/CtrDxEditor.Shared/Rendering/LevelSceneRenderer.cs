@@ -78,7 +78,7 @@ namespace CtrDxEditor.Rendering
 
             if (ConveyorGeometry.Of(obj) is { } beltShape)
             {
-                return ConveyorGeometry.Bounds(beltShape);
+                return ConveyorGeometry.DialSelectionBounds(beltShape);
             }
 
             if (obj.Type == "steamTube")
@@ -684,15 +684,16 @@ namespace CtrDxEditor.Rendering
                 ScreenPoint(v, bounds.X, bounds.Y + bounds.H),
             ];
 
+            RotationSpec? rotSpec = RotationTable.For(obj.Type);
             double degrees = previewRotationDegrees
-                + (RotationTable.For(obj.Type) is { } rotSpec ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
+                + (rotSpec is not null ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
             if (degrees == 0)
             {
                 return points;
             }
 
-            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
-            Point center = ScreenPoint(v, previewPosition.X, previewPosition.Y);
+            Vec2 rotationCenter = SelectionRotationCenter(obj, rotSpec, animationPreviewSeconds);
+            Point center = ScreenPoint(v, rotationCenter.X, rotationCenter.Y);
             double radians = degrees * Math.PI / 180.0;
             double sin = Math.Sin(radians);
             double cos = Math.Cos(radians);
@@ -733,14 +734,15 @@ namespace CtrDxEditor.Rendering
             double? animationPreviewSeconds = null)
         {
             bounds = PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
+            RotationSpec? rotSpec = RotationTable.For(obj.Type);
             double degrees = previewRotationDegrees
-                + (RotationTable.For(obj.Type) is { } rotSpec ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
+                + (rotSpec is not null ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
             if (degrees == 0)
             {
                 return bounds.Contains(point);
             }
 
-            Vec2 center = PreviewPosition(obj, animationPreviewSeconds);
+            Vec2 center = SelectionRotationCenter(obj, rotSpec, animationPreviewSeconds);
             double radians = -degrees * Math.PI / 180.0;
             double sin = Math.Sin(radians);
             double cos = Math.Cos(radians);
@@ -750,6 +752,17 @@ namespace CtrDxEditor.Rendering
                 center.X + (dx * cos) - (dy * sin),
                 center.Y + (dx * sin) + (dy * cos));
             return bounds.Contains(unrotated);
+        }
+
+        private static Vec2 SelectionRotationCenter(
+            LevelObject obj,
+            RotationSpec? spec,
+            double? animationPreviewSeconds)
+        {
+            Vec2 authoredPosition = new(obj.X, obj.Y);
+            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
+            Vec2 center = spec is null ? authoredPosition : ObjectRotation.Center(obj, spec);
+            return center + (previewPosition - authoredPosition);
         }
 
         private static Point ScreenPoint(ViewTransform v, double x, double y)
