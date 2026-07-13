@@ -197,5 +197,42 @@ namespace CtrDxEditor.Views
             }
             return _notifications;
         }
+
+        private void OnPaletteScrollChanged(object? sender, Avalonia.Controls.ScrollChangedEventArgs e)
+        {
+            if (this.FindControl<Avalonia.Controls.ScrollViewer>("PaletteScroll") is not { } scroll
+                || this.FindControl<Avalonia.Controls.ItemsControl>("PaletteList") is not { } list
+                || this.FindControl<Avalonia.Controls.Border>("StickyHeaderHost") is not { } host
+                || this.FindControl<Avalonia.Controls.TextBlock>("StickyHeaderText") is not { } text)
+            {
+                return;
+            }
+
+            string? topGroup = null;
+            for (int i = 0; i < list.ItemCount; i++)
+            {
+                if (list.ContainerFromIndex(i) is not Avalonia.Controls.Control container)
+                {
+                    continue;
+                }
+                if (container.TranslatePoint(new Avalonia.Point(0, container.Bounds.Height), scroll) is not { } p)
+                {
+                    continue;
+                }
+                // First item whose bottom edge is below the top of the viewport owns the sticky header.
+                if (p.Y > 0 && list.Items[i] is PaletteItemViewModel item)
+                {
+                    topGroup = item.GroupName;
+                    break;
+                }
+            }
+
+            bool scrolled = scroll.Offset.Y > 0.5;
+            host.IsVisible = scrolled && topGroup is not null;
+            if (topGroup is not null)
+            {
+                text.Text = topGroup;
+            }
+        }
     }
 }
