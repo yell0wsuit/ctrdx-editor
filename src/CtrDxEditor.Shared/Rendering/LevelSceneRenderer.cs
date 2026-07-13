@@ -245,7 +245,7 @@ namespace CtrDxEditor.Rendering
                 if (sprites.GetSprite(CanvasSpriteKey("star", nightLevel), candySkin, omNomSupport) is { } star)
                 {
                     DrawSprite(ctx, v, star, x, y, spinRotation);
-                    DrawStarDuration(ctx, v, star, x, y, timeout, starDurationText);
+                    DrawDurationLabel(ctx, v, star, x, y, timeout, starDurationText);
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
                 DrawBindingIdLabel(ctx, v, obj, objects, x, y);
@@ -314,6 +314,12 @@ namespace CtrDxEditor.Rendering
                     foreach (SpriteLayerDraw layer in rotSprite.Layers)
                     {
                         DrawLayer(ctx, v, layer, x, y, rotSprite.Scale, deg, offsetY);
+                    }
+                    // Timed rocket: like the timed star, show the burn-time countdown at the rocket's top.
+                    // time = -1 fires until impact (no label); a positive value burns for that many seconds.
+                    if (obj.Type == "rocket" && RocketTime(obj) is double burnTime && burnTime > 0)
+                    {
+                        DrawDurationLabel(ctx, v, rotSprite, x, y + offsetY, burnTime, starDurationText);
                     }
                     DrawOverlays(ctx, v, sprites, obj, x, y);
                     DrawBindingIdLabel(ctx, v, obj, objects, x, y + offsetY);
@@ -669,6 +675,16 @@ namespace CtrDxEditor.Rendering
                 : 0;
         }
 
+        /// <summary>Reads a rocket's <c>time</c> attribute in seconds (burn time; -1 fires until impact).</summary>
+        /// <param name="obj">The rocket object.</param>
+        /// <returns>The burn time in seconds, or 0 when the attribute is absent or unparseable.</returns>
+        private static double RocketTime(LevelObject obj)
+        {
+            return double.TryParse(obj.GetAttr("time"), NumberStyles.Float, CultureInfo.InvariantCulture, out double time)
+                ? time
+                : 0;
+        }
+
         /// <summary>Resolves the sprite key for an object, applying night-level variants.</summary>
         /// <param name="obj">The object whose base sprite key is resolved first.</param>
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
@@ -913,26 +929,26 @@ namespace CtrDxEditor.Rendering
                 foreground);
         }
 
-        /// <summary>Draws the countdown label above a timed star.</summary>
+        /// <summary>Draws a countdown label just inside the top of a timed object's sprite (star or rocket).</summary>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
-        /// <param name="star">The star sprite, used to find its visible top edge.</param>
-        /// <param name="x">Star anchor X in level units.</param>
-        /// <param name="y">Star anchor Y in level units.</param>
-        /// <param name="timeout">The star's timeout in seconds.</param>
+        /// <param name="sprite">The object sprite, used to find its visible top edge.</param>
+        /// <param name="x">Object anchor X in level units.</param>
+        /// <param name="y">Object anchor Y in level units.</param>
+        /// <param name="seconds">The countdown value in seconds.</param>
         /// <param name="foreground">Brush for the label text.</param>
-        private static void DrawStarDuration(
+        private static void DrawDurationLabel(
             DrawingContext ctx,
             ViewTransform v,
-            ObjectSprite star,
+            ObjectSprite sprite,
             double x,
             double y,
-            double timeout,
+            double seconds,
             IBrush foreground)
         {
-            FormattedText formatted = CreateStarDurationText(FormatStarDuration(timeout), v.Zoom, foreground);
+            FormattedText formatted = CreateStarDurationText(FormatStarDuration(seconds), v.Zoom, foreground);
 
-            double top = StarTop(star, x, y);
+            double top = StarTop(sprite, x, y);
             Vec2 anchor = v.LevelToScreen(new Vec2(x, top));
             Point origin = ComputeStarDurationOrigin(
                 new Point(anchor.X, anchor.Y),

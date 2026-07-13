@@ -123,6 +123,34 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, label);
         }
 
+        /// <summary>
+        /// A rocket's burn-time countdown reads the positive <c>time</c> attribute; the default -1 (fires
+        /// until impact) and an absent value read as 0-or-negative so no countdown label is drawn.
+        /// </summary>
+        [Theory]
+        [InlineData("5", 5.0)]
+        [InlineData("4.5", 4.5)]
+        [InlineData("-1", -1.0)]
+        [InlineData(null, 0.0)]
+        public void RocketTimeReadsBurnSeconds(string? time, double expected)
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "RocketTime",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            XElement e = new("rocket");
+            if (time is not null)
+            {
+                e.SetAttributeValue("time", time);
+            }
+            LevelObject rocket = new(e);
+
+            double value = (double)method.Invoke(null, [rocket])!;
+
+            Assert.Equal(expected, value, 3);
+        }
+
         /// <summary>Night levels keep normal stars but draw classic sleeping Om Nom.</summary>
         [Theory]
         [InlineData("star", true, "star")]
