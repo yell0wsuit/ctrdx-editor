@@ -11,22 +11,15 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Rendering
 {
     /// <summary>
-    /// Draws a conveyor belt on the canvas, assembling the game's obj_conveyor pieces along the belt axis.
-    /// The belt is anchored at (x,y) and rotated by its angle; local +X runs from the anchor to the far end
-    /// (length), local Y is centred thickness (width). Modeled on <see cref="GrabRenderer"/>'s rail drawing.
-    /// Quad order in the "transporter_belt" sprite: 0 end, 1 end-side, 2 middle, 3 middle-side, 4 plate,
-    /// 5 plate-arrow, 6 highlight (see ConveyorBelt.cs).
+    /// Draws a conveyor belt by reproducing the complete static scene graph built by the game's
+    /// <c>ConveyorBelt.BuildVisuals</c>: background, end caps, rails, corners, tiled plate, arrows, and
+    /// end highlights. The game authors the composition in a width-by-length root rotated 90 degrees;
+    /// that coordinate system is retained here so its anchors and mirrors remain exact.
     /// </summary>
     internal static class ConveyorRenderer
     {
-        // Consecutive tiles overlap by this many screen px to hide sub-pixel seams (same trick as the grab rail).
-        private const double Bleed = 1.0;
-
-        // Quad indices into the transporter_belt sprite layers.
-        private const int QuadMiddle = 2;
         private const int QuadPlate = 4;
         private const int QuadPlateArrow = 5;
-        private const int QuadHighlight = 6;
 
         /// <summary>Draws the belt for <paramref name="belt"/> using the transporter_belt pieces.</summary>
         /// <param name="ctx">Destination drawing context.</param>
@@ -47,26 +40,36 @@ namespace CtrDxEditor.Rendering
             double z = v.Zoom;
             Vec2 anchor = v.LevelToScreen(s.Anchor);
             double a = s.AngleDeg * Math.PI / 180.0;
-            // Screen space is y-down; the belt axis is (cos a, -sin a) in level space, i.e. rotate by -a on screen.
-            Matrix m = Matrix.CreateRotation(-a) * Matrix.CreateTranslation(anchor.X, anchor.Y);
+            ConveyorVisualLayout layout = ConveyorVisualLayout.Build(s.Length, s.Width, ConveyorObject.ArrowSign(belt));
+            double pivotX = layout.ParentRotationPivotX * z;
+            // ConveyorBelt rotates around its integer parent half-width plus rotationCenterX.
+            Matrix m = Matrix.CreateTranslation(-pivotX, 0)
+                * Matrix.CreateRotation(-a)
+                * Matrix.CreateTranslation(anchor.X + pivotX, anchor.Y);
             using (ctx.PushTransform(m))
             {
-                double lengthPx = s.Length * z;
-                double widthPx = s.Width * z;
-
-                // Middle background stretched to the full belt (tiled along +X, centred on Y).
-                DrawTiledAlong(ctx, pieces.Layers[QuadMiddle], 0, lengthPx, widthPx, z);
-
-                // Moving plate + optional directional arrow overlay (auto belts only).
-                DrawTiledAlong(ctx, pieces.Layers[QuadPlate], 0, lengthPx, widthPx * 0.8, z);
-                int arrow = ConveyorObject.ArrowSign(belt);
-                if (arrow != 0)
+                // visualRoot.rotation = 90 around integer half-width/height pivots.
+                Matrix root = Matrix.CreateRotation(Math.PI / 2)
+                    * Matrix.CreateTranslation(layout.RootTranslationX * z, layout.RootTranslationY * z);
+                using (ctx.PushTransform(root))
                 {
-                    DrawArrow(ctx, pieces.Layers[QuadPlateArrow], lengthPx, widthPx, z, arrow);
+                    ConveyorVisualPiece? arrow = FindArrow(layout);
+                    foreach (ConveyorVisualPiece piece in layout.Pieces)
+                    {
+                        if (piece.Kind == ConveyorVisualPieceKind.Arrow)
+                        {
+                            continue;
+                        }
+                        else if (piece.Kind == ConveyorVisualPieceKind.PlateSurface)
+                        {
+                            DrawPlateSurface(ctx, pieces, piece, z, arrow);
+                        }
+                        else
+                        {
+                            DrawPiece(ctx, pieces.Layers[piece.Quad], piece, z);
+                        }
+                    }
                 }
-
-                // Highlight overlay along the top edge.
-                DrawTiledAlong(ctx, pieces.Layers[QuadHighlight], 0, lengthPx, widthPx * 0.8, z);
             }
         }
 
@@ -99,56 +102,126 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        // Repeats a tile from local x=start to x=end along +X, centred on local Y, height = heightPx.
-        private static void DrawTiledAlong(
-            DrawingContext ctx, SpriteLayerDraw tile, double start, double end, double heightPx, double z)
+        private static ConveyorVisualPiece? FindArrow(ConveyorVisualLayout layout)
         {
-            IntRect f = tile.Frame.Frame;
-            if (f.W <= 0 || f.H <= 0 || end <= start)
+            foreach (ConveyorVisualPiece piece in layout.Pieces)
+            {
+                if (piece.Kind == ConveyorVisualPieceKind.Arrow)
+                {
+                    return piece;
+                }
+            }
+            return null;
+        }
+
+        private static void DrawPiece(DrawingContext ctx, SpriteLayerDraw layer, ConveyorVisualPiece piece, double z)
+        {
+            IntRect source = layer.Frame.Frame;
+            if (source.W <= 0 || source.H <= 0 || piece.Bounds.W <= 0 || piece.Bounds.H <= 0)
             {
                 return;
             }
 
-            double tileW = f.W / SpritePlacement.MapScale * z; // matches other sprites' px->screen mapping
-            if (tileW <= 0)
+            Rect dest = ScreenRect(piece.Bounds, z);
+            if (!piece.FlipX && !piece.FlipY)
             {
+                ctx.DrawImage(layer.Bitmap, SourceRect(source), dest);
                 return;
             }
 
-            for (double x = start; x < end - 0.01; x += tileW)
+            double sx = piece.FlipX ? -1 : 1;
+            double sy = piece.FlipY ? -1 : 1;
+            Matrix mirror = Matrix.CreateScale(sx, sy)
+                * Matrix.CreateTranslation(dest.Center.X * (1 - sx), dest.Center.Y * (1 - sy));
+            using (ctx.PushTransform(mirror))
             {
-                double remaining = end - x;
-                bool partial = remaining < tileW;
-                double drawW = partial ? remaining : tileW + Bleed;
-                double srcW = partial ? f.W * (remaining / tileW) : f.W;
-                ctx.DrawImage(
-                    tile.Bitmap,
-                    new Rect(f.X, f.Y, srcW, f.H),
-                    new Rect(x, -heightPx / 2, drawW, heightPx));
+                ctx.DrawImage(layer.Bitmap, SourceRect(source), dest);
             }
         }
 
-        // Draws the directional arrow near the belt centre, flipped 180 deg for arrow==-1 (game plateArrow).
-        private static void DrawArrow(
-            DrawingContext ctx, SpriteLayerDraw arrowTile, double lengthPx, double widthPx, double z, int arrow)
+        private static void DrawPlateSurface(
+            DrawingContext ctx,
+            ObjectSprite pieces,
+            ConveyorVisualPiece plate,
+            double z,
+            ConveyorVisualPiece? arrow)
         {
-            _ = widthPx;
-            IntRect f = arrowTile.Frame.Frame;
-            if (f.W <= 0 || f.H <= 0)
+            SpriteLayerDraw tile = pieces.Layers[QuadPlate];
+            IntRect source = tile.Frame.Frame;
+            double tileHeight = source.H / SpritePlacement.MapScale;
+            if (source.W <= 0 || source.H <= 0 || tileHeight <= 0)
             {
                 return;
             }
 
-            double w = f.W / SpritePlacement.MapScale * z;
-            double h = f.H / SpritePlacement.MapScale * z;
-            double cx = lengthPx / 2.0;
-            Matrix m = arrow < 0
-                ? Matrix.CreateRotation(Math.PI) * Matrix.CreateTranslation(cx, 0)
-                : Matrix.CreateTranslation(cx, 0);
-            using (ctx.PushTransform(m))
+            for (double y = plate.Bounds.Y; y < plate.Bounds.Y + plate.Bounds.H - 0.0001; y += tileHeight)
             {
-                ctx.DrawImage(arrowTile.Bitmap, new Rect(f.X, f.Y, f.W, f.H), new Rect(-w / 2, -h / 2, w, h));
+                double visible = Math.Min(tileHeight, plate.Bounds.Y + plate.Bounds.H - y);
+                double scaleY = visible / tileHeight;
+                double drawY = visible < tileHeight
+                    ? plate.Bounds.Y + plate.Bounds.H - visible - (0.5 * (tileHeight - visible))
+                    : y;
+                // Image scaling pivots on height >> 1 (31 atlas px), not the geometric 31.5px center.
+                double destY = drawY + (31.0 / SpritePlacement.MapScale * (1 - scaleY));
+                Rect dest = new(plate.Bounds.X * z, destY * z, plate.Bounds.W * z, visible * z);
+                ctx.DrawImage(tile.Bitmap, SourceRect(source), dest);
+                if (arrow is { } arrowPiece)
+                {
+                    DrawArrowInTile(
+                        ctx, pieces.Layers[QuadPlateArrow], plate, drawY, visible, z, arrowPiece.Direction);
+                }
             }
+        }
+
+        private static void DrawArrowInTile(
+            DrawingContext ctx,
+            SpriteLayerDraw arrow,
+            ConveyorVisualPiece plate,
+            double tileDrawY,
+            double visibleHeight,
+            double z,
+            int direction)
+        {
+            IntRect source = arrow.Frame.Frame;
+            if (source.W <= 0 || source.H <= 0)
+            {
+                return;
+            }
+
+            // plateArrow is center-anchored inside the odd-sized 235x63 plateSection. Both elements use
+            // integer half pivots (117,31 and 33,17 respectively) before plateSection's scale is inherited.
+            double pivotX = plate.Bounds.X + (117.0 / 235 * plate.Bounds.W);
+            double pivotY = tileDrawY + (31.0 / SpritePlacement.MapScale);
+            double w = 66.0 / 235 * plate.Bounds.W;
+            double h = 35.0 / 63 * visibleHeight;
+            double left = pivotX - (33.0 / 235 * plate.Bounds.W);
+            double top = pivotY - (17.0 / 63 * visibleHeight);
+            Rect dest = new(left * z, top * z, w * z, h * z);
+            if (direction >= 0)
+            {
+                ctx.DrawImage(arrow.Bitmap, SourceRect(source), dest);
+                return;
+            }
+
+            double rotationPivotX = pivotX * z;
+            double rotationPivotY = pivotY * z;
+            Matrix rotate = Matrix.CreateTranslation(-rotationPivotX, -rotationPivotY)
+                * Matrix.CreateRotation(Math.PI)
+                * Matrix.CreateTranslation(rotationPivotX, rotationPivotY);
+            using (ctx.PushTransform(rotate))
+            {
+                ctx.DrawImage(arrow.Bitmap, SourceRect(source), dest);
+            }
+        }
+
+        private static Rect SourceRect(IntRect source)
+        {
+            return new Rect(source.X, source.Y, source.W, source.H);
+        }
+
+        private static Rect ScreenRect(LevelBounds bounds, double z)
+        {
+            return new Rect(bounds.X * z, bounds.Y * z, bounds.W * z, bounds.H * z);
         }
     }
 }
