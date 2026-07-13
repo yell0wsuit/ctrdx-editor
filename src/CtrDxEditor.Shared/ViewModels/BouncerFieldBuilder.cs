@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 
 using CtrDxEditor.Core.Descriptors;
@@ -14,9 +15,9 @@ namespace CtrDxEditor.ViewModels
         public static void Build(
             ObservableCollection<AttributeFieldViewModel> fields,
             LevelObject value,
-            System.Action onChanged,
-            System.Action onChanging,
-            System.Action rebuild)
+            Action onChanged,
+            Action onChanging,
+            Action rebuild)
         {
             AttributeOptionViewModel[] sizeOptions =
             [

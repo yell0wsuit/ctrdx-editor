@@ -9,10 +9,9 @@ using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
-using CtrDxEditor.Rendering;
-
 using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.Localization;
+using CtrDxEditor.Rendering;
 
 namespace CtrDxEditor.ViewModels
 {

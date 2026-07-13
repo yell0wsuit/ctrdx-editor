@@ -1,5 +1,7 @@
-using System.Reflection;
+using System;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 using CtrDxEditor.Content;
@@ -24,9 +26,9 @@ namespace CtrDxEditor.Tests
             XElement e = new("transporter");
             e.SetAttributeValue("x", "100");
             e.SetAttributeValue("y", "200");
-            e.SetAttributeValue("length", length.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            e.SetAttributeValue("width", width.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            e.SetAttributeValue("angle", angle.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            e.SetAttributeValue("length", length.ToString(CultureInfo.InvariantCulture));
+            e.SetAttributeValue("width", width.ToString(CultureInfo.InvariantCulture));
+            e.SetAttributeValue("angle", angle.ToString(CultureInfo.InvariantCulture));
             e.SetAttributeValue("velocity", "10");
             e.SetAttributeValue("direction", "forward");
             if (type is not null)
@@ -38,7 +40,7 @@ namespace CtrDxEditor.Tests
 
         private static int GameDrawLayer(LevelObject obj)
         {
-            System.Type renderer = typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            Type renderer = typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo method = renderer.GetMethod("GameDrawLayer", BindingFlags.Public | BindingFlags.Static)!;
             return (int)method.Invoke(null, [obj])!;
         }
@@ -183,7 +185,7 @@ namespace CtrDxEditor.Tests
             belt.X = 100;
             belt.Y = 200;
             LevelBounds bounds = ConveyorGeometry.DialSelectionBounds(ConveyorGeometry.Of(belt)!.Value);
-            System.Type renderer = typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            Type renderer = typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo method = renderer.GetMethod("SelectionOutlinePoints", BindingFlags.Public | BindingFlags.Static)!;
 
             Avalonia.Point[] points = (Avalonia.Point[])method.Invoke(null, [ViewTransform.Identity, belt, bounds])!;

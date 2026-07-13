@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
@@ -59,7 +60,7 @@ namespace CtrDxEditor.Core.Editing
             (double along, _) = LocalCoordinates(spike, point);
             double targetWidth = Math.Abs(along) * 2.0 * SpritePlacement.MapScale / scale;
             int size = NearestSize(targetWidth, SpikeObject.IsToggled(spike));
-            SpikeObject.SetSize(spike, size.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            SpikeObject.SetSize(spike, size.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>Returns the supported size whose DX width is closest to <paramref name="targetWidth"/>.</summary>

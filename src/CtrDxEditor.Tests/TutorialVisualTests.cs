@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 using Avalonia.Media.Imaging;
 
@@ -27,7 +28,7 @@ namespace CtrDxEditor.Tests
             {
                 VisualDescriptor? v = VisualDescriptorMap.For(TutorialObject.TagForQuad(q));
                 Assert.NotNull(v);
-                SpriteLayer layer = Assert.Single(v!.Layers);
+                SpriteLayer layer = Assert.Single(v.Layers);
                 Assert.Equal("images/tutorial_signs.json", layer.AtlasJsonRelPath);
                 Assert.Equal(q, layer.Quad);
             }
@@ -44,8 +45,8 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void TutorialsDrawOnTopTextThenIcons()
         {
-            LevelObject text = new(new System.Xml.Linq.XElement("tutorialText"));
-            LevelObject icon = new(new System.Xml.Linq.XElement("tutorial04"));
+            LevelObject text = new(new XElement("tutorialText"));
+            LevelObject icon = new(new XElement("tutorial04"));
             Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo gameDrawLayer = renderer.GetMethod("GameDrawLayer", BindingFlags.Public | BindingFlags.Static)!;
             int textLayer = (int)gameDrawLayer.Invoke(null, [text])!;
@@ -87,12 +88,12 @@ namespace CtrDxEditor.Tests
         public void WrappedTextSelectionBoundsIncludeEveryLine()
         {
             SpriteCache sprites = new(new EmptyContentStore());
-            LevelObject text = new(new System.Xml.Linq.XElement(
+            LevelObject text = new(new XElement(
                 "tutorialText",
-                new System.Xml.Linq.XAttribute("x", "100"),
-                new System.Xml.Linq.XAttribute("y", "100"),
-                new System.Xml.Linq.XAttribute("text", "aaa bbb ccc"),
-                new System.Xml.Linq.XAttribute("width", "20")));
+                new XAttribute("x", "100"),
+                new XAttribute("y", "100"),
+                new XAttribute("text", "aaa bbb ccc"),
+                new XAttribute("width", "20")));
             Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
 
@@ -118,12 +119,12 @@ namespace CtrDxEditor.Tests
         public void TextSelectionBoundsStartAtAuthoredPosition()
         {
             SpriteCache sprites = new(new EmptyContentStore());
-            LevelObject text = new(new System.Xml.Linq.XElement(
+            LevelObject text = new(new XElement(
                 "tutorialText",
-                new System.Xml.Linq.XAttribute("x", "100"),
-                new System.Xml.Linq.XAttribute("y", "120"),
-                new System.Xml.Linq.XAttribute("text", "Tutorial"),
-                new System.Xml.Linq.XAttribute("width", "140")));
+                new XAttribute("x", "100"),
+                new XAttribute("y", "120"),
+                new XAttribute("text", "Tutorial"),
+                new XAttribute("width", "140")));
             Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
 
@@ -155,10 +156,10 @@ namespace CtrDxEditor.Tests
             {
                 ["images/tutorial_signs.json"] = new Atlas([frame]),
             });
-            LevelObject icon = new(new System.Xml.Linq.XElement(
+            LevelObject icon = new(new XElement(
                 "tutorial01",
-                new System.Xml.Linq.XAttribute("x", "100"),
-                new System.Xml.Linq.XAttribute("y", "100")));
+                new XAttribute("x", "100"),
+                new XAttribute("y", "100")));
             Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
 
@@ -189,10 +190,10 @@ namespace CtrDxEditor.Tests
             {
                 ["images/tutorial_signs.json"] = new Atlas([frame]),
             });
-            LevelObject icon = new(new System.Xml.Linq.XElement(
+            LevelObject icon = new(new XElement(
                 "tutorial01",
-                new System.Xml.Linq.XAttribute("x", "100"),
-                new System.Xml.Linq.XAttribute("y", "100")));
+                new XAttribute("x", "100"),
+                new XAttribute("y", "100")));
             Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
             MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
 

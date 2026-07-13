@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 
 using Avalonia;
@@ -90,8 +91,8 @@ namespace CtrDxEditor.Rendering
             }
 
             LevelBounds art = IconArtBounds(sprite.Layers[0], obj.X, obj.Y, sprite.Scale);
-            double width = System.Math.Max(art.W, MinimumIconSelectionSize);
-            double height = System.Math.Max(art.H, MinimumIconSelectionSize);
+            double width = Math.Max(art.W, MinimumIconSelectionSize);
+            double height = Math.Max(art.H, MinimumIconSelectionSize);
             return new LevelBounds(obj.X - (width / 2), obj.Y - (height / 2), width, height);
         }
 
@@ -122,7 +123,7 @@ namespace CtrDxEditor.Rendering
             double max = 0;
             foreach (string line in text.Replace("\r\n", "\n").Split('\n'))
             {
-                max = System.Math.Max(max, font.MeasureText(line));
+                max = Math.Max(max, font.MeasureText(line));
             }
 
             return max;
@@ -140,7 +141,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            int width = System.Math.Max(1, (int)System.Math.Ceiling(MeasureTextWidth(sprites, obj.GetAttr("text") ?? string.Empty)));
+            int width = Math.Max(1, (int)Math.Ceiling(MeasureTextWidth(sprites, obj.GetAttr("text") ?? string.Empty)));
             obj.SetAttr("width", width.ToString(CultureInfo.InvariantCulture));
         }
 
@@ -184,7 +185,7 @@ namespace CtrDxEditor.Rendering
                 artBounds.X + (artBounds.W / 2),
                 artBounds.Y + (artBounds.H / 2)));
             Matrix transform = Matrix.CreateTranslation(-center.X, -center.Y)
-                * Matrix.CreateRotation(angle * System.Math.PI / 180.0)
+                * Matrix.CreateRotation(angle * Math.PI / 180.0)
                 * Matrix.CreateTranslation(center.X, center.Y);
             using (ctx.PushTransform(transform))
             {

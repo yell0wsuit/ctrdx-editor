@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
@@ -121,7 +122,7 @@ namespace CtrDxEditor.Core.Tests
         {
             Vec2 c = new(0, 0);
             double a = ObjectRotation.AngleFromPoint(c, new Vec2(100, 3), PumpSpec, snap: false);
-            Assert.Equal(System.Math.Round(a), a); // integer degrees
+            Assert.Equal(Math.Round(a), a); // integer degrees
         }
 
         /// <summary>Verifies the knob sits along the object's display direction at the ring radius.</summary>
