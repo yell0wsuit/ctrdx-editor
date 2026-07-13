@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Styling;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -608,6 +609,7 @@ namespace CtrDxEditor.Rendering
 
             // Draw in the game's fixed z-order (GameScene.Draw), a stable sort so same-layer objects keep list order.
             int ropeSeed = 0;
+            bool tutorialDark = ActiveBackground == 0 && ActualThemeVariant == ThemeVariant.Dark;
             foreach (LevelObject obj in objects.OrderBy(LevelSceneRenderer.GameDrawLayer))
             {
                 if (obj.Type == "grab")
@@ -643,7 +645,9 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
                         ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText,
                         objects,
-                        useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null);
+                        useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null,
+                        opBounds,
+                        tutorialDark);
                 }
             }
 
