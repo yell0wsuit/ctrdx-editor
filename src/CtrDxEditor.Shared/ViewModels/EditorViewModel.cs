@@ -548,6 +548,12 @@ namespace CtrDxEditor.ViewModels
             Fields.Add(new AttributeFieldViewModel(value, "x", AttrType.Whole, null, Changed, Changing));
             Fields.Add(new AttributeFieldViewModel(value, "y", AttrType.Whole, null, Changed, Changing));
 
+            if (TutorialObject.IsText(value.Type) || TutorialObject.IsImage(value.Type))
+            {
+                TutorialFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
             if (value.Type == "star")
             {
                 StarFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
