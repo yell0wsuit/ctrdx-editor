@@ -160,6 +160,7 @@
     "Object.transporter": "Conveyor",
     "Object.tutorial": "Tutorial icon",
     "Object.tutorialText": "Tutorial text",
+    "Object.rocket": "Rocket",
 
     "Attr.velocity": "Velocity",
     "Attr.width": "Width",

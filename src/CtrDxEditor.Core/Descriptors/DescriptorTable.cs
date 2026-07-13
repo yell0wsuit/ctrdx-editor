@@ -205,6 +205,18 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, ConveyorObject.DefaultAngle),
                 new AttributeSpec("type", AttrType.Enum, ConveyorObject.DefaultType, EnumValues: ["manual"]),
             ], MaxCount: int.MaxValue),
+
+            // Rocket (Cut the Rope: Experiments). Attributes ported from LoadRockets.cs:
+            // impulseFactor defaults to 0.6 in-game; time = -1 fires until impact, a positive
+            // value burns for that many seconds then exhausts (star-timeout-shaped).
+            new ObjectDescriptor("rocket", "Rocket",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
+                new AttributeSpec("impulse", AttrType.Number, "0"),
+                new AttributeSpec("impulseFactor", AttrType.Number, "0.6"),
+                new AttributeSpec("time", AttrType.Number, "-1"),
+                new AttributeSpec("isRotatable", AttrType.Bool, "false"),
+            ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
         ]);
     }
 }

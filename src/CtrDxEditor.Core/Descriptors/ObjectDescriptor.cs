@@ -8,5 +8,6 @@ namespace CtrDxEditor.Core.Descriptors
         string DisplayName,
         IReadOnlyList<AttributeSpec> Attributes,
         int MaxCount,
-        string? LocalizationName = null);
+        string? LocalizationName = null,
+        string Game = "Cut the Rope");
 }
