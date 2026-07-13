@@ -27,6 +27,26 @@ namespace CtrDxEditor.Core.Descriptors
         /// <summary>Built-in descriptor set for the currently supported editor objects.</summary>
         public static DescriptorTable CtrObjects { get; } = new(
         [
+            // Tutorial text. Text is rendered literally and width is the wrap width.
+            new ObjectDescriptor("tutorialText", "Tutorial text",
+            [
+                new AttributeSpec("text", AttrType.Text, TutorialObject.DefaultText),
+                new AttributeSpec("width", AttrType.Whole, "140"),
+            ], MaxCount: int.MaxValue),
+
+            // Tutorial icons
+            new ObjectDescriptor("tutorial01", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial02", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial03", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial04", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial05", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial06", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial07", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial08", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial09", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial10", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+            new ObjectDescriptor("tutorial11", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
+
             // Om Nom
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: int.MaxValue),
 
@@ -185,27 +205,6 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, ConveyorObject.DefaultAngle),
                 new AttributeSpec("type", AttrType.Enum, ConveyorObject.DefaultType, EnumValues: ["manual"]),
             ], MaxCount: int.MaxValue),
-
-            // Tutorial text. Text is rendered literally and width is the wrap width.
-            new ObjectDescriptor("tutorialText", "Tutorial text",
-            [
-                new AttributeSpec("text", AttrType.Text, TutorialObject.DefaultText),
-                new AttributeSpec("width", AttrType.Whole, "140"),
-            ], MaxCount: int.MaxValue),
-
-            // Tutorial icons map tutorial01..tutorial11 to tutorial_signs quads 0..10. The icon is
-            // selected by renaming the tag; only angle is a per-object editable attribute.
-            new ObjectDescriptor("tutorial01", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial02", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial03", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial04", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial05", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial06", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial07", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial08", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial09", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial10", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
-            new ObjectDescriptor("tutorial11", "Tutorial icon", [new AttributeSpec("angle", AttrType.Number, "0")], MaxCount: int.MaxValue, LocalizationName: "tutorial"),
         ]);
     }
 }
