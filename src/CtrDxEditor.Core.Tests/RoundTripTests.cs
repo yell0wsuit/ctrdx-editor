@@ -78,6 +78,30 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("true", (string?)grabs[1].Attribute("hidePath"));
         }
 
+        /// <summary>A rocket with launch attributes and a mover path round-trips byte-for-byte, including
+        /// the mover attributes the editor never turns into fields.</summary>
+        [Fact]
+        public void RocketWithPathSurvivesRoundTrip()
+        {
+            const string original =
+                "<level width=\"640\" height=\"480\">" +
+                "<rocket x=\"100\" y=\"120\" angle=\"45\" impulse=\"20\" impulseFactor=\"0.6\" " +
+                "time=\"-1\" isRotatable=\"true\" path=\"R,80\" moveSpeed=\"60\" rotateSpeed=\"90\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(original);
+            XDocument after = XDocument.Parse(doc.Save());
+
+            XElement rocket = after.Root!.Element("rocket")!;
+            Assert.Equal("45", (string?)rocket.Attribute("angle"));
+            Assert.Equal("20", (string?)rocket.Attribute("impulse"));
+            Assert.Equal("R,80", (string?)rocket.Attribute("path"));
+            Assert.Equal("60", (string?)rocket.Attribute("moveSpeed"));
+            Assert.Equal("90", (string?)rocket.Attribute("rotateSpeed"));
+            Assert.True(XNode.DeepEquals(
+                Normalize(XDocument.Parse(original)), Normalize(after)));
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {
