@@ -20,7 +20,7 @@ namespace CtrDxEditor.Tests
             LevelCanvas canvas = new()
             {
                 Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
-                PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.Default.For("star")!, x, y),
+                PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, x, y),
             };
 
             bool placed = canvas.AddAtCenter("star");
@@ -36,7 +36,7 @@ namespace CtrDxEditor.Tests
             {
                 Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
                 View = ViewTransform.Identity,
-                PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.Default.For("star")!, x, y),
+                PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, x, y),
             };
 
             bool placed = canvas.DropElement("star", new Point(10, 20));

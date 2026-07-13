@@ -11,7 +11,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void SplitCandyHalvesAreSingletonWithNoAttributes()
         {
-            DescriptorTable table = DescriptorTable.Default;
+            DescriptorTable table = DescriptorTable.CtrObjects;
 
             ObjectDescriptor? left = table.For("candyL");
             ObjectDescriptor? right = table.For("candyR");
@@ -28,7 +28,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void LightBulbHasOnlyLitRadius()
         {
-            ObjectDescriptor? bulb = DescriptorTable.Default.For("lightBulb");
+            ObjectDescriptor? bulb = DescriptorTable.CtrObjects.For("lightBulb");
             Assert.NotNull(bulb);
 
             AttributeSpec litRadius = Assert.Single(bulb.Attributes);
@@ -41,7 +41,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void PlainCandyHasNoEditableAttributes()
         {
-            ObjectDescriptor? candy = DescriptorTable.Default.For("candy");
+            ObjectDescriptor? candy = DescriptorTable.CtrObjects.For("candy");
             Assert.NotNull(candy);
 
             Assert.Empty(candy.Attributes);

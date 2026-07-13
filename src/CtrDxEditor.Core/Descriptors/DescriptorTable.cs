@@ -23,7 +23,7 @@ namespace CtrDxEditor.Core.Descriptors
         }
 
         /// <summary>Built-in descriptor set for the currently supported editor objects.</summary>
-        public static DescriptorTable Default { get; } = new(
+        public static DescriptorTable CtrObjects { get; } = new(
         [
             // Om Nom
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: int.MaxValue),

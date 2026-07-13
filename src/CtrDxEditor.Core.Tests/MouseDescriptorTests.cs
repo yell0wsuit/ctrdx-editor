@@ -13,7 +13,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void MouseIsRegisteredUnderGapElement()
         {
-            ObjectDescriptor? gap = DescriptorTable.Default.For("gap");
+            ObjectDescriptor? gap = DescriptorTable.CtrObjects.For("gap");
             Assert.NotNull(gap);
             Assert.Equal("Mouse", gap.DisplayName);
             Assert.Equal(int.MaxValue, gap.MaxCount);
@@ -23,7 +23,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void MouseAliasIsNotASeparateDescriptor()
         {
-            Assert.False(DescriptorTable.Default.Knows("mouse"));
+            Assert.False(DescriptorTable.CtrObjects.Knows("mouse"));
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void GapExposesMouseAttributesWithShippedDefaults()
         {
-            ObjectDescriptor gap = DescriptorTable.Default.For("gap")!;
+            ObjectDescriptor gap = DescriptorTable.CtrObjects.For("gap")!;
 
             AttributeSpec angle = gap.Attributes.Single(a => a.Name == "angle");
             Assert.Equal(AttrType.Number, angle.Type);

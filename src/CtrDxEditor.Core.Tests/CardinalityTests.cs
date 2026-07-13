@@ -21,7 +21,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void TargetIsNeverAtCapacity()
         {
-            ObjectDescriptor target = DescriptorTable.Default.For("target")!;
+            ObjectDescriptor target = DescriptorTable.CtrObjects.For("target")!;
             IReadOnlyList<LevelObject> objects = [Obj("""<target x="1" y="2" />""")];
 
             Assert.False(Cardinality.IsAtCapacity(target, objects));
@@ -31,7 +31,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void StarsAreNeverAtCapacity()
         {
-            ObjectDescriptor star = DescriptorTable.Default.For("star")!;
+            ObjectDescriptor star = DescriptorTable.CtrObjects.For("star")!;
             IReadOnlyList<LevelObject> objects =
             [
                 Obj("""<star x="1" y="1" />"""),
@@ -45,8 +45,8 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CandyAndTargetAreNeverAtCapacity()
         {
-            ObjectDescriptor candy = DescriptorTable.Default.For("candy")!;
-            ObjectDescriptor target = DescriptorTable.Default.For("target")!;
+            ObjectDescriptor candy = DescriptorTable.CtrObjects.For("candy")!;
+            ObjectDescriptor target = DescriptorTable.CtrObjects.For("target")!;
             IReadOnlyList<LevelObject> objects =
             [
                 Obj("""<candy x="1" y="1" />"""),

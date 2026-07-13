@@ -13,7 +13,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void TransporterIsRegistered()
         {
-            ObjectDescriptor? d = DescriptorTable.Default.For("transporter");
+            ObjectDescriptor? d = DescriptorTable.CtrObjects.For("transporter");
             Assert.NotNull(d);
             Assert.Equal("Conveyor", d!.DisplayName);
             Assert.Equal(int.MaxValue, d.MaxCount);
@@ -23,7 +23,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void TransporterExposesGameAttributesWithDefaults()
         {
-            ObjectDescriptor d = DescriptorTable.Default.For("transporter")!;
+            ObjectDescriptor d = DescriptorTable.CtrObjects.For("transporter")!;
 
             AttributeSpec velocity = d.Attributes.Single(a => a.Name == "velocity");
             Assert.Equal(AttrType.Number, velocity.Type);
@@ -43,7 +43,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void TransporterTypeAttributeHasNoDefaultSoNewBeltsAreAutomatic()
         {
-            ObjectDescriptor d = DescriptorTable.Default.For("transporter")!;
+            ObjectDescriptor d = DescriptorTable.CtrObjects.For("transporter")!;
             AttributeSpec type = d.Attributes.Single(a => a.Name == "type");
             Assert.Null(type.Default);
         }

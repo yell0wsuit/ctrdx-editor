@@ -85,7 +85,7 @@ namespace CtrDxEditor.Localization
         /// <summary>Display name for a level element, falling back to its descriptor then its raw id.</summary>
         public static string ObjectName(string elementName)
         {
-            ObjectDescriptor? descriptor = DescriptorTable.Default.For(elementName);
+            ObjectDescriptor? descriptor = DescriptorTable.CtrObjects.For(elementName);
             string localizationName = descriptor?.LocalizationName ?? elementName;
             return Strings.TryGetValue($"Object.{localizationName}", out string? value)
                 ? value

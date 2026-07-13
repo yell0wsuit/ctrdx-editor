@@ -11,7 +11,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void LanternHasCandyCapturedBoolDefaultFalse()
         {
-            ObjectDescriptor? lantern = DescriptorTable.Default.For("lantern");
+            ObjectDescriptor? lantern = DescriptorTable.CtrObjects.For("lantern");
             Assert.NotNull(lantern);
 
             AttributeSpec attr = Assert.Single(lantern.Attributes);

@@ -21,7 +21,7 @@ namespace CtrDxEditor.ViewModels
     public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
     {
         private const int UndoHistoryLimit = 100;
-        private readonly DescriptorTable _descriptors = DescriptorTable.Default;
+        private readonly DescriptorTable _descriptors = DescriptorTable.CtrObjects;
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
         private HistoryState? _pendingUndoTransaction;

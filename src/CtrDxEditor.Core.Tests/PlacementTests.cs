@@ -13,7 +13,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateObjectSetsCoordinatesAndDefaults()
         {
-            ObjectDescriptor star = DescriptorTable.Default.For("star")!;
+            ObjectDescriptor star = DescriptorTable.CtrObjects.For("star")!;
 
             LevelObject obj = Placement.CreateObject(star, x: 40, y: 60);
 
@@ -27,7 +27,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateObjectSkipsAttributesWithoutADefault()
         {
-            ObjectDescriptor grab = DescriptorTable.Default.For("grab")!;
+            ObjectDescriptor grab = DescriptorTable.CtrObjects.For("grab")!;
 
             LevelObject obj = Placement.CreateObject(grab, x: 1, y: 2);
 
@@ -39,7 +39,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateElectroObjectSetsTimingDefaults()
         {
-            ObjectDescriptor electro = DescriptorTable.Default.For("electro")!;
+            ObjectDescriptor electro = DescriptorTable.CtrObjects.For("electro")!;
 
             LevelObject obj = Placement.CreateObject(electro, x: 250, y: 186);
 
@@ -55,7 +55,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateSockObjectSetsTeleportGroupDefault()
         {
-            ObjectDescriptor sock = DescriptorTable.Default.For("sock")!;
+            ObjectDescriptor sock = DescriptorTable.CtrObjects.For("sock")!;
 
             LevelObject obj = Placement.CreateObject(sock, x: 120, y: 240);
 
