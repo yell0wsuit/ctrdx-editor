@@ -100,7 +100,7 @@ namespace CtrDxEditor.Rendering
         {
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
             string text = obj.GetAttr("text") ?? string.Empty;
-            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
+            using SKFont font = TutorialFont.CreateFont(sprites);
             int lineCount = TutorialTextLayout.Wrap(text, width, value => font.MeasureText(value)).Count;
             double height = lineCount > 0
                 ? ((lineCount - 1) * TutorialFont.LineAdvanceLevel)
@@ -118,7 +118,7 @@ namespace CtrDxEditor.Rendering
                 return 0;
             }
 
-            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
+            using SKFont font = TutorialFont.CreateFont(sprites);
             double max = 0;
             foreach (string line in text.Replace("\r\n", "\n").Split('\n'))
             {

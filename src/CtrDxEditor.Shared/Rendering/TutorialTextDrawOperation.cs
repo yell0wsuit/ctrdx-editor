@@ -17,7 +17,13 @@ namespace CtrDxEditor.Rendering
     /// <summary>Lazily loaded gooddog typeface used by the game tutorial font and its level-space metrics.</summary>
     internal static class TutorialFont
     {
-        /// <summary>Game SmallFont size 72 game pixels divided by map scale 3.</summary>
+        /// <summary>
+        /// Tutorial glyph pixel height in level units: the game SmallFont's 72-px height / map scale 3.
+        /// The game renders with FontStashSharp, whose size is the glyph pixel height (stb_truetype's
+        /// ScaleForPixelHeight = ascent − descent), not the em size. <see cref="CreateFont"/> sizes the
+        /// SKFont to this pixel height so the editor matches the game rather than rendering ~30% larger
+        /// (SKFont.Size is the em size, and gooddog's em is only ~76% of its ascent−descent height).
+        /// </summary>
         public const double FontSizeLevel = 24.0;
 
         /// <summary>Line advance including the game's five-pixel line spacing.</summary>
@@ -27,6 +33,8 @@ namespace CtrDxEditor.Rendering
         public const double TopSpacingLevel = 25.0 / 3.0;
 
         private static SKTypeface? TypefaceCache { get; set; }
+
+        private static float? EmSizeCache { get; set; }
 
         /// <summary>Returns the gooddog typeface, or Skia's default when the font asset is unavailable.</summary>
         /// <param name="sprites">Sprite cache whose platform content store supplies the font bytes.</param>
@@ -51,6 +59,29 @@ namespace CtrDxEditor.Rendering
 
             TypefaceCache ??= SKTypeface.Default;
             return TypefaceCache;
+        }
+
+        /// <summary>
+        /// Builds an <see cref="SKFont"/> whose pixel height (descent − ascent) equals
+        /// <see cref="FontSizeLevel"/> level units, matching the game's FontStashSharp pixel-height sizing.
+        /// SKFont.Size is the em size, so we scale it by the font's (pixel height / em) ratio, probed once.
+        /// </summary>
+        /// <param name="sprites">Sprite cache supplying the typeface.</param>
+        /// <returns>A font sized to the game's glyph pixel height.</returns>
+        public static SKFont CreateFont(SpriteCache sprites)
+        {
+            SKTypeface typeface = GetTypeface(sprites);
+            if (EmSizeCache is null)
+            {
+                using SKFont probe = new(typeface, 100f);
+                SKFontMetrics metrics = probe.Metrics;
+                float heightPer100 = metrics.Descent - metrics.Ascent;
+                EmSizeCache = heightPer100 > 0
+                    ? (float)(FontSizeLevel * 100f / heightPer100)
+                    : (float)FontSizeLevel;
+            }
+
+            return new SKFont(typeface, EmSizeCache.Value);
         }
     }
 
@@ -106,7 +137,7 @@ namespace CtrDxEditor.Rendering
 
             using ISkiaSharpApiLease lease = leaseFeature.Lease();
             SKCanvas canvas = lease.SkCanvas;
-            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
+            using SKFont font = TutorialFont.CreateFont(sprites);
             using SKPaint paint = new()
             {
                 IsAntialias = true,
