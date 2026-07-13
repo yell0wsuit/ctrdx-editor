@@ -18,11 +18,13 @@ namespace CtrDxEditor.Tests
         }
 
         [Fact]
-        public void RocketLauncherUsesQuad0()
+        public void RocketLauncherUsesQuad0AtFullScale()
         {
             VisualDescriptor? launcher = VisualDescriptorMap.For("rocket_launcher");
             Assert.NotNull(launcher);
             Assert.Equal(0, launcher.Layers[0].Quad);
+            // LoadRocket leaves the marker Image at the default scale 1.0 (only the body is 0.7).
+            Assert.Equal(1.0, launcher.Scale);
         }
 
         [Fact]

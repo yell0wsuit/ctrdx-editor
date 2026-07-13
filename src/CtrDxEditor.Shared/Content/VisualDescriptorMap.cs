@@ -285,8 +285,10 @@ namespace CtrDxEditor.Content
             new("rocket", [new SpriteLayer(RocketJson, RocketImageBase, 10)], Scale: 0.7),
 
             // Rocket launcher base (quad 0, frame_00_launcher). Non-placeable; drawn upright behind the
-            // body only when isRotatable, matching LoadRocket's decalsLayer marker.
-            new("rocket_launcher", [new SpriteLayer(RocketJson, RocketImageBase, 0)], Scale: 0.7),
+            // body only when isRotatable, matching LoadRocket's decalsLayer marker. The game leaves the
+            // marker Image at the default scale 1.0 (only the rocket body is scaled to 0.7), so the base
+            // renders larger than the body.
+            new("rocket_launcher", [new SpriteLayer(RocketJson, RocketImageBase, 0)]),
 
             // Tutorial icons map tutorial01..tutorial11 to tutorial_signs quads 0..10.
             new("tutorial01", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 0)]),
