@@ -292,6 +292,7 @@
       <Color x:Key="EditorColor.SurfacePreview">#F1F5F9</Color>  <!-- slate-100 -->
       <Color x:Key="EditorColor.TextSubtle">#62748E</Color>  <!-- slate-500 -->
       <Color x:Key="EditorColor.TextDisabled">#90A1B9</Color>  <!-- slate-400 -->
+      <Color x:Key="EditorColor.TutorialPaletteOverlay">#00FFFFFF</Color>
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
       <Color x:Key="EditorColor.CanvasBorder">#90A1B9</Color>  <!-- slate-400 -->
@@ -334,6 +335,7 @@
       <Color x:Key="EditorColor.SurfacePreview">#1D293D</Color>  <!-- slate-800 -->
       <Color x:Key="EditorColor.TextSubtle">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.TextDisabled">#62748E</Color>  <!-- slate-500 -->
+      <Color x:Key="EditorColor.TutorialPaletteOverlay">#FFFFFFFF</Color>
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
       <Color x:Key="EditorColor.CanvasBorder">#45556C</Color>  <!-- slate-600 -->
@@ -377,6 +379,7 @@
   <SolidColorBrush x:Key="EditorBrush.Surface.Preview" Color="{DynamicResource EditorColor.SurfacePreview}" />
   <SolidColorBrush x:Key="EditorBrush.Text.Subtle" Color="{DynamicResource EditorColor.TextSubtle}" />
   <SolidColorBrush x:Key="EditorBrush.Text.Disabled" Color="{DynamicResource EditorColor.TextDisabled}" />
+  <SolidColorBrush x:Key="EditorBrush.TutorialPaletteOverlay" Color="{DynamicResource EditorColor.TutorialPaletteOverlay}" />
 
   <!--
     Override FluentTheme's CheckBox disabled-foreground keys so disabled checkbox

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -68,6 +69,19 @@ namespace CtrDxEditor.Tests
             Assert.Equal(255, matrix[14]);
         }
 
+        /// <summary>Palette drag ghosts use the tutorial renderer so dark-theme inversion is preserved.</summary>
+        [Fact]
+        public void PaletteDragPreviewUsesTutorialIconRenderer()
+        {
+            string source = File.ReadAllText(SourcePath(
+                "CtrDxEditor.Shared",
+                "Rendering",
+                "LevelCanvas.Rendering.cs"));
+
+            Assert.Contains("TutorialObject.IsImage(dragPreviewElement)", source, StringComparison.Ordinal);
+            Assert.Contains("TutorialRenderer.DrawIcon(", source, StringComparison.Ordinal);
+        }
+
         /// <summary>Expands tutorial text selection bounds to contain wrapped lines.</summary>
         [Fact]
         public void WrappedTextSelectionBoundsIncludeEveryLine()
@@ -85,6 +99,18 @@ namespace CtrDxEditor.Tests
             LevelBounds bounds = (LevelBounds)selectionBounds.Invoke(null, [sprites, text, 0, 0, false])!;
 
             Assert.True(bounds.H > 50);
+        }
+
+        private static string SourcePath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                    ?? throw new InvalidOperationException("Could not locate src directory.");
+            }
+
+            return Path.Combine([path, .. parts]);
         }
 
         /// <summary>Treats tutorial text coordinates as the game's top-left wrap-box origin.</summary>

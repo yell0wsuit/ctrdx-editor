@@ -48,8 +48,12 @@ namespace CtrDxEditor.Tests
             vm.PaletteSearchText = needle;
 
             Assert.NotEmpty(vm.PaletteView);
+            Assert.Contains(vm.PaletteView, i =>
+                i.DisplayName.Contains(needle, System.StringComparison.OrdinalIgnoreCase));
             Assert.All(vm.PaletteView, i =>
-                Assert.Contains(needle, i.DisplayName, System.StringComparison.OrdinalIgnoreCase));
+                Assert.True(
+                    i.DisplayName.Contains(needle, System.StringComparison.OrdinalIgnoreCase)
+                    || i.Element.Contains(needle, System.StringComparison.OrdinalIgnoreCase)));
         }
 
         /// <summary>Search also matches the raw XML element name, not just the display name.</summary>

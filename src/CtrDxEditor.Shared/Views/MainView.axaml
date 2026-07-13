@@ -276,8 +276,15 @@
                       <ctl:MarqueeTextBlock Grid.Column="0" Text="{Binding DisplayName}"
                                             ForceActive="{Binding IsDragging}"
                                             VerticalAlignment="Center" />
-                      <Image Grid.Column="1" Source="{Binding Icon}" Width="28" Height="28"
-                             Stretch="Uniform" Margin="6,0,0,0" />
+                      <Grid Grid.Column="1" Width="28" Height="28" Margin="6,0,0,0">
+                        <Image Source="{Binding Icon}" Stretch="Uniform" />
+                        <Border IsVisible="{Binding InvertOnDarkTheme}"
+                                Background="{DynamicResource EditorBrush.TutorialPaletteOverlay}">
+                          <Border.OpacityMask>
+                            <ImageBrush Source="{Binding Icon}" Stretch="Uniform" />
+                          </Border.OpacityMask>
+                        </Border>
+                      </Grid>
                     </Grid>
                   </Button>
                 </DataTemplate>

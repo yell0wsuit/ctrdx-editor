@@ -271,6 +271,26 @@ namespace CtrDxEditor.Rendering
                         TutorialRenderer.DrawText(context, v, sprites, previewText, new Rect(Bounds.Size), previewDark);
                     }
                 }
+                else if (TutorialObject.IsImage(dragPreviewElement))
+                {
+                    // Tutorial line art needs the same dark-theme inversion as a placed icon.
+                    using (context.PushOpacity(0.7))
+                    {
+                        bool previewDark = ActiveBackground == 0 && ActualThemeVariant == ThemeVariant.Dark;
+                        LevelObject previewIcon = new(new XElement(
+                            dragPreviewElement,
+                            new XAttribute("x", ((int)Math.Round(_dragPreviewLevel.X)).ToString(CultureInfo.InvariantCulture)),
+                            new XAttribute("y", ((int)Math.Round(_dragPreviewLevel.Y)).ToString(CultureInfo.InvariantCulture)),
+                            new XAttribute("angle", "0")));
+                        TutorialRenderer.DrawIcon(
+                            context,
+                            v,
+                            sprites,
+                            previewIcon,
+                            new Rect(Bounds.Size),
+                            previewDark);
+                    }
+                }
                 else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
                     doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)

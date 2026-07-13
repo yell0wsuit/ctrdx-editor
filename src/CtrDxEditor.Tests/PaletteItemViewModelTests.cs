@@ -22,5 +22,19 @@ namespace CtrDxEditor.Tests
             Assert.True(item.IsDragging);
             Assert.Equal(nameof(PaletteItemViewModel.IsDragging), changed);
         }
+
+        /// <summary>Only monochrome tutorial icons request the dark-theme palette treatment.</summary>
+        [Theory]
+        [InlineData("tutorial01", true)]
+        [InlineData("tutorial09", true)]
+        [InlineData("tutorial10", false)]
+        [InlineData("tutorial11", false)]
+        [InlineData("candy", false)]
+        public void InvertOnDarkThemeMatchesTutorialIconColorRules(string element, bool expected)
+        {
+            PaletteItemViewModel item = new(element, "Object", enabled: true, icon: null);
+
+            Assert.Equal(expected, item.InvertOnDarkTheme);
+        }
     }
 }
