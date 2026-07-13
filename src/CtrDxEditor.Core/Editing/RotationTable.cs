@@ -39,6 +39,18 @@ namespace CtrDxEditor.Core.Editing
             ["pump"] = new RotationSpec(DisplayOffset: 90),
             // SteamTube.InitWithPositionAngle stores and renders the authored angle directly.
             ["steamTube"] = new RotationSpec(DisplayOffset: 0),
+            // Tutorial images store and render the authored angle directly.
+            ["tutorial01"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial02"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial03"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial04"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial05"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial06"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial07"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial08"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial09"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial10"] = new RotationSpec(DisplayOffset: 0),
+            ["tutorial11"] = new RotationSpec(DisplayOffset: 0),
             // Mouse.Update sets the body container rotation to the authored angle directly (no offset);
             // the hole stays upright, so only the body layer is rotated by DrawObject.
             ["gap"] = new RotationSpec(DisplayOffset: 0),

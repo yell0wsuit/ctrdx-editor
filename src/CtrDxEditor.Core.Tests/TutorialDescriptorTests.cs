@@ -41,5 +41,24 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(d.Attributes, a => a.Name == "text" && a.Type == AttrType.Text);
             Assert.Contains(d.Attributes, a => a.Name == "width" && a.Type == AttrType.Whole);
         }
+
+        /// <summary>Rotates every tutorial icon using its authored angle without an offset.</summary>
+        [Fact]
+        public void AllIconsRotateWithZeroOffset()
+        {
+            for (int q = 0; q < TutorialObject.IconCount; q++)
+            {
+                RotationSpec? spec = RotationTable.For(TutorialObject.TagForQuad(q));
+                Assert.NotNull(spec);
+                Assert.Equal(0, spec!.DisplayOffset);
+            }
+        }
+
+        /// <summary>Does not expose rotation for tutorial text.</summary>
+        [Fact]
+        public void TutorialTextDoesNotRotate()
+        {
+            Assert.Null(RotationTable.For("tutorialText"));
+        }
     }
 }
