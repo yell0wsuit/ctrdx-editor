@@ -61,6 +61,13 @@ namespace CtrDxEditor.Core.Editing
                 new("electro", new(200, 120, 433, 10), new(200 / 3.0, 40, 433 / 3.0, 10 / 3.0), 833, 250),
                 new("bouncer1", new(318.5, 120, 196, 10), new(318.5 / 3.0, 110.0 / 3.0, 196 / 3.0, 30.0 / 3.0), 833, 250),
                 new("bouncer2", new(264.5, 120, 304, 10), new(264.5 / 3.0, 110.0 / 3.0, 304 / 3.0, 30.0 / 3.0), 833, 250),
+                // Rocket: bb from LoadRockets.cs quad 10 (sourceSize 619x418): quadCenter (288,209),
+                // quadSize (358*0.6, 179*0.05). No WP7 box, so Phone = Desktop/3 reproduces it after the
+                // x3 phone scaling. Drawn (and hit-tested) at sprite.Scale 0.7, passed in by DrawHitbox.
+                new("rocket",
+                    new(180.6, 204.525, 214.8, 8.95),
+                    new(180.6 / 3.0, 204.525 / 3.0, 214.8 / 3.0, 8.95 / 3.0),
+                    619, 418),
             }.ToDictionary(d => d.Element);
 
         /// <summary>

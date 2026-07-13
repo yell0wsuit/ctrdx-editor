@@ -197,5 +197,34 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(SockHitbox.Compute(10, 20), desktop);
             Assert.Equal(desktop, phone);
         }
+
+        /// <summary>
+        /// The rocket box is the thin launch strip from LoadRockets.cs quad 10 (0.6x width, 0.05x height),
+        /// centered on the quad. At scale 3 (s=1): center x = quadCenter.X - RefWidth/2 = 288 - 309.5 = -21.5,
+        /// centered vertically; width 214.8, height 8.95.
+        /// </summary>
+        [Fact]
+        public void RocketHasThinLaunchStripHitbox()
+        {
+            LevelBounds? box = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Desktop);
+            Assert.NotNull(box);
+            Assert.Equal(-128.9, box.Value.X, 3);
+            Assert.Equal(-4.475, box.Value.Y, 3);
+            Assert.Equal(214.8, box.Value.W, 3);
+            Assert.Equal(8.95, box.Value.H, 3);
+        }
+
+        /// <summary>The rocket has no WP7-specific box, so the phone model matches the desktop model.</summary>
+        [Fact]
+        public void RocketPhoneHitboxMatchesDesktop()
+        {
+            LevelBounds? desktop = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Desktop);
+            LevelBounds? phone = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Phone);
+            Assert.NotNull(phone);
+            Assert.Equal(desktop!.Value.X, phone!.Value.X, 3);
+            Assert.Equal(desktop.Value.Y, phone.Value.Y, 3);
+            Assert.Equal(desktop.Value.W, phone.Value.W, 3);
+            Assert.Equal(desktop.Value.H, phone.Value.H, 3);
+        }
     }
 }
