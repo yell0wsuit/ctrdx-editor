@@ -183,7 +183,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("length", AttrType.Number, ConveyorObject.DefaultLength),
                 new AttributeSpec("width", AttrType.Number, ConveyorObject.DefaultWidth),
                 new AttributeSpec("angle", AttrType.Number, ConveyorObject.DefaultAngle),
-                new AttributeSpec("type", AttrType.Enum, null, EnumValues: ["manual"]),
+                new AttributeSpec("type", AttrType.Enum, ConveyorObject.DefaultType, EnumValues: ["manual"]),
             ], MaxCount: int.MaxValue),
         ]);
     }

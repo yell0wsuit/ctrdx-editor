@@ -39,13 +39,13 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("0", d.Attributes.Single(a => a.Name == "angle").Default);
         }
 
-        /// <summary>The type attribute has no default so freshly placed belts are automatic.</summary>
+        /// <summary>Freshly placed conveyors default to the game's manual type.</summary>
         [Fact]
-        public void TransporterTypeAttributeHasNoDefaultSoNewBeltsAreAutomatic()
+        public void TransporterTypeAttributeDefaultsToManual()
         {
             ObjectDescriptor d = DescriptorTable.CtrObjects.For("transporter")!;
             AttributeSpec type = d.Attributes.Single(a => a.Name == "type");
-            Assert.Null(type.Default);
+            Assert.Equal("manual", type.Default);
         }
     }
 }

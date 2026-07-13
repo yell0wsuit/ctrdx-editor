@@ -30,6 +30,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Default belt angle used by palette placement.</summary>
         public const string DefaultAngle = "0";
 
+        /// <summary>Default control mode used by palette placement.</summary>
+        public const string DefaultType = "manual";
+
         /// <summary>Creates the exact automatic conveyor shown while dragging from the palette.</summary>
         /// <param name="x">Anchor X coordinate.</param>
         /// <param name="y">Anchor Y coordinate.</param>
@@ -44,6 +47,7 @@ namespace CtrDxEditor.Core.Editing
             element.SetAttributeValue("length", DefaultLength);
             element.SetAttributeValue("width", DefaultWidth);
             element.SetAttributeValue("angle", DefaultAngle);
+            element.SetAttributeValue("type", DefaultType);
             return new LevelObject(element);
         }
 

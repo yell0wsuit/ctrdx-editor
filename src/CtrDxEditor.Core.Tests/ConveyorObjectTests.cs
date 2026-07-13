@@ -78,7 +78,7 @@ namespace CtrDxEditor.Core.Tests
 
         /// <summary>The palette drag ghost and placed object share the authored default preset.</summary>
         [Fact]
-        public void PresetCreatesDefaultAutomaticConveyor()
+        public void PresetCreatesDefaultManualConveyor()
         {
             LevelObject belt = ConveyorObject.CreatePreset(120, 240);
 
@@ -89,8 +89,8 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("250", belt.GetAttr("length"));
             Assert.Equal("50", belt.GetAttr("width"));
             Assert.Equal("0", belt.GetAttr("angle"));
-            Assert.Null(belt.GetAttr("type"));
-            Assert.True(ConveyorObject.IsAuto(belt));
+            Assert.Equal("manual", belt.GetAttr("type"));
+            Assert.False(ConveyorObject.IsAuto(belt));
         }
 
         /// <summary>Descriptor placement cannot drift away from the drag-preview preset.</summary>
