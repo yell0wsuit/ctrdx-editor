@@ -46,6 +46,8 @@ namespace CtrDxEditor.Content
         private const string MouseImageBase = "images/obj_mouse";
         private const string ConveyorJson = "images/obj_conveyor.json";
         private const string ConveyorImageBase = "images/obj_conveyor";
+        private const string TutorialSignsJson = "images/tutorial_signs.json";
+        private const string TutorialSignsImageBase = "images/tutorial_signs";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -275,6 +277,19 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(ConveyorJson, ConveyorImageBase, 5),
                 new SpriteLayer(ConveyorJson, ConveyorImageBase, 6),
             ]),
+
+            // Tutorial icons map tutorial01..tutorial11 to tutorial_signs quads 0..10.
+            new("tutorial01", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 0)]),
+            new("tutorial02", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 1)]),
+            new("tutorial03", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 2)]),
+            new("tutorial04", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 3)]),
+            new("tutorial05", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 4)]),
+            new("tutorial06", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 5)]),
+            new("tutorial07", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 6)]),
+            new("tutorial08", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 7)]),
+            new("tutorial09", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 8)]),
+            new("tutorial10", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 9)]),
+            new("tutorial11", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 10)]),
 
             // Pump object
             new("pump",
