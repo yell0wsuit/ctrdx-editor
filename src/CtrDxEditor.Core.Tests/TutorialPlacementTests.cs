@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
@@ -36,6 +38,28 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("en", o.GetAttr("locale"));
             Assert.Equal("140", o.GetAttr("width"));
             Assert.Equal("Tutorial text", o.GetAttr("text"));
+        }
+
+        /// <summary>Preserves tutorial attributes and non-English sibling layers without mutation.</summary>
+        [Fact]
+        public void MultiLocaleTutorialMapRoundTripsUnchanged()
+        {
+            const string xml =
+                "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"640\" height=\"480\"/>"
+                + "<gameDesign twoParts=\"false\"/></layer>"
+                + "<layer name=\"Objects\">"
+                + "<tutorialText x=\"215\" y=\"331\" locale=\"en\" text=\"TUTORIAL_LVL_8_1_01\" width=\"140\"/>"
+                + "<tutorial04 x=\"222\" y=\"429\" locale=\"en\" angle=\"35\" moveSpeed=\"100\" rotateSpeed=\"100\"/>"
+                + "</layer>"
+                + "<layer name=\"Ru\">"
+                + "<tutorialText x=\"229\" y=\"328\" locale=\"ru\" text=\"TUTORIAL_LVL_8_1_01\" width=\"140\"/>"
+                + "</layer></map>";
+
+            LevelDocument doc = LevelDocument.Parse(xml);
+            XDocument before = XDocument.Parse(xml);
+            XDocument after = XDocument.Parse(doc.Save());
+
+            Assert.True(XNode.DeepEquals(before, after));
         }
     }
 }
