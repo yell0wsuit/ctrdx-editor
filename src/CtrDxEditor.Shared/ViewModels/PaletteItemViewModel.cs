@@ -5,7 +5,7 @@ using CtrDxEditor.Core.Editing;
 namespace CtrDxEditor.ViewModels
 {
     /// <summary>Palette entry for one placeable object type.</summary>
-    public sealed partial class PaletteItemViewModel(string element, string displayName, bool enabled, IImage? icon)
+    public sealed partial class PaletteItemViewModel(string element, string displayName, bool enabled, IImage? icon, string groupName)
         : ViewModelBase
     {
         /// <summary>The raw object element name to place.</summary>
@@ -13,6 +13,23 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>The localized display name shown in the palette.</summary>
         public string DisplayName { get; } = displayName;
+
+        /// <summary>The localized game/group label this item belongs to.</summary>
+        public string GroupName { get; } = groupName;
+
+        /// <summary>True when this item is the first visible item of its group (renders a section header).</summary>
+        public bool ShowGroupHeader
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
+
+        /// <summary>True when this item opens a group other than the first visible one (renders a divider above).</summary>
+        public bool ShowDivider
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
 
         /// <summary>Small sprite preview shown in the palette.</summary>
         public IImage? Icon { get; } = icon;

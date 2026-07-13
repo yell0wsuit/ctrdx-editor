@@ -96,39 +96,6 @@ namespace CtrDxEditor.Tests
                 Assert.Contains(needle, i.DisplayName, StringComparison.OrdinalIgnoreCase));
         }
 
-        /// <summary>The palette reports the game whose object catalog it displays.</summary>
-        [Fact]
-        public void CurrentGameNameIsCutTheRope()
-        {
-            Assert.Equal("Cut the Rope", Vm().CtrOriginalPalette);
-        }
-
-        /// <summary>With no level open, the game-name header stays hidden.</summary>
-        [Fact]
-        public void GameNameHiddenWithoutDocument()
-        {
-            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
-            Assert.False(vm.ShowGameName);
-        }
-
-        /// <summary>With a level open and no search, the game-name header shows.</summary>
-        [Fact]
-        public void GameNameShownWithDocumentAndEmptySearch()
-        {
-            Assert.True(Vm().ShowGameName);
-        }
-
-        /// <summary>An active search hides the game-name header to reduce clutter.</summary>
-        [Fact]
-        public void GameNameHiddenWhileSearching()
-        {
-            EditorViewModel vm = Vm();
-
-            vm.PaletteSearchText = "candy";
-
-            Assert.False(vm.ShowGameName);
-        }
-
         /// <summary>Closing a level clears both the source palette and its filtered view.</summary>
         [Fact]
         public void CloseLevelClearsPaletteView()

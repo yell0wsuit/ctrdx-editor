@@ -11,7 +11,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void IsDraggingRaisesPropertyChangedAndUpdatesValue()
         {
-            PaletteItemViewModel item = new("candy", "Candy", enabled: true, icon: null);
+            PaletteItemViewModel item = new("candy", "Candy", enabled: true, icon: null, groupName: "Cut the Rope");
             string? changed = null;
             item.PropertyChanged += (_, e) => changed = e.PropertyName;
 
@@ -32,7 +32,7 @@ namespace CtrDxEditor.Tests
         [InlineData("candy", false)]
         public void InvertOnDarkThemeMatchesTutorialIconColorRules(string element, bool expected)
         {
-            PaletteItemViewModel item = new(element, "Object", enabled: true, icon: null);
+            PaletteItemViewModel item = new(element, "Object", enabled: true, icon: null, groupName: "Cut the Rope");
 
             Assert.Equal(expected, item.InvertOnDarkTheme);
         }

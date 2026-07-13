@@ -63,9 +63,6 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Palette items available for placement.</summary>
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];
 
-        /// <summary>Display name of the game whose objects fill the palette.</summary>
-        public string CtrOriginalPalette { get; } = "Cut the Rope";
-
         /// <summary>Palette items after applying <see cref="PaletteSearchText"/>.</summary>
         public ObservableCollection<PaletteItemViewModel> PaletteView { get; } = [];
 
@@ -98,12 +95,6 @@ namespace CtrDxEditor.ViewModels
         {
             _savedBaselineXml = ToXml();
         }
-
-        /// <summary>
-        /// True when the palette's game-name header should show: a level is open and no
-        /// search is active (the header is hidden while searching to reduce clutter).
-        /// </summary>
-        public bool ShowGameName => HasDocument && string.IsNullOrWhiteSpace(PaletteSearchText);
 
         /// <summary>Whether the selected object has real polyline movement with direct-edit handles.</summary>
         public bool CanEditPolyline => SelectedObject is { } obj
@@ -355,7 +346,8 @@ namespace CtrDxEditor.ViewModels
                 bool enabled = Document is not null && LockedObject is null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled,
-                    Sprites.GetThumbnail(PaletteSpriteKey(d.ElementName), ActiveCandySkin, ActiveOmNomSupport)));
+                    Sprites.GetThumbnail(PaletteSpriteKey(d.ElementName), ActiveCandySkin, ActiveOmNomSupport),
+                    GroupLabel(d.Game)));
             }
             RebuildPaletteView();
         }
@@ -363,26 +355,55 @@ namespace CtrDxEditor.ViewModels
         partial void OnPaletteSearchTextChanged(string value)
         {
             RebuildPaletteView();
-            OnPropertyChanged(nameof(ShowGameName));
         }
 
         /// <summary>
         /// Repopulates <see cref="PaletteView"/> from <see cref="Palette"/> and the search text,
-        /// matching against both the display name and the raw XML element name.
+        /// matching against both the display name and the raw XML element name. The first visible item
+        /// of each group carries a section header; groups after the first also carry a divider.
         /// </summary>
         public void RebuildPaletteView()
         {
             PaletteView.Clear();
             string needle = PaletteSearchText?.Trim() ?? "";
+            string? currentGroup = null;
+            bool firstGroup = true;
             foreach (PaletteItemViewModel item in Palette)
             {
-                if (needle.Length == 0
-                    || item.DisplayName.Contains(needle, StringComparison.OrdinalIgnoreCase)
-                    || item.Element.Contains(needle, StringComparison.OrdinalIgnoreCase))
+                if (needle.Length != 0
+                    && !item.DisplayName.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                    && !item.Element.Contains(needle, StringComparison.OrdinalIgnoreCase))
                 {
-                    PaletteView.Add(item);
+                    continue;
                 }
+
+                bool newGroup = item.GroupName != currentGroup;
+                item.ShowGroupHeader = newGroup;
+                item.ShowDivider = newGroup && !firstGroup;
+                if (newGroup)
+                {
+                    currentGroup = item.GroupName;
+                    firstGroup = false;
+                }
+                PaletteView.Add(item);
             }
+        }
+
+        /// <summary>Localized palette section label for a descriptor's Game, falling back to the raw value.</summary>
+        private static string GroupLabel(string game)
+        {
+            string key = game switch
+            {
+                "Cut the Rope" => "Palette.Group.CutTheRope",
+                "Cut the Rope: Experiments" => "Palette.Group.Experiments",
+                _ => "",
+            };
+            if (key.Length == 0)
+            {
+                return game;
+            }
+            string localized = Localizer.Get(key);
+            return localized == key ? game : localized;
         }
 
         private static string PaletteSpriteKey(string element)
@@ -556,7 +577,6 @@ namespace CtrDxEditor.ViewModels
         partial void OnDocumentChanged(LevelDocument? value)
         {
             OnPropertyChanged(nameof(HasDocument));
-            OnPropertyChanged(nameof(ShowGameName));
         }
 
         partial void OnAnimationPreviewModeChanged(AnimationPreviewMode value)

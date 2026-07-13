@@ -30,6 +30,8 @@
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",
     "Palette.SearchPlaceholder": "Search…",
+    "Palette.Group.CutTheRope": "Cut the Rope",
+    "Palette.Group.Experiments": "Cut the Rope: Experiments",
 
     "Dialog.Open.Title": "Open level XML",
     "Dialog.Save.Title": "Save level XML",
