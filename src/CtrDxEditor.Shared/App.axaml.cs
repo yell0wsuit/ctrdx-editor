@@ -69,22 +69,30 @@ namespace CtrDxEditor
 
             // Either no content is installed, or installed content passed the cheap existence check
             // yet failed to actually load (wrong-platform bundle, corrupt atlas, ...): run setup.
-            ContentSetupViewModel vm = new(
-                _startup.Installer,
-                async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
-                allowQuit: allowQuit,
-                allowManualDownload: true,
-                allowDownload: _startup.AllowDirectDownload,
-                downloadSizeLabel: _startup.DownloadSizeLabel,
-                manualDownloadUrl: _startup.ManualDownloadUrl);
-            ContentSetupDialog dialog = new() { DataContext = vm };
-            _ = await dialog.ShowAsync();
-
-            // Desktop may quit if the user dismissed setup without installing; the browser never quits.
-            if (allowQuit && root.DataContext is null)
+            // The dialog tries to block Escape while setup is mandatory, but the browser has no Quit
+            // action and cannot run without content, so if it is dismissed anyway (Escape) without
+            // installing, re-open it until content actually loads. Desktop instead quits on dismissal.
+            do
             {
-                desktop?.Shutdown();
+                ContentSetupViewModel vm = new(
+                    _startup.Installer,
+                    async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
+                    allowQuit: allowQuit,
+                    allowManualDownload: true,
+                    allowDownload: _startup.AllowDirectDownload,
+                    downloadSizeLabel: _startup.DownloadSizeLabel,
+                    manualDownloadUrl: _startup.ManualDownloadUrl);
+                ContentSetupDialog dialog = new() { DataContext = vm };
+                _ = await dialog.ShowAsync();
+
+                if (allowQuit && root.DataContext is null)
+                {
+                    // Desktop: dismissing setup without installing quits the app.
+                    desktop?.Shutdown();
+                    return;
+                }
             }
+            while (root.DataContext is null);
         }
 
         private async Task<bool> TryShowEditorAsync(Control root, IContentStore store)
