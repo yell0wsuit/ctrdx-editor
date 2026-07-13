@@ -286,6 +286,9 @@ namespace CtrDxEditor.Content
         /// <summary>Bitmap side (px) for the composited vinyl thumbnail; the palette scales it down to 28 px.</summary>
         private const int VinylThumbnailPx = 64;
 
+        /// <summary>Bitmap side for the complete conveyor palette thumbnail.</summary>
+        private const int ConveyorThumbnailPx = 32;
+
         private RenderTargetBitmap? BuildThumbnail(string element, int candySkin, int omNomSupport)
         {
             // The vinyl disc scales with its size and composes mirrored halves + handles, which the generic
@@ -297,6 +300,13 @@ namespace CtrDxEditor.Content
                 return GetSprite(element, candySkin, omNomSupport) is null
                     ? null
                     : Rendering.LevelSceneRenderer.RenderVinylThumbnail(this, VinylThumbnailPx);
+            }
+
+            if (UsesCompositedThumbnail(element))
+            {
+                return GetSprite("transporter_belt", candySkin, omNomSupport) is not { Layers.Count: >= 7 }
+                    ? null
+                    : Rendering.ConveyorRenderer.RenderThumbnail(this, ConveyorThumbnailPx);
             }
 
             ObjectSprite? sprite = GetSprite(element, candySkin, omNomSupport);
@@ -373,6 +383,11 @@ namespace CtrDxEditor.Content
                 }
             }
             return rtb;
+        }
+
+        private static bool UsesCompositedThumbnail(string element)
+        {
+            return element == ConveyorObject.Element;
         }
 
         /// <summary>Game-space layer offsets used only by the puff-free Steam Pipe thumbnail.</summary>

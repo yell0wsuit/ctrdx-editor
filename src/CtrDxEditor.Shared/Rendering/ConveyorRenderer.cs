@@ -1,7 +1,9 @@
 using System;
+using System.Globalization;
 
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -20,6 +22,44 @@ namespace CtrDxEditor.Rendering
     {
         private const int QuadPlate = 4;
         private const int QuadPlateArrow = 5;
+
+        /// <summary>Renders a complete default automatic conveyor for the object palette.</summary>
+        /// <param name="sprites">Sprite cache containing all seven transporter pieces.</param>
+        /// <param name="px">Square thumbnail side in pixels.</param>
+        /// <returns>The rendered thumbnail, or null for a non-positive size or empty layout.</returns>
+        public static RenderTargetBitmap? RenderThumbnail(SpriteCache sprites, int px)
+        {
+            if (px <= 0)
+            {
+                return null;
+            }
+
+            const double thumbnailLength = 100;
+            LevelObject belt = ConveyorObject.CreatePreset(0, 0);
+            belt.SetAttr("length", thumbnailLength.ToString(CultureInfo.InvariantCulture));
+            double length = thumbnailLength;
+            double width = double.Parse(ConveyorObject.DefaultWidth, CultureInfo.InvariantCulture);
+            ConveyorVisualLayout layout = ConveyorVisualLayout.Build(length, width, ConveyorObject.ArrowSign(belt));
+            LevelBounds bounds = layout.BeltLocalBounds();
+            if (bounds.W <= 0 || bounds.H <= 0)
+            {
+                return null;
+            }
+
+            const double margin = 1;
+            double available = Math.Max(1, px - (2 * margin));
+            double zoom = Math.Min(available / bounds.W, available / bounds.H);
+            double panX = ((px - (bounds.W * zoom)) / 2) - (bounds.X * zoom);
+            double panY = ((px - (bounds.H * zoom)) / 2) - (bounds.Y * zoom);
+            ViewTransform view = new(zoom, panX, panY);
+
+            RenderTargetBitmap rtb = new(new PixelSize(px, px), new Vector(96, 96));
+            using (DrawingContext ctx = rtb.CreateDrawingContext())
+            {
+                Draw(ctx, view, sprites, belt);
+            }
+            return rtb;
+        }
 
         /// <summary>Draws the belt for <paramref name="belt"/> using the transporter_belt pieces.</summary>
         /// <param name="ctx">Destination drawing context.</param>

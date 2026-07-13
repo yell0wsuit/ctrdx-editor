@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using CtrDxEditor.Core.Editing;
+
 namespace CtrDxEditor.Core.Descriptors
 {
     /// <summary>Lookup table of editable object descriptors keyed by XML element name.</summary>
@@ -176,11 +178,11 @@ namespace CtrDxEditor.Core.Descriptors
             // Conveyor belt
             new ObjectDescriptor("transporter", "Conveyor",
             [
-                new AttributeSpec("velocity", AttrType.Number, "10"),
-                new AttributeSpec("direction", AttrType.Enum, "forward", EnumValues: ["forward", "backward"]),
-                new AttributeSpec("length", AttrType.Number, "250"),
-                new AttributeSpec("width", AttrType.Number, "50"),
-                new AttributeSpec("angle", AttrType.Number, "0"),
+                new AttributeSpec("velocity", AttrType.Number, ConveyorObject.DefaultVelocity),
+                new AttributeSpec("direction", AttrType.Enum, ConveyorObject.DefaultDirection, EnumValues: ["forward", "backward"]),
+                new AttributeSpec("length", AttrType.Number, ConveyorObject.DefaultLength),
+                new AttributeSpec("width", AttrType.Number, ConveyorObject.DefaultWidth),
+                new AttributeSpec("angle", AttrType.Number, ConveyorObject.DefaultAngle),
                 new AttributeSpec("type", AttrType.Enum, null, EnumValues: ["manual"]),
             ], MaxCount: int.MaxValue),
         ]);

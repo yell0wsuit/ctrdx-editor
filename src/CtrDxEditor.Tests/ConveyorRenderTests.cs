@@ -150,5 +150,29 @@ namespace CtrDxEditor.Tests
             Assert.Equal(-1, Assert.Single(automatic.Pieces, p => p.Kind == ConveyorVisualPieceKind.Arrow).Direction);
             Assert.DoesNotContain(manual.Pieces, p => p.Kind == ConveyorVisualPieceKind.Arrow);
         }
+
+        /// <summary>The palette crop includes the frame overhang at both transporter ends.</summary>
+        [Fact]
+        public void ConveyorThumbnailBoundsIncludeCompleteComposedFrame()
+        {
+            LevelBounds bounds = ConveyorVisualLayout.Build(100, 50, arrowSign: 1).BeltLocalBounds();
+
+            Assert.Equal(-6, bounds.X, 6);
+            Assert.Equal(112.0 + (1.0 / 3.0), bounds.W, 6);
+            Assert.Equal(-25.0 - (1.0 / 3.0), bounds.Y, 6);
+            Assert.Equal(25, bounds.Y + bounds.H, 6);
+        }
+
+        /// <summary>Transporters bypass the generic centered-layer thumbnail compositor.</summary>
+        [Fact]
+        public void ConveyorUsesCompositedPaletteThumbnailRoute()
+        {
+            MethodInfo? method = typeof(SpriteCache).GetMethod(
+                "UsesCompositedThumbnail", BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+            Assert.True((bool)method.Invoke(null, ["transporter"])!);
+            Assert.False((bool)method.Invoke(null, ["bubble"])!);
+        }
     }
 }

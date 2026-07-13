@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 
@@ -73,6 +74,36 @@ namespace CtrDxEditor.Core.Tests
         public void BackwardAutoArrowIsPositive()
         {
             Assert.Equal(1, ConveyorObject.ArrowSign(Belt(("velocity", "10"), ("direction", "backward"))));
+        }
+
+        /// <summary>The palette drag ghost and placed object share the authored default preset.</summary>
+        [Fact]
+        public void PresetCreatesDefaultAutomaticConveyor()
+        {
+            LevelObject belt = ConveyorObject.CreatePreset(120, 240);
+
+            Assert.Equal(120, belt.X);
+            Assert.Equal(240, belt.Y);
+            Assert.Equal("10", belt.GetAttr("velocity"));
+            Assert.Equal("forward", belt.GetAttr("direction"));
+            Assert.Equal("250", belt.GetAttr("length"));
+            Assert.Equal("50", belt.GetAttr("width"));
+            Assert.Equal("0", belt.GetAttr("angle"));
+            Assert.Null(belt.GetAttr("type"));
+            Assert.True(ConveyorObject.IsAuto(belt));
+        }
+
+        /// <summary>Descriptor placement cannot drift away from the drag-preview preset.</summary>
+        [Fact]
+        public void DescriptorDefaultsMatchPreset()
+        {
+            LevelObject preset = ConveyorObject.CreatePreset(1, 2);
+            LevelObject placed = Placement.CreateObject(DescriptorTable.CtrObjects.For("transporter")!, 1, 2);
+
+            foreach (string name in new[] { "velocity", "direction", "length", "width", "angle", "type" })
+            {
+                Assert.Equal(preset.GetAttr(name), placed.GetAttr(name));
+            }
         }
     }
 }

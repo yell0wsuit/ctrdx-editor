@@ -57,6 +57,39 @@ namespace CtrDxEditor.Core.Editing
         private const double PlateScale = 0.8;
         private const double CapOffset = 18;
 
+        /// <summary>
+        /// Returns the visible union after the game's 90-degree visual-root rotation, in belt-local
+        /// level coordinates. Used to crop the complete palette thumbnail without clipping its frame.
+        /// </summary>
+        /// <returns>Axis-aligned bounds containing every visible transporter piece.</returns>
+        public LevelBounds BeltLocalBounds()
+        {
+            double minX = double.MaxValue, minY = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue;
+            foreach (ConveyorVisualPiece piece in Pieces)
+            {
+                // Arrow is a child contained by PlateSurface, so it does not expand the visible union.
+                if (piece.Kind == ConveyorVisualPieceKind.Arrow)
+                {
+                    continue;
+                }
+
+                // root rotation: (u,v) -> (RootTranslationX-v, RootTranslationY+u).
+                double left = RootTranslationX - (piece.Bounds.Y + piece.Bounds.H);
+                double right = RootTranslationX - piece.Bounds.Y;
+                double top = RootTranslationY + piece.Bounds.X;
+                double bottom = RootTranslationY + piece.Bounds.X + piece.Bounds.W;
+                minX = Math.Min(minX, left);
+                minY = Math.Min(minY, top);
+                maxX = Math.Max(maxX, right);
+                maxY = Math.Max(maxY, bottom);
+            }
+
+            return minX == double.MaxValue
+                ? new LevelBounds(0, 0, 0, 0)
+                : new LevelBounds(minX, minY, maxX - minX, maxY - minY);
+        }
+
         /// <summary>Builds the complete static transporter composition in editor level units.</summary>
         /// <param name="length">Transporter length from XML.</param>
         /// <param name="width">Transporter thickness from XML.</param>

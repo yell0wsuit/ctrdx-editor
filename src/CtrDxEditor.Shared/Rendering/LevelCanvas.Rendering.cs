@@ -242,6 +242,17 @@ namespace CtrDxEditor.Rendering
                         LevelSceneRenderer.DrawVinylPreview(context, v, sprites, _dragPreviewLevel);
                     }
                 }
+                else if (dragPreviewElement == ConveyorObject.Element)
+                {
+                    using (context.PushOpacity(0.7))
+                    {
+                        ConveyorRenderer.Draw(
+                            context,
+                            v,
+                            sprites,
+                            ConveyorObject.CreatePreset(_dragPreviewLevel.X, _dragPreviewLevel.Y));
+                    }
+                }
                 else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
                     doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)

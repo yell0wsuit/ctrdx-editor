@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
 
@@ -13,6 +14,38 @@ namespace CtrDxEditor.Core.Editing
     {
         /// <summary>The XML element name for a conveyor belt.</summary>
         public const string Element = "transporter";
+
+        /// <summary>Default automatic speed used by palette placement.</summary>
+        public const string DefaultVelocity = "10";
+
+        /// <summary>Default movement direction used by palette placement.</summary>
+        public const string DefaultDirection = "forward";
+
+        /// <summary>Default belt length used by palette placement.</summary>
+        public const string DefaultLength = "250";
+
+        /// <summary>Default belt thickness used by palette placement.</summary>
+        public const string DefaultWidth = "50";
+
+        /// <summary>Default belt angle used by palette placement.</summary>
+        public const string DefaultAngle = "0";
+
+        /// <summary>Creates the exact automatic conveyor shown while dragging from the palette.</summary>
+        /// <param name="x">Anchor X coordinate.</param>
+        /// <param name="y">Anchor Y coordinate.</param>
+        /// <returns>A new XML-backed conveyor with the placement defaults applied.</returns>
+        public static LevelObject CreatePreset(double x, double y)
+        {
+            XElement element = new(Element);
+            element.SetAttributeValue("x", x.ToString(CultureInfo.InvariantCulture));
+            element.SetAttributeValue("y", y.ToString(CultureInfo.InvariantCulture));
+            element.SetAttributeValue("velocity", DefaultVelocity);
+            element.SetAttributeValue("direction", DefaultDirection);
+            element.SetAttributeValue("length", DefaultLength);
+            element.SetAttributeValue("width", DefaultWidth);
+            element.SetAttributeValue("angle", DefaultAngle);
+            return new LevelObject(element);
+        }
 
         /// <summary>Whether <paramref name="type"/> is the conveyor element.</summary>
         /// <param name="type">An object element name.</param>
