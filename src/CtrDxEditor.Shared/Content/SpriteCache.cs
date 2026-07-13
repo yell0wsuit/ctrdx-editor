@@ -54,6 +54,14 @@ namespace CtrDxEditor.Content
         private readonly ConcurrentDictionary<int, Bitmap?> _backgroundsP2 = new();
         private readonly ConcurrentDictionary<int, Bitmap?> _backgroundThumbnails = new();
 
+        /// <summary>Reads a non-sprite content asset from the active platform store.</summary>
+        /// <param name="relativePath">Manifest-relative content path.</param>
+        /// <returns>The asset bytes.</returns>
+        internal byte[] ReadContentBytes(string relativePath)
+        {
+            return store.ReadBytes(relativePath);
+        }
+
         /// <summary>
         /// Per-background secondary (p2) layer Y offset in internal pixels, from the game's pack config
         /// (<c>boxBackgroundP2Y</c> in ctroriginal_packs.json). Index is the background id (1..17);

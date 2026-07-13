@@ -83,7 +83,7 @@ namespace CtrDxEditor.Rendering
 
             if (TutorialObject.IsText(obj.Type))
             {
-                return TutorialRenderer.TextBounds(obj);
+                return TutorialRenderer.TextBounds(sprites, obj);
             }
 
             if (TutorialObject.IsImage(obj.Type))
@@ -217,7 +217,7 @@ namespace CtrDxEditor.Rendering
         {
             if (TutorialObject.IsText(obj.Type))
             {
-                TutorialRenderer.DrawText(ctx, v, obj, tutorialBounds, tutorialDark);
+                TutorialRenderer.DrawText(ctx, v, sprites, obj, tutorialBounds, tutorialDark);
                 return;
             }
 

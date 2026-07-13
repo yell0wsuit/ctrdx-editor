@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 using Avalonia;
 using Avalonia.Media;
@@ -29,36 +28,29 @@ namespace CtrDxEditor.Rendering
 
         private static SKTypeface? TypefaceCache { get; set; }
 
-        /// <summary>The gooddog typeface, or Skia's default when the font file is unavailable.</summary>
-        public static SKTypeface Typeface
+        /// <summary>Returns the gooddog typeface, or Skia's default when the font asset is unavailable.</summary>
+        /// <param name="sprites">Sprite cache whose platform content store supplies the font bytes.</param>
+        /// <returns>The cached gooddog or fallback typeface.</returns>
+        public static SKTypeface GetTypeface(SpriteCache sprites)
         {
-            get
+            if (TypefaceCache is not null)
             {
-                if (TypefaceCache is not null)
-                {
-                    return TypefaceCache;
-                }
-
-                string? dir = ContentRoot.TryResolve();
-                if (dir is not null)
-                {
-                    string path = Path.Combine(dir, "fonts", "gooddog_new-webfont.ttf");
-                    if (File.Exists(path))
-                    {
-                        try
-                        {
-                            TypefaceCache = SKTypeface.FromFile(path);
-                        }
-                        catch (Exception)
-                        {
-                            TypefaceCache = null;
-                        }
-                    }
-                }
-
-                TypefaceCache ??= SKTypeface.Default;
                 return TypefaceCache;
             }
+
+            try
+            {
+                byte[] bytes = sprites.ReadContentBytes("fonts/gooddog_new-webfont.ttf");
+                using SKData data = SKData.CreateCopy(bytes);
+                TypefaceCache = SKTypeface.FromData(data);
+            }
+            catch (Exception)
+            {
+                TypefaceCache = null;
+            }
+
+            TypefaceCache ??= SKTypeface.Default;
+            return TypefaceCache;
         }
     }
 
@@ -69,6 +61,7 @@ namespace CtrDxEditor.Rendering
     internal sealed class TutorialTextDrawOperation(
         Rect bounds,
         ViewTransform view,
+        SpriteCache sprites,
         string text,
         double centerX,
         double centerY,
@@ -112,7 +105,7 @@ namespace CtrDxEditor.Rendering
 
             using ISkiaSharpApiLease lease = leaseFeature.Lease();
             SKCanvas canvas = lease.SkCanvas;
-            using SKFont font = new(TutorialFont.Typeface, (float)TutorialFont.FontSizeLevel);
+            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
             using SKPaint paint = new()
             {
                 IsAntialias = true,

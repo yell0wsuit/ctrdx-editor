@@ -8,6 +8,8 @@ using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 
+using SkiaSharp;
+
 namespace CtrDxEditor.Rendering
 {
     /// <summary>Draws tutorial icons and text and computes their selection bounds.</summary>
@@ -62,6 +64,7 @@ namespace CtrDxEditor.Rendering
         public static void DrawText(
             DrawingContext ctx,
             ViewTransform view,
+            SpriteCache sprites,
             LevelObject obj,
             Rect operationBounds,
             bool dark)
@@ -71,6 +74,7 @@ namespace CtrDxEditor.Rendering
             ctx.Custom(new TutorialTextDrawOperation(
                 operationBounds,
                 view,
+                sprites,
                 text,
                 obj.X,
                 obj.Y,
@@ -86,11 +90,18 @@ namespace CtrDxEditor.Rendering
                 : new LevelBounds(obj.X - 8, obj.Y - 8, 16, 16);
         }
 
-        /// <summary>Returns a one-line, authored-width selection box centered on tutorial text.</summary>
-        public static LevelBounds TextBounds(LevelObject obj)
+        /// <summary>Returns the wrapped, authored-width selection box centered on tutorial text.</summary>
+        public static LevelBounds TextBounds(SpriteCache sprites, LevelObject obj)
         {
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
-            double height = TutorialFont.LineAdvanceLevel;
+            string text = obj.GetAttr("text") ?? string.Empty;
+            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
+            int lineCount = TutorialTextLayout.Wrap(text, width, value => font.MeasureText(value)).Count;
+            SKFontMetrics metrics = font.Metrics;
+            double glyphHeight = metrics.Descent - metrics.Ascent;
+            double height = lineCount > 0
+                ? ((lineCount - 1) * TutorialFont.LineAdvanceLevel) + glyphHeight + TutorialFont.TopSpacingLevel
+                : TutorialFont.LineAdvanceLevel;
             return new LevelBounds(obj.X - (width / 2), obj.Y - (height / 2), width, height);
         }
 
