@@ -4,6 +4,7 @@
              xmlns:ctl="using:CtrDxEditor.Controls"
              xmlns:conv="using:CtrDxEditor.Converters"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:icons="using:Material.Icons.Avalonia"
              x:Class="CtrDxEditor.Views.PropertyPanel"
              x:DataType="vm:EditorViewModel">
   <UserControl.Styles>
@@ -24,9 +25,16 @@
                 <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
                 <ColumnDefinition Width="100" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Classes="field-label" Text="{Binding Label}"
-                         IsEnabled="{Binding IsEnabled}"
-                         VerticalAlignment="Center" Margin="0,0,8,0" />
+              <StackPanel Grid.Column="0" Orientation="Horizontal"
+                          VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
+                <TextBlock Classes="field-label" Text="{Binding Label}"
+                           IsEnabled="{Binding IsEnabled}" VerticalAlignment="Center" />
+                <icons:MaterialIcon Kind="HelpCircleOutline" Width="14" Height="14"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding HasHelp}"
+                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
+                                    ToolTip.Tip="{Binding HelpText}" />
+              </StackPanel>
               <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
                         IsEnabled="{Binding IsEnabled}"
                         Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"

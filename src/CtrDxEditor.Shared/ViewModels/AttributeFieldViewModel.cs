@@ -100,6 +100,12 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The localized label shown in the Properties panel.</summary>
         public string Label { get; }
 
+        /// <summary>Optional help text; when set, the panel shows a help icon with this as its tooltip.</summary>
+        public string? HelpText { get; init; }
+
+        /// <summary>Whether this field has help text to surface via a help icon.</summary>
+        public bool HasHelp => !string.IsNullOrEmpty(HelpText);
+
         /// <summary>Allowed values for fixed enum attributes, or null.</summary>
         public string[]? EnumValues { get; }
 
@@ -122,7 +128,7 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public int NumericMinimum => Name switch
         {
-            "timeout" => 1,
+            "timeout" or "time" => 1,
             "spinSpeed" or "orbitRadius" or "orbitSpeed" or "polylineSpeed" => 1,
             "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" or "group" => 0,
             _ => -9999,
