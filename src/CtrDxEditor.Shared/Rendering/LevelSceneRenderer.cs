@@ -81,6 +81,16 @@ namespace CtrDxEditor.Rendering
                 return ConveyorGeometry.DialSelectionBounds(beltShape);
             }
 
+            if (TutorialObject.IsText(obj.Type))
+            {
+                return TutorialRenderer.TextBounds(obj);
+            }
+
+            if (TutorialObject.IsImage(obj.Type))
+            {
+                return TutorialRenderer.IconBounds(sprites, obj);
+            }
+
             if (obj.Type == "steamTube")
             {
                 double mapScale = SpritePlacement.MapScale;
@@ -167,6 +177,9 @@ namespace CtrDxEditor.Rendering
                 "candy" or "candyL" or "candyR" => 12,
                 "lantern" => 12,
                 "lightBulb" => 13,
+                "tutorialText" => 14,
+                "tutorial01" or "tutorial02" or "tutorial03" or "tutorial04" or "tutorial05" or "tutorial06"
+                    or "tutorial07" or "tutorial08" or "tutorial09" or "tutorial10" or "tutorial11" => 15,
                 _ => 10,
             };
         }
@@ -186,6 +199,8 @@ namespace CtrDxEditor.Rendering
         /// <param name="starDurationText">Brush for the timed-star duration label.</param>
         /// <param name="objects">All level objects, used to decide whether binding id labels are needed.</param>
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
+        /// <param name="tutorialBounds">Screen bounds for tutorial custom draw operations.</param>
+        /// <param name="tutorialDark">Whether tutorials use dark blank-canvas styling.</param>
         public static void DrawObject(
             DrawingContext ctx,
             ViewTransform v,
@@ -196,8 +211,22 @@ namespace CtrDxEditor.Rendering
             bool nightLevel,
             IBrush starDurationText,
             IReadOnlyList<LevelObject> objects,
-            double? animationPreviewSeconds = null)
+            double? animationPreviewSeconds = null,
+            Rect tutorialBounds = default,
+            bool tutorialDark = false)
         {
+            if (TutorialObject.IsText(obj.Type))
+            {
+                TutorialRenderer.DrawText(ctx, v, obj, tutorialBounds, tutorialDark);
+                return;
+            }
+
+            if (TutorialObject.IsImage(obj.Type))
+            {
+                TutorialRenderer.DrawIcon(ctx, v, sprites, obj, tutorialBounds, tutorialDark);
+                return;
+            }
+
             Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
             double x = previewPosition.X;
             double y = previewPosition.Y;
@@ -1351,6 +1380,19 @@ namespace CtrDxEditor.Rendering
         private static double PreviewRotationDegrees(string element)
         {
             return RotationTable.For(element)?.DisplayOffset ?? 0;
+        }
+
+        /// <summary>Draws a single sprite layer for specialized renderers.</summary>
+        public static void DrawSpriteLayerPublic(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteLayerDraw layer,
+            double x,
+            double y,
+            double scale,
+            double? rotationDegrees)
+        {
+            DrawLayer(ctx, v, layer, x, y, scale, rotationDegrees);
         }
 
         /// <summary>Draws a single sprite layer, optionally rotated about the object's anchor.</summary>
