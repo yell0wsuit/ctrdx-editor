@@ -64,6 +64,24 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.ShowDownloadSizeLabel);
         }
 
+        /// <summary>Browser setup is mandatory until installation completes, while desktop setup remains dismissible.</summary>
+        [Fact]
+        public async Task CanDismissReflectsQuitPermissionAndCompletion()
+        {
+            ContentSetupViewModel browser = new(
+                new FakeInstaller(), () => Task.CompletedTask, allowQuit: false);
+            ContentSetupViewModel desktop = new(
+                new FakeInstaller(), () => Task.CompletedTask, allowQuit: true);
+
+            Assert.False(browser.CanDismiss);
+            Assert.True(desktop.CanDismiss);
+
+            using MemoryStream zip = new();
+            await browser.InstallFromZipAsync(zip);
+
+            Assert.True(browser.CanDismiss);
+        }
+
         /// <summary>Verifies the download-size disclosure is hidden by default (no label supplied).</summary>
         [Fact]
         public void ShowDownloadSizeLabelIsFalseWhenNoLabelSupplied()

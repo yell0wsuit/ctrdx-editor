@@ -40,6 +40,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
 
+        /// <summary>Whether the setup dialog may be dismissed: immediately on desktop, or after browser setup completes.</summary>
+        public bool CanDismiss { get; private set; }
+
         /// <summary>Whether the in-app Download button is shown; false where a cross-origin fetch is blocked (the browser), leaving only manual download and zip upload.</summary>
         public bool AllowDownload { get; }
 
@@ -70,6 +73,7 @@ namespace CtrDxEditor.ViewModels
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
+            CanDismiss = allowQuit;
             AllowManualDownload = allowManualDownload;
             AllowDownload = allowDownload;
             DownloadSizeLabel = downloadSizeLabel;
@@ -151,6 +155,7 @@ namespace CtrDxEditor.ViewModels
         private async Task CompleteAsync()
         {
             await _onInstalled();
+            CanDismiss = true;
             Completed?.Invoke();
         }
     }

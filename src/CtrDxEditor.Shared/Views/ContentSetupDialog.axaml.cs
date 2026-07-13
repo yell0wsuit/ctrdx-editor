@@ -69,6 +69,14 @@ namespace CtrDxEditor.Views
             Close("");
         }
 
+        /// <inheritdoc />
+        public override bool OnClosing()
+        {
+            // Browser setup is mandatory because the editor cannot run without content. In
+            // particular, keep Escape from dismissing the dialog while an install is in flight.
+            return _vm?.CanDismiss ?? true;
+        }
+
         private async void PickZip_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not ContentSetupViewModel vm)

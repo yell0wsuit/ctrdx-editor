@@ -69,9 +69,9 @@ namespace CtrDxEditor
 
             // Either no content is installed, or installed content passed the cheap existence check
             // yet failed to actually load (wrong-platform bundle, corrupt atlas, ...): run setup.
-            // The dialog tries to block Escape while setup is mandatory, but the browser has no Quit
-            // action and cannot run without content, so if it is dismissed anyway (Escape) without
-            // installing, re-open it until content actually loads. Desktop instead quits on dismissal.
+            // Browser setup blocks dismissal because the editor cannot run without content. Keep the
+            // loop as a defensive fallback in case the dialog is removed by some mechanism other than
+            // its normal close path. Desktop instead quits on dismissal.
             do
             {
                 ContentSetupViewModel vm = new(
