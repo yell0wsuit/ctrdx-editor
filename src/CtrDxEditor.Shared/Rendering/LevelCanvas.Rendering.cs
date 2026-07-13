@@ -201,6 +201,7 @@ namespace CtrDxEditor.Rendering
                 {
                     context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
                 }
+                DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
 
                 if (selected.Type == "transporter")
@@ -299,6 +300,28 @@ namespace CtrDxEditor.Rendering
             {
                 DrawPolylineLimitHint(context, v, limitObj);
             }
+        }
+
+        /// <summary>Draws the selected tutorial text's wrap-width handle.</summary>
+        private void DrawTutorialTextResizeHandle(
+            DrawingContext context,
+            ViewTransform view,
+            SpriteCache sprites,
+            LevelObject selected)
+        {
+            if (!TutorialObject.IsText(selected.Type))
+            {
+                return;
+            }
+
+            LevelBounds bounds = TutorialRenderer.TextBounds(sprites, selected);
+            Vec2 screen = view.LevelToScreen(TutorialTextResize.HandlePosition(bounds));
+            context.DrawEllipse(
+                Brushes.White,
+                _palette.OrbitPathArrow,
+                new Point(screen.X, screen.Y),
+                5,
+                5);
         }
 
         /// <summary>Draws the selected ghost's enabled-state selector badge and records its hit targets.</summary>

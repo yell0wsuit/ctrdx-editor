@@ -241,6 +241,18 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while dragging a grab's auto-catch radius ring to resize it.</summary>
         private bool _resizingRadius;
 
+        /// <summary>True while dragging the selected tutorial text's right edge to change wrap width.</summary>
+        private bool _resizingTutorialText;
+
+        /// <summary>Level-space pointer X where a tutorial text width gesture began.</summary>
+        private double _tutorialTextResizeStartPointerX;
+
+        /// <summary>Horizontal pointer offset from the tutorial text edge captured at gesture start.</summary>
+        private double _tutorialTextResizeGrabOffsetX;
+
+        /// <summary>True after the tutorial text resize gesture crosses its drag threshold.</summary>
+        private bool _tutorialTextResizeHasDragged;
+
         /// <summary>Rotation mapping used only while previewing a ghost's small-bouncer morph.</summary>
         private static readonly RotationSpec GhostBouncerRotation = new(DisplayOffset: 0);
 

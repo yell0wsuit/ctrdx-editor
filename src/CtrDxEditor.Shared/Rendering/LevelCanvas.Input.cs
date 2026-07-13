@@ -54,6 +54,20 @@ namespace CtrDxEditor.Rendering
                 && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), r, levelPt, 6 / View.Zoom);
         }
 
+        /// <summary>Whether a point is over the selected tutorial text's right-edge width handle.</summary>
+        private bool HitTutorialTextResize(Vec2 levelPt)
+        {
+            return SelectedObject is { } selected
+                && TutorialObject.IsText(selected.Type)
+                && !IsAnimatingInPreview(selected)
+                && Sprites is { } sprites
+                && View.Zoom > 0
+                && TutorialTextResize.HitTest(
+                    TutorialRenderer.TextBounds(sprites, selected),
+                    levelPt,
+                    9 / View.Zoom);
+        }
+
         /// <summary>What part of the selected movable grab's rail a level point is over, or <see cref="GrabRail.Handle.None"/>.</summary>
         /// <remarks>
         /// The hit-testing itself lives in <see cref="GrabRail"/>; here we only supply the selected grab's geometry and
@@ -547,6 +561,20 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // Tutorial text width is the only authored text dimension; height follows live wrapping.
+            if (HitTutorialTextResize(levelPt) && SelectedObject is { } tutorialText)
+            {
+                BeginDocumentEdit?.Invoke();
+                _resizingTutorialText = true;
+                _tutorialTextResizeHasDragged = false;
+                _tutorialTextResizeStartPointerX = levelPt.X;
+                _tutorialTextResizeGrabOffsetX = TutorialTextResize.GrabOffset(
+                    TutorialRenderer.TextBounds(Sprites!, tutorialText),
+                    levelPt.X);
+                e.Pointer.Capture(this);
+                return;
+            }
+
             // A vinyl handle drag rotates the disc; it takes priority over the size ring since both sit on
             // the disc edge (the ring wins everywhere except the two handle spots).
             VinylGeometry.Handle vinylHandle = HitVinylHandle(levelPt);
@@ -743,6 +771,25 @@ namespace CtrDxEditor.Rendering
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
+            if (_resizingTutorialText && SelectedObject is { } tutorialText)
+            {
+                _tutorialTextResizeHasDragged = TutorialTextResize.ShouldApplyDrag(
+                    _tutorialTextResizeHasDragged,
+                    _tutorialTextResizeStartPointerX,
+                    levelPt.X,
+                    View.Zoom);
+                if (!_tutorialTextResizeHasDragged)
+                {
+                    return;
+                }
+
+                double edgeX = TutorialTextResize.EdgeFromPointer(levelPt.X, _tutorialTextResizeGrabOffsetX);
+                TutorialTextResize.ApplyDrag(tutorialText, edgeX);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_vinylHandleDrag != VinylGeometry.Handle.None && SelectedObject is { } vinylDrag)
             {
                 vinylDrag.SetAttr("handleAngle", Whole(VinylGeometry.AngleFor(vinylDrag, _vinylHandleDrag, levelPt)));
@@ -834,6 +881,7 @@ namespace CtrDxEditor.Rendering
                 SpikeResize.Handle stripHandle = HitStripResize(levelPt);
                 ConveyorGeometry.Handle conveyorHover = HitConveyor(levelPt);
                 VinylGeometry.Handle vinylHover = HitVinylHandle(levelPt);
+                bool tutorialTextResizeHover = HitTutorialTextResize(levelPt);
                 SetVinylHandleHovered(vinylHover);
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
@@ -846,7 +894,8 @@ namespace CtrDxEditor.Rendering
                 {
                     InvalidateVisual();
                 }
-                Cursor = vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
+                Cursor = tutorialTextResizeHover ? ResizeCursor
+                    : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
                     ? new Cursor(StandardCursorType.Hand)
                     : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
@@ -886,7 +935,7 @@ namespace CtrDxEditor.Rendering
         {
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
-            bool gestureActive = _dragging || _panning || _resizingRadius || _polylinePointDrag > 0
+            bool gestureActive = _dragging || _panning || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered;
@@ -895,13 +944,17 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            bool editedDocument = _dragging || _resizingRadius || _polylinePointDrag > 0
+            bool editedDocument = _dragging || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating;
             _dragging = false;
             _panning = false;
             _resizingRadius = false;
+            _resizingTutorialText = false;
+            _tutorialTextResizeHasDragged = false;
+            _tutorialTextResizeStartPointerX = 0;
+            _tutorialTextResizeGrabOffsetX = 0;
             _railDrag = GrabRail.Handle.None;
             _stripResizeDrag = SpikeResize.Handle.None;
             _conveyorDrag = ConveyorGeometry.Handle.None;

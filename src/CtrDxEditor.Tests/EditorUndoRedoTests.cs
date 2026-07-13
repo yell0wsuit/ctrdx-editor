@@ -189,6 +189,30 @@ namespace CtrDxEditor.Tests
             Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
         }
 
+        /// <summary>Groups a canvas tutorial-width drag into one undoable edit.</summary>
+        [Fact]
+        public void UndoAndRedoRestoreTutorialCanvasWidthResize()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            LevelObject text = vm.PlaceObject("tutorialText", 20, 30)!;
+            string initialWidth = text.GetAttr("width")!;
+
+            vm.BeginUndoTransaction();
+            TutorialTextResize.ApplyDrag(text, 220);
+            vm.CompleteUndoTransaction();
+
+            Assert.Equal("200", vm.Document!.Objects[1].GetAttr("width"));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+
+            vm.Undo();
+            Assert.Equal(initialWidth, vm.Document.Objects[1].GetAttr("width"));
+            Assert.True(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+
+            vm.Redo();
+            Assert.Equal("200", vm.Document.Objects[1].GetAttr("width"));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+        }
+
         private static EditorViewModel CreateLoadedViewModel()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));

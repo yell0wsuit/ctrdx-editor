@@ -104,5 +104,20 @@ namespace CtrDxEditor.Tests
             Assert.Null(typeof(EditorViewModel).GetProperty("EditTutorialTextCommand"));
             Assert.Null(typeof(EditorViewModel).GetEvent("TutorialTextEditRequested"));
         }
+
+        /// <summary>Shows manual width after a canvas resize disables auto-width.</summary>
+        [Fact]
+        public void RefreshFieldsShowsWidthAfterCanvasResize()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelObject text = vm.PlaceObject("tutorialText", 20, 30)!;
+            Assert.DoesNotContain(vm.Fields, f => f.Name == "width");
+
+            TutorialTextResize.ApplyDrag(text, 120);
+            vm.RefreshFieldValues();
+
+            Assert.Contains(vm.Fields, f => f.Name == "width");
+        }
     }
 }
