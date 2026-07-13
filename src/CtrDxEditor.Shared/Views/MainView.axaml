@@ -259,7 +259,7 @@
                                   Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
             </TextBox.InnerLeftContent>
           </TextBox>
-          <TextBlock Grid.Row="1" Text="{Binding CurrentGameName}" FontWeight="Bold"
+          <TextBlock Grid.Row="1" Text="{Binding CtrOriginalPalette}" FontWeight="Bold"
                      IsVisible="{Binding ShowGameName, FallbackValue=False}"
                      TextWrapping="Wrap"
                      Margin="8,6,8,8" />
