@@ -1,13 +1,11 @@
 using System;
-using System.Threading;
+using System.Diagnostics;
 
 using Avalonia;
-using Avalonia.Animation;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
-using Avalonia.Styling;
+using Avalonia.Threading;
 
 namespace CtrDxEditor.Controls
 {
@@ -16,7 +14,6 @@ namespace CtrDxEditor.Controls
     /// </summary>
     public sealed class MarqueeTextBlock : Control, IDisposable
     {
-        private const double Speed = 40;
         private static readonly TimeSpan MinLeg = TimeSpan.FromSeconds(0.6);
 
         /// <summary>Identifies the <see cref="Text"/> styled property.</summary>
@@ -29,7 +26,8 @@ namespace CtrDxEditor.Controls
 
         private readonly TextBlock _label;
         private readonly TranslateTransform _translate = new();
-        private CancellationTokenSource? _animCts;
+        private readonly DispatcherTimer _animationTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
+        private readonly Stopwatch _animationClock = new();
         private double _overflow;
 
         /// <summary>Initializes a new instance of the <see cref="MarqueeTextBlock"/> class.</summary>
@@ -46,6 +44,7 @@ namespace CtrDxEditor.Controls
             _label[!TextBlock.ForegroundProperty] = this[!TextElement.ForegroundProperty];
             VisualChildren.Add(_label);
             LogicalChildren.Add(_label);
+            _animationTimer.Tick += OnAnimationTick;
         }
 
         /// <summary>Gets or sets the text displayed by the control.</summary>
@@ -101,6 +100,7 @@ namespace CtrDxEditor.Controls
         public void Dispose()
         {
             StopAnimation();
+            _animationTimer.Tick -= OnAnimationTick;
         }
 
         private bool IsActive => IsPointerOver || ForceActive;
@@ -114,37 +114,24 @@ namespace CtrDxEditor.Controls
                 return;
             }
 
-            TimeSpan leg = TimeSpan.FromSeconds(Math.Max(_overflow / Speed, MinLeg.TotalSeconds));
-            Animation anim = new()
-            {
-                Duration = leg,
-                IterationCount = IterationCount.Infinite,
-                PlaybackDirection = PlaybackDirection.Alternate,
-                Easing = new LinearEasing(),
-                Children =
-                {
-                    new KeyFrame
-                    {
-                        Cue = new Cue(0d),
-                        Setters = { new Setter(TranslateTransform.XProperty, 0d) },
-                    },
-                    new KeyFrame
-                    {
-                        Cue = new Cue(1d),
-                        Setters = { new Setter(TranslateTransform.XProperty, -_overflow) },
-                    },
-                },
-            };
-
-            _animCts = new CancellationTokenSource();
-            _ = anim.RunAsync(_translate, _animCts.Token);
+            _animationClock.Restart();
+            _animationTimer.Start();
         }
 
         private void StopAnimation()
         {
-            _animCts?.Cancel();
-            _animCts?.Dispose();
-            _animCts = null;
+            _animationTimer.Stop();
+            _animationClock.Reset();
+        }
+
+        private void OnAnimationTick(object? sender, EventArgs e)
+        {
+            _translate.X = MarqueeMath.BounceOffset(
+                _overflow,
+                _animationClock.Elapsed.TotalSeconds,
+                MarqueeMath.DefaultSpeed,
+                MinLeg.TotalSeconds,
+                MarqueeMath.DefaultPauseSeconds);
         }
     }
 }

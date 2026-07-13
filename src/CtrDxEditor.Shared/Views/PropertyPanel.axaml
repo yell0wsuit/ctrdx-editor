@@ -31,10 +31,11 @@
                         IsEnabled="{Binding IsEnabled}"
                         Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                         ItemsSource="{Binding EnumOptions}"
-                        SelectedItem="{Binding SelectedOption, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                        SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <ComboBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:AttributeOptionViewModel">
-                    <TextBlock Text="{Binding Label}" />
+                    <ctl:MarqueeTextBlock Text="{Binding Label}" HorizontalAlignment="Stretch" />
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
