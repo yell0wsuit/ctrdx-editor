@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
@@ -80,6 +85,79 @@ namespace CtrDxEditor.Tests
             LevelBounds bounds = (LevelBounds)selectionBounds.Invoke(null, [sprites, text, 0, 0, false])!;
 
             Assert.True(bounds.H > 50);
+        }
+
+        /// <summary>Centers the visible spriteSourceSize region on the authored tutorial position.</summary>
+        [Fact]
+        public void IconSelectionBoundsCenterTrimmedTutorialArtOnAnchor()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            AtlasFrame frame = new(
+                "frame_0000.png",
+                new IntRect(1, 933, 150, 14),
+                new IntRect(584, 766, 150, 14),
+                new IntSize(998, 1058),
+                Rotated: false,
+                Trimmed: true);
+            SetPrivateField(sprites, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/tutorial_signs.png"] = bitmap,
+            });
+            SetPrivateField(sprites, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/tutorial_signs.json"] = new Atlas([frame]),
+            });
+            LevelObject icon = new(new System.Xml.Linq.XElement(
+                "tutorial01",
+                new System.Xml.Linq.XAttribute("x", "100"),
+                new System.Xml.Linq.XAttribute("y", "100")));
+            Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
+
+            LevelBounds actual = (LevelBounds)selectionBounds.Invoke(null, [sprites, icon, 0, 0, false])!;
+            Assert.Equal(icon.X, actual.X + (actual.W / 2), precision: 9);
+            Assert.Equal(icon.Y, actual.Y + (actual.H / 2), precision: 9);
+            Assert.Equal(150.0 / SpritePlacement.MapScale, actual.W, precision: 9);
+        }
+
+        /// <summary>Keeps very thin tutorial art practical to click without using the huge sourceSize canvas.</summary>
+        [Fact]
+        public void ThinIconSelectionBoundsHaveMinimumHeight()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            AtlasFrame frame = new(
+                "frame_0000.png",
+                new IntRect(1, 933, 150, 14),
+                new IntRect(584, 766, 150, 14),
+                new IntSize(998, 1058),
+                Rotated: false,
+                Trimmed: true);
+            SetPrivateField(sprites, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                ["images/tutorial_signs.png"] = bitmap,
+            });
+            SetPrivateField(sprites, "_atlases", new Dictionary<string, Atlas>
+            {
+                ["images/tutorial_signs.json"] = new Atlas([frame]),
+            });
+            LevelObject icon = new(new System.Xml.Linq.XElement(
+                "tutorial01",
+                new System.Xml.Linq.XAttribute("x", "100"),
+                new System.Xml.Linq.XAttribute("y", "100")));
+            Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
+
+            LevelBounds actual = (LevelBounds)selectionBounds.Invoke(null, [sprites, icon, 0, 0, false])!;
+
+            Assert.Equal(16, actual.H, precision: 9);
+            Assert.Equal(icon.Y, actual.Y + (actual.H / 2), precision: 9);
+        }
+
+        private static void SetPrivateField<T>(SpriteCache cache, string name, T value)
+        {
+            typeof(SpriteCache).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(cache, value);
         }
     }
 }
