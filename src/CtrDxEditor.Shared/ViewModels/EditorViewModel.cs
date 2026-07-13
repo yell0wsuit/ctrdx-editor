@@ -619,6 +619,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (value.Type == "rocket")
+            {
+                RocketFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                return;
+            }
+
             if (value.Type == "grab" && Document is not null)
             {
                 GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => PopulateFields(value));
