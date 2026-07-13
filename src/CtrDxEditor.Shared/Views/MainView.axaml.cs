@@ -4,9 +4,11 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
 
@@ -19,12 +21,17 @@ namespace CtrDxEditor.Views
         private readonly Action _invalidateCanvas;
         private readonly PaletteDragController _paletteDrag;
         private WindowNotificationManager? _notifications;
+        private readonly LevelCanvas _canvas;
+        private readonly TextBox _textEditor;
+        private LevelObject? _editingText;
 
         /// <summary>Creates the main editor view and wires input gestures.</summary>
         public MainView()
         {
             AvaloniaXamlLoader.Load(this);
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
+            _canvas = canvas;
+            _textEditor = this.FindControl<TextBox>("TextEditor")!;
             _invalidateCanvas = canvas.InvalidateVisual;
             DataContextChanged += (_, _) => WireObjectMutated();
             WireObjectMutated();
@@ -36,6 +43,7 @@ namespace CtrDxEditor.Views
             canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
             canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();
             canvas.CompleteDocumentEdit = () => (DataContext as EditorViewModel)?.CompleteUndoTransaction();
+            canvas.EditTutorialTextRequested = BeginTextEdit;
 
             // Palette placement is an internal pointer-capture drag (see PaletteDragController). Buttons mark
             // their own left PointerPressed as Handled for click logic, so the handlers are registered with
@@ -91,6 +99,59 @@ namespace CtrDxEditor.Views
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
             canvas.FitToView();
             _ = canvas.Focus();
+        }
+
+        /// <summary>Opens the inline text editor over a tutorial text from the canvas F2 shortcut.</summary>
+        private void BeginTextEdit(LevelObject obj)
+        {
+            _editingText = obj;
+            Rect r = _canvas.TutorialTextScreenRect(obj);
+            _textEditor.Margin = new Thickness(Math.Max(0, r.X), Math.Max(0, r.Y), 0, 0);
+            _textEditor.Width = Math.Max(80, r.Width);
+            _textEditor.Height = Math.Max(28, r.Height + 6);
+            _textEditor.Text = obj.GetAttr("text") ?? string.Empty;
+            _textEditor.IsVisible = true;
+            _ = _textEditor.Focus();
+            _textEditor.SelectAll();
+        }
+
+        private void TextEditor_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && !e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            {
+                CommitTextEdit();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                EndTextEdit();
+                e.Handled = true;
+            }
+        }
+
+        private void TextEditor_LostFocus(object? sender, RoutedEventArgs e)
+        {
+            CommitTextEdit();
+        }
+
+        private void CommitTextEdit()
+        {
+            if (_editingText is { } obj && DataContext is EditorViewModel vm)
+            {
+                vm.CommitTutorialText(obj, _textEditor.Text ?? string.Empty);
+            }
+            EndTextEdit();
+        }
+
+        private void EndTextEdit()
+        {
+            if (_editingText is null)
+            {
+                return;
+            }
+            _editingText = null;
+            _textEditor.IsVisible = false;
+            _ = _canvas.Focus();
         }
 
         /// <inheritdoc />

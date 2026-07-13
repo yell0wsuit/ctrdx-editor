@@ -18,6 +18,12 @@ namespace CtrDxEditor.Core.Editing
                 TutorialObject.EnsureEnglishLocale(obj);
             }
 
+            // A freshly placed tutorial text starts in auto-width mode so its box grows with the text.
+            if (TutorialObject.IsText(obj.Type))
+            {
+                TutorialObject.SetAutoWidth(obj, true);
+            }
+
             if (document.TwoParts && obj.Type == "grab" && obj.GetAttr("part") is null)
             {
                 obj.SetAttr("part", "L");

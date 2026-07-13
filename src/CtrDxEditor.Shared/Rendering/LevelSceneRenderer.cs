@@ -505,6 +505,35 @@ namespace CtrDxEditor.Rendering
             return rtb;
         }
 
+        /// <summary>
+        /// Renders the tutorial-text palette thumbnail: the word "Text" in a neutral gray that reads on
+        /// both the light and dark palette background (tutorial text has no atlas sprite of its own).
+        /// </summary>
+        /// <param name="px">Square bitmap side in pixels.</param>
+        /// <returns>The rendered thumbnail, or null when <paramref name="px"/> is not positive.</returns>
+        public static RenderTargetBitmap? RenderTutorialTextThumbnail(int px)
+        {
+            if (px <= 0)
+            {
+                return null;
+            }
+
+            FormattedText formatted = new(
+                "Text",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.DefaultFontFamilyName, FontStyle.Normal, FontWeight.SemiBold),
+                px * 0.34,
+                new SolidColorBrush(Color.FromRgb(0x9A, 0x9A, 0x9A)));
+
+            RenderTargetBitmap rtb = new(new PixelSize(px, px), new Vector(96, 96));
+            using (DrawingContext ctx = rtb.CreateDrawingContext())
+            {
+                ctx.DrawText(formatted, new Point((px - formatted.Width) / 2.0, (px - formatted.Height) / 2.0));
+            }
+            return rtb;
+        }
+
         /// <summary>Resolves a single atlas layer of a vinyl sprite key, or null when unavailable.</summary>
         private static SpriteLayerDraw? VinylLayer(SpriteCache sprites, string key, int index)
         {

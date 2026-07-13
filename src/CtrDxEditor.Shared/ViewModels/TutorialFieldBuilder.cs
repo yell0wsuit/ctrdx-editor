@@ -2,9 +2,11 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Rendering;
 
 namespace CtrDxEditor.ViewModels
 {
@@ -22,20 +24,57 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Appends the fields for a tutorial icon or tutorial text object.</summary>
         /// <param name="fields">The properties-panel field collection to append to.</param>
         /// <param name="value">The tutorial object being edited.</param>
+        /// <param name="sprites">Sprite cache, used to measure text for auto-width.</param>
         /// <param name="onChanged">Invoked after a field commits a change.</param>
         /// <param name="onChanging">Invoked before a field commits a change.</param>
-        /// <param name="rebuild">Repopulates fields after the icon tag changes.</param>
+        /// <param name="rebuild">Repopulates fields after a structural toggle (icon tag, auto-width).</param>
         public static void Build(
             ObservableCollection<AttributeFieldViewModel> fields,
             LevelObject value,
+            SpriteCache sprites,
             Action onChanged,
             Action onChanging,
             Action rebuild)
         {
             if (TutorialObject.IsText(value.Type))
             {
-                fields.Add(new AttributeFieldViewModel(value, "text", AttrType.Text, null, onChanged, onChanging));
-                fields.Add(new AttributeFieldViewModel(value, "width", AttrType.Whole, null, onChanged, onChanging));
+                void Structural()
+                {
+                    onChanged();
+                    rebuild();
+                }
+
+                // Editing the text re-syncs width when auto (so the box grows to fit the text).
+                fields.Add(new AttributeFieldViewModel(
+                    "text",
+                    AttrType.Text,
+                    () => value.GetAttr("text"),
+                    text =>
+                    {
+                        value.SetAttr("text", text ?? string.Empty);
+                        TutorialRenderer.ApplyAutoWidth(sprites, value);
+                    },
+                    onChanged,
+                    onChanging));
+
+                // Auto-width hides the manual width field and keeps width synced to the text.
+                fields.Add(new AttributeFieldViewModel(
+                    "autoWidth",
+                    AttrType.Bool,
+                    () => TutorialObject.IsAutoWidth(value) ? "true" : "false",
+                    v =>
+                    {
+                        TutorialObject.SetAutoWidth(value, v == "true");
+                        TutorialRenderer.ApplyAutoWidth(sprites, value);
+                    },
+                    Structural,
+                    onChanging));
+
+                if (!TutorialObject.IsAutoWidth(value))
+                {
+                    fields.Add(new AttributeFieldViewModel(value, "width", AttrType.Whole, null, onChanged, onChanging));
+                }
+
                 return;
             }
 

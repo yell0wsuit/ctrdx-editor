@@ -201,6 +201,28 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
+        /// <summary>Callback raised (F2) to open the inline text editor over the given tutorial text.</summary>
+        public Action<LevelObject>? EditTutorialTextRequested { get; set; }
+
+        /// <summary>
+        /// The screen-space rectangle covering a tutorial text's selection box, for positioning the inline
+        /// editor overlay. Returns an empty rect when the sprite cache is unavailable.
+        /// </summary>
+        /// <param name="obj">The tutorial text object.</param>
+        /// <returns>The text's bounds in canvas (screen) pixels.</returns>
+        public Rect TutorialTextScreenRect(LevelObject obj)
+        {
+            if (Sprites is not { } sprites)
+            {
+                return default;
+            }
+
+            LevelBounds b = TutorialRenderer.TextBounds(sprites, obj);
+            Vec2 tl = View.LevelToScreen(new Vec2(b.X, b.Y));
+            Vec2 br = View.LevelToScreen(new Vec2(b.X + b.W, b.Y + b.H));
+            return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+        }
+
         /// <summary>Callback raised before a direct canvas edit begins, so the view model can capture undo state.</summary>
         public Action? BeginDocumentEdit { get; set; }
 

@@ -254,6 +254,22 @@ namespace CtrDxEditor.Rendering
                             ConveyorObject.CreatePreset(_dragPreviewLevel.X, _dragPreviewLevel.Y));
                     }
                 }
+                else if (dragPreviewElement == TutorialObject.TextElement)
+                {
+                    // Tutorial text has no sprite; preview the placeholder text at its auto-fit width.
+                    using (context.PushOpacity(0.7))
+                    {
+                        bool previewDark = ActiveBackground == 0 && ActualThemeVariant == ThemeVariant.Dark;
+                        LevelObject previewText = new(new XElement(
+                            TutorialObject.TextElement,
+                            new XAttribute("x", ((int)Math.Round(_dragPreviewLevel.X)).ToString(CultureInfo.InvariantCulture)),
+                            new XAttribute("y", ((int)Math.Round(_dragPreviewLevel.Y)).ToString(CultureInfo.InvariantCulture)),
+                            new XAttribute("text", TutorialObject.DefaultText)));
+                        TutorialObject.SetAutoWidth(previewText, true);
+                        TutorialRenderer.ApplyAutoWidth(sprites, previewText);
+                        TutorialRenderer.DrawText(context, v, sprites, previewText, new Rect(Bounds.Size), previewDark);
+                    }
+                }
                 else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
                     doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)

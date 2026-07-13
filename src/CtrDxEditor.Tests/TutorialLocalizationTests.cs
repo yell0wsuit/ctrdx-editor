@@ -48,7 +48,7 @@ namespace CtrDxEditor.Tests
         {
             Dictionary<string, string> strings = Strings();
             Assert.Equal("Cut line", strings["Attr.icon.tutorial01"]);
-            Assert.Equal("Finger", strings["Attr.icon.tutorial10"]);
+            Assert.Equal("Cursor", strings["Attr.icon.tutorial10"]);
             Assert.Equal("Fingers", strings["Attr.icon.tutorial11"]);
             Assert.True(strings.ContainsKey("Attr.icon"));
             Assert.True(strings.ContainsKey("Attr.text"));

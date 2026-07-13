@@ -55,7 +55,7 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Draws centered tutorial text, white on the dark canvas and black otherwise.</summary>
+        /// <summary>Draws game-aligned tutorial text, white on the dark canvas and black otherwise.</summary>
         public static void DrawText(
             DrawingContext ctx,
             ViewTransform view,
@@ -95,19 +95,53 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(obj.X - (width / 2), obj.Y - (height / 2), width, height);
         }
 
-        /// <summary>Returns the wrapped, authored-width selection box centered on tutorial text.</summary>
+        /// <summary>Returns the game's top-left-anchored, authored-width tutorial text box.</summary>
         public static LevelBounds TextBounds(SpriteCache sprites, LevelObject obj)
         {
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
             string text = obj.GetAttr("text") ?? string.Empty;
             using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
             int lineCount = TutorialTextLayout.Wrap(text, width, value => font.MeasureText(value)).Count;
-            SKFontMetrics metrics = font.Metrics;
-            double glyphHeight = metrics.Descent - metrics.Ascent;
             double height = lineCount > 0
-                ? ((lineCount - 1) * TutorialFont.LineAdvanceLevel) + glyphHeight + TutorialFont.TopSpacingLevel
-                : TutorialFont.LineAdvanceLevel;
-            return new LevelBounds(obj.X - (width / 2), obj.Y - (height / 2), width, height);
+                ? ((lineCount - 1) * TutorialFont.LineAdvanceLevel)
+                    + TutorialFont.FontSizeLevel
+                    + TutorialFont.TopSpacingLevel
+                : TutorialFont.FontSizeLevel + TutorialFont.TopSpacingLevel;
+            return new LevelBounds(obj.X, obj.Y, width, height);
+        }
+
+        /// <summary>Measures the widest line of <paramref name="text"/> in level units with the gooddog font.</summary>
+        public static double MeasureTextWidth(SpriteCache sprites, string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 0;
+            }
+
+            using SKFont font = new(TutorialFont.GetTypeface(sprites), (float)TutorialFont.FontSizeLevel);
+            double max = 0;
+            foreach (string line in text.Replace("\r\n", "\n").Split('\n'))
+            {
+                max = System.Math.Max(max, font.MeasureText(line));
+            }
+
+            return max;
+        }
+
+        /// <summary>
+        /// When the tutorial text is in auto-width mode, syncs its <c>width</c> attribute to the measured
+        /// text so the box fits exactly (no wrapping) and the game renders the same single lines. No-op for
+        /// a fixed (manual) width.
+        /// </summary>
+        public static void ApplyAutoWidth(SpriteCache sprites, LevelObject obj)
+        {
+            if (!TutorialObject.IsAutoWidth(obj))
+            {
+                return;
+            }
+
+            int width = System.Math.Max(1, (int)System.Math.Ceiling(MeasureTextWidth(sprites, obj.GetAttr("text") ?? string.Empty)));
+            obj.SetAttr("width", width.ToString(CultureInfo.InvariantCulture));
         }
 
         private static LevelBounds IconArtBounds(SpriteLayerDraw layer, double x, double y, double scale)

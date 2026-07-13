@@ -307,6 +307,12 @@
                             AnimationPreviewElapsedSeconds="{Binding AnimationPreviewElapsedSeconds}"
                             SelectedObject="{Binding SelectedObject, Mode=TwoWay}"
                             LockedObject="{Binding LockedObject, Mode=TwoWay}" />
+        <TextBox Grid.Row="0" Grid.Column="0" x:Name="TextEditor"
+                 IsVisible="False"
+                 HorizontalAlignment="Left" VerticalAlignment="Top"
+                 AcceptsReturn="True" TextWrapping="Wrap"
+                 MinWidth="60" MinHeight="26"
+                 KeyDown="TextEditor_KeyDown" LostFocus="TextEditor_LostFocus" />
         <ScrollBar Grid.Row="0" Grid.Column="1"
                    Orientation="Vertical"
                    Minimum="0"

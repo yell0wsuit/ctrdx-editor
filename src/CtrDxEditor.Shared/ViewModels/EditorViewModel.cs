@@ -9,6 +9,8 @@ using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Rendering;
+
 using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.Localization;
 
@@ -225,12 +227,21 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Deletes the currently selected object, if one exists.</summary>
         public void DeleteSelected()
         {
-            if (SelectedObject is null || Document is null)
+            if (SelectedObject is { } selected)
+            {
+                Delete(selected);
+            }
+        }
+
+        /// <summary>Removes <paramref name="removed"/> from the document, capturing undo and refreshing views.</summary>
+        /// <param name="removed">The object to delete.</param>
+        public void Delete(LevelObject removed)
+        {
+            if (Document is null)
             {
                 return;
             }
 
-            LevelObject removed = SelectedObject;
             if (IsAnimationPreviewing(removed))
             {
                 StopAnimationPreview();
@@ -242,7 +253,10 @@ namespace CtrDxEditor.ViewModels
             {
                 LockedObject = null;
             }
-            SelectedObject = null;
+            if (Equals(SelectedObject, removed))
+            {
+                SelectedObject = null;
+            }
             RefreshPalette();
             RefreshObjectList();
         }
@@ -409,6 +423,10 @@ namespace CtrDxEditor.ViewModels
             CaptureUndoSnapshot();
             LevelObject obj = Placement.CreateObject(d, levelX, levelY);
             LevelObjectPolicy.ApplyDefaults(obj, Document);
+            if (TutorialObject.IsText(obj.Type))
+            {
+                TutorialRenderer.ApplyAutoWidth(Sprites, obj);
+            }
             Document.Add(obj);
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
@@ -443,7 +461,8 @@ namespace CtrDxEditor.ViewModels
             }
 
             _pendingUndoTransaction = null;
-            if (before.Xml == Document.Save())
+            HistoryState after = CreateHistoryState()!;
+            if (HistoryStatesEqual(before, after))
             {
                 return;
             }
@@ -494,6 +513,34 @@ namespace CtrDxEditor.ViewModels
         {
             OnPropertyChanged(nameof(CanEditPolyline));
             PopulateFields(value);
+        }
+
+        /// <summary>
+        /// Commits inline-edited tutorial text: captures undo, writes the text, re-syncs auto-width, and
+        /// refreshes the panel and canvas. A no-op when the text is unchanged.
+        /// </summary>
+        /// <param name="obj">The tutorial text being edited.</param>
+        /// <param name="newText">The new literal text.</param>
+        public void CommitTutorialText(LevelObject obj, string newText)
+        {
+            // An empty tutorial text is useless (renders nothing), so committing empty removes it.
+            if (string.IsNullOrWhiteSpace(newText))
+            {
+                Delete(obj);
+                return;
+            }
+
+            if ((obj.GetAttr("text") ?? string.Empty) == newText)
+            {
+                return;
+            }
+
+            CaptureUndoSnapshot();
+            obj.SetAttr("text", newText);
+            TutorialRenderer.ApplyAutoWidth(Sprites, obj);
+            ObjectListVersion++;
+            ObjectMutated?.Invoke();
+            RefreshFieldValues();
         }
 
         partial void OnDocumentChanged(LevelDocument? value)
@@ -552,7 +599,7 @@ namespace CtrDxEditor.ViewModels
 
             if (TutorialObject.IsText(value.Type) || TutorialObject.IsImage(value.Type))
             {
-                TutorialFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                TutorialFieldBuilder.Build(Fields, value, Sprites, Changed, Changing, () => PopulateFields(value));
                 return;
             }
 
@@ -631,7 +678,7 @@ namespace CtrDxEditor.ViewModels
 
         private void PushUndoState(HistoryState state)
         {
-            if (_undoStack.Count > 0 && _undoStack[^1].Xml == state.Xml)
+            if (_undoStack.Count > 0 && HistoryStatesEqual(_undoStack[^1], state))
             {
                 return;
             }
@@ -648,14 +695,34 @@ namespace CtrDxEditor.ViewModels
 
         private HistoryState? CreateHistoryState()
         {
-            return Document is null
-                ? null
-                : new HistoryState(Document.Save(), IndexOf(Document.Objects, SelectedObject), IndexOf(Document.Objects, LockedObject));
+            if (Document is null)
+            {
+                return null;
+            }
+
+            IReadOnlyList<LevelObject> objects = Document.Objects;
+            int[] autoWidthIndices = [.. objects
+                .Select((obj, index) => (obj, index))
+                .Where(item => TutorialObject.IsAutoWidth(item.obj))
+                .Select(item => item.index)];
+            return new HistoryState(
+                Document.Save(),
+                IndexOf(objects, SelectedObject),
+                IndexOf(objects, LockedObject),
+                autoWidthIndices);
         }
 
         private void RestoreHistoryState(HistoryState state)
         {
             Document = LevelDocument.Parse(state.Xml);
+            IReadOnlyList<LevelObject> objects = Document.Objects;
+            foreach (int index in state.AutoWidthIndices)
+            {
+                if (index >= 0 && index < objects.Count && TutorialObject.IsText(objects[index].Type))
+                {
+                    TutorialObject.SetAutoWidth(objects[index], true);
+                }
+            }
             RefreshPalette();
             RefreshObjectList();
             SelectedObject = ObjectAt(state.SelectedIndex);
@@ -663,6 +730,11 @@ namespace CtrDxEditor.ViewModels
             // A restore repaints in place; it must not refit/refocus the canvas the way opening a
             // level does (LevelLoaded), or every undo/redo would throw away the user's zoom and pan.
             ObjectMutated?.Invoke();
+        }
+
+        private static bool HistoryStatesEqual(HistoryState left, HistoryState right)
+        {
+            return left.Xml == right.Xml && left.AutoWidthIndices.SequenceEqual(right.AutoWidthIndices);
         }
 
         private LevelObject? ObjectAt(int index)
@@ -711,6 +783,10 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanRedo));
         }
 
-        private sealed record HistoryState(string Xml, int SelectedIndex, int LockedIndex);
+        private sealed record HistoryState(
+            string Xml,
+            int SelectedIndex,
+            int LockedIndex,
+            int[] AutoWidthIndices);
     }
 }

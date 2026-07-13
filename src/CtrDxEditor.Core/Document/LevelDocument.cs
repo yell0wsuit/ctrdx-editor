@@ -158,11 +158,19 @@ namespace CtrDxEditor.Core.Document
         public IReadOnlyList<LevelObject> Objects =>
             ObjectsLayer is null ? [] : [.. ObjectsLayer.Elements().Select(e => new LevelObject(e))];
 
-        /// <summary>Serializes the level XML, preserving the original declaration when present.</summary>
+        /// <summary>
+        /// Serializes game level XML, preserving the original declaration and unknown data while omitting
+        /// editor-only tutorial auto-width attributes emitted by pre-release editor builds.
+        /// </summary>
         public string Save()
         {
             XDeclaration decl = _doc.Declaration ?? new XDeclaration("1.0", "utf-8", null);
-            return decl + Environment.NewLine + Root;
+            XElement exportRoot = new(Root);
+            foreach (XElement tutorialText in exportRoot.DescendantsAndSelf("tutorialText"))
+            {
+                tutorialText.Attribute("autoWidth")?.Remove();
+            }
+            return decl + Environment.NewLine + exportRoot;
         }
 
         private static int ReadInt(XElement? el, string attr, int fallback)

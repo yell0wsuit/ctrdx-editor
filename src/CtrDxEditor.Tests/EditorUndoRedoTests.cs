@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -168,6 +169,24 @@ namespace CtrDxEditor.Tests
             }
 
             Assert.Equal(historyLimit, undoCount);
+        }
+
+        /// <summary>Preserves editor-only tutorial auto-width state across undo and redo.</summary>
+        [Fact]
+        public void UndoAndRedoRestoreTutorialAutoWidthState()
+        {
+            EditorViewModel vm = CreateLoadedViewModel();
+            LevelObject text = vm.PlaceObject("tutorialText", 20, 30)!;
+            AttributeFieldViewModel autoWidth = vm.Fields.Single(f => f.Name == "autoWidth");
+
+            autoWidth.Value = "false";
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document!.Objects[1]));
+
+            vm.Undo();
+            Assert.True(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+
+            vm.Redo();
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
         }
 
         private static EditorViewModel CreateLoadedViewModel()

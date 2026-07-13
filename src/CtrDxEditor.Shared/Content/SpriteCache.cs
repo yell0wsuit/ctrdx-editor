@@ -297,6 +297,9 @@ namespace CtrDxEditor.Content
         /// <summary>Bitmap side for the complete conveyor palette thumbnail.</summary>
         private const int ConveyorThumbnailPx = 32;
 
+        /// <summary>Bitmap side for the tutorial-text "Text" palette thumbnail.</summary>
+        private const int TutorialTextThumbnailPx = 40;
+
         private RenderTargetBitmap? BuildThumbnail(string element, int candySkin, int omNomSupport)
         {
             // The vinyl disc scales with its size and composes mirrored halves + handles, which the generic
@@ -315,6 +318,15 @@ namespace CtrDxEditor.Content
                 return GetSprite("transporter_belt", candySkin, omNomSupport) is not { Layers.Count: >= 7 }
                     ? null
                     : Rendering.ConveyorRenderer.RenderThumbnail(this, ConveyorThumbnailPx);
+            }
+
+            // Tutorial text has no atlas sprite; draw the word "Text" once the tutorial art (i.e. content)
+            // is present, so a bundle-less host returns null like the generic path below.
+            if (element == TutorialObject.TextElement)
+            {
+                return GetSprite(TutorialObject.DefaultElement, candySkin, omNomSupport) is null
+                    ? null
+                    : Rendering.LevelSceneRenderer.RenderTutorialTextThumbnail(TutorialTextThumbnailPx);
             }
 
             ObjectSprite? sprite = GetSprite(element, candySkin, omNomSupport);

@@ -12,6 +12,8 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public static class TutorialObject
     {
+        private sealed class AutoWidthState;
+
         /// <summary>Number of tutorial icon quads / tags.</summary>
         public const int IconCount = 11;
 
@@ -22,10 +24,27 @@ namespace CtrDxEditor.Core.Editing
         public const int DefaultTextWidth = 140;
 
         /// <summary>Placeholder text so a freshly placed tutorial text is visible.</summary>
-        public const string DefaultText = "Tutorial text";
+        public const string DefaultText = "Text";
 
         /// <summary>The tutorial-text element name.</summary>
         public const string TextElement = "tutorialText";
+
+        /// <summary>Whether the tutorial text auto-sizes its width to the text (default for new text).</summary>
+        public static bool IsAutoWidth(LevelObject o)
+        {
+            return o.Element.Annotation<AutoWidthState>() is not null;
+        }
+
+        /// <summary>Turns editor-only auto-width state on or off without changing serialized level XML.</summary>
+        public static void SetAutoWidth(LevelObject o, bool auto)
+        {
+            o.Element.RemoveAnnotations<AutoWidthState>();
+            o.RemoveAttr("autoWidth"); // Clean up levels touched by pre-release editor builds.
+            if (auto)
+            {
+                o.Element.AddAnnotation(new AutoWidthState());
+            }
+        }
 
         /// <summary>Whether <paramref name="type"/> is one of the 11 tutorial icon tags.</summary>
         public static bool IsImage(string type)
@@ -42,7 +61,7 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>The zero-based quad for a <c>tutorialNN</c> tag, or -1 when not an icon tag.</summary>
         public static int QuadForTag(string type)
         {
-            if (type is not { Length: 10 } || !type.StartsWith("tutorial", System.StringComparison.Ordinal))
+            if (type is not { Length: 10 } || !type.StartsWith("tutorial", StringComparison.Ordinal))
             {
                 return -1;
             }

@@ -87,6 +87,27 @@ namespace CtrDxEditor.Tests
             Assert.True(bounds.H > 50);
         }
 
+        /// <summary>Treats tutorial text coordinates as the game's top-left wrap-box origin.</summary>
+        [Fact]
+        public void TextSelectionBoundsStartAtAuthoredPosition()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            LevelObject text = new(new System.Xml.Linq.XElement(
+                "tutorialText",
+                new System.Xml.Linq.XAttribute("x", "100"),
+                new System.Xml.Linq.XAttribute("y", "120"),
+                new System.Xml.Linq.XAttribute("text", "Tutorial"),
+                new System.Xml.Linq.XAttribute("width", "140")));
+            Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            MethodInfo selectionBounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
+
+            LevelBounds bounds = (LevelBounds)selectionBounds.Invoke(null, [sprites, text, 0, 0, false])!;
+
+            Assert.Equal(100, bounds.X, precision: 9);
+            Assert.Equal(120, bounds.Y, precision: 9);
+            Assert.Equal(140, bounds.W, precision: 9);
+        }
+
         /// <summary>Centers the visible spriteSourceSize region on the authored tutorial position.</summary>
         [Fact]
         public void IconSelectionBoundsCenterTrimmedTutorialArtOnAnchor()

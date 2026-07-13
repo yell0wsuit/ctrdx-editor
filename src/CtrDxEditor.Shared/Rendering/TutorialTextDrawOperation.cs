@@ -55,16 +55,17 @@ namespace CtrDxEditor.Rendering
     }
 
     /// <summary>
-    /// Draws centered tutorial text in the gooddog font, greedily wrapped to the authored width. Text is
-    /// white on the dark blank canvas and black otherwise. A non-Skia backend draws nothing.
+    /// Draws tutorial text from the game's top-left wrap-box origin in the gooddog font, greedily wrapped
+    /// to the authored width. Text is white on the dark blank canvas and black otherwise. A non-Skia
+    /// backend draws nothing.
     /// </summary>
     internal sealed class TutorialTextDrawOperation(
         Rect bounds,
         ViewTransform view,
         SpriteCache sprites,
         string text,
-        double centerX,
-        double centerY,
+        double originX,
+        double originY,
         double widthLevel,
         bool dark)
         : ICustomDrawOperation
@@ -123,15 +124,13 @@ namespace CtrDxEditor.Rendering
             canvas.Scale((float)view.Zoom);
 
             SKFontMetrics metrics = font.Metrics;
-            double blockHeight = ((lines.Count - 1) * TutorialFont.LineAdvanceLevel)
-                + (metrics.Descent - metrics.Ascent);
-            double firstBaseline = centerY - (blockHeight / 2) - metrics.Ascent + TutorialFont.TopSpacingLevel;
+            double firstBaseline = originY + TutorialFont.TopSpacingLevel - metrics.Ascent;
 
             for (int i = 0; i < lines.Count; i++)
             {
                 string line = lines[i];
                 float lineWidth = font.MeasureText(line);
-                float x = (float)(centerX - (lineWidth / 2));
+                float x = (float)(originX + ((widthLevel - lineWidth) / 2));
                 float y = (float)(firstBaseline + (i * TutorialFont.LineAdvanceLevel));
                 canvas.DrawText(line, x, y, font, paint);
             }

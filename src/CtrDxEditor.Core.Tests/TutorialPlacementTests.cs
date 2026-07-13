@@ -37,7 +37,35 @@ namespace CtrDxEditor.Core.Tests
             LevelObjectPolicy.ApplyDefaults(o, doc);
             Assert.Equal("en", o.GetAttr("locale"));
             Assert.Equal("140", o.GetAttr("width"));
-            Assert.Equal("Tutorial text", o.GetAttr("text"));
+            Assert.Equal("Text", o.GetAttr("text"));
+            Assert.True(TutorialObject.IsAutoWidth(o));
+        }
+
+        /// <summary>Keeps the editor's auto-width mode out of game level XML.</summary>
+        [Fact]
+        public void PlacedAutoWidthTextDoesNotSerializeEditorState()
+        {
+            LevelDocument doc = EmptyDoc();
+            LevelObject o = Placement.CreateObject(DescriptorTable.CtrObjects.For("tutorialText")!, 10, 20);
+            LevelObjectPolicy.ApplyDefaults(o, doc);
+            doc.Add(o);
+
+            Assert.True(TutorialObject.IsAutoWidth(o));
+            Assert.Null(o.GetAttr("autoWidth"));
+            Assert.DoesNotContain("autoWidth", doc.Save());
+        }
+
+        /// <summary>Strips editor-only state emitted by pre-release editor builds during export.</summary>
+        [Fact]
+        public void LegacyAutoWidthAttributeIsNotSerialized()
+        {
+            const string xml = "<map><layer name=\"Objects\">"
+                + "<tutorialText x=\"10\" y=\"20\" text=\"Text\" width=\"40\" autoWidth=\"true\"/>"
+                + "</layer></map>";
+
+            LevelDocument doc = LevelDocument.Parse(xml);
+
+            Assert.DoesNotContain("autoWidth", doc.Save());
         }
 
         /// <summary>Preserves tutorial attributes and non-English sibling layers without mutation.</summary>

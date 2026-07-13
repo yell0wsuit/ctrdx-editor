@@ -937,6 +937,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // F2 opens the inline text editor over a selected tutorial text.
+            if (e.Key == Key.F2 && SelectedObject is { } sel && TutorialObject.IsText(sel.Type))
+            {
+                EditTutorialTextRequested?.Invoke(sel);
+                e.Handled = true;
+                return;
+            }
+
             base.OnKeyDown(e);
         }
 

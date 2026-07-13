@@ -1,8 +1,12 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -12,10 +16,33 @@ namespace CtrDxEditor.Tests
     /// <summary>The tutorial properties panel exposes icon and text editing controls.</summary>
     public class TutorialFieldBuilderTests
     {
+        private sealed class EmptyStore : IContentStore
+        {
+            public Task<bool> ExistsAsync(string relPath)
+            {
+                return Task.FromResult(false);
+            }
+
+            public Task<byte[]> ReadBytesAsync(string relPath)
+            {
+                return Task.FromResult(Array.Empty<byte>());
+            }
+
+            public Task<string> ReadTextAsync(string relPath)
+            {
+                return Task.FromResult("");
+            }
+
+            public Task<bool> IsPopulatedAsync()
+            {
+                return Task.FromResult(false);
+            }
+        }
+
         private static ObservableCollection<AttributeFieldViewModel> Build(LevelObject obj)
         {
             ObservableCollection<AttributeFieldViewModel> fields = [];
-            TutorialFieldBuilder.Build(fields, obj, () => { }, () => { }, () => { });
+            TutorialFieldBuilder.Build(fields, obj, new SpriteCache(new EmptyStore()), () => { }, () => { }, () => { });
             return fields;
         }
 
@@ -41,9 +68,9 @@ namespace CtrDxEditor.Tests
             Assert.Equal("tutorial07", obj.Type);
         }
 
-        /// <summary>Builds literal text and wrap-width fields for tutorial text.</summary>
+        /// <summary>A fixed-width (manual) tutorial text shows text, the auto-width toggle, and width.</summary>
         [Fact]
-        public void TextPanelHasTextAndWidth()
+        public void ManualTextPanelHasTextAutoAndWidth()
         {
             LevelObject obj = new(new XElement(
                 "tutorialText",
@@ -51,7 +78,31 @@ namespace CtrDxEditor.Tests
                 new XAttribute("width", "140")));
             ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
             Assert.Contains(fields, f => f.Name == "text");
+            Assert.Contains(fields, f => f.Name == "autoWidth");
             Assert.Contains(fields, f => f.Name == "width");
+        }
+
+        /// <summary>An auto-width tutorial text hides the manual width field.</summary>
+        [Fact]
+        public void AutoTextPanelHidesWidth()
+        {
+            LevelObject obj = new(new XElement(
+                "tutorialText",
+                new XAttribute("text", "hi")));
+            TutorialObject.SetAutoWidth(obj, true);
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            Assert.Contains(fields, f => f.Name == "text");
+            Assert.Contains(fields, f => f.Name == "autoWidth");
+            Assert.DoesNotContain(fields, f => f.Name == "width");
+        }
+
+        /// <summary>Uses the property field and F2 overlay without exposing a redundant panel command.</summary>
+        [Fact]
+        public void ViewModelHasNoTutorialEditButtonCommand()
+        {
+            Assert.Null(typeof(EditorViewModel).GetProperty("CanEditTutorialText"));
+            Assert.Null(typeof(EditorViewModel).GetProperty("EditTutorialTextCommand"));
+            Assert.Null(typeof(EditorViewModel).GetEvent("TutorialTextEditRequested"));
         }
     }
 }
