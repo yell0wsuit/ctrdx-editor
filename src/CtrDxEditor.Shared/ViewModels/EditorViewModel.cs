@@ -64,7 +64,7 @@ namespace CtrDxEditor.ViewModels
         public ObservableCollection<PaletteItemViewModel> Palette { get; } = [];
 
         /// <summary>Display name of the game whose objects fill the palette.</summary>
-        public string CurrentGameName { get; } = "Cut the Rope";
+        public string CtrOriginalPalette { get; } = "Cut the Rope";
 
         /// <summary>Palette items after applying <see cref="PaletteSearchText"/>.</summary>
         public ObservableCollection<PaletteItemViewModel> PaletteView { get; } = [];

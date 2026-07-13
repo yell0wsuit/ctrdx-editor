@@ -100,7 +100,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void CurrentGameNameIsCutTheRope()
         {
-            Assert.Equal("Cut the Rope", Vm().CurrentGameName);
+            Assert.Equal("Cut the Rope", Vm().CtrOriginalPalette);
         }
 
         /// <summary>With no level open, the game-name header stays hidden.</summary>
