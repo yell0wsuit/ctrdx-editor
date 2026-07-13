@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 
@@ -36,7 +38,7 @@ namespace CtrDxEditor.Rendering
 
         private static float? EmSizeCache { get; set; }
 
-        /// <summary>Returns the gooddog typeface, or Skia's default when the font asset is unavailable.</summary>
+        /// <summary>Returns the gooddog typeface, or Inter when the game font asset is unavailable.</summary>
         /// <param name="sprites">Sprite cache whose platform content store supplies the font bytes.</param>
         /// <returns>The cached gooddog or fallback typeface.</returns>
         public static SKTypeface GetTypeface(SpriteCache sprites)
@@ -57,8 +59,32 @@ namespace CtrDxEditor.Rendering
                 TypefaceCache = null;
             }
 
-            TypefaceCache ??= SKTypeface.Default;
+            TypefaceCache ??= ResolveDefaultTypeface();
             return TypefaceCache;
+        }
+
+        /// <summary>Embedded default UI font (Inter, from <c>WithInterFont</c>), loadable on every backend.</summary>
+        private static readonly Uri InterFontUri = new("avares://Avalonia.Fonts.Inter/Assets/Inter-Regular.ttf");
+
+        /// <summary>
+        /// Resolves Inter as an <see cref="SKTypeface"/> for when gooddog is absent, so fallback text
+        /// matches the editor on every platform. The asset stream is copied to managed bytes before it is
+        /// passed to Skia because package-resource streams are not consistently seekable in browser WASM.
+        /// </summary>
+        private static SKTypeface ResolveDefaultTypeface()
+        {
+            StandardAssetLoader assetLoader = new();
+            return ResolveDefaultTypeface(() => assetLoader.Open(InterFontUri));
+        }
+
+        private static SKTypeface ResolveDefaultTypeface(Func<Stream> openInterFont)
+        {
+            using Stream stream = openInterFont();
+            using MemoryStream buffer = new();
+            stream.CopyTo(buffer);
+            using SKData data = SKData.CreateCopy(buffer.ToArray());
+            return SKTypeface.FromData(data)
+                ?? throw new InvalidOperationException("Could not decode Avalonia's packaged Inter font.");
         }
 
         /// <summary>
