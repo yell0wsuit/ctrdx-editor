@@ -1,5 +1,3 @@
-using System.Linq;
-
 using CtrDxEditor.Content;
 
 using Xunit;

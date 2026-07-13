@@ -294,6 +294,16 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // Rocket launcher base: when isRotatable, LoadRocket adds an upright marker (quad 0) behind
+            // the rocket. Draw it unrotated at the object anchor; the body then draws rotated by the
+            // generic RotationTable block below.
+            if (obj.Type == "rocket" && obj.GetAttr("isRotatable") == "true"
+                && sprites.GetSprite(CanvasSpriteKey("rocket_launcher", nightLevel), candySkin, omNomSupport) is { } launcher
+                && launcher.Layers.Count > 0)
+            {
+                DrawLayer(ctx, v, launcher.Layers[0], x, y, launcher.Scale, null);
+            }
+
             if (RotationTable.For(obj.Type) is { } rotSpec)
             {
                 string rotKey = PreviewSpriteKey(obj, animationPreviewSeconds);
