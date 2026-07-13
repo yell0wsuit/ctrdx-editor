@@ -72,6 +72,8 @@ namespace CtrDxEditor.Core.Editing
             ["sock_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),
             ["sock_xmas"] = new RotationSpec(DisplayOffset: 90, Editable: false),
             ["sock_xmas_grouped"] = new RotationSpec(DisplayOffset: 90, Editable: false),
+            // Rocket: LoadRocket sets rotation = angle - DEG_180, so the dial renders with a -180 offset.
+            ["rocket"] = new RotationSpec(DisplayOffset: -180),
         };
 
         /// <summary>The rotation spec for <paramref name="element"/>, or null when it does not rotate.</summary>

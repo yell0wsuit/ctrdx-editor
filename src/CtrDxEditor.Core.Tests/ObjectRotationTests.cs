@@ -285,5 +285,16 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(RotationTable.IsRotatable(key));
             Assert.Null(RotationTable.EditableFor(key));
         }
+
+        /// <summary>The rocket carries an editable dial with the game's -180 display offset (Rocket render = angle - DEG_180).</summary>
+        [Fact]
+        public void RocketHasEditableMinus180RotationSpec()
+        {
+            RotationSpec? spec = RotationTable.For("rocket");
+            Assert.NotNull(spec);
+            Assert.Equal(-180, spec.DisplayOffset);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.True(RotationTable.IsRotatable("rocket"));
+        }
     }
 }
