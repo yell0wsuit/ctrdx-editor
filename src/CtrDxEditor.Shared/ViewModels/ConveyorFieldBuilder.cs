@@ -17,9 +17,9 @@ namespace CtrDxEditor.ViewModels
         ];
 
         /// <summary>
-        /// Adds the Automatic checkbox (backed by the <c>type</c> attribute: checked removes it, unchecked
-        /// writes "manual"), the direction enum, and the numeric velocity/length/width/angle fields.
-        /// velocity and direction stay visible in manual mode; the game ignores them there.
+        /// Adds geometry fields first, followed by the Automatic checkbox (backed by the <c>type</c>
+        /// attribute: checked removes it, unchecked writes "manual"). Automatic-only velocity and direction
+        /// fields appear below the checkbox and are hidden in manual mode because the game ignores them.
         /// </summary>
         /// <param name="fields">The properties-panel field collection to append to.</param>
         /// <param name="value">The conveyor object being edited.</param>
@@ -33,28 +33,37 @@ namespace CtrDxEditor.ViewModels
             Action onChanging,
             Action rebuild)
         {
-            fields.Add(new AttributeFieldViewModel(
-                "auto",
-                AttrType.Bool,
-                () => ConveyorObject.IsAuto(value) ? "true" : "false",
-                v => ConveyorObject.SetAuto(value, v == "true"),
-                onChanged,
-                onChanging));
+            bool automatic = ConveyorObject.IsAuto(value);
 
-            fields.Add(new AttributeFieldViewModel(
-                "direction",
-                DirectionOptions,
-                () => value.GetAttr("direction") ?? "forward",
-                v => value.SetAttr("direction", v ?? "forward"),
-                onChanged,
-                onChanging));
+            void Structural()
+            {
+                onChanged();
+                rebuild();
+            }
 
-            fields.Add(new AttributeFieldViewModel(value, "velocity", AttrType.Number, null, onChanged, onChanging));
             fields.Add(new AttributeFieldViewModel(value, "length", AttrType.Number, null, onChanged, onChanging));
             fields.Add(new AttributeFieldViewModel(value, "width", AttrType.Number, null, onChanged, onChanging));
             fields.Add(new AttributeFieldViewModel(value, "angle", AttrType.Number, null, onChanged, onChanging));
 
-            _ = rebuild;
+            fields.Add(new AttributeFieldViewModel(
+                "auto",
+                AttrType.Bool,
+                () => automatic ? "true" : "false",
+                v => ConveyorObject.SetAuto(value, v == "true"),
+                Structural,
+                onChanging));
+
+            if (automatic)
+            {
+                fields.Add(new AttributeFieldViewModel(value, "velocity", AttrType.Number, null, onChanged, onChanging));
+                fields.Add(new AttributeFieldViewModel(
+                    "direction",
+                    DirectionOptions,
+                    () => value.GetAttr("direction") ?? ConveyorObject.DefaultDirection,
+                    v => value.SetAttr("direction", v ?? ConveyorObject.DefaultDirection),
+                    onChanged,
+                    onChanging));
+            }
         }
     }
 }

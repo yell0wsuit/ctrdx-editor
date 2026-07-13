@@ -25,13 +25,36 @@ namespace CtrDxEditor.Tests
             return (fields, belt);
         }
 
-        /// <summary>The builder emits auto, direction, then the numeric size fields in order.</summary>
+        /// <summary>Geometry comes first; automatic controls sit at the bottom.</summary>
         [Fact]
-        public void BuildsAutoDirectionAndNumericFields()
+        public void BuildsGeometryThenAutomaticControls()
         {
             (ObservableCollection<AttributeFieldViewModel> fields, _) = Build(("velocity", "10"));
             string[] names = [.. fields.Select(f => f.Name)];
-            Assert.Equal(["auto", "direction", "velocity", "length", "width", "angle"], names);
+            Assert.Equal(["length", "width", "angle", "auto", "velocity", "direction"], names);
+        }
+
+        /// <summary>Manual conveyors hide velocity and direction because the game ignores them.</summary>
+        [Fact]
+        public void ManualConveyorHidesAutomaticControls()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, _) = Build(("type", "manual"), ("velocity", "10"));
+            string[] names = [.. fields.Select(f => f.Name)];
+            Assert.Equal(["length", "width", "angle", "auto"], names);
+        }
+
+        /// <summary>Toggling Automatic requests a field rebuild so conditional controls update immediately.</summary>
+        [Fact]
+        public void TogglingAutomaticRebuildsFields()
+        {
+            LevelObject belt = new(new XElement("transporter"));
+            ObservableCollection<AttributeFieldViewModel> fields = [];
+            int rebuilds = 0;
+            ConveyorFieldBuilder.Build(fields, belt, () => { }, () => { }, () => rebuilds++);
+
+            fields.Single(f => f.Name == "auto").BoolValue = false;
+
+            Assert.Equal(1, rebuilds);
         }
 
         /// <summary>The auto checkbox is checked when the belt has no type attribute.</summary>
