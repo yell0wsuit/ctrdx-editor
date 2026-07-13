@@ -167,11 +167,13 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("index", AttrType.Whole, null),
             ], MaxCount: int.MaxValue),
 
-            // Conveyor belt (game element `transporter`, LoadConveyorBelts.cs). (x,y) is the centre of one
-            // end; the belt extends `length` along (cos angle, -sin angle) with thickness `width` centred.
-            // `type` is left with a null default so a freshly placed belt writes no `type` attribute and is
-            // therefore automatic (the game treats anything != "manual" as automatic). Auto/manual and
-            // direction are edited through ConveyorFieldBuilder, not the generic attribute fields.
+            // Light bulb
+            new ObjectDescriptor("lightBulb", "Light bulb",
+            [
+                new AttributeSpec("litRadius", AttrType.Whole, "50"),
+            ], MaxCount: int.MaxValue),
+
+            // Conveyor belt
             new ObjectDescriptor("transporter", "Conveyor",
             [
                 new AttributeSpec("velocity", AttrType.Number, "10"),
@@ -180,12 +182,6 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("width", AttrType.Number, "50"),
                 new AttributeSpec("angle", AttrType.Number, "0"),
                 new AttributeSpec("type", AttrType.Enum, null, EnumValues: ["manual"]),
-            ], MaxCount: int.MaxValue),
-
-            // Light bulb
-            new ObjectDescriptor("lightBulb", "Light bulb",
-            [
-                new AttributeSpec("litRadius", AttrType.Whole, "50"),
             ], MaxCount: int.MaxValue),
         ]);
     }
