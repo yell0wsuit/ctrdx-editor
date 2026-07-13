@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 using Avalonia;
 using Avalonia.Media;
@@ -28,39 +29,62 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         public const double FontSizeLevel = 24.0;
 
+        private const double InterFallbackScale = 0.75;
+
         /// <summary>Line advance including the game's five-pixel line spacing.</summary>
         public const double LineAdvanceLevel = FontSizeLevel + (5.0 / 3.0);
 
         /// <summary>The game's 25-pixel top spacing converted to level units.</summary>
         public const double TopSpacingLevel = 25.0 / 3.0;
 
-        private static SKTypeface? TypefaceCache { get; set; }
+        private static readonly Lock TypefaceCacheLock = new();
 
-        private static float? EmSizeCache { get; set; }
+        private static TypefaceSelection? TypefaceCache { get; set; }
+
+        private sealed class TypefaceSelection(SKTypeface typeface, bool usesInterFallback)
+        {
+            public SKTypeface Typeface { get; } = typeface;
+
+            public bool UsesInterFallback { get; } = usesInterFallback;
+
+            public float? EmSize { get; set; }
+        }
 
         /// <summary>Returns the gooddog typeface, or Inter when the game font asset is unavailable.</summary>
         /// <param name="sprites">Sprite cache whose platform content store supplies the font bytes.</param>
         /// <returns>The cached gooddog or fallback typeface.</returns>
         public static SKTypeface GetTypeface(SpriteCache sprites)
         {
-            if (TypefaceCache is not null)
+            return GetTypefaceSelection(sprites).Typeface;
+        }
+
+        private static TypefaceSelection GetTypefaceSelection(SpriteCache sprites)
+        {
+            lock (TypefaceCacheLock)
             {
+                if (TypefaceCache is not null)
+                {
+                    return TypefaceCache;
+                }
+
+                SKTypeface? typeface = null;
+                try
+                {
+                    byte[] bytes = sprites.ReadContentBytes("fonts/gooddog_new-webfont.ttf");
+                    using SKData data = SKData.CreateCopy(bytes);
+                    typeface = SKTypeface.FromData(data);
+                }
+                catch (Exception)
+                {
+                    typeface = null;
+                }
+
+                TypefaceCache = typeface is not null
+                    ? new TypefaceSelection(typeface, usesInterFallback: false)
+                    : new TypefaceSelection(ResolveDefaultTypeface(), usesInterFallback: true);
+
                 return TypefaceCache;
             }
-
-            try
-            {
-                byte[] bytes = sprites.ReadContentBytes("fonts/gooddog_new-webfont.ttf");
-                using SKData data = SKData.CreateCopy(bytes);
-                TypefaceCache = SKTypeface.FromData(data);
-            }
-            catch (Exception)
-            {
-                TypefaceCache = null;
-            }
-
-            TypefaceCache ??= ResolveDefaultTypeface();
-            return TypefaceCache;
         }
 
         /// <summary>Embedded default UI font (Inter, from <c>WithInterFont</c>), loadable on every backend.</summary>
@@ -88,26 +112,36 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Builds an <see cref="SKFont"/> whose pixel height (descent − ascent) equals
-        /// <see cref="FontSizeLevel"/> level units, matching the game's FontStashSharp pixel-height sizing.
-        /// SKFont.Size is the em size, so we scale it by the font's (pixel height / em) ratio, probed once.
+        /// Builds an <see cref="SKFont"/> whose pixel height (descent − ascent) matches the game's
+        /// <see cref="FontSizeLevel"/> when gooddog is available. Inter fallback text uses 90% of that
+        /// height for a closer visual match. SKFont.Size is the em size, so it is scaled by the font's
+        /// pixel-height-to-em ratio, probed once.
         /// </summary>
         /// <param name="sprites">Sprite cache supplying the typeface.</param>
-        /// <returns>A font sized to the game's glyph pixel height.</returns>
+        /// <returns>A font sized for the selected gooddog or Inter typeface.</returns>
         public static SKFont CreateFont(SpriteCache sprites)
         {
-            SKTypeface typeface = GetTypeface(sprites);
-            if (EmSizeCache is null)
+            TypefaceSelection selection = GetTypefaceSelection(sprites);
+            lock (TypefaceCacheLock)
             {
-                using SKFont probe = new(typeface, 100f);
-                SKFontMetrics metrics = probe.Metrics;
-                float heightPer100 = metrics.Descent - metrics.Ascent;
-                EmSizeCache = heightPer100 > 0
-                    ? (float)(FontSizeLevel * 100f / heightPer100)
-                    : (float)FontSizeLevel;
-            }
+                if (selection.EmSize is null)
+                {
+                    using SKFont probe = new(selection.Typeface, 100f);
+                    SKFontMetrics metrics = probe.Metrics;
+                    float heightPer100 = metrics.Descent - metrics.Ascent;
+                    double pixelHeight = TargetPixelHeight(selection.UsesInterFallback);
+                    selection.EmSize = heightPer100 > 0
+                        ? (float)(pixelHeight * 100f / heightPer100)
+                        : (float)pixelHeight;
+                }
 
-            return new SKFont(typeface, EmSizeCache.Value);
+                return new SKFont(selection.Typeface, selection.EmSize.Value);
+            }
+        }
+
+        private static double TargetPixelHeight(bool usesInterFallback)
+        {
+            return usesInterFallback ? FontSizeLevel * InterFallbackScale : FontSizeLevel;
         }
     }
 
