@@ -1575,6 +1575,34 @@ namespace CtrDxEditor.Rendering
             ctx.DrawRectangle(null, pen, box);
         }
 
+        /// <summary>
+        /// Draws the candy's physics-center point — the marker hazards (spike/bouncer/bubble) actually test —
+        /// as a small screen-space crosshair, sized in pixels so it stays readable at any zoom.
+        /// </summary>
+        public static void DrawCandyCrosshair(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pen)
+        {
+            Point[] points = ComputeCandyCrosshairPoints(v, obj, armScreen: 6.0);
+            ctx.DrawLine(pen, points[0], points[1]);
+            ctx.DrawLine(pen, points[2], points[3]);
+        }
+
+        /// <summary>Computes the candy crosshair's horizontal and vertical arm endpoints in screen space.</summary>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">The candy object; the crosshair marks its physics center.</param>
+        /// <param name="armScreen">Half-length of each arm in screen pixels.</param>
+        /// <returns>Horizontal endpoints [left, right] followed by vertical endpoints [top, bottom].</returns>
+        public static Point[] ComputeCandyCrosshairPoints(ViewTransform v, LevelObject obj, double armScreen)
+        {
+            Vec2 c = v.LevelToScreen(new Vec2(obj.X, obj.Y));
+            return
+            [
+                new Point(c.X - armScreen, c.Y),
+                new Point(c.X + armScreen, c.Y),
+                new Point(c.X, c.Y - armScreen),
+                new Point(c.X, c.Y + armScreen),
+            ];
+        }
+
         /// <summary>Computes hitbox bounds translated to the live orbit-preview position.</summary>
         public static LevelBounds? PreviewHitboxBounds(
             LevelObject obj,

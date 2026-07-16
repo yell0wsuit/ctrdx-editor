@@ -296,6 +296,26 @@ namespace CtrDxEditor.Tests
             Assert.True(ccw[1].Y > ccw[0].Y);
         }
 
+        /// <summary>The candy crosshair centers on the object and keeps fixed screen-space arms at any zoom.</summary>
+        [Fact]
+        public void CandyCrosshairCentersOnObjectInScreenSpace()
+        {
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "ComputeCandyCrosshairPoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            LevelObject candy = new(new XElement("candy", new XAttribute("x", "100"), new XAttribute("y", "200")));
+
+            // Zoomed 3x: the center moves with the transform but the 6px arms stay screen-fixed.
+            Point[] points = (Point[])method.Invoke(null, [new ViewTransform(3.0, 0.0, 0.0), candy, 6.0])!;
+
+            Assert.Equal(4, points.Length);
+            Assert.Equal(new Point(300 - 6, 600), points[0]);
+            Assert.Equal(new Point(300 + 6, 600), points[1]);
+            Assert.Equal(new Point(300, 600 - 6), points[2]);
+            Assert.Equal(new Point(300, 600 + 6), points[3]);
+        }
+
         /// <summary>Live orbit preview moves hitbox bounds with the object position, matching DX mover updates.</summary>
         [Fact]
         public void OrbitPreviewHitboxFollowsPreviewPosition()

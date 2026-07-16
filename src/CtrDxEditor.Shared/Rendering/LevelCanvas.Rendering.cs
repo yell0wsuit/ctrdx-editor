@@ -116,6 +116,10 @@ namespace CtrDxEditor.Rendering
                         _palette.HitboxDesktop,
                         PreviewSpinDegrees(obj),
                         PreviewAnimationSeconds(obj));
+                    if (obj.Type is "candy" or "candyL" or "candyR")
+                    {
+                        LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, _palette.HitboxDesktop);
+                    }
                     if (obj.Type == "steamTube")
                     {
                         double angle = ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!);
