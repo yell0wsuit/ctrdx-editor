@@ -39,7 +39,8 @@ namespace CtrDxEditor.Core.Editing
             {
                 // Bounding boxes are converted from top-left texture offsets using BaseElement's integer
                 // center anchor (width >> 1), then WP7 rows are scaled by ActivePhysicsConstants.Wp7ToWorldScale.
-                new("bubble", new(-77, -77, 152, 152), new(-125, -125, 171, 171)),
+                // PointInRect capture square: 2 x BubbleCaptureRadius (85 desktop; 30 x 3 = 90 world mobile).
+                new("bubble", new(-85, -85, 170, 170), new(-90, -90, 180, 180)),
                 new("candy", new(-54, -52, 112, 104), new(-58, -62, 105, 105)),
                 new("candyL", new(-41, -33, 88, 76), new(-40, -41, 69, 72)),
                 new("candyR", new(-41, -33, 88, 76), new(-40, -41, 69, 72)),

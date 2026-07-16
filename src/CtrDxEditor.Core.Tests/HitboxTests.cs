@@ -41,10 +41,17 @@ namespace CtrDxEditor.Core.Tests
                 76 / 3.0);
         }
 
+        /// <summary>Bubble collision is the PointInRect capture square (2 x BubbleCaptureRadius), not the sprite bb.</summary>
+        [Theory]
+        [InlineData(HitboxModel.Desktop, -85, -85, 170, 170)]
+        [InlineData(HitboxModel.Phone, -90, -90, 180, 180)]
+        public void BubbleUsesCaptureSquare(HitboxModel model, double x, double y, double w, double h)
+        {
+            AssertBounds(HitboxTable.Compute("bubble", 0, 0, scale: 0.25, model), x / 3.0, y / 3.0, w / 3.0, h / 3.0);
+        }
+
         /// <summary>Texture-offset boxes use the game's integer center anchor before world-to-level conversion.</summary>
         [Theory]
-        [InlineData("bubble", HitboxModel.Desktop, -77, -77, 152, 152)]
-        [InlineData("bubble", HitboxModel.Phone, -125, -125, 171, 171)]
         [InlineData("star", HitboxModel.Desktop, -48, -47, 82, 82)]
         [InlineData("star", HitboxModel.Phone, -52, -51, 90, 90)]
         [InlineData("target", HitboxModel.Desktop, -56, 30, 108, 2)]
