@@ -120,18 +120,6 @@ namespace CtrDxEditor.Rendering
                     {
                         LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, _palette.HitboxDesktop);
                     }
-                    if (obj.Type == "steamTube")
-                    {
-                        double angle = ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!);
-                        LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y, angle);
-                        Vec2 center = v.LevelToScreen(new Vec2(body.X + (body.W / 2), body.Y + (body.H / 2)));
-                        context.DrawEllipse(
-                            null,
-                            _palette.HitboxDesktop,
-                            new Point(center.X, center.Y),
-                            body.W * v.Zoom / 2,
-                            body.H * v.Zoom / 2);
-                    }
                 }
 
                 // A selected ghost previewing a bubble/bouncer morph shows that transformed object's
