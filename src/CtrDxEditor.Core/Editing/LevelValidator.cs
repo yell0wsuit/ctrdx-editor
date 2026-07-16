@@ -130,16 +130,14 @@ namespace CtrDxEditor.Core.Editing
         private static string CandyLabel(LevelObject candy)
         {
             string? number = candy.GetAttr("candyNumber");
-            if (!string.IsNullOrWhiteSpace(number))
-            {
-                return number.Trim();
-            }
-            return candy.Type switch
-            {
-                "candyL" => "L",
-                "candyR" => "R",
-                _ => "?",
-            };
+            return !string.IsNullOrWhiteSpace(number)
+                ? number.Trim()
+                : candy.Type switch
+                {
+                    "candyL" => "L",
+                    "candyR" => "R",
+                    _ => "?",
+                };
         }
     }
 }

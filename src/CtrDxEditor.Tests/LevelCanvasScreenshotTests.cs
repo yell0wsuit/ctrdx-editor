@@ -447,6 +447,18 @@ namespace CtrDxEditor.Tests
             Assert.True(pen.Thickness > 1.5);
         }
 
+        /// <summary>The candy hazard-alert crosshair pen is solid red, distinct from the normal solid pen.</summary>
+        [Fact]
+        public void CandyCrosshairAlertPenIsSolid()
+        {
+            Type paletteType = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.CanvasPalette")!;
+            object palette = Activator.CreateInstance(paletteType, nonPublic: true)!;
+            Pen pen = (Pen)paletteType.GetProperty("CandyCrosshairAlert")!.GetValue(palette)!;
+
+            Assert.Null(pen.DashStyle);
+            Assert.True(pen.Thickness > 1.0);
+        }
+
         /// <summary>Steam force ticks cross the shaft at the game's low, medium, and maximum levels.</summary>
         [Fact]
         public void SteamForceLevelMarksUseExactRotatedEndpoints()

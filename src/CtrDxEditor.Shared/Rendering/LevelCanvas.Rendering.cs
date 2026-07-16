@@ -101,6 +101,7 @@ namespace CtrDxEditor.Rendering
             if (ShowHitboxes)
             {
                 HitboxModel hitboxModel = HitboxTable.ModelFor(doc.UseMobilePhysics);
+                System.Collections.Generic.HashSet<LevelObject> hazardCandies = [.. HazardOverlap.CandiesInHazards(doc)];
                 foreach (LevelObject obj in objects)
                 {
                     if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(obj, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is not { } sprite)
@@ -118,7 +119,10 @@ namespace CtrDxEditor.Rendering
                         PreviewAnimationSeconds(obj));
                     if (obj.Type is "candy" or "candyL" or "candyR")
                     {
-                        LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, _palette.CandyCrosshair);
+                        Pen crosshairPen = hazardCandies.Contains(obj)
+                            ? _palette.CandyCrosshairAlert
+                            : _palette.CandyCrosshair;
+                        LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, crosshairPen);
                     }
                 }
 
