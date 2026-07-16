@@ -56,8 +56,6 @@ namespace CtrDxEditor.Core.Tests
         [InlineData("star", HitboxModel.Phone, -52, -51, 90, 90)]
         [InlineData("target", HitboxModel.Desktop, -56, 30, 108, 2)]
         [InlineData("target", HitboxModel.Phone, -50, 10, 75, 3)]
-        [InlineData("pump", HitboxModel.Desktop, -80, -80, 175, 175)]
-        [InlineData("pump", HitboxModel.Phone, -98, -95, 171, 171)]
         public void BoundingBoxesMatchDxWorldGeometry(
             string element,
             HitboxModel model,
@@ -219,6 +217,7 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData("grab")]
         [InlineData("gravitySwitch")]
+        [InlineData("pump")]
         [InlineData("")]
         public void UnsupportedElementsReturnNull(string element)
         {

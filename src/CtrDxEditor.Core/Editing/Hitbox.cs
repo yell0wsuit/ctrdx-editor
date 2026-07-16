@@ -46,7 +46,6 @@ namespace CtrDxEditor.Core.Editing
                 new("candyR", new(-41, -33, 88, 76), new(-40, -41, 69, 72)),
                 new("star", new(-48, -47, 82, 82), new(-52, -51, 90, 90)),
                 new("target", new(-56, 30, 108, 2), new(-50, 10, 75, 3)),
-                new("pump", new(-80, -80, 175, 175), new(-98, -95, 171, 171)),
 
                 // ActivePhysicsConstants.SpikesCollisionLineWidth and SpikesCollisionBandHalfHeight,
                 // inflated by the 15-unit spikeCollisionRadius candy tolerance (literal, both models).
