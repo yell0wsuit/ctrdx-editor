@@ -115,6 +115,20 @@ namespace CtrDxEditor.Core.Tests
             AssertCenteredStrip("electro", toggled: false, HitboxModel.Phone, 411, 30, tolerance: 15);
         }
 
+        /// <summary>Bouncer bands are inflated by BouncerCollisionRadius (40 desktop / 60 world mobile).</summary>
+        [Fact]
+        public void BouncerBandIncludesCollisionRadius()
+        {
+            // bouncer1 desktop 194 x 10, +40 => 274 x 90.
+            AssertBounds(
+                HitboxTable.Compute("bouncer1", 0, 0, scale: 3, HitboxModel.Desktop),
+                -274 / 6.0, -90 / 6.0, 274 / 3.0, 90 / 3.0);
+            // bouncer1 mobile 138 x 30, +60 => 258 x 150.
+            AssertBounds(
+                HitboxTable.Compute("bouncer1", 0, 0, scale: 3, HitboxModel.Phone),
+                -258 / 6.0, -150 / 6.0, 258 / 3.0, 150 / 3.0);
+        }
+
         /// <summary>Bouncers use frozen original-asset widths rather than the repacked JSON atlas widths.</summary>
         [Theory]
         [InlineData("bouncer1", 194, 138)]
@@ -124,8 +138,8 @@ namespace CtrDxEditor.Core.Tests
             double desktopWidth,
             double mobileWidth)
         {
-            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10);
-            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10, tolerance: 40);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30, tolerance: 60);
         }
 
         /// <summary>Rocket catch geometry is raw world-space physics and does not inherit the 0.7 art scale.</summary>

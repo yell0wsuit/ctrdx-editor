@@ -59,9 +59,10 @@ namespace CtrDxEditor.Core.Editing
                 new("spike4_toggled", Centered(559, 10), Centered(534, 30), 15, 15),
                 new("electro", Centered(433, 10), Centered(411, 30), 15, 15),
 
-                // ActivePhysicsConstants.BouncerCollisionWidth and BouncerHeight.
-                new("bouncer1", Centered(194, 10), Centered(138, 30)),
-                new("bouncer2", Centered(302, 10), Centered(273, 30)),
+                // ActivePhysicsConstants.BouncerCollisionWidth and BouncerHeight, inflated by
+                // BouncerCollisionRadius (40 desktop; 20 mobile x Wp7ToWorldScale(3) = 60 world).
+                new("bouncer1", Centered(194, 10), Centered(138, 30), 40, 60),
+                new("bouncer2", Centered(302, 10), Centered(273, 30), 40, 60),
 
                 // ActivePhysicsConstants.RocketCatchBox*; the rocket's 0.7 scale affects artwork only.
                 new(
