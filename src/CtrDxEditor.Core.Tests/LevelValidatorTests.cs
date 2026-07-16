@@ -184,5 +184,25 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.GhostIdle");
         }
+
+        /// <summary>A candy starting inside a spike is flagged so the author can move it.</summary>
+        [Fact]
+        public void CandyInsideSpikeWarns()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"0\" y=\"0\" candyNumber=\"1\" /><spike1 x=\"0\" y=\"0\" /><target x=\"3\" y=\"3\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.CandyInHazard");
+        }
+
+        /// <summary>A candy clear of every hazard produces no hazard warning.</summary>
+        [Fact]
+        public void CandyClearOfHazardsDoesNotWarn()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"0\" y=\"0\" /><spike1 x=\"200\" y=\"200\" /><target x=\"3\" y=\"3\" />");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.CandyInHazard");
+        }
     }
 }
