@@ -34,6 +34,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Hitbox overlay for the level's active physics model.</summary>
         public Pen HitboxDesktop { get; private set; } = OverlayPen(Brushes.LimeGreen, 1.5);
 
+        /// <summary>Candy physics-center crosshair, drawn solid so it reads as a point marker
+        /// against the dashed hitbox boxes.</summary>
+        public Pen CandyCrosshair { get; private set; } = SolidPen(Colors.LimeGreen, 1.5);
+
         /// <summary>Selection marquee for the locked object.</summary>
         public Pen ObjectLocked { get; private set; } = OverlayPen(Brushes.Red, 2);
 
@@ -70,7 +74,9 @@ namespace CtrDxEditor.Rendering
 
             GrabRadius = OverlayPen(ThemeColor(host, "EditorColor.OverlayGrabRadius", Colors.Orange), 1.5);
             BulbRadius = OverlayPen(ThemeColor(host, "EditorColor.OverlayBulbRadius", Colors.Gold), 1.5);
-            HitboxDesktop = OverlayPen(ThemeColor(host, "EditorColor.OverlayHitboxDesktop", Colors.LimeGreen), 1.5);
+            Color hitboxColor = ThemeColor(host, "EditorColor.OverlayHitboxDesktop", Colors.LimeGreen);
+            HitboxDesktop = OverlayPen(hitboxColor, 1.5);
+            CandyCrosshair = SolidPen(hitboxColor, 1.5);
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
             ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
             ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);

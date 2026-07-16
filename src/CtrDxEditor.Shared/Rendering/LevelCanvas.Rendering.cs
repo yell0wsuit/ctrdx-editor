@@ -118,7 +118,7 @@ namespace CtrDxEditor.Rendering
                         PreviewAnimationSeconds(obj));
                     if (obj.Type is "candy" or "candyL" or "candyR")
                     {
-                        LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, _palette.HitboxDesktop);
+                        LevelSceneRenderer.DrawCandyCrosshair(context, v, obj, _palette.CandyCrosshair);
                     }
                 }
 
