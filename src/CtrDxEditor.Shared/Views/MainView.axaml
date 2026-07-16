@@ -209,18 +209,6 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="ShowMobileHitboxesToggle_Click" IsEnabled="{Binding HasDocument}">
-          <MenuItem.Icon>
-            <Border Width="16" Height="16" Background="Transparent" />
-          </MenuItem.Icon>
-          <MenuItem.Header>
-            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
-              <TextBlock Grid.Column="0" Text="{loc:Tr Menu.View.ShowMobileHitboxes}" VerticalAlignment="Center" />
-              <icons:MaterialIcon Grid.Column="1" Kind="CheckBold" Width="14" Height="14"
-                                  Margin="24,0,0,0" VerticalAlignment="Center" IsVisible="{Binding ShowMobileHitboxes}" />
-            </Grid>
-          </MenuItem.Header>
-        </MenuItem>
         <MenuItem Click="ShowForceFieldsToggle_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <Border Width="16" Height="16" Background="Transparent" />
@@ -314,7 +302,6 @@
                             View="{Binding View, Mode=TwoWay}"
                             SnapEnabled="{Binding SnapEnabled}"
                             ShowHitboxes="{Binding ShowHitboxes}"
-                            ShowMobileHitboxes="{Binding ShowMobileHitboxes}"
                             ShowForceFields="{Binding ShowForceFields}"
                             ShowMovementPaths="{Binding ShowMovementPaths}"
                             ActiveRopeSkin="{Binding ActiveRopeSkin}"

@@ -1527,7 +1527,7 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Draws an object's hitbox rectangle for the given device model, if it has one.</summary>
+        /// <summary>Draws an object's hitbox outline for the active physics model, if it has one.</summary>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="obj">The object whose hitbox is drawn.</param>

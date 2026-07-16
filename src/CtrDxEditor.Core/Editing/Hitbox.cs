@@ -6,72 +6,72 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
 {
-    /// <summary>A raw game bounding box (offset + size) in game texture pixels.</summary>
+    /// <summary>A center-relative collision rectangle in cuttherope-dx world units.</summary>
     public readonly record struct GameRect(double X, double Y, double W, double H);
 
-    /// <summary>
-    /// One object's ported hitbox: the verbatim game bounding boxes plus the reference frame
-    /// (the object width/height the box was authored against, where drawX = x - RefWidth/2).
-    /// </summary>
-    public sealed record HitboxDef(
-        string Element,
-        GameRect Desktop,
-        GameRect Phone,
-        double RefWidth,
-        double RefHeight);
+    /// <summary>One object's desktop and mobile collision rectangles in game world space.</summary>
+    public sealed record HitboxDef(string Element, GameRect Desktop, GameRect Phone);
 
-    /// <summary>Which physics model's bounding box to use.</summary>
+    /// <summary>Which physics model's collision geometry to use.</summary>
     public enum HitboxModel
     {
-        /// <summary>The desktop physics bounding box.</summary>
+        /// <summary>The desktop physics model.</summary>
         Desktop,
 
-        /// <summary>The phone physics bounding box.</summary>
+        /// <summary>The mobile/WP7 physics model transformed into desktop world units.</summary>
         Phone,
     }
 
     /// <summary>
-    /// Maps ported game collision boxes (GameScene.BoundingBoxes.cs) into editor level space,
-    /// mirroring <see cref="SpritePlacement"/>. Because a box is a sub-region of the same sprite
-    /// scaled by the same s = scale / mapScale, it stays glued to the drawn art at any zoom.
-    /// Add an object by adding a row to <see cref="Defs"/>.
+    /// Maps the active cuttherope-dx collision geometry into editor level space. Definitions are stored
+    /// center-relative in raw world units, exactly where the game performs collision checks; visual sprite
+    /// scale is intentionally ignored because it does not transform <c>GameObject.bb</c> or collision strips.
     /// </summary>
     public static class HitboxTable
     {
-        /// <summary>ActivePhysicsConstants.Wp7ToWorldScale in the main project.</summary>
-        public const double Wp7ToWorldScale = 3.0;
-
-        //                                 desktop bb            phone bb (pre-scale)  ref frame
         private static readonly Dictionary<string, HitboxDef> Defs =
             new HitboxDef[]
             {
-                new("bubble", new(48, 48, 152, 152), new(0, 0, 57, 57), 250, 250),
-                new("candy", new(142, 157, 112, 104), new(46, 49, 35, 35), 393, 418),
-                new("star", new(70, 64, 82, 82), new(22, 20, 30, 30), 236, 223),
-                new("target", new(264, 350, 108, 2), new(90, 110, 25, 1), 640, 640),
-                new("pump", new(300, 300, 175, 175), new(94, 95, 57, 57), 761, 761),
-                new("spike1", new(309.5, 120, 214, 10), new(309.5, 120, 214, 10), 833, 250),
-                new("spike2", new(249, 120, 335, 10), new(249, 120, 335, 10), 833, 250),
-                new("spike3", new(189, 120, 455, 10), new(189, 120, 455, 10), 833, 250),
-                new("spike4", new(132.5, 120, 568, 10), new(132.5, 120, 568, 10), 833, 250),
-                new("spike1_toggled", new(314.5, 120, 204, 10), new(314.5, 120, 204, 10), 833, 250),
-                new("spike2_toggled", new(256, 120, 321, 10), new(256, 120, 321, 10), 833, 250),
-                new("spike3_toggled", new(193.5, 120, 446, 10), new(193.5, 120, 446, 10), 833, 250),
-                new("spike4_toggled", new(136, 120, 561, 10), new(136, 120, 561, 10), 833, 250),
-                new("electro", new(200, 120, 433, 10), new(200 / 3.0, 40, 433 / 3.0, 10 / 3.0), 833, 250),
-                new("bouncer1", new(318.5, 120, 196, 10), new(318.5 / 3.0, 110.0 / 3.0, 196 / 3.0, 30.0 / 3.0), 833, 250),
-                new("bouncer2", new(264.5, 120, 304, 10), new(264.5 / 3.0, 110.0 / 3.0, 304 / 3.0, 30.0 / 3.0), 833, 250),
-                // Rocket: bb from LoadRockets.cs quad 10 (sourceSize 619x418): quadCenter (288,209),
-                // quadSize (358*0.6, 179*0.05). No WP7 box, so Phone = Desktop/3 reproduces it after the
-                // x3 phone scaling. Drawn (and hit-tested) at sprite.Scale 0.7, passed in by DrawHitbox.
-                new("rocket",
-                    new(180.6, 204.525, 214.8, 8.95),
-                    new(180.6 / 3.0, 204.525 / 3.0, 214.8 / 3.0, 8.95 / 3.0),
-                    619, 418),
+                // Bounding boxes are converted from top-left texture offsets using BaseElement's integer
+                // center anchor (width >> 1), then WP7 rows are scaled by ActivePhysicsConstants.Wp7ToWorldScale.
+                new("bubble", new(-77, -77, 152, 152), new(-125, -125, 171, 171)),
+                new("candy", new(-54, -52, 112, 104), new(-58, -62, 105, 105)),
+                new("candyL", new(-41, -33, 88, 76), new(-40, -41, 69, 72)),
+                new("candyR", new(-41, -33, 88, 76), new(-40, -41, 69, 72)),
+                new("star", new(-48, -47, 82, 82), new(-52, -51, 90, 90)),
+                new("target", new(-56, 30, 108, 2), new(-50, 10, 75, 3)),
+                new("pump", new(-80, -80, 175, 175), new(-98, -95, 171, 171)),
+
+                // ActivePhysicsConstants.SpikesCollisionLineWidth and SpikesCollisionBandHalfHeight.
+                new("spike1", Centered(212, 10), Centered(204, 30)),
+                new("spike2", Centered(333, 10), Centered(318, 30)),
+                new("spike3", Centered(453, 10), Centered(438, 30)),
+                new("spike4", Centered(566, 10), Centered(543, 30)),
+                new("spike1_toggled", Centered(202, 10), Centered(204, 30)),
+                new("spike2_toggled", Centered(319, 10), Centered(354, 30)),
+                new("spike3_toggled", Centered(444, 10), Centered(426, 30)),
+                new("spike4_toggled", Centered(559, 10), Centered(534, 30)),
+                new("electro", Centered(433, 10), Centered(411, 30)),
+
+                // ActivePhysicsConstants.BouncerCollisionWidth and BouncerHeight.
+                new("bouncer1", Centered(194, 10), Centered(138, 30)),
+                new("bouncer2", Centered(302, 10), Centered(273, 30)),
+
+                // ActivePhysicsConstants.RocketCatchBox*; the rocket's 0.7 scale affects artwork only.
+                new(
+                    "rocket",
+                    Centered(214.8, 8.95, centerX: -21.5, centerY: -0.5),
+                    Centered(208.8, 8.7, centerX: -25.5, centerY: 0)),
             }.ToDictionary(d => d.Element);
 
+        /// <summary>Returns the active model selected by a level's <c>useMobilePhysics</c> setting.</summary>
+        public static HitboxModel ModelFor(bool useMobilePhysics)
+        {
+            return useMobilePhysics ? HitboxModel.Phone : HitboxModel.Desktop;
+        }
+
         /// <summary>
-        /// The level-space box for <paramref name="obj"/>, accounting for state-dependent variants such as
+        /// Computes an object's level-space collision bounds, including state-dependent variants such as
         /// rotatable spike quads.
         /// </summary>
         public static LevelBounds? Compute(
@@ -87,9 +87,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The level-space box for <paramref name="element"/> at object center
-        /// (<paramref name="x"/>,<paramref name="y"/>), or <see langword="null"/> if the element
-        /// has no ported hitbox.
+        /// Computes an element's level-space collision bounds at object center
+        /// (<paramref name="x"/>, <paramref name="y"/>), or <see langword="null"/> when unsupported.
         /// </summary>
         public static LevelBounds? Compute(
             string element,
@@ -99,11 +98,11 @@ namespace CtrDxEditor.Core.Editing
             HitboxModel model,
             double mapScale = SpritePlacement.MapScale)
         {
-            // The magic hat's mouth is world-unit, off-center, and scale/model-independent, so it
-            // does not fit the texture-pixel HitboxDef rows; compute it directly.
+            _ = scale; // Collision geometry is authored in world space and does not inherit visual scale.
+
             if (element == "sock")
             {
-                return SockHitbox.Compute(x, y, mapScale);
+                return SockHitbox.Compute(x, y, model, mapScale);
             }
 
             if (!Defs.TryGetValue(element, out HitboxDef? def))
@@ -111,18 +110,25 @@ namespace CtrDxEditor.Core.Editing
                 return null;
             }
 
-            GameRect bb = model == HitboxModel.Phone
-                ? new GameRect(
-                    def.Phone.X * Wp7ToWorldScale, def.Phone.Y * Wp7ToWorldScale,
-                    def.Phone.W * Wp7ToWorldScale, def.Phone.H * Wp7ToWorldScale)
-                : def.Desktop;
+            GameRect box = model == HitboxModel.Phone ? def.Phone : def.Desktop;
+            return new LevelBounds(
+                x + (box.X / mapScale),
+                y + (box.Y / mapScale),
+                box.W / mapScale,
+                box.H / mapScale);
+        }
 
-            double s = scale / mapScale;
-            double cx = x + ((bb.X + (bb.W / 2) - (def.RefWidth / 2)) * s);
-            double cy = y + ((bb.Y + (bb.H / 2) - (def.RefHeight / 2)) * s);
-            double w = bb.W * s;
-            double h = bb.H * s;
-            return new LevelBounds(cx - (w / 2), cy - (h / 2), w, h);
+        private static GameRect Centered(
+            double width,
+            double height,
+            double centerX = 0,
+            double centerY = 0)
+        {
+            return new GameRect(
+                centerX - (width / 2.0),
+                centerY - (height / 2.0),
+                width,
+                height);
         }
     }
 }

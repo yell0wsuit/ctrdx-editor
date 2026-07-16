@@ -98,33 +98,35 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            if (ShowHitboxes || ShowMobileHitboxes)
+            if (ShowHitboxes)
             {
+                HitboxModel hitboxModel = HitboxTable.ModelFor(doc.UseMobilePhysics);
                 foreach (LevelObject obj in objects)
                 {
                     if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(obj, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is not { } sprite)
                     {
                         continue;
                     }
-                    if (ShowHitboxes)
+                    LevelSceneRenderer.DrawHitbox(
+                        context,
+                        v,
+                        obj,
+                        sprite.Scale,
+                        hitboxModel,
+                        _palette.HitboxDesktop,
+                        PreviewSpinDegrees(obj),
+                        PreviewAnimationSeconds(obj));
+                    if (obj.Type == "steamTube")
                     {
-                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
-                        if (obj.Type == "steamTube")
-                        {
-                            double angle = ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!);
-                            LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y, angle);
-                            Vec2 center = v.LevelToScreen(new Vec2(body.X + (body.W / 2), body.Y + (body.H / 2)));
-                            context.DrawEllipse(
-                                null,
-                                _palette.HitboxDesktop,
-                                new Point(center.X, center.Y),
-                                body.W * v.Zoom / 2,
-                                body.H * v.Zoom / 2);
-                        }
-                    }
-                    if (ShowMobileHitboxes)
-                    {
-                        LevelSceneRenderer.DrawHitbox(context, v, obj, sprite.Scale, HitboxModel.Phone, _palette.HitboxPhone, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
+                        double angle = ObjectRotation.StoredAngle(obj, RotationTable.For("steamTube")!);
+                        LevelBounds body = SteamTubeGeometry.BodyBounds(obj.X, obj.Y, angle);
+                        Vec2 center = v.LevelToScreen(new Vec2(body.X + (body.W / 2), body.Y + (body.H / 2)));
+                        context.DrawEllipse(
+                            null,
+                            _palette.HitboxDesktop,
+                            new Point(center.X, center.Y),
+                            body.W * v.Zoom / 2,
+                            body.H * v.Zoom / 2);
                     }
                 }
 
@@ -147,14 +149,13 @@ namespace CtrDxEditor.Rendering
                     LevelObject proxy = new(proxyEl);
                     if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(proxy, doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } proxySprite)
                     {
-                        if (ShowHitboxes)
-                        {
-                            LevelSceneRenderer.DrawHitbox(context, v, proxy, proxySprite.Scale, HitboxModel.Desktop, _palette.HitboxDesktop);
-                        }
-                        if (ShowMobileHitboxes)
-                        {
-                            LevelSceneRenderer.DrawHitbox(context, v, proxy, proxySprite.Scale, HitboxModel.Phone, _palette.HitboxPhone);
-                        }
+                        LevelSceneRenderer.DrawHitbox(
+                            context,
+                            v,
+                            proxy,
+                            proxySprite.Scale,
+                            hitboxModel,
+                            _palette.HitboxDesktop);
                     }
                 }
             }

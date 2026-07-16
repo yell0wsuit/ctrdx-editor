@@ -52,14 +52,6 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void ShowMobileHitboxesToggle_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm)
-            {
-                vm.ShowMobileHitboxes = !vm.ShowMobileHitboxes;
-            }
-        }
-
         private void ShowForceFieldsToggle_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)

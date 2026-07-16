@@ -46,10 +46,6 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> ShowHitboxesProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowHitboxes), defaultValue: true);
 
-        /// <summary>Avalonia property backing <see cref="ShowMobileHitboxes"/>.</summary>
-        public static readonly StyledProperty<bool> ShowMobileHitboxesProperty =
-            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowMobileHitboxes));
-
         /// <summary>Avalonia property backing <see cref="ShowForceFields"/>.</summary>
         public static readonly StyledProperty<bool> ShowForceFieldsProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(ShowForceFields), defaultValue: true);
@@ -117,7 +113,7 @@ namespace CtrDxEditor.Rendering
             AffectsRender<LevelCanvas>(
                 DocumentProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
-                ShowHitboxesProperty, ShowMobileHitboxesProperty, ShowForceFieldsProperty, ShowMovementPathsProperty,
+                ShowHitboxesProperty, ShowForceFieldsProperty, ShowMovementPathsProperty,
                 ActiveRopeSkinProperty, ActiveBackgroundProperty, ActiveCandySkinProperty,
                 ActiveOmNomSupportProperty,
                 AnimationPreviewModeProperty, AnimationPreviewObjectProperty, AnimationPreviewElapsedSecondsProperty);
@@ -143,9 +139,6 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether desktop hitboxes are drawn over objects.</summary>
         public bool ShowHitboxes { get => GetValue(ShowHitboxesProperty); set => SetValue(ShowHitboxesProperty, value); }
-
-        /// <summary>Whether phone hitboxes are drawn over objects.</summary>
-        public bool ShowMobileHitboxes { get => GetValue(ShowMobileHitboxesProperty); set => SetValue(ShowMobileHitboxesProperty, value); }
 
         /// <summary>Whether directional force-field arrows (e.g. the pump's flow) are drawn over objects.</summary>
         public bool ShowForceFields { get => GetValue(ShowForceFieldsProperty); set => SetValue(ShowForceFieldsProperty, value); }

@@ -8,223 +8,234 @@ using Xunit;
 
 namespace CtrDxEditor.Core.Tests
 {
-    /// <summary>Tests for mapping game hitboxes into editor level space.</summary>
+    /// <summary>Regression coverage for hitbox geometry ported from the active cuttherope-dx physics model.</summary>
     public class HitboxTests
     {
-        // scale = 3 makes s = scale/mapScale = 1, so level units == game px for clean expectations.
-
-        /// <summary>Verifies that the candy desktop hitbox is centered using its source-size frame.</summary>
-        [Fact]
-        public void CandyDesktopBoxCentersOnObjectUsingSourcesizeFrame()
+        /// <summary>Candy collision remains in raw game-object units even though its artwork is scaled to 0.71.</summary>
+        [Theory]
+        [InlineData(HitboxModel.Desktop, -18, -17.333333333333332, 37.333333333333336, 34.666666666666664)]
+        [InlineData(HitboxModel.Phone, -19.333333333333332, -20.666666666666668, 35, 35)]
+        public void CandyMatchesRawGameObjectBounds(
+            HitboxModel model,
+            double x,
+            double y,
+            double width,
+            double height)
         {
-            // desktop (142,157,112,104), ref (393,418):
-            // center offset = (142+56-196.5, 157+52-209) = (1.5, 0); box = center - size/2.
-            LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(-54.5, -52, 112, 104), box);
+            LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 0.71, model);
+
+            AssertBounds(box, x, y, width, height);
         }
 
-        /// <summary>Verifies that the star desktop hitbox aligns with the trimmed glow frame.</summary>
-        [Fact]
-        public void StarDesktopBoxUsesTrimmedGlowFrame()
+        /// <summary>Both split candy elements use GetSplitCandyBoundingBox from the game.</summary>
+        [Theory]
+        [InlineData("candyL")]
+        [InlineData("candyR")]
+        public void SplitCandyMatchesGameBounds(string element)
         {
-            // desktop (70,64,82,82), ref (236,223): offset = (-7, -6.5).
-            LevelBounds? box = HitboxTable.Compute("star", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(-48, -47.5, 82, 82), box);
+            AssertBounds(
+                HitboxTable.Compute(element, 0, 0, scale: 0.71, HitboxModel.Desktop),
+                -41 / 3.0,
+                -11,
+                88 / 3.0,
+                76 / 3.0);
         }
 
-        /// <summary>Verifies that the target desktop hitbox maps to the mouth line.</summary>
-        [Fact]
-        public void TargetDesktopBoxIsTheMouthLine()
+        /// <summary>Texture-offset boxes use the game's integer center anchor before world-to-level conversion.</summary>
+        [Theory]
+        [InlineData("bubble", HitboxModel.Desktop, -77, -77, 152, 152)]
+        [InlineData("bubble", HitboxModel.Phone, -125, -125, 171, 171)]
+        [InlineData("star", HitboxModel.Desktop, -48, -47, 82, 82)]
+        [InlineData("star", HitboxModel.Phone, -52, -51, 90, 90)]
+        [InlineData("target", HitboxModel.Desktop, -56, 30, 108, 2)]
+        [InlineData("target", HitboxModel.Phone, -50, 10, 75, 3)]
+        [InlineData("pump", HitboxModel.Desktop, -80, -80, 175, 175)]
+        [InlineData("pump", HitboxModel.Phone, -98, -95, 171, 171)]
+        public void BoundingBoxesMatchDxWorldGeometry(
+            string element,
+            HitboxModel model,
+            double worldX,
+            double worldY,
+            double worldWidth,
+            double worldHeight)
         {
-            // desktop (264,350,108,2), ref (640,640): offset = (-2, 31).
-            LevelBounds? box = HitboxTable.Compute("target", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(-56, 30, 108, 2), box);
+            AssertBounds(
+                HitboxTable.Compute(element, 0, 0, scale: 0.25, model),
+                worldX / 3.0,
+                worldY / 3.0,
+                worldWidth / 3.0,
+                worldHeight / 3.0);
         }
 
-        /// <summary>Verifies that phone hitboxes use WP7 scaling and differ from desktop bounds.</summary>
-        [Fact]
-        public void PhoneBoxScalesRawValuesByWp7AndDiffersFromDesktop()
+        /// <summary>Static spike collision uses the original physics tables, not repacked atlas widths.</summary>
+        [Theory]
+        [InlineData("spike1", 212, 204)]
+        [InlineData("spike2", 333, 318)]
+        [InlineData("spike3", 453, 438)]
+        [InlineData("spike4", 566, 543)]
+        public void StaticSpikesMatchDesktopAndMobilePhysicsConstants(
+            string element,
+            double desktopWidth,
+            double mobileWidth)
         {
-            // phone (46,49,35,35)*3 = (138,147,105,105), ref (393,418):
-            // offset = (138+52.5-196.5, 147+52.5-209) = (-6, -9.5).
-            LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 3, HitboxModel.Phone);
-            Assert.Equal(new LevelBounds(-58.5, -62, 105, 105), box);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30);
         }
 
-        /// <summary>Verifies that object coordinates translate the computed hitbox.</summary>
-        [Fact]
-        public void ObjectPositionTranslatesTheBox()
+        /// <summary>Rotatable spike collision uses the separate rotatable-width tables in the game.</summary>
+        [Theory]
+        [InlineData("spike1", 202, 204)]
+        [InlineData("spike2", 319, 354)]
+        [InlineData("spike3", 444, 426)]
+        [InlineData("spike4", 559, 534)]
+        public void RotatableSpikesMatchDesktopAndMobilePhysicsConstants(
+            string element,
+            double desktopWidth,
+            double mobileWidth)
         {
-            LevelBounds? box = HitboxTable.Compute("candy", 100, 200, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(45.5, 148, 112, 104), box);
+            AssertCenteredStrip(element, toggled: true, HitboxModel.Desktop, desktopWidth, 10);
+            AssertCenteredStrip(element, toggled: true, HitboxModel.Phone, mobileWidth, 30);
         }
 
-        /// <summary>Verifies that per-object scale shrinks the hitbox around the object center.</summary>
+        /// <summary>Electrodes select both width reduction and collision-band height from the active model.</summary>
         [Fact]
-        public void ObjectScaleShrinksTheBoxAboutTheObjectCenter()
+        public void ElectroMatchesActivePhysicsConstants()
         {
-            // candy scale 0.71, s = 0.71/3. Width = 112 * s; center stays near (0,0).
-            LevelBounds? box = HitboxTable.Compute("candy", 0, 0, scale: 0.71, HitboxModel.Desktop);
-            double s = 0.71 / 3.0;
-            _ = Assert.NotNull(box);
-            Assert.Equal(112 * s, box.Value.W, precision: 9);
-            Assert.Equal(104 * s, box.Value.H, precision: 9);
-            Assert.Equal(1.5 * s, box.Value.X + (box.Value.W / 2.0), precision: 9); // center x
-            Assert.Equal(0.0, box.Value.Y + (box.Value.H / 2.0), precision: 9); // center y
+            AssertCenteredStrip("electro", toggled: false, HitboxModel.Desktop, 433, 10);
+            AssertCenteredStrip("electro", toggled: false, HitboxModel.Phone, 411, 30);
         }
 
-        /// <summary>Verifies that the bubble desktop hitbox is the game box centered on its 250px frame.</summary>
-        [Fact]
-        public void BubbleDesktopBoxCentersOnItsFlightFrame()
+        /// <summary>Bouncers use frozen original-asset widths rather than the repacked JSON atlas widths.</summary>
+        [Theory]
+        [InlineData("bouncer1", 194, 138)]
+        [InlineData("bouncer2", 302, 273)]
+        public void BouncersMatchActivePhysicsConstants(
+            string element,
+            double desktopWidth,
+            double mobileWidth)
         {
-            // desktop (48,48,152,152), ref (250,250): offset = (48+76-125, 48+76-125) = (-1, -1).
-            LevelBounds? box = HitboxTable.Compute("bubble", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(-77, -77, 152, 152), box);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30);
         }
 
-        /// <summary>Verifies that the bubble phone hitbox scales the raw WP7 box by 3.</summary>
+        /// <summary>Rocket catch geometry is raw world-space physics and does not inherit the 0.7 art scale.</summary>
         [Fact]
-        public void BubblePhoneBoxScalesRawValuesByWp7()
+        public void RocketMatchesDesktopAndMobileCatchSlatConstants()
         {
-            // phone (0,0,57,57)*3 = (0,0,171,171), ref (250,250): offset = (85.5-125) = (-39.5, -39.5).
-            LevelBounds? box = HitboxTable.Compute("bubble", 0, 0, scale: 3, HitboxModel.Phone);
-            Assert.Equal(new LevelBounds(-125, -125, 171, 171), box);
+            AssertBounds(
+                HitboxTable.Compute("rocket", 0, 0, scale: 0.7, HitboxModel.Desktop),
+                -128.9 / 3.0,
+                -4.975 / 3.0,
+                71.6,
+                8.95 / 3.0);
+            AssertBounds(
+                HitboxTable.Compute("rocket", 0, 0, scale: 0.7, HitboxModel.Phone),
+                -43.3,
+                -1.45,
+                69.6,
+                2.9);
         }
 
-        /// <summary>Verifies that unsupported elements do not produce hitboxes.</summary>
+        /// <summary>The magic-hat mouth changes to the smaller WP7 rectangle under mobile physics.</summary>
+        [Fact]
+        public void SockMatchesActivePhysicsModel()
+        {
+            AssertBounds(
+                HitboxTable.Compute("sock", 0, 0, scale: 0.7, HitboxModel.Desktop),
+                -30,
+                0,
+                140 / 3.0,
+                5);
+            AssertBounds(
+                HitboxTable.Compute("sock", 0, 0, scale: 0.7, HitboxModel.Phone),
+                -15,
+                0,
+                30,
+                1);
+        }
+
+        /// <summary>Hitbox model selection follows the level's useMobilePhysics flag.</summary>
+        [Fact]
+        public void ModelSelectionFollowsMobilePhysicsSetting()
+        {
+            Assert.Equal(HitboxModel.Desktop, HitboxTable.ModelFor(useMobilePhysics: false));
+            Assert.Equal(HitboxModel.Phone, HitboxTable.ModelFor(useMobilePhysics: true));
+        }
+
+        /// <summary>World-space collision geometry is independent of the object's visual sprite scale.</summary>
+        [Fact]
+        public void VisualScaleDoesNotChangeCollisionBounds()
+        {
+            LevelBounds? normal = HitboxTable.Compute("candy", 0, 0, scale: 0.71, HitboxModel.Desktop);
+            LevelBounds? arbitrary = HitboxTable.Compute("candy", 0, 0, scale: 9, HitboxModel.Desktop);
+
+            Assert.Equal(normal, arbitrary);
+        }
+
+        /// <summary>Object coordinates translate collision bounds without changing their size.</summary>
+        [Fact]
+        public void ObjectPositionTranslatesBounds()
+        {
+            AssertBounds(
+                HitboxTable.Compute("candy", 100, 200, scale: 0.71, HitboxModel.Desktop),
+                82,
+                200 - (52 / 3.0),
+                112 / 3.0,
+                104 / 3.0);
+        }
+
+        /// <summary>Objects without a ported collision primitive do not receive an indicator.</summary>
         [Theory]
         [InlineData("grab")]
         [InlineData("gravitySwitch")]
         [InlineData("")]
         public void UnsupportedElementsReturnNull(string element)
         {
-            Assert.Null(HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop));
+            Assert.Null(HitboxTable.Compute(element, 0, 0, scale: 1, HitboxModel.Desktop));
         }
 
-        /// <summary>Verifies the pump desktop hitbox uses the raw game box against the 761 ref frame.</summary>
-        [Fact]
-        public void PumpDesktopBoxUsesRawGameValues()
+        private static void AssertCenteredStrip(
+            string element,
+            bool toggled,
+            HitboxModel model,
+            double worldWidth,
+            double worldHeight)
         {
-            // desktop (300,300,175,175), ref 761: drawX = x - 761/2 = -380.5; box left = -380.5+300 = -80.5.
-            LevelBounds? box = HitboxTable.Compute("pump", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.Equal(new LevelBounds(-80.5, -80.5, 175, 175), box);
+            LevelBounds? box;
+            if (toggled)
+            {
+                LevelObject obj = new(new XElement(
+                    element,
+                    new XAttribute("x", "0"),
+                    new XAttribute("y", "0"),
+                    new XAttribute("toggled", "0")));
+                box = HitboxTable.Compute(obj, scale: 3, model);
+            }
+            else
+            {
+                box = HitboxTable.Compute(element, 0, 0, scale: 3, model);
+            }
+
+            AssertBounds(
+                box,
+                -worldWidth / 6.0,
+                -worldHeight / 6.0,
+                worldWidth / 3.0,
+                worldHeight / 3.0);
         }
 
-        /// <summary>Spike hitboxes follow the game's narrow rotated collision strip.</summary>
-        [Theory]
-        [InlineData("spike1", 214)]
-        [InlineData("spike2", 335)]
-        [InlineData("spike3", 455)]
-        [InlineData("spike4", 568)]
-        public void SpikeDesktopBoxUsesAtlasQuadWidthAndTenPixelCollisionHeight(string element, int width)
+        private static void AssertBounds(
+            LevelBounds? actual,
+            double x,
+            double y,
+            double width,
+            double height)
         {
-            LevelBounds? box = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop);
-
-            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), box);
-        }
-
-        /// <summary>Toggled spikes use the rotatable spike quad width for their hitbox.</summary>
-        [Theory]
-        [InlineData("spike1", 204)]
-        [InlineData("spike2", 321)]
-        [InlineData("spike3", 446)]
-        [InlineData("spike4", 561)]
-        public void ToggledSpikeDesktopBoxUsesRotatableAtlasQuadWidth(string element, int width)
-        {
-            LevelObject spike = new(new XElement(
-                element,
-                new XAttribute("x", "0"),
-                new XAttribute("y", "0"),
-                new XAttribute("size", element[^1].ToString()),
-                new XAttribute("toggled", "0")));
-
-            LevelBounds? box = HitboxTable.Compute(spike, 3, HitboxModel.Desktop);
-
-            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), box);
-        }
-
-        /// <summary>Electrodes use the game's active electric strip width rather than the full visible art width.</summary>
-        [Fact]
-        public void ElectroDesktopBoxUsesActiveElectricStripWidth()
-        {
-            LevelBounds? box = HitboxTable.Compute("electro", 0, 0, scale: 3, HitboxModel.Desktop);
-
-            Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
-        }
-
-        /// <summary>Electrodes use the same Spikes.UpdateRotation collision strip for phone physics.</summary>
-        [Fact]
-        public void ElectroPhoneBoxMatchesDesktopSpikesCollisionStrip()
-        {
-            LevelBounds? box = HitboxTable.Compute("electro", 0, 0, scale: 3, HitboxModel.Phone);
-
-            Assert.Equal(new LevelBounds(-216.5, -5, 433, 10), box);
-        }
-
-        /// <summary>
-        /// Bouncer collision uses the resting quad width (model-independent) and 2·BouncerHeight for its
-        /// height. BouncerHeight = SelectScaled(5, 5): desktop 5 → full height 10; phone ToWorld(5) = 15 →
-        /// full height 30. So the phone box is 3× taller than desktop, not equal to it.
-        /// </summary>
-        [Theory]
-        [InlineData("bouncer1", 196)]
-        [InlineData("bouncer2", 304)]
-        public void BouncerBoxMatchesDxRotatedCollisionRectangle(string element, int width)
-        {
-            LevelBounds? desktop = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Desktop);
-            LevelBounds? phone = HitboxTable.Compute(element, 0, 0, scale: 3, HitboxModel.Phone);
-
-            Assert.Equal(new LevelBounds(-width / 2.0, -5, width, 10), desktop);
-            Assert.Equal(new LevelBounds(-width / 2.0, -15, width, 30), phone);
-        }
-
-        /// <summary>The magic hat returns its mouth box, ignoring scale and physics model.</summary>
-        [Fact]
-        public void SockBoxIsTheMagicHatMouth()
-        {
-            LevelBounds? box = HitboxTable.Compute("sock", 0, 0, scale: 3, HitboxModel.Desktop);
-
-            Assert.Equal(SockHitbox.Compute(0, 0), box);
-        }
-
-        /// <summary>The hat's box is identical for desktop and phone and independent of scale.</summary>
-        [Fact]
-        public void SockBoxIsIdenticalForDesktopAndPhone()
-        {
-            LevelBounds? desktop = HitboxTable.Compute("sock", 10, 20, scale: 3, HitboxModel.Desktop);
-            LevelBounds? phone = HitboxTable.Compute("sock", 10, 20, scale: 0.7, HitboxModel.Phone);
-
-            Assert.Equal(SockHitbox.Compute(10, 20), desktop);
-            Assert.Equal(desktop, phone);
-        }
-
-        /// <summary>
-        /// The rocket box is the thin launch strip from LoadRockets.cs quad 10 (0.6x width, 0.05x height),
-        /// centered on the quad. At scale 3 (s=1): center x = quadCenter.X - RefWidth/2 = 288 - 309.5 = -21.5,
-        /// centered vertically; width 214.8, height 8.95.
-        /// </summary>
-        [Fact]
-        public void RocketHasThinLaunchStripHitbox()
-        {
-            LevelBounds? box = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Desktop);
-            Assert.NotNull(box);
-            Assert.Equal(-128.9, box.Value.X, 3);
-            Assert.Equal(-4.475, box.Value.Y, 3);
-            Assert.Equal(214.8, box.Value.W, 3);
-            Assert.Equal(8.95, box.Value.H, 3);
-        }
-
-        /// <summary>The rocket has no WP7-specific box, so the phone model matches the desktop model.</summary>
-        [Fact]
-        public void RocketPhoneHitboxMatchesDesktop()
-        {
-            LevelBounds? desktop = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Desktop);
-            LevelBounds? phone = HitboxTable.Compute("rocket", 0, 0, scale: 3, HitboxModel.Phone);
-            Assert.NotNull(phone);
-            Assert.Equal(desktop!.Value.X, phone!.Value.X, 3);
-            Assert.Equal(desktop.Value.Y, phone.Value.Y, 3);
-            Assert.Equal(desktop.Value.W, phone.Value.W, 3);
-            Assert.Equal(desktop.Value.H, phone.Value.H, 3);
+            LevelBounds box = Assert.IsType<LevelBounds>(actual);
+            Assert.Equal(x, box.X, precision: 9);
+            Assert.Equal(y, box.Y, precision: 9);
+            Assert.Equal(width, box.W, precision: 9);
+            Assert.Equal(height, box.H, precision: 9);
         }
     }
 }

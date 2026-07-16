@@ -302,7 +302,6 @@
       <Color x:Key="EditorColor.OverlayGrabRadius">#CA3500</Color>     <!-- orange-700 -->
       <Color x:Key="EditorColor.OverlayBulbRadius">#BB4D00</Color>     <!-- amber-700 -->
       <Color x:Key="EditorColor.OverlayHitboxDesktop">#497D00</Color>  <!-- lime-700 -->
-      <Color x:Key="EditorColor.OverlayHitboxPhone">#A800B7</Color>    <!-- fuchsia-700 -->
       <Color x:Key="EditorColor.OverlayObjectLocked">#C10007</Color>   <!-- red-700 -->
       <Color x:Key="EditorColor.OverlayObjectSelected">#0069A8</Color> <!-- sky-700 -->
       <Color x:Key="EditorColor.OverlayForceArrow">#7F22FE</Color>     <!-- violet-700 -->
@@ -345,7 +344,6 @@
       <Color x:Key="EditorColor.OverlayGrabRadius">#FF8904</Color>     <!-- orange-400, 7.50 -->
       <Color x:Key="EditorColor.OverlayBulbRadius">#FDC700</Color>     <!-- yellow-400, 12.98 -->
       <Color x:Key="EditorColor.OverlayHitboxDesktop">#7CCF00</Color>  <!-- lime-500, 9.15 -->
-      <Color x:Key="EditorColor.OverlayHitboxPhone">#F4A8FF</Color>    <!-- fuchsia-300, 10.10 -->
       <Color x:Key="EditorColor.OverlayObjectLocked">#FFA2A2</Color>   <!-- red-300, 9.29 -->
       <Color x:Key="EditorColor.OverlayObjectSelected">#00BCFF</Color> <!-- sky-400, 8.18 -->
       <Color x:Key="EditorColor.OverlayForceArrow">#C4B4FF</Color>     <!-- violet-300, 8.90 -->
