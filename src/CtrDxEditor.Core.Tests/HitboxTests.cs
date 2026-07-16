@@ -67,6 +67,16 @@ namespace CtrDxEditor.Core.Tests
                 worldHeight / 3.0);
         }
 
+        /// <summary>Spike bands are inflated by the 15-unit candy point tolerance on every side.</summary>
+        [Fact]
+        public void SpikeBandIncludesCandyTolerance()
+        {
+            // spike1 desktop band = 212 x 10; +15 tolerance each side => 242 x 40, centered.
+            AssertBounds(
+                HitboxTable.Compute("spike1", 0, 0, scale: 3, HitboxModel.Desktop),
+                -242 / 6.0, -40 / 6.0, 242 / 3.0, 40 / 3.0);
+        }
+
         /// <summary>Static spike collision uses the original physics tables, not repacked atlas widths.</summary>
         [Theory]
         [InlineData("spike1", 212, 204)]
@@ -78,8 +88,8 @@ namespace CtrDxEditor.Core.Tests
             double desktopWidth,
             double mobileWidth)
         {
-            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10);
-            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Desktop, desktopWidth, 10, tolerance: 15);
+            AssertCenteredStrip(element, toggled: false, HitboxModel.Phone, mobileWidth, 30, tolerance: 15);
         }
 
         /// <summary>Rotatable spike collision uses the separate rotatable-width tables in the game.</summary>
@@ -93,16 +103,16 @@ namespace CtrDxEditor.Core.Tests
             double desktopWidth,
             double mobileWidth)
         {
-            AssertCenteredStrip(element, toggled: true, HitboxModel.Desktop, desktopWidth, 10);
-            AssertCenteredStrip(element, toggled: true, HitboxModel.Phone, mobileWidth, 30);
+            AssertCenteredStrip(element, toggled: true, HitboxModel.Desktop, desktopWidth, 10, tolerance: 15);
+            AssertCenteredStrip(element, toggled: true, HitboxModel.Phone, mobileWidth, 30, tolerance: 15);
         }
 
         /// <summary>Electrodes select both width reduction and collision-band height from the active model.</summary>
         [Fact]
         public void ElectroMatchesActivePhysicsConstants()
         {
-            AssertCenteredStrip("electro", toggled: false, HitboxModel.Desktop, 433, 10);
-            AssertCenteredStrip("electro", toggled: false, HitboxModel.Phone, 411, 30);
+            AssertCenteredStrip("electro", toggled: false, HitboxModel.Desktop, 433, 10, tolerance: 15);
+            AssertCenteredStrip("electro", toggled: false, HitboxModel.Phone, 411, 30, tolerance: 15);
         }
 
         /// <summary>Bouncers use frozen original-asset widths rather than the repacked JSON atlas widths.</summary>
@@ -199,7 +209,8 @@ namespace CtrDxEditor.Core.Tests
             bool toggled,
             HitboxModel model,
             double worldWidth,
-            double worldHeight)
+            double worldHeight,
+            double tolerance = 0)
         {
             LevelBounds? box;
             if (toggled)
@@ -216,12 +227,14 @@ namespace CtrDxEditor.Core.Tests
                 box = HitboxTable.Compute(element, 0, 0, scale: 3, model);
             }
 
+            double inflatedWidth = worldWidth + (2 * tolerance);
+            double inflatedHeight = worldHeight + (2 * tolerance);
             AssertBounds(
                 box,
-                -worldWidth / 6.0,
-                -worldHeight / 6.0,
-                worldWidth / 3.0,
-                worldHeight / 3.0);
+                -inflatedWidth / 6.0,
+                -inflatedHeight / 6.0,
+                inflatedWidth / 3.0,
+                inflatedHeight / 3.0);
         }
 
         private static void AssertBounds(

@@ -10,7 +10,12 @@ namespace CtrDxEditor.Core.Editing
     public readonly record struct GameRect(double X, double Y, double W, double H);
 
     /// <summary>One object's desktop and mobile collision rectangles in game world space.</summary>
-    public sealed record HitboxDef(string Element, GameRect Desktop, GameRect Phone);
+    public sealed record HitboxDef(
+        string Element,
+        GameRect Desktop,
+        GameRect Phone,
+        double DesktopTolerance = 0,
+        double PhoneTolerance = 0);
 
     /// <summary>Which physics model's collision geometry to use.</summary>
     public enum HitboxModel
@@ -42,16 +47,17 @@ namespace CtrDxEditor.Core.Editing
                 new("target", new(-56, 30, 108, 2), new(-50, 10, 75, 3)),
                 new("pump", new(-80, -80, 175, 175), new(-98, -95, 171, 171)),
 
-                // ActivePhysicsConstants.SpikesCollisionLineWidth and SpikesCollisionBandHalfHeight.
-                new("spike1", Centered(212, 10), Centered(204, 30)),
-                new("spike2", Centered(333, 10), Centered(318, 30)),
-                new("spike3", Centered(453, 10), Centered(438, 30)),
-                new("spike4", Centered(566, 10), Centered(543, 30)),
-                new("spike1_toggled", Centered(202, 10), Centered(204, 30)),
-                new("spike2_toggled", Centered(319, 10), Centered(354, 30)),
-                new("spike3_toggled", Centered(444, 10), Centered(426, 30)),
-                new("spike4_toggled", Centered(559, 10), Centered(534, 30)),
-                new("electro", Centered(433, 10), Centered(411, 30)),
+                // ActivePhysicsConstants.SpikesCollisionLineWidth and SpikesCollisionBandHalfHeight,
+                // inflated by the 15-unit spikeCollisionRadius candy tolerance (literal, both models).
+                new("spike1", Centered(212, 10), Centered(204, 30), 15, 15),
+                new("spike2", Centered(333, 10), Centered(318, 30), 15, 15),
+                new("spike3", Centered(453, 10), Centered(438, 30), 15, 15),
+                new("spike4", Centered(566, 10), Centered(543, 30), 15, 15),
+                new("spike1_toggled", Centered(202, 10), Centered(204, 30), 15, 15),
+                new("spike2_toggled", Centered(319, 10), Centered(354, 30), 15, 15),
+                new("spike3_toggled", Centered(444, 10), Centered(426, 30), 15, 15),
+                new("spike4_toggled", Centered(559, 10), Centered(534, 30), 15, 15),
+                new("electro", Centered(433, 10), Centered(411, 30), 15, 15),
 
                 // ActivePhysicsConstants.BouncerCollisionWidth and BouncerHeight.
                 new("bouncer1", Centered(194, 10), Centered(138, 30)),
@@ -111,11 +117,12 @@ namespace CtrDxEditor.Core.Editing
             }
 
             GameRect box = model == HitboxModel.Phone ? def.Phone : def.Desktop;
+            double tol = model == HitboxModel.Phone ? def.PhoneTolerance : def.DesktopTolerance;
             return new LevelBounds(
-                x + (box.X / mapScale),
-                y + (box.Y / mapScale),
-                box.W / mapScale,
-                box.H / mapScale);
+                x + ((box.X - tol) / mapScale),
+                y + ((box.Y - tol) / mapScale),
+                (box.W + (2 * tol)) / mapScale,
+                (box.H + (2 * tol)) / mapScale);
         }
 
         private static GameRect Centered(
