@@ -127,5 +127,80 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(b.X + b.W >= 150);
             Assert.True(b.Y + b.H >= 240);
         }
+
+        /// <summary>The base is hit at the hand's own anchor.</summary>
+        [Fact]
+        public void HitTestFindsBase()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(101, 201), 6, 4, 24);
+
+            Assert.Equal(HandGeometry.HandleKind.Base, h.Kind);
+            Assert.Equal(0, h.Index);
+        }
+
+        /// <summary>A joint reports the index of the segment it terminates.</summary>
+        [Fact]
+        public void HitTestFindsJointBySegmentIndex()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true), (90, 40, false));
+
+            HandGeometry.Handle first = HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4, 24);
+            Assert.Equal(HandGeometry.HandleKind.Joint, first.Kind);
+            Assert.Equal(1, first.Index);
+
+            HandGeometry.Handle claw = HandGeometry.HitTest(hand, new Vec2(150, 240), 6, 4, 24);
+            Assert.Equal(HandGeometry.HandleKind.Joint, claw.Kind);
+            Assert.Equal(2, claw.Index);
+        }
+
+        /// <summary>A point along a bone but away from its joints reports the bone.</summary>
+        [Fact]
+        public void HitTestFindsBoneBetweenJoints()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(125, 201), 6, 4, 24);
+
+            Assert.Equal(HandGeometry.HandleKind.Bone, h.Kind);
+            Assert.Equal(1, h.Index);
+        }
+
+        /// <summary>Joints win over the bone they terminate.</summary>
+        [Fact]
+        public void HitTestPrefersJointOverBone()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            Assert.Equal(HandGeometry.HandleKind.Joint, HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4, 24).Kind);
+        }
+
+        /// <summary>The nub sits past the claw, continuing the last segment's direction.</summary>
+        [Fact]
+        public void NubContinuesLastSegmentDirection()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            Vec2 nub = HandGeometry.NubPosition(hand, 24);
+
+            Assert.Equal(174, nub.X, 6);
+            Assert.Equal(200, nub.Y, 6);
+        }
+
+        /// <summary>The nub is hit and reports the index of the segment it would create.</summary>
+        [Fact]
+        public void HitTestFindsNub()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(174, 200), 6, 4, 24);
+
+            Assert.Equal(HandGeometry.HandleKind.Nub, h.Kind);
+            Assert.Equal(2, h.Index);
+        }
+
+        /// <summary>A point away from every handle reports None.</summary>
+        [Fact]
+        public void HitTestReturnsNoneWhenClear()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            Assert.Equal(HandGeometry.HandleKind.None, HandGeometry.HitTest(hand, new Vec2(400, 400), 6, 4, 24).Kind);
+        }
     }
 }

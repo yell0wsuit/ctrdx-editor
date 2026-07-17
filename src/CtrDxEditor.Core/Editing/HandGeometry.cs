@@ -44,6 +44,93 @@ namespace CtrDxEditor.Core.Editing
                 SnapStep: 90);
         }
 
+        /// <summary>What part of a hand a point is over, so the canvas can route a drag.</summary>
+        public enum HandleKind
+        {
+            /// <summary>Nothing interactive under the point.</summary>
+            None,
+
+            /// <summary>The hand base: dragging moves the whole hand.</summary>
+            Base,
+
+            /// <summary>A joint: dragging rewrites its segment's angle and length together.</summary>
+            Joint,
+
+            /// <summary>A bone: clicking splits it into two collinear segments.</summary>
+            Bone,
+
+            /// <summary>The tip nub: clicking appends a segment.</summary>
+            Nub,
+        }
+
+        /// <summary>A hit-tested hand handle.</summary>
+        /// <param name="Kind">Which handle kind is under the point.</param>
+        /// <param name="Index">
+        /// The 1-based segment index for <see cref="HandleKind.Joint"/> (the segment the joint terminates) and
+        /// <see cref="HandleKind.Bone"/>; 0 for <see cref="HandleKind.Base"/>; and the index the new segment
+        /// would take for <see cref="HandleKind.Nub"/>.
+        /// </param>
+        public readonly record struct Handle(HandleKind Kind, int Index);
+
+        /// <summary>
+        /// The append nub's position: <paramref name="distance"/> past the claw, continuing the last segment's
+        /// direction. A hand with no live segments places the nub along +X from its base.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="distance">How far past the claw to place the nub, in level units.</param>
+        /// <returns>The nub position in level units.</returns>
+        public static Vec2 NubPosition(LevelObject hand, double distance)
+        {
+            int n = HandObject.SegmentCount(hand);
+            Vec2 tip = Joints(hand)[^1];
+            double angle = n >= 1 ? HandObject.Angle(hand, n) : 0;
+            // Only the spec's display offset and stored-angle sign affect the projection, and both are
+            // constant across segments, so the index used to build the spec is immaterial here.
+            return ObjectRotation.KnobPosition(tip, angle, SegmentSpec(Math.Max(1, n)), distance);
+        }
+
+        /// <summary>
+        /// Classifies what a point is over. Joints are scanned tip-first and beat the bones they terminate,
+        /// then bones, then the nub — mirroring the polyline editor's point-before-segment-before-nub order.
+        /// Tolerances are in level units, so the caller converts screen pixels via the zoom.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="point">The position to classify, in level units.</param>
+        /// <param name="jointTolerance">Hit radius around joints, the base, and the nub.</param>
+        /// <param name="boneTolerance">Hit distance from a bone's centre line.</param>
+        /// <param name="nubDistance">How far past the claw the nub sits.</param>
+        /// <returns>The handle under the point, or <see cref="HandleKind.None"/>.</returns>
+        public static Handle HitTest(
+            LevelObject hand, Vec2 point, double jointTolerance, double boneTolerance, double nubDistance)
+        {
+            Vec2[] points = Joints(hand);
+
+            for (int i = points.Length - 1; i >= 1; i--)
+            {
+                if (Distance(points[i], point) <= jointTolerance)
+                {
+                    return new Handle(HandleKind.Joint, i);
+                }
+            }
+
+            if (Distance(points[0], point) <= jointTolerance)
+            {
+                return new Handle(HandleKind.Base, 0);
+            }
+
+            for (int i = 1; i < points.Length; i++)
+            {
+                if (DistanceToSegment(points[i - 1], points[i], point) <= boneTolerance)
+                {
+                    return new Handle(HandleKind.Bone, i);
+                }
+            }
+
+            return Distance(NubPosition(hand, nubDistance), point) <= jointTolerance
+                ? new Handle(HandleKind.Nub, points.Length)
+                : new Handle(HandleKind.None, 0);
+        }
+
         /// <summary>The world position of joint <paramref name="index"/>, where 0 is the hand base.</summary>
         /// <param name="hand">The hand object.</param>
         /// <param name="index">The joint index; clamped to the live segment count.</param>
@@ -111,6 +198,27 @@ namespace CtrDxEditor.Core.Editing
         {
             return ObjectRotation.KnobPosition(
                 from, HandObject.Angle(hand, index), SegmentSpec(index), HandObject.Length(hand, index));
+        }
+
+        private static double Distance(Vec2 a, Vec2 b)
+        {
+            double dx = a.X - b.X;
+            double dy = a.Y - b.Y;
+            return Math.Sqrt((dx * dx) + (dy * dy));
+        }
+
+        private static double DistanceToSegment(Vec2 a, Vec2 b, Vec2 p)
+        {
+            double dx = b.X - a.X;
+            double dy = b.Y - a.Y;
+            double lengthSquared = (dx * dx) + (dy * dy);
+            if (lengthSquared < 0.0001)
+            {
+                return Distance(a, p);
+            }
+
+            double t = Math.Clamp((((p.X - a.X) * dx) + ((p.Y - a.Y) * dy)) / lengthSquared, 0, 1);
+            return Distance(new Vec2(a.X + (t * dx), a.Y + (t * dy)), p);
         }
     }
 }
