@@ -131,6 +131,84 @@ namespace CtrDxEditor.Core.Editing
                 : new Handle(HandleKind.None, 0);
         }
 
+        /// <summary>Length seeded into a segment created by the nub, before the drag overwrites it.</summary>
+        public const double AppendLength = 10;
+
+        /// <summary>Moves the whole hand by rewriting its anchor; the chain follows unchanged.</summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="point">The new base position in level units.</param>
+        public static void ApplyBaseDrag(LevelObject hand, Vec2 point)
+        {
+            hand.X = (int)Math.Round(point.X, MidpointRounding.AwayFromZero);
+            hand.Y = (int)Math.Round(point.Y, MidpointRounding.AwayFromZero);
+        }
+
+        /// <summary>
+        /// Rewrites segment <paramref name="index"/>'s angle and length from a single joint drag. Because
+        /// angles are absolute, downstream segments keep their orientation and translate along automatically.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment whose end joint is being dragged.</param>
+        /// <param name="point">The drag position in level units.</param>
+        /// <param name="snap">True to snap the angle to the spec's 90-degree step; false to round to whole degrees.</param>
+        public static void ApplyJointDrag(LevelObject hand, int index, Vec2 point, bool snap)
+        {
+            if (index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return;
+            }
+
+            Vec2 center = Joint(hand, index - 1);
+            double angle = ObjectRotation.AngleFromPoint(center, point, SegmentSpec(index), snap);
+            HandObject.SetAngle(hand, index, angle);
+            HandObject.SetLength(hand, index, Distance(center, point));
+        }
+
+        /// <summary>
+        /// Splits bone <paramref name="index"/> at <paramref name="point"/> into two collinear segments. Both
+        /// halves inherit the original angle and rotatable flag, so the rendered arm is unchanged; only the
+        /// joint count grows. Each half is kept at least one unit long.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment to split.</param>
+        /// <param name="point">The split position in level units; projected onto the bone.</param>
+        /// <returns>The new segment's index, ready to drag, or -1 when <paramref name="index"/> is out of range.</returns>
+        public static int SplitBone(LevelObject hand, int index, Vec2 point)
+        {
+            if (index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return -1;
+            }
+
+            Vec2 start = Joint(hand, index - 1);
+            double total = HandObject.Length(hand, index);
+            double angle = HandObject.Angle(hand, index);
+            bool rotatable = HandObject.Rotatable(hand, index);
+
+            double radians = angle * Math.PI / 180;
+            double along = ((point.X - start.X) * Math.Cos(radians)) + ((point.Y - start.Y) * Math.Sin(radians));
+            along = Math.Clamp(along, 1, Math.Max(1, total - 1));
+
+            HandObject.SetLength(hand, index, along);
+            HandObject.InsertSegment(hand, index + 1, angle, total - along, rotatable);
+            return index + 1;
+        }
+
+        /// <summary>
+        /// Appends a segment past the claw, continuing the last segment's angle and rotatable flag. The seeded
+        /// length is a placeholder the caller's drag immediately overwrites.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <returns>The new segment's index, ready to drag.</returns>
+        public static int AppendSegment(LevelObject hand)
+        {
+            int n = HandObject.SegmentCount(hand);
+            double angle = n >= 1 ? HandObject.Angle(hand, n) : 0;
+            bool rotatable = n < 1 || HandObject.Rotatable(hand, n);
+            HandObject.InsertSegment(hand, n + 1, angle, AppendLength, rotatable);
+            return n + 1;
+        }
+
         /// <summary>The world position of joint <paramref name="index"/>, where 0 is the hand base.</summary>
         /// <param name="hand">The hand object.</param>
         /// <param name="index">The joint index; clamped to the live segment count.</param>

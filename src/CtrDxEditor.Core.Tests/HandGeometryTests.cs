@@ -202,5 +202,128 @@ namespace CtrDxEditor.Core.Tests
             LevelObject hand = Hand(100, 200, (0, 50, true));
             Assert.Equal(HandGeometry.HandleKind.None, HandGeometry.HitTest(hand, new Vec2(400, 400), 6, 4, 24).Kind);
         }
+
+        /// <summary>Dragging the base rewrites only x/y, as whole numbers.</summary>
+        [Fact]
+        public void ApplyBaseDragWritesWholeCoordinates()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.ApplyBaseDrag(hand, new Vec2(161.6, 253.4));
+
+            Assert.Equal(162, hand.X);
+            Assert.Equal(253, hand.Y);
+            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+        }
+
+        /// <summary>An unmodified joint drag sets angle and length together, rounding the angle to whole degrees.</summary>
+        [Fact]
+        public void ApplyJointDragSetsAngleAndLengthFree()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.ApplyJointDrag(hand, 1, new Vec2(100, 130), snap: false);
+
+            Assert.Equal("-90", hand.GetAttr("segment1Angle"));
+            Assert.Equal("70", hand.GetAttr("segment1Length"));
+        }
+
+        /// <summary>A snapped joint drag rounds the angle to 90 degrees but leaves the length free.</summary>
+        [Fact]
+        public void ApplyJointDragSnapsAnglebutNotLength()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+            HandGeometry.ApplyJointDrag(hand, 1, new Vec2(163, 205), snap: true);
+
+            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+            Assert.Equal("63", hand.GetAttr("segment1Length"));
+        }
+
+        /// <summary>Dragging a joint leaves every other segment's angle untouched, because angles are absolute.</summary>
+        [Fact]
+        public void ApplyJointDragDoesNotChangeDownstreamAngles()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true), (90, 40, false));
+            HandGeometry.ApplyJointDrag(hand, 1, new Vec2(100, 150), snap: true);
+
+            Assert.Equal("90", hand.GetAttr("segment2Angle"));
+            Assert.Equal("40", hand.GetAttr("segment2Length"));
+        }
+
+        /// <summary>Splitting a bone preserves every joint position, including the claw.</summary>
+        [Fact]
+        public void SplitBonePreservesChainShape()
+        {
+            LevelObject hand = Hand(100, 200, (0, 60, true), (90, 40, false));
+            Vec2 clawBefore = HandGeometry.ClawPosition(hand);
+
+            int newIndex = HandGeometry.SplitBone(hand, 1, new Vec2(125, 200));
+
+            Assert.Equal(2, newIndex);
+            Assert.Equal(3, HandObject.SegmentCount(hand));
+            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+            Assert.Equal("25", hand.GetAttr("segment1Length"));
+            Assert.Equal("0", hand.GetAttr("segment2Angle"));
+            Assert.Equal("35", hand.GetAttr("segment2Length"));
+            Assert.Equal("90", hand.GetAttr("segment3Angle"));
+
+            Vec2 clawAfter = HandGeometry.ClawPosition(hand);
+            Assert.Equal(clawBefore.X, clawAfter.X, 6);
+            Assert.Equal(clawBefore.Y, clawAfter.Y, 6);
+        }
+
+        /// <summary>A split inherits the original segment's rotatable flag on both halves.</summary>
+        [Fact]
+        public void SplitBoneInheritsRotatable()
+        {
+            LevelObject hand = Hand(100, 200, (0, 60, false));
+            _ = HandGeometry.SplitBone(hand, 1, new Vec2(130, 200));
+
+            Assert.Equal("false", hand.GetAttr("segment1Rotatable"));
+            Assert.Equal("false", hand.GetAttr("segment2Rotatable"));
+        }
+
+        /// <summary>A split at the very end still leaves both halves at least one unit long.</summary>
+        [Fact]
+        public void SplitBoneClampsDegenerateHalves()
+        {
+            LevelObject hand = Hand(100, 200, (0, 60, true));
+            _ = HandGeometry.SplitBone(hand, 1, new Vec2(400, 200));
+
+            Assert.Equal("59", hand.GetAttr("segment1Length"));
+            Assert.Equal("1", hand.GetAttr("segment2Length"));
+        }
+
+        /// <summary>Splitting an out-of-range bone is a no-op.</summary>
+        [Fact]
+        public void SplitBoneIgnoresOutOfRangeIndex()
+        {
+            LevelObject hand = Hand(100, 200, (0, 60, true));
+            Assert.Equal(-1, HandGeometry.SplitBone(hand, 5, new Vec2(130, 200)));
+            Assert.Equal(1, HandObject.SegmentCount(hand));
+        }
+
+        /// <summary>Appending continues the last segment's angle and returns the new index to drag.</summary>
+        [Fact]
+        public void AppendSegmentContinuesLastAngle()
+        {
+            LevelObject hand = Hand(100, 200, (90, 50, true));
+            int index = HandGeometry.AppendSegment(hand);
+
+            Assert.Equal(2, index);
+            Assert.Equal(2, HandObject.SegmentCount(hand));
+            Assert.Equal("90", hand.GetAttr("segment2Angle"));
+            Assert.Equal("10", hand.GetAttr("segment2Length"));
+        }
+
+        /// <summary>Appending to an empty hand creates the first segment.</summary>
+        [Fact]
+        public void AppendSegmentSeedsFirstSegment()
+        {
+            LevelObject hand = Hand(100, 200);
+            int index = HandGeometry.AppendSegment(hand);
+
+            Assert.Equal(1, index);
+            Assert.Equal(1, HandObject.SegmentCount(hand));
+            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+        }
     }
 }
