@@ -725,6 +725,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (HandObject.IsHand(value.Type))
+            {
+                HandFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
+                return;
+            }
+
             if (value.Type == "transporter")
             {
                 ConveyorFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
