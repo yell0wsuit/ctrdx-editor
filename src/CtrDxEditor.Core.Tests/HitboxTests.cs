@@ -27,18 +27,30 @@ namespace CtrDxEditor.Core.Tests
             AssertBounds(box, x, y, width, height);
         }
 
-        /// <summary>Both split candy elements use GetSplitCandyBoundingBox from the game.</summary>
+        /// <summary>
+        /// Both split candy elements use GetSplitCandyBoundingBox from the game, in both physics
+        /// models. Desktop world box (155,176,88,76) and phone box (52,56,23,24) x Wp7ToWorldScale(3)
+        /// = (156,168,69,72), each less the candy sprite's (196,209) center anchor, then /3 to level space.
+        /// </summary>
         [Theory]
-        [InlineData("candyL")]
-        [InlineData("candyR")]
-        public void SplitCandyMatchesGameBounds(string element)
+        [InlineData("candyL", HitboxModel.Desktop, -41, -33, 88, 76)]
+        [InlineData("candyR", HitboxModel.Desktop, -41, -33, 88, 76)]
+        [InlineData("candyL", HitboxModel.Phone, -40, -41, 69, 72)]
+        [InlineData("candyR", HitboxModel.Phone, -40, -41, 69, 72)]
+        public void SplitCandyMatchesGameBounds(
+            string element,
+            HitboxModel model,
+            double worldX,
+            double worldY,
+            double worldWidth,
+            double worldHeight)
         {
             AssertBounds(
-                HitboxTable.Compute(element, 0, 0, scale: 0.71, HitboxModel.Desktop),
-                -41 / 3.0,
-                -11,
-                88 / 3.0,
-                76 / 3.0);
+                HitboxTable.Compute(element, 0, 0, scale: 0.71, model),
+                worldX / 3.0,
+                worldY / 3.0,
+                worldWidth / 3.0,
+                worldHeight / 3.0);
         }
 
         /// <summary>Bubble collision is the PointInRect capture square (2 x BubbleCaptureRadius), not the sprite bb.</summary>
