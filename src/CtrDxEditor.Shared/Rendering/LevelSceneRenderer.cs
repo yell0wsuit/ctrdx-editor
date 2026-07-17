@@ -61,6 +61,11 @@ namespace CtrDxEditor.Rendering
         /// <returns>The selection bounds in level units.</returns>
         public static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
         {
+            if (HandObject.IsHand(obj.Type))
+            {
+                return HandGeometry.Bounds(obj);
+            }
+
             // A movable grab's marquee / click target wraps the whole rail, not just the hook, so it can
             // be selected by clicking anywhere along the bar.
             if (GrabRenderer.DrawsMovableRail(obj) && GrabRail.Of(obj) is { } rail)

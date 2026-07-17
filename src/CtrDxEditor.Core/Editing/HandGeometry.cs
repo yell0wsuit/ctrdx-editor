@@ -172,7 +172,7 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="hand">The hand object.</param>
         /// <param name="index">The 1-based segment to split.</param>
         /// <param name="point">The split position in level units; projected onto the bone.</param>
-        /// <returns>The new segment's index, ready to drag, or -1 when <paramref name="index"/> is out of range.</returns>
+        /// <returns>The inserted joint's index, ready to drag, or -1 when <paramref name="index"/> is out of range.</returns>
         public static int SplitBone(LevelObject hand, int index, Vec2 point)
         {
             if (index < 1 || index > HandObject.SegmentCount(hand))
@@ -191,7 +191,7 @@ namespace CtrDxEditor.Core.Editing
 
             HandObject.SetLength(hand, index, along);
             HandObject.InsertSegment(hand, index + 1, angle, total - along, rotatable);
-            return index + 1;
+            return index;
         }
 
         /// <summary>

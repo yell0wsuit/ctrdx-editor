@@ -76,10 +76,11 @@ namespace CtrDxEditor.ViewModels
             Action<string?> set,
             Action onChanged,
             Action? onChanging = null,
-            Func<bool>? isEnabled = null)
+            Func<bool>? isEnabled = null,
+            string? labelName = null)
         {
             Name = name;
-            Label = Localizer.AttributeName(name);
+            Label = Localizer.AttributeName(labelName ?? name);
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;

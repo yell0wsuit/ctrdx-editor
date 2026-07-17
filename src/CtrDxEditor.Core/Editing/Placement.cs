@@ -27,7 +27,13 @@ namespace CtrDxEditor.Core.Editing
                 element.SetAttributeValue("size", "5");
             }
 
-            return new LevelObject(element);
+            LevelObject result = new(element);
+            if (HandObject.IsHand(descriptor.ElementName))
+            {
+                HandObject.SetSegmentCount(result, HandObject.SegmentCount(result));
+            }
+
+            return result;
         }
     }
 }

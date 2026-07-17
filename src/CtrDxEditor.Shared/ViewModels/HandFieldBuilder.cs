@@ -55,11 +55,25 @@ namespace CtrDxEditor.ViewModels
             int segments = HandObject.SegmentCount(value);
             for (int i = 1; i <= segments; i++)
             {
+                int index = i;
                 string header = string.Format(
                     CultureInfo.CurrentCulture, SegmentHeaderFormat, i);
 
                 fields.Add(new AttributeFieldViewModel(
-                    value, HandObject.AngleAttr(i), AttrType.Number, null, onChanged, onChanging, labelName: "angle")
+                    HandObject.AngleAttr(index),
+                    AttrType.Number,
+                    () => value.GetAttr(HandObject.AngleAttr(index)),
+                    v =>
+                    {
+                        double angle = double.TryParse(
+                            v, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
+                            ? parsed
+                            : 0;
+                        HandObject.SetAngle(value, index, angle);
+                    },
+                    onChanged,
+                    onChanging,
+                    labelName: "angle")
                 {
                     GroupHeader = header,
                     GroupIndex = i,

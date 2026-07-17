@@ -65,5 +65,19 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("0", obj.GetAttr("group"));
             Assert.Equal("0", obj.GetAttr("angle"));
         }
+
+        /// <summary>A newly placed mechanical hand seeds its first live segment with editable defaults.</summary>
+        [Fact]
+        public void CreateHandObjectSeedsFirstSegment()
+        {
+            ObjectDescriptor hand = DescriptorTable.CtrObjects.For("hand")!;
+
+            LevelObject obj = Placement.CreateObject(hand, x: 162, y: 254);
+
+            Assert.Equal("1", obj.GetAttr("segmentsCount"));
+            Assert.Equal("0", obj.GetAttr("segment1Angle"));
+            Assert.Equal("10", obj.GetAttr("segment1Length"));
+            Assert.Equal("true", obj.GetAttr("segment1Rotatable"));
+        }
     }
 }

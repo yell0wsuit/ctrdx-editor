@@ -210,6 +210,36 @@ namespace CtrDxEditor.Tests
             Assert.Equal(normal.H, night.H, 3);
         }
 
+        /// <summary>A hand's selection box encloses its full articulated chain rather than only the base sprite.</summary>
+        [Fact]
+        public void HandSelectionBoundsUseArticulatedChain()
+        {
+            SpriteCache sprites = new(new FakeStore());
+            LevelObject hand = new(new XElement(
+                "hand",
+                new XAttribute("x", "100"),
+                new XAttribute("y", "200"),
+                new XAttribute("segmentsCount", "2"),
+                new XAttribute("segment1Angle", "0"),
+                new XAttribute("segment1Length", "100"),
+                new XAttribute("segment1Rotatable", "true"),
+                new XAttribute("segment2Angle", "90"),
+                new XAttribute("segment2Length", "50"),
+                new XAttribute("segment2Rotatable", "true")));
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "SelectionBounds",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            LevelBounds actual = (LevelBounds)method.Invoke(null, [sprites, hand, 0, 0, false])!;
+            LevelBounds expected = HandGeometry.Bounds(hand);
+
+            Assert.Equal(expected.X, actual.X, 6);
+            Assert.Equal(expected.Y, actual.Y, 6);
+            Assert.Equal(expected.W, actual.W, 6);
+            Assert.Equal(expected.H, actual.H, 6);
+        }
+
         /// <summary>Spike selection uses the trimmed visible strip, like other sprite-backed objects.</summary>
         [Fact]
         public void SpikeSelectionBoundsUseTrimmedSpriteBounds()

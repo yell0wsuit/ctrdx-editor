@@ -257,7 +257,7 @@ namespace CtrDxEditor.Core.Tests
 
             int newIndex = HandGeometry.SplitBone(hand, 1, new Vec2(125, 200));
 
-            Assert.Equal(2, newIndex);
+            Assert.Equal(1, newIndex);
             Assert.Equal(3, HandObject.SegmentCount(hand));
             Assert.Equal("0", hand.GetAttr("segment1Angle"));
             Assert.Equal("25", hand.GetAttr("segment1Length"));

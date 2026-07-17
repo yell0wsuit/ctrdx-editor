@@ -82,6 +82,18 @@ namespace CtrDxEditor.Tests
             Assert.Equal("85", hand.GetAttr("segment1Length"));
         }
 
+        /// <summary>Angle edits use the hand writer, which stores invariant whole degrees.</summary>
+        [Fact]
+        public void EditingAngleWritesWholeDegrees()
+        {
+            LevelObject hand = Hand("<hand x='0' y='0' segmentsCount='1' segment1Angle='0' segment1Length='10' segment1Rotatable='true' />");
+            ObservableCollection<AttributeFieldViewModel> fields = Build(hand);
+
+            fields.Single(f => f.Name == "segment1Angle").Value = "12.5";
+
+            Assert.Equal("12", hand.GetAttr("segment1Angle"));
+        }
+
         /// <summary>Growing the count seeds the new slot and triggers a rebuild.</summary>
         [Fact]
         public void GrowingCountSeedsSlotAndRebuilds()
