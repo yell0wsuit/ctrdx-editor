@@ -252,7 +252,8 @@
                      Opacity="0.7" />
           <TextBlock Text="{Binding WaterDrainHint}"
                      TextWrapping="Wrap"
-                     Opacity="0.7" />
+                     Opacity="0.7"
+                     IsVisible="{Binding HasWaterDrainHint}" />
         </StackPanel>
 
         <!-- Editor-decoration pickers, shown in both New and Edit modes. -->

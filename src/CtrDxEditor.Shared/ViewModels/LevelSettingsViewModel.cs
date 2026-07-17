@@ -169,12 +169,14 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
+        [NotifyPropertyChangedFor(nameof(HasWaterDrainHint))]
         public partial decimal? Water { get; set; } = 0m;
 
         /// <summary>Rate at which the water drains, in level units per second; 0 is a static pool.</summary>
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
+        [NotifyPropertyChangedFor(nameof(HasWaterDrainHint))]
         public partial decimal? WaterSpeed { get; set; } = 0m;
 
         /// <summary>
@@ -188,6 +190,12 @@ namespace CtrDxEditor.ViewModels
                     WaterDrainHintFormat,
                     Water.Value / WaterSpeed.Value)
                 : string.Empty;
+
+        /// <summary>
+        /// Whether the drain hint has anything to say. Bound to its visibility so the row claims no layout
+        /// space on a level whose water never drains.
+        /// </summary>
+        public bool HasWaterDrainHint => WaterDrainHint.Length > 0;
 
         /// <summary>Highest background id (bgr_01..bgr_17); ids map to the game's box backgrounds.</summary>
         private const int BackgroundCount = 17;

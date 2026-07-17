@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -316,6 +317,68 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.IsSpecialCustom);
             Assert.Equal(3m, vm.CustomSpecial);
             Assert.Equal(3, vm.ToSettings().Special);
+        }
+
+        /// <summary>The drain hint is hidden unless the level has both a pool and a speed to drain it.</summary>
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(240, 0)]
+        [InlineData(0, 12)]
+        public void DrainHintHiddenWithoutBothWaterAndSpeed(int water, int speed)
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.Water = water;
+            vm.WaterSpeed = speed;
+
+            Assert.False(vm.HasWaterDrainHint);
+            Assert.Empty(vm.WaterDrainHint);
+        }
+
+        /// <summary>A pool with a drain speed shows the hint.</summary>
+        [Fact]
+        public void DrainHintShownWhenWaterDrains()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.Water = 240m;
+            vm.WaterSpeed = 12m;
+
+            Assert.True(vm.HasWaterDrainHint);
+            Assert.NotEmpty(vm.WaterDrainHint);
+        }
+
+        /// <summary>A blanked-out field hides the hint rather than leaving a stale duration on screen.</summary>
+        [Fact]
+        public void DrainHintHiddenWhenAFieldIsCleared()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.Water = 240m;
+            vm.WaterSpeed = 12m;
+
+            vm.WaterSpeed = null;
+
+            Assert.False(vm.HasWaterDrainHint);
+        }
+
+        /// <summary>Both water fields notify the hint's visibility, so the row appears and collapses live.</summary>
+        [Theory]
+        [InlineData(nameof(LevelSettingsViewModel.Water))]
+        [InlineData(nameof(LevelSettingsViewModel.WaterSpeed))]
+        public void WaterFieldsNotifyDrainHintVisibility(string property)
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            if (property == nameof(LevelSettingsViewModel.Water))
+            {
+                vm.Water = 240m;
+            }
+            else
+            {
+                vm.WaterSpeed = 12m;
+            }
+
+            Assert.Contains(nameof(LevelSettingsViewModel.HasWaterDrainHint), changed);
         }
     }
 }
