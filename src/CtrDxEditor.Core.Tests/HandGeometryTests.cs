@@ -248,6 +248,33 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("40", hand.GetAttr("segment2Length"));
         }
 
+        /// <summary>Length dragging projects onto the existing segment ray without rewriting its angle.</summary>
+        [Fact]
+        public void ApplyLengthDragChangesOnlyLengthAlongCurrentAngle()
+        {
+            LevelObject hand = Hand(100, 200, (-90, 50, true), (0, 40, false));
+            hand.SetAttr("segment1Angle", "-90.0");
+
+            HandGeometry.ApplyLengthDrag(hand, 1, new Vec2(100, 120));
+
+            Assert.Equal("-90.0", hand.GetAttr("segment1Angle"));
+            Assert.Equal("80", hand.GetAttr("segment1Length"));
+            Assert.Equal("0", hand.GetAttr("segment2Angle"));
+            Assert.Equal("40", hand.GetAttr("segment2Length"));
+        }
+
+        /// <summary>Dragging behind the segment origin clamps length without flipping its direction.</summary>
+        [Fact]
+        public void ApplyLengthDragBehindOriginClampsWithoutChangingAngle()
+        {
+            LevelObject hand = Hand(100, 200, (0, 50, true));
+
+            HandGeometry.ApplyLengthDrag(hand, 1, new Vec2(50, 200));
+
+            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+            Assert.Equal("1", hand.GetAttr("segment1Length"));
+        }
+
         /// <summary>Splitting a bone preserves every joint position, including the claw.</summary>
         [Fact]
         public void SplitBonePreservesChainShape()

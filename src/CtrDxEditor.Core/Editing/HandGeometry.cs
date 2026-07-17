@@ -165,6 +165,28 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
+        /// Changes one segment's length by projecting the pointer onto its existing direction. The angle is
+        /// never rewritten, and dragging behind the segment origin clamps the length to one unit rather than
+        /// flipping the segment.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment whose end joint is being dragged.</param>
+        /// <param name="point">The drag position in level units.</param>
+        public static void ApplyLengthDrag(LevelObject hand, int index, Vec2 point)
+        {
+            if (index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return;
+            }
+
+            Vec2 center = Joint(hand, index - 1);
+            double radians = HandObject.Angle(hand, index) * Math.PI / 180;
+            double projected = ((point.X - center.X) * Math.Cos(radians))
+                + ((point.Y - center.Y) * Math.Sin(radians));
+            HandObject.SetLength(hand, index, Math.Max(1, projected));
+        }
+
+        /// <summary>
         /// Splits bone <paramref name="index"/> at <paramref name="point"/> into two collinear segments. Both
         /// halves inherit the original angle and rotatable flag, so the rendered arm is unchanged; only the
         /// joint count grows. Each half is kept at least one unit long.

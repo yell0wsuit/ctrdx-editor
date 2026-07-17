@@ -904,8 +904,7 @@ namespace CtrDxEditor.Rendering
 
             if (_handJointDrag > 0 && SelectedObject is { } draggedHand)
             {
-                HandGeometry.ApplyJointDrag(
-                    draggedHand, _handJointDrag, levelPt, e.KeyModifiers.HasFlag(KeyModifiers.Shift));
+                HandGeometry.ApplyLengthDrag(draggedHand, _handJointDrag, levelPt);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Handled = true;
