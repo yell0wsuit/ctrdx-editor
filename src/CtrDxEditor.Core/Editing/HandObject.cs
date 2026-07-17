@@ -84,6 +84,58 @@ namespace CtrDxEditor.Core.Editing
             hand.SetAttr(CountAttr, n.ToString(CultureInfo.InvariantCulture));
         }
 
+        /// <summary>
+        /// Inserts a segment at <paramref name="index"/>, shifting the live slots at and above it up by one
+        /// and incrementing the count. Only live slots shift, so a shift may overwrite a dead slot's leftover
+        /// values; that is accepted loss for an explicit structural edit. Out-of-range indices are ignored.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based position the new segment takes; valid range is 1..count+1.</param>
+        /// <param name="angle">The new segment's absolute world angle in degrees.</param>
+        /// <param name="length">The new segment's length in level units.</param>
+        /// <param name="rotatable">Whether the new segment is rotatable.</param>
+        public static void InsertSegment(LevelObject hand, int index, double angle, double length, bool rotatable)
+        {
+            int n = SegmentCount(hand);
+            if (index < 1 || index > n + 1)
+            {
+                return;
+            }
+
+            for (int i = n; i >= index; i--)
+            {
+                CopySlot(hand, i, i + 1);
+            }
+
+            SetAngle(hand, index, angle);
+            SetLength(hand, index, length);
+            SetRotatable(hand, index, rotatable);
+            hand.SetAttr(CountAttr, (n + 1).ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>
+        /// Deletes segment <paramref name="index"/>, shifting the live slots above it down by one and
+        /// decrementing the count. Deleting the last segment shifts nothing, leaving its slot verbatim as a
+        /// preserved orphan. Out-of-range indices are ignored.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment to remove; valid range is 1..count.</param>
+        public static void DeleteSegment(LevelObject hand, int index)
+        {
+            int n = SegmentCount(hand);
+            if (index < 1 || index > n)
+            {
+                return;
+            }
+
+            for (int i = index; i < n; i++)
+            {
+                CopySlot(hand, i + 1, i);
+            }
+
+            hand.SetAttr(CountAttr, (n - 1).ToString(CultureInfo.InvariantCulture));
+        }
+
         /// <summary>Segment <paramref name="index"/>'s absolute world angle in degrees; 0 when missing or unparseable.</summary>
         /// <param name="hand">The hand object.</param>
         /// <param name="index">The 1-based segment index.</param>
@@ -150,6 +202,13 @@ namespace CtrDxEditor.Core.Editing
             {
                 hand.SetAttr(RotatableAttr(index), DefaultRotatable);
             }
+        }
+
+        private static void CopySlot(LevelObject hand, int from, int to)
+        {
+            SetAngle(hand, to, Angle(hand, from));
+            SetLength(hand, to, Length(hand, from));
+            SetRotatable(hand, to, Rotatable(hand, from));
         }
 
         private static double Float(LevelObject hand, string attr)

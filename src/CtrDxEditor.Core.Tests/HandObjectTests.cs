@@ -149,5 +149,109 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("180", hand.GetAttr("segment3Angle"));
             Assert.Equal("64", hand.GetAttr("segment3Length"));
         }
+
+        /// <summary>Deleting the last segment only decrements the count, leaving its slot verbatim.</summary>
+        [Fact]
+        public void DeleteLastSegmentLeavesSlotVerbatim()
+        {
+            LevelObject hand = Hand(
+                ("segmentsCount", "2"),
+                ("segment1Angle", "-90"), ("segment1Length", "70"), ("segment1Rotatable", "true"),
+                ("segment2Angle", "180"), ("segment2Length", "50"), ("segment2Rotatable", "false"));
+
+            HandObject.DeleteSegment(hand, 2);
+
+            Assert.Equal("1", hand.GetAttr("segmentsCount"));
+            Assert.Equal("180", hand.GetAttr("segment2Angle"));
+            Assert.Equal("50", hand.GetAttr("segment2Length"));
+            Assert.Equal("false", hand.GetAttr("segment2Rotatable"));
+        }
+
+        /// <summary>Deleting a middle segment shifts the live slots above it down.</summary>
+        [Fact]
+        public void DeleteMiddleSegmentShiftsLiveSlotsDown()
+        {
+            LevelObject hand = Hand(
+                ("segmentsCount", "3"),
+                ("segment1Angle", "90"), ("segment1Length", "50"), ("segment1Rotatable", "true"),
+                ("segment2Angle", "0"), ("segment2Length", "60"), ("segment2Rotatable", "false"),
+                ("segment3Angle", "180"), ("segment3Length", "70"), ("segment3Rotatable", "true"));
+
+            HandObject.DeleteSegment(hand, 2);
+
+            Assert.Equal("2", hand.GetAttr("segmentsCount"));
+            Assert.Equal("90", hand.GetAttr("segment1Angle"));
+            Assert.Equal("180", hand.GetAttr("segment2Angle"));
+            Assert.Equal("70", hand.GetAttr("segment2Length"));
+            Assert.Equal("true", hand.GetAttr("segment2Rotatable"));
+        }
+
+        /// <summary>Inserting shifts live slots up and writes the new segment at the requested index.</summary>
+        [Fact]
+        public void InsertSegmentShiftsLiveSlotsUp()
+        {
+            LevelObject hand = Hand(
+                ("segmentsCount", "2"),
+                ("segment1Angle", "90"), ("segment1Length", "50"), ("segment1Rotatable", "true"),
+                ("segment2Angle", "180"), ("segment2Length", "60"), ("segment2Rotatable", "false"));
+
+            HandObject.InsertSegment(hand, 2, angle: -90, length: 25, rotatable: true);
+
+            Assert.Equal("3", hand.GetAttr("segmentsCount"));
+            Assert.Equal("90", hand.GetAttr("segment1Angle"));
+            Assert.Equal("-90", hand.GetAttr("segment2Angle"));
+            Assert.Equal("25", hand.GetAttr("segment2Length"));
+            Assert.Equal("true", hand.GetAttr("segment2Rotatable"));
+            Assert.Equal("180", hand.GetAttr("segment3Angle"));
+            Assert.Equal("60", hand.GetAttr("segment3Length"));
+            Assert.Equal("false", hand.GetAttr("segment3Rotatable"));
+        }
+
+        /// <summary>Appending past the last live slot is allowed and increments the count.</summary>
+        [Fact]
+        public void InsertSegmentAppendsAtCountPlusOne()
+        {
+            LevelObject hand = Hand(
+                ("segmentsCount", "1"),
+                ("segment1Angle", "90"), ("segment1Length", "50"), ("segment1Rotatable", "true"));
+
+            HandObject.InsertSegment(hand, 2, angle: 0, length: 40, rotatable: false);
+
+            Assert.Equal("2", hand.GetAttr("segmentsCount"));
+            Assert.Equal("0", hand.GetAttr("segment2Angle"));
+            Assert.Equal("40", hand.GetAttr("segment2Length"));
+            Assert.Equal("false", hand.GetAttr("segment2Rotatable"));
+        }
+
+        /// <summary>Insert and delete ignore out-of-range indices instead of corrupting the chain.</summary>
+        [Fact]
+        public void InsertAndDeleteIgnoreOutOfRangeIndices()
+        {
+            LevelObject hand = Hand(
+                ("segmentsCount", "1"),
+                ("segment1Angle", "90"), ("segment1Length", "50"), ("segment1Rotatable", "true"));
+
+            HandObject.DeleteSegment(hand, 0);
+            HandObject.DeleteSegment(hand, 2);
+            HandObject.InsertSegment(hand, 0, 0, 10, true);
+            HandObject.InsertSegment(hand, 3, 0, 10, true);
+
+            Assert.Equal("1", hand.GetAttr("segmentsCount"));
+            Assert.Equal("90", hand.GetAttr("segment1Angle"));
+        }
+
+        /// <summary>Segment counts above the authored maximum of 3 are supported; the game's loop has no cap.</summary>
+        [Fact]
+        public void InsertSegmentSupportsCountsAboveThree()
+        {
+            LevelObject hand = Hand(("segmentsCount", "0"));
+            HandObject.SetSegmentCount(hand, 3);
+
+            HandObject.InsertSegment(hand, 4, angle: 45, length: 30, rotatable: true);
+
+            Assert.Equal("4", hand.GetAttr("segmentsCount"));
+            Assert.Equal("45", hand.GetAttr("segment4Angle"));
+            Assert.Equal("30", hand.GetAttr("segment4Length"));
+        }
     }
 }
