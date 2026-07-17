@@ -800,10 +800,16 @@ namespace CtrDxEditor.Rendering
             return IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null;
         }
 
-        /// <summary>The water height to render, in level units.</summary>
-        private static double CurrentWaterHeight(LevelDocument doc)
+        /// <summary>
+        /// The water height to render, in level units. Under a full animation preview the pool drains over
+        /// the elapsed time as GameScene.Update does — the water falls, it never rises. Water is level-wide
+        /// with no object to focus, so it only previews in All mode.
+        /// </summary>
+        private double CurrentWaterHeight(LevelDocument doc)
         {
-            return doc.Water;
+            return AnimationPreviewMode == ViewModels.AnimationPreviewMode.All
+                ? WaterGeometry.DrainedWater(doc.Water, doc.WaterSpeed, AnimationPreviewElapsedSeconds)
+                : doc.Water;
         }
     }
 }

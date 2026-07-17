@@ -956,7 +956,10 @@ namespace CtrDxEditor.Rendering
                     : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
                     : conveyorHover != ConveyorGeometry.Handle.None ? ResizeCursor
-                    : OnRadiusEdge(levelPt) ? ResizeCursor : CursorForHandle(handle);
+                    : OnRadiusEdge(levelPt) ? ResizeCursor
+                    : handle != GrabRail.Handle.None ? CursorForHandle(handle)
+                    : _waterHandleHovered ? VResizeCursor
+                    : Cursor.Default;
                 return;
             }
 
