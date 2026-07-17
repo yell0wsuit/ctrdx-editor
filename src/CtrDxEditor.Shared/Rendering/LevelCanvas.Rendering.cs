@@ -578,6 +578,11 @@ namespace CtrDxEditor.Rendering
             Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
 
+            // Decoration is clipped to the level's vertical span but not its width: the background column and
+            // the water band both legitimately overhang a narrow level's sides, while nothing may spill past
+            // its top or bottom edge.
+            Rect levelClip = new(0, tl.Y, renderSize.Width, br.Y - tl.Y);
+
             Bitmap? bg = sprites.GetBackground(ActiveBackground);
             if (bg is not null && bg.Size is { Width: > 0, Height: > 0 } bgSize)
             {
@@ -588,7 +593,7 @@ namespace CtrDxEditor.Rendering
                     p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
                     SpriteCache.GetEarthBgPosition(ActiveBackground));
 
-                using (context.PushClip(new Rect(0, tl.Y, renderSize.Width, br.Y - tl.Y)))
+                using (context.PushClip(levelClip))
                 {
                     if (layout.TileHeight > 0.5)
                     {
@@ -623,10 +628,17 @@ namespace CtrDxEditor.Rendering
 
             // Water's back layer sits under the scene objects, matching GameScene.Draw's split
             // (DrawBack at :93, DrawFront at :329). Under the grid too, so the grid stays readable.
+            //
+            // Clipped to the level because the game's bottom shadow is anchored to the screen's bottom edge
+            // and drawn 323px tall from a 115px tile, so it tiles ~2.8x down and spills below the map. In
+            // game those repeats fall off-screen; the editor has no screen, so the clip is what hides them.
             LevelBounds? waterBand = WaterGeometry.Band(doc.Width, doc.Height, CurrentWaterHeight(doc));
             if (waterBand is { } backBand)
             {
-                WaterRenderer.DrawBack(context, v, sprites, backBand, doc.Height);
+                using (context.PushClip(levelClip))
+                {
+                    WaterRenderer.DrawBack(context, v, sprites, backBand, doc.Height);
+                }
             }
 
             if (drawGrid)
@@ -737,10 +749,15 @@ namespace CtrDxEditor.Rendering
                     ObjectRotation.StoredAngle(steamTube, RotationTable.For("steamTube")!));
             }
 
-            // Water's front layer — surface tile and top shadow — draws over the scene objects.
+            // Water's front layer — surface tile and top shadow — draws over the scene objects. Clipped to
+            // the level for the same reason as the back layer: the 323px top shadow runs past the map's
+            // bottom edge whenever the pool is shallower than it is tall.
             if (waterBand is { } frontBand)
             {
-                WaterRenderer.DrawFront(context, v, sprites, frontBand);
+                using (context.PushClip(levelClip))
+                {
+                    WaterRenderer.DrawFront(context, v, sprites, frontBand);
+                }
             }
 
             if (grabRadiusPen is not null)

@@ -513,6 +513,13 @@ namespace CtrDxEditor.Rendering
                 && Math.Abs(screen.Y - surface.Y) <= WaterHandleTolerance;
         }
 
+        /// <summary>
+        /// Shallowest pool a drag may leave behind, in level units. Dragging to zero would remove the band,
+        /// the drag handle along with it, and the XML attributes — leaving no way back except the settings
+        /// dialog. A drag can only make the water shallow; turning it off is a deliberate act there.
+        /// </summary>
+        private const double MinDraggedWater = 1.0;
+
         /// <summary>Writes a dragged water height back to the document, clamped to the level.</summary>
         private void SetWaterHeight(double levelY)
         {
@@ -521,7 +528,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            double water = Math.Clamp(doc.Height - levelY, 0, doc.Height);
+            double water = Math.Clamp(doc.Height - levelY, MinDraggedWater, doc.Height);
             doc.UpdateSettings(doc.Settings with { Water = (float)water });
             InvalidateVisual();
         }
