@@ -28,6 +28,7 @@
 
     "Panel.Objects": "Objects",
     "Panel.Properties": "Properties",
+    "Panel.HandSegment": "Segment {0}",
     "Palette.SearchPlaceholder": "Search…",
     "Palette.Group.CutTheRope": "Cut the Rope",
     "Palette.Group.Experiments": "Cut the Rope: Experiments",
@@ -167,6 +168,7 @@
     "Object.tutorial": "Tutorial icon",
     "Object.tutorialText": "Tutorial text",
     "Object.rocket": "Rocket",
+    "Object.hand": "Mechanical Hand",
     "Object.snail": "Snail",
 
     "Attr.velocity": "Velocity",
@@ -222,6 +224,7 @@
     "Attr.candyNumber": "Candy number",
     "Attr.attachTo": "Attach to",
     "Attr.angle": "Angle",
+    "Attr.segmentsCount": "Segments",
     "Attr.size": "Size",
     "Attr.handleAngle": "Handle angle",
     "Attr.oneHandle": "Single handle",
