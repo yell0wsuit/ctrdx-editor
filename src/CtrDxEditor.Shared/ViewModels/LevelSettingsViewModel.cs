@@ -161,15 +161,21 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool NightLevel { get; set; }
         [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
 
+        // Nullable so clearing the box or typing a non-number reads back as null rather than failing to
+        // convert (which surfaces a raw exception instead of the field's own "enter a number" message).
+        // CanConfirm rejects null, as it does for the other numeric fields.
+
         /// <summary>Height of the water pool in level units; 0 means the level has no water.</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
-        public partial decimal Water { get; set; }
+        public partial decimal? Water { get; set; } = 0m;
 
         /// <summary>Rate at which the water drains, in level units per second; 0 is a static pool.</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
-        public partial decimal WaterSpeed { get; set; }
+        public partial decimal? WaterSpeed { get; set; } = 0m;
 
         /// <summary>
         /// How long the pool takes to empty, or empty text when there is no water or no drain. Derived so
@@ -180,7 +186,7 @@ namespace CtrDxEditor.ViewModels
                 ? string.Format(
                     CultureInfo.CurrentCulture,
                     WaterDrainHintFormat,
-                    Water / WaterSpeed)
+                    Water.Value / WaterSpeed.Value)
                 : string.Empty;
 
         /// <summary>Highest background id (bgr_01..bgr_17); ids map to the game's box backgrounds.</summary>
@@ -227,6 +233,8 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether every currently-required numeric field has a value (gates the confirm button).</summary>
         public bool CanConfirm =>
             RopePhysicsSpeed is not null
+            && Water is not null
+            && WaterSpeed is not null
             && (!IsCustom || (CustomWidth is not null && CustomHeight is not null))
             && (!IsSpecialCustom || CustomSpecial is not null);
 
@@ -433,7 +441,9 @@ namespace CtrDxEditor.ViewModels
             int height = IsCustom ? ClampOrDefault(CustomHeight, MinHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
             int special = IsSpecialCustom ? ClampOrDefault(CustomSpecial, 0, 0, MaxSpecial) : SelectedSpecial.Value;
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
-            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics, (float)Water, (float)WaterSpeed);
+            return new LevelSettings(
+                width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics,
+                (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m));
         }
 
         private static RopeSkinOption[] BuildRopeSkinOptions()

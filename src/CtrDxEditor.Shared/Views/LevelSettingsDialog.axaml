@@ -223,7 +223,14 @@
           <NumericUpDown Minimum="0"
                          Maximum="10000"
                          Increment="1"
-                         Value="{Binding Water}" />
+                         FormatString="0.##"
+                         Value="{Binding Water, Mode=TwoWay}" />
+
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                     Foreground="{DynamicResource EditorBrush.DangerText}"
+                     FontSize="12"
+                     IsVisible="{Binding Water, Converter={x:Static ObjectConverters.IsNull}}" />
+
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterDescription}"
                      TextWrapping="Wrap"
                      Opacity="0.7" />
@@ -232,7 +239,14 @@
           <NumericUpDown Minimum="0"
                          Maximum="10000"
                          Increment="1"
-                         Value="{Binding WaterSpeed}" />
+                         FormatString="0.##"
+                         Value="{Binding WaterSpeed, Mode=TwoWay}" />
+
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                     Foreground="{DynamicResource EditorBrush.DangerText}"
+                     FontSize="12"
+                     IsVisible="{Binding WaterSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
+
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeedDescription}"
                      TextWrapping="Wrap"
                      Opacity="0.7" />
