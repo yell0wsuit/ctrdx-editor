@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
@@ -252,6 +253,50 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("4", hand.GetAttr("segmentsCount"));
             Assert.Equal("45", hand.GetAttr("segment4Angle"));
             Assert.Equal("30", hand.GetAttr("segment4Length"));
+        }
+
+        /// <summary>
+        /// A hand whose segmentsCount is lower than its authored slots (the 6_14.xml shape) survives a
+        /// load/save cycle unchanged. The game ignores slots past the count; the editor must preserve them
+        /// rather than normalize them away.
+        /// </summary>
+        [Fact]
+        public void DeadSegmentSlotsSurviveRoundTrip()
+        {
+            const string Original =
+                "<level width=\"640\" height=\"480\">" +
+                "<hand x=\"162\" y=\"254\" segmentsCount=\"2\" " +
+                "segment1Angle=\"-90\" segment1Length=\"70\" segment1Rotatable=\"true\" " +
+                "segment2Angle=\"-90\" segment2Length=\"70\" segment2Rotatable=\"true\" " +
+                "segment3Angle=\"-90\" segment3Length=\"70\" segment3Rotatable=\"true\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(Original);
+            XDocument after = XDocument.Parse(doc.Save());
+            XElement hand = after.Root!.Elements("hand").Single();
+
+            Assert.Equal("2", (string?)hand.Attribute("segmentsCount"));
+            Assert.Equal("-90", (string?)hand.Attribute("segment3Angle"));
+            Assert.Equal("70", (string?)hand.Attribute("segment3Length"));
+            Assert.Equal("true", (string?)hand.Attribute("segment3Rotatable"));
+        }
+
+        /// <summary>An authored hand's angles and lengths are never rewritten on load.</summary>
+        [Fact]
+        public void AuthoredHandValuesAreNotNormalizedOnLoad()
+        {
+            const string Original =
+                "<level width=\"640\" height=\"480\">" +
+                "<hand x=\"160\" y=\"303\" segmentsCount=\"1\" " +
+                "segment1Angle=\"270\" segment1Length=\"100\" segment1Rotatable=\"true\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(Original);
+            XDocument after = XDocument.Parse(doc.Save());
+            XElement hand = after.Root!.Elements("hand").Single();
+
+            // 270 is equivalent to -90, but the editor must not rewrite what it did not edit.
+            Assert.Equal("270", (string?)hand.Attribute("segment1Angle"));
         }
     }
 }
