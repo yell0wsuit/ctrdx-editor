@@ -8,6 +8,10 @@ namespace CtrDxEditor.Core.Editing
     /// shades. The renderer ramps each track from shade to base and alternates between
     /// the two tracks to produce the twisted-cord look.
     /// </summary>
+    /// <param name="Base1">The first track's bright color.</param>
+    /// <param name="Base2">The second track's bright color.</param>
+    /// <param name="Shade1">The darker shade ramped into <paramref name="Base1"/>.</param>
+    /// <param name="Shade2">The darker shade ramped into <paramref name="Base2"/>.</param>
     public readonly record struct RopeDrawColors(RopeRgb Base1, RopeRgb Base2, RopeRgb Shade1, RopeRgb Shade2);
 
     /// <summary>

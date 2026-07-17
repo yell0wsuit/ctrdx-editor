@@ -4,6 +4,11 @@ using System.Collections.Generic;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>One deterministic puff sampled from SteamTube's steady-state maximum plume.</summary>
+    /// <param name="Quad">The puff's zero-based atlas quad.</param>
+    /// <param name="LocalX">X offset from the tube, in level units.</param>
+    /// <param name="LocalY">Y offset from the tube, in level units.</param>
+    /// <param name="Scale">The per-puff sprite scale.</param>
+    /// <param name="Front">Whether the puff draws in front of the tube rather than behind it.</param>
     public readonly record struct SteamPuffSpec(
         int Quad,
         double LocalX,

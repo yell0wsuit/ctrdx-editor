@@ -30,6 +30,9 @@ namespace CtrDxEditor.Content
         /// Returns the invalid (missing/corrupt/wrong-platform) relative paths; empty when fully valid.
         /// Hashes every file, so it is a one-time install check, not something to run on every launch.
         /// </summary>
+        /// <param name="contentDir">The extracted content directory to check.</param>
+        /// <param name="imageExtension">The platform's image extension, such as <c>.png</c> or <c>.webp</c>.</param>
+        /// <returns>The offending relative paths, or empty when the content is fully valid.</returns>
         public static IReadOnlyList<string> FindInvalidFiles(string contentDir, string imageExtension)
         {
             string manifestPath = Path.Combine(contentDir, ContentManifest.FileName);
@@ -70,6 +73,9 @@ namespace CtrDxEditor.Content
         /// folder next to <paramref name="baseDir"/>, then in any ancestor of it. Returns null when
         /// none are valid.
         /// </summary>
+        /// <param name="baseDir">The directory to search from, along with its ancestors.</param>
+        /// <param name="configuredPath">An explicitly configured content path, tried first. May be null.</param>
+        /// <returns>The resolved directory, or null when no candidate is valid.</returns>
         public static string? Resolve(string baseDir, string? configuredPath)
         {
             if (IsValid(configuredPath))

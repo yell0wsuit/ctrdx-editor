@@ -47,6 +47,9 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Computes absolute path points for a DX mover path.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <returns>Absolute points, never empty: a blank path yields <paramref name="start"/> alone.</returns>
         public static Vec2[] Points(Vec2 start, string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -59,6 +62,12 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Returns the object point plus editable canonical waypoints; retrace paths expose their outbound half.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <returns>
+        /// The editable waypoints. For a retrace path this is the outbound half only, since the return leg is
+        /// implied and must not be presented as separately editable.
+        /// </returns>
         public static Vec2[] CanonicalPoints(Vec2 start, string? path)
         {
             Vec2[] full = Points(start, path);
@@ -73,6 +82,11 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Computes the live-preview position for a DX mover path.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="moveSpeed">Units per second; zero or negative parks the object at <paramref name="start"/>.</param>
+        /// <param name="elapsedSeconds">Seconds since the preview began. The path loops, so this is not clamped.</param>
+        /// <returns>The interpolated position along the looping path.</returns>
         public static Vec2 PreviewPosition(Vec2 start, string? path, int moveSpeed, double elapsedSeconds)
         {
             if (moveSpeed <= 0)
@@ -131,12 +145,19 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Computes the live-preview position for a level object's mover data.</summary>
+        /// <param name="obj">The mover, supplying its own position, <c>path</c>, and speed.</param>
+        /// <param name="elapsedSeconds">Seconds since the preview began. The path loops, so this is not clamped.</param>
+        /// <returns>The interpolated position along the looping path.</returns>
         public static Vec2 PreviewPosition(LevelObject obj, double elapsedSeconds)
         {
             return PreviewPosition(new Vec2(obj.X, obj.Y), obj.GetAttr("path"), RawMoveSpeed(obj), elapsedSeconds);
         }
 
         /// <summary>Serializes canonical absolute points to a plain DX offset path; retrace appends the reversed interior.</summary>
+        /// <param name="start">The object's absolute position, subtracted from each point to produce offsets.</param>
+        /// <param name="canonicalAbsolutePoints">Waypoints including <paramref name="start"/> at index 0. Excess points beyond the DX limit are dropped.</param>
+        /// <param name="retrace">When true the interior is mirrored to walk the path back; when false it loops as a circuit.</param>
+        /// <returns>The serialized path, or an empty string when there are too few points to move along.</returns>
         public static string Serialize(Vec2 start, IReadOnlyList<Vec2> canonicalAbsolutePoints, bool retrace)
         {
             if (canonicalAbsolutePoints.Count <= 1)
@@ -162,6 +183,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Compatibility wrapper for serializing a looping or out-and-back plain path.</summary>
+        /// <param name="start">The object's absolute position, subtracted from each point to produce offsets.</param>
+        /// <param name="absolutePoints">Waypoints including <paramref name="start"/> at index 0.</param>
+        /// <param name="loop">True to circuit back to the start; false to retrace the path in reverse.</param>
+        /// <returns>The serialized path, or an empty string when there are too few points to move along.</returns>
         public static string SerializePlain(Vec2 start, IReadOnlyList<Vec2> absolutePoints, bool loop)
         {
             return Serialize(start, absolutePoints, retrace: !loop);
@@ -197,12 +222,22 @@ namespace CtrDxEditor.Core.Editing
         /// True when out-and-back retrace produces a different path from a plain circuit — i.e. the path has at
         /// least two waypoints. A single straight segment is inherently back-and-forth, so retrace is a no-op.
         /// </summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
         public static bool CanRetrace(Vec2 start, string? path)
         {
             return !IsCircularPath(path) && CanonicalPoints(start, path).Length >= 3;
         }
 
         /// <summary>Returns the canonical waypoint index (>= 1) under the point, or -1.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="point">The absolute position to test, typically the cursor.</param>
+        /// <param name="tolerance">The hit radius in the same units as <paramref name="point"/>.</param>
+        /// <returns>
+        /// The waypoint index, always 1 or greater since index 0 is the object itself and is not separately
+        /// draggable, or -1 when nothing is under <paramref name="point"/>.
+        /// </returns>
         public static int HitCanonicalPoint(Vec2 start, string? path, Vec2 point, double tolerance)
         {
             if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
@@ -226,6 +261,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Whether one more canonical waypoint can fit without truncating the serialized DX path.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
         public static bool CanAddCanonicalPoint(Vec2 start, string? path)
         {
             return !IsCircularPath(path)
@@ -233,6 +270,11 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Moves one canonical waypoint and re-serializes, preserving retrace/circuit state.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="index">The waypoint to move, 1-based as returned by <see cref="HitCanonicalPoint"/>.</param>
+        /// <param name="newPoint">The waypoint's new absolute position.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the move does not apply.</returns>
         public static string MoveCanonicalPoint(Vec2 start, string? path, int index, Vec2 newPoint)
         {
             Vec2[] pts = CanonicalPoints(start, path);
@@ -246,6 +288,11 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Inserts a canonical waypoint after <paramref name="segmentIndex"/> and re-serializes.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="segmentIndex">The 0-based segment to insert after; the new point lands at <c>segmentIndex + 1</c>.</param>
+        /// <param name="newPoint">The new waypoint's absolute position.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the edit does not apply.</returns>
         public static string InsertCanonicalPoint(Vec2 start, string? path, int segmentIndex, Vec2 newPoint)
         {
             Vec2[] pts = CanonicalPoints(start, path);
@@ -264,6 +311,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Appends a canonical waypoint, preserving retrace/circuit state.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="newPoint">The new waypoint's absolute position.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the edit does not apply.</returns>
         public static string AppendCanonicalPoint(Vec2 start, string? path, Vec2 newPoint)
         {
             if (IsCircularPath(path) || !CanAddCanonicalPoint(start, path))
@@ -278,6 +329,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Removes a single canonical waypoint (index >= 1) and re-serializes, preserving retrace/circuit state.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="index">The waypoint to remove, 1-based; index 0 is the object itself and cannot be deleted.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the edit does not apply.</returns>
         public static string DeleteCanonicalPoint(Vec2 start, string? path, int index)
         {
             Vec2[] pts = CanonicalPoints(start, path);
@@ -292,6 +347,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Re-serializes the canonical points as an out-and-back retrace or a plain circuit.</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="retrace">True to walk the path back; false to close it into a circuit.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when retracing would overflow the DX point limit.</returns>
         public static string SetRetrace(Vec2 start, string? path, bool retrace)
         {
             if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
@@ -310,6 +369,8 @@ namespace CtrDxEditor.Core.Editing
         /// out-and-back retrace, and at least three non-collinear canonical points (so it encloses an area).
         /// Travel direction is only meaningful for such loops.
         /// </summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
         public static bool IsClosedLoop(Vec2 start, string? path)
         {
             if (IsCircularPath(path) || IsRetrace(path))
@@ -322,6 +383,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Returns true when the closed loop winds clockwise on screen (level Y is screen-down).</summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
         public static bool IsClockwise(Vec2 start, string? path)
         {
             return IsClosedLoop(start, path) && SignedArea(CanonicalPoints(start, path)) > 0;
@@ -331,6 +394,10 @@ namespace CtrDxEditor.Core.Editing
         /// Reverses the loop's traversal direction (the stored point order) when needed so it winds the
         /// requested way, and re-serializes. The game has no direction flag, so direction is the point order.
         /// </summary>
+        /// <param name="start">The object's absolute position, which becomes the first point.</param>
+        /// <param name="path">A DX path string of offsets from <paramref name="start"/>; null or blank means no path.</param>
+        /// <param name="clockwise">The desired on-screen winding; level Y runs screen-down.</param>
+        /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when it is not a closed loop or already winds that way.</returns>
         public static string SetClockwise(Vec2 start, string? path, bool clockwise)
         {
             if (!IsClosedLoop(start, path) || IsClockwise(start, path) == clockwise)

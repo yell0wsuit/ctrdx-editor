@@ -9,6 +9,8 @@ namespace CtrDxEditor.Core.Editing
     public readonly record struct RopeRgba(double R, double G, double B, double A);
 
     /// <summary>One triangle strip of a rendered rope: parallel position/color arrays in strip order.</summary>
+    /// <param name="Points">Vertex positions in level units, in strip order.</param>
+    /// <param name="Colors">Per-vertex colors, index-aligned with <paramref name="Points"/> and the same length.</param>
     public sealed record RopeStrip(Vec2[] Points, RopeRgba[] Colors);
 
     /// <summary>

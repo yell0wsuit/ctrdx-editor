@@ -46,6 +46,9 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The stored angle in degrees, or 0 when missing/unparseable.</summary>
+        /// <param name="obj">The object carrying the angle attribute.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <returns>The raw stored angle in degrees.</returns>
         public static double StoredAngle(LevelObject obj, RotationSpec spec)
         {
             return double.TryParse(
@@ -55,6 +58,9 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The object's on-screen rotation in degrees (stored × sign + display offset).</summary>
+        /// <param name="obj">The object carrying the angle attribute.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <returns>The on-screen angle in degrees, clockwise-positive with Y running screen-down.</returns>
         public static double DisplayDegrees(LevelObject obj, RotationSpec spec)
         {
             return (StoredAngle(obj, spec) * spec.StoredAngleSign) + spec.DisplayOffset;
@@ -76,6 +82,9 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Rounds <paramref name="deg"/> to the nearest <paramref name="step"/> degrees.</summary>
+        /// <param name="deg">The angle in degrees.</param>
+        /// <param name="step">The snap increment in degrees.</param>
+        /// <returns>The snapped angle; halfway cases round away from zero.</returns>
         public static double Snap(double deg, double step)
         {
             return Math.Round(deg / step, MidpointRounding.AwayFromZero) * step;
@@ -87,6 +96,11 @@ namespace CtrDxEditor.Core.Editing
         /// display offset yields the stored angle. Snapped to the spec's step when <paramref name="snap"/>,
         /// otherwise rounded to whole degrees. Always normalized to (-180, 180].
         /// </summary>
+        /// <param name="center">The object's center, in level units.</param>
+        /// <param name="point">The drag position, in level units.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <param name="snap">True to snap to the spec's step; false to round to whole degrees.</param>
+        /// <returns>The angle to store, normalized to (-180, 180].</returns>
         public static double AngleFromPoint(Vec2 center, Vec2 point, RotationSpec spec, bool snap)
         {
             double dir = Math.Atan2(point.Y - center.Y, point.X - center.X) * 180 / Math.PI;
@@ -96,6 +110,11 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The knob's level-space position for a stored angle and ring radius.</summary>
+        /// <param name="center">The object's center, in level units.</param>
+        /// <param name="storedAngle">The angle as stored on the object, not the on-screen angle.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <param name="radius">The dial ring radius, in level units.</param>
+        /// <returns>The knob's position, in level units.</returns>
         public static Vec2 KnobPosition(Vec2 center, double storedAngle, RotationSpec spec, double radius)
         {
             double dir = ((storedAngle * spec.StoredAngleSign) + spec.DisplayOffset) * Math.PI / 180;
@@ -103,12 +122,22 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Whether <paramref name="point"/> is within <paramref name="tolerance"/> of the ring edge.</summary>
+        /// <param name="center">The object's center, in level units.</param>
+        /// <param name="radius">The dial ring radius, in level units.</param>
+        /// <param name="point">The position to test, in level units; typically the cursor.</param>
+        /// <param name="tolerance">The hit distance in level units, so callers convert screen pixels via the zoom.</param>
         public static bool OnRing(Vec2 center, double radius, Vec2 point, double tolerance)
         {
             return Math.Abs(GrabRadius.Distance(center, point) - radius) <= tolerance;
         }
 
         /// <summary>Whether <paramref name="point"/> is within <paramref name="tolerance"/> of the knob.</summary>
+        /// <param name="center">The object's center, in level units.</param>
+        /// <param name="storedAngle">The angle as stored on the object, not the on-screen angle.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <param name="radius">The dial ring radius, in level units.</param>
+        /// <param name="point">The position to test, in level units; typically the cursor.</param>
+        /// <param name="tolerance">The hit distance in level units, so callers convert screen pixels via the zoom.</param>
         public static bool OnKnob(Vec2 center, double storedAngle, RotationSpec spec, double radius, Vec2 point, double tolerance)
         {
             return GrabRadius.Distance(KnobPosition(center, storedAngle, spec, radius), point) <= tolerance;
@@ -119,6 +148,13 @@ namespace CtrDxEditor.Core.Editing
         /// primary target); then the ring bar; then nothing. Tolerances are in level units, so the caller
         /// converts screen pixels via the zoom.
         /// </summary>
+        /// <param name="center">The object's center, in level units.</param>
+        /// <param name="storedAngle">The angle as stored on the object, not the on-screen angle.</param>
+        /// <param name="spec">The object's rotation convention, mapping the stored attribute to an on-screen angle.</param>
+        /// <param name="radius">The dial ring radius, in level units.</param>
+        /// <param name="point">The position to test, in level units; typically the cursor.</param>
+        /// <param name="ringTolerance">The hit distance from the ring edge, in level units.</param>
+        /// <param name="knobTolerance">The hit radius around the knob, in level units.</param>
         public static Handle HitTest(
             Vec2 center, double storedAngle, RotationSpec spec, double radius, Vec2 point, double ringTolerance, double knobTolerance)
         {

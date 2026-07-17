@@ -45,6 +45,12 @@ namespace CtrDxEditor.Core.Editing
     /// Pure static port of <c>ConveyorBelt.BuildVisuals</c>. Coordinates are retained in the game's
     /// width-by-length visual root; the renderer applies its authored 90-degree rotation afterwards.
     /// </summary>
+    /// <param name="RootWidth">The visual root's width in level units, before its 90-degree rotation.</param>
+    /// <param name="RootHeight">The visual root's height in level units, before its 90-degree rotation.</param>
+    /// <param name="RootTranslationX">The root's X translation in level units.</param>
+    /// <param name="RootTranslationY">The root's Y translation in level units.</param>
+    /// <param name="ParentRotationPivotX">The X pivot the parent rotates the root about.</param>
+    /// <param name="Pieces">The nodes to draw, in back-to-front order.</param>
     public sealed record ConveyorVisualLayout(
         double RootWidth,
         double RootHeight,

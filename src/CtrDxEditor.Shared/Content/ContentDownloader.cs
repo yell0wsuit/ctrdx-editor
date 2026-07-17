@@ -28,6 +28,10 @@ namespace CtrDxEditor.Content
         /// <paramref name="destContentDir"/> untouched. Throws <see cref="InvalidDataException"/> when the
         /// downloaded bundle is not valid content for this platform.
         /// </summary>
+        /// <param name="destContentDir">The content directory to install into. Left untouched unless the install succeeds.</param>
+        /// <param name="imageExtension">The platform's image extension, such as <c>.png</c> or <c>.webp</c>; content built for another platform is rejected.</param>
+        /// <param name="progress">Receives stage changes, and fractional progress while downloading. May be null.</param>
+        /// <param name="ct">Cancels the download; staging is cleaned up on the way out.</param>
         public static async Task DownloadAsync(
             string destContentDir, string imageExtension, IProgress<InstallProgress>? progress, CancellationToken ct)
         {
@@ -70,6 +74,9 @@ namespace CtrDxEditor.Content
         /// (leaving the destination untouched) when the staged content is incomplete, corrupt, or built
         /// for a different platform than <paramref name="imageExtension"/>.
         /// </summary>
+        /// <param name="stagingDir">The freshly-extracted content to validate. Renamed onto the destination on success.</param>
+        /// <param name="destContentDir">The content directory to replace. Must be on the same volume as <paramref name="stagingDir"/> so the swap is a rename.</param>
+        /// <param name="imageExtension">The platform's image extension, such as <c>.png</c> or <c>.webp</c>; content built for another platform is rejected.</param>
         public static void CommitStagedContent(string stagingDir, string destContentDir, string imageExtension)
         {
             IReadOnlyList<string> invalid = ContentLocation.FindInvalidFiles(stagingDir, imageExtension);
@@ -86,6 +93,8 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>Extracts a downloaded asset zip into <paramref name="destContentDir"/>, overwriting existing files.</summary>
+        /// <param name="zipPath">The downloaded asset zip.</param>
+        /// <param name="destContentDir">The directory to extract into; created when absent.</param>
         public static void ExtractInto(string zipPath, string destContentDir)
         {
             _ = Directory.CreateDirectory(destContentDir);

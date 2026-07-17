@@ -36,6 +36,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Turns editor-only auto-width state on or off without changing serialized level XML.</summary>
+        /// <param name="o">The tutorial text object.</param>
+        /// <param name="auto">True to auto-size the width to the text; false to keep the authored width.</param>
         public static void SetAutoWidth(LevelObject o, bool auto)
         {
             o.Element.RemoveAnnotations<AutoWidthState>();
@@ -88,6 +90,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Renames the element to the tag for <paramref name="quad"/>, preserving attributes.</summary>
+        /// <param name="o">The tutorial icon object.</param>
+        /// <param name="quad">The zero-based icon quad.</param>
         public static void SetIcon(LevelObject o, int quad)
         {
             o.Element.Name = TagForQuad(quad);
@@ -100,6 +104,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Whether an icon quad should be color-inverted for the current canvas.</summary>
+        /// <param name="quad">The zero-based icon quad.</param>
+        /// <param name="dark">Whether the canvas is dark. Full-color icons never invert, so only monochrome art flips.</param>
         public static bool ShouldInvert(int quad, bool dark)
         {
             return dark && !IsColoredQuad(quad);

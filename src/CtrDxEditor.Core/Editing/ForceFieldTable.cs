@@ -10,6 +10,10 @@ namespace CtrDxEditor.Core.Editing
     /// <see cref="DirectionOffset"/> is added to the object's display angle to get the push direction, so a
     /// pump that blows along its mouth (game impulse <c>rotate((0,-1), rotation)</c>) is <c>-90</c>.
     /// </summary>
+    /// <param name="Reach">How far the emitter pushes, in game units.</param>
+    /// <param name="DirectionOffset">Degrees added to the display angle to get the push direction.</param>
+    /// <param name="Marks">Distances from the emitter to draw transverse marks; null means none.</param>
+    /// <param name="CoordinateScale">Scale applied to <paramref name="Reach"/> and <paramref name="Marks"/> when the emitter authors its field in a non-standard space.</param>
     public sealed record ForceFieldSpec(
         double Reach,
         double DirectionOffset,

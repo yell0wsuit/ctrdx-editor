@@ -6,6 +6,9 @@ namespace CtrDxEditor.Content
     /// One atlas frame layer of a composited object sprite, drawn back-to-front. The frame is resolved
     /// by <paramref name="Quad"/>, the zero-based position in the atlas JSON array used by the game.
     /// </summary>
+    /// <param name="AtlasJsonRelPath">Path to the atlas JSON, relative to the content root.</param>
+    /// <param name="AtlasImageBasePath">The atlas image path without its extension, so either platform's format resolves.</param>
+    /// <param name="Quad">The layer's zero-based index in the atlas JSON array.</param>
     public sealed record SpriteLayer(string AtlasJsonRelPath, string AtlasImageBasePath, int Quad);
 
     /// <summary>
@@ -17,6 +20,10 @@ namespace CtrDxEditor.Content
     /// drawn behind <see cref="Layers"/> (the bubble's random attached outline in the game's
     /// LoadBubble); they never affect selection bounds, hitboxes, or palette thumbnails.
     /// </summary>
+    /// <param name="Element">The object's XML element name.</param>
+    /// <param name="Layers">The atlas layers, drawn back-to-front.</param>
+    /// <param name="Scale">The per-object visual scale the game applies.</param>
+    /// <param name="RandomBackLayers">Decorative variants, one picked per placed instance; null means none.</param>
     public sealed record VisualDescriptor(
         string Element,
         IReadOnlyList<SpriteLayer> Layers,

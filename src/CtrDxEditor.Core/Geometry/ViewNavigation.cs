@@ -6,6 +6,12 @@ namespace CtrDxEditor.Core.Geometry
     public static class ViewNavigation
     {
         /// <summary>Zooms around a screen-space anchor so the anchored level point remains under the pointer.</summary>
+        /// <param name="view">The current view transform.</param>
+        /// <param name="factor">Multiplied into the current zoom; above 1 zooms in, below 1 zooms out.</param>
+        /// <param name="anchor">The screen-space point to hold fixed, typically the pointer.</param>
+        /// <param name="minZoom">Lower clamp for the resulting zoom.</param>
+        /// <param name="maxZoom">Upper clamp for the resulting zoom.</param>
+        /// <returns>The zoomed transform, panned so the level point under <paramref name="anchor"/> stays put.</returns>
         public static ViewTransform ZoomBy(
             ViewTransform view,
             double factor,
@@ -21,6 +27,14 @@ namespace CtrDxEditor.Core.Geometry
         }
 
         /// <summary>Returns a view transform for the requested scroll offsets, clamped to scaled content bounds.</summary>
+        /// <param name="view">The current view transform.</param>
+        /// <param name="levelWidth">The level width in level units.</param>
+        /// <param name="levelHeight">The level height in level units.</param>
+        /// <param name="viewportWidth">The viewport width in screen pixels.</param>
+        /// <param name="viewportHeight">The viewport height in screen pixels.</param>
+        /// <param name="offsetX">The requested horizontal scroll offset in screen pixels, clamped to the content.</param>
+        /// <param name="offsetY">The requested vertical scroll offset in screen pixels, clamped to the content.</param>
+        /// <returns>The scrolled transform at the same zoom. An axis whose content is smaller than the viewport is centered instead of scrolled.</returns>
         public static ViewTransform ScrollTo(
             ViewTransform view,
             double levelWidth,
@@ -40,6 +54,9 @@ namespace CtrDxEditor.Core.Geometry
         }
 
         /// <summary>Converts cumulative pinch scale into an incremental zoom factor.</summary>
+        /// <param name="previousScale">The pinch gesture's cumulative scale at the previous event.</param>
+        /// <param name="currentScale">The pinch gesture's cumulative scale now.</param>
+        /// <returns>The incremental factor to pass to <see cref="ZoomBy"/>; 1 when either scale is non-positive.</returns>
         public static double PinchScaleToZoomFactor(double previousScale, double currentScale)
         {
             return previousScale <= 0 || currentScale <= 0 ? 1 : currentScale / previousScale;

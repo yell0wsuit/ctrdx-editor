@@ -44,6 +44,12 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Resolved rail geometry in level space: the two ends, the hook, and orientation.</summary>
+        /// <param name="Start">The near cap, in level units.</param>
+        /// <param name="End">The far cap, in level units.</param>
+        /// <param name="Hook">The hook's rest position, in level units.</param>
+        /// <param name="Vertical">Whether the rail runs vertically rather than horizontally.</param>
+        /// <param name="Length">The rail length in level units.</param>
+        /// <param name="Offset">The hook's distance from <paramref name="Start"/> along the rail.</param>
         public readonly record struct Geometry(
             Vec2 Start, Vec2 End, Vec2 Hook, bool Vertical, double Length, double Offset);
 
@@ -71,6 +77,11 @@ namespace CtrDxEditor.Core.Editing
         /// small targets) unless the hook sits on that end, where sliding wins; then the hook; then the bar
         /// itself. Tolerances are in level units, so the caller converts screen pixels via the zoom.
         /// </summary>
+        /// <param name="g">The rail geometry, from <see cref="Of"/>.</param>
+        /// <param name="point">The position to test, in level units; typically the cursor.</param>
+        /// <param name="endTolerance">The hit radius for the end caps, in level units.</param>
+        /// <param name="hookTolerance">The hit radius for the hook, in level units.</param>
+        /// <param name="barThickness">How far off-axis still counts as the bar, in level units.</param>
         public static Handle HitTest(Geometry g, Vec2 point, double endTolerance, double hookTolerance, double barThickness)
         {
             bool onHook = Distance(point, g.Hook) <= hookTolerance;
@@ -115,6 +126,8 @@ namespace CtrDxEditor.Core.Editing
         /// Slides the hook to <paramref name="point"/>: the rail ends stay put, the hook moves along the
         /// axis clamped between them. Returns the new hook axis coordinate and the matching offset.
         /// </summary>
+        /// <param name="g">The rail geometry, from <see cref="Of"/>.</param>
+        /// <param name="point">The drag position, in level units.</param>
         public static (double HookAxis, double Offset) SlideHook(Geometry g, Vec2 point)
         {
             double start = Axis(g.Start, g.Vertical);
@@ -127,6 +140,8 @@ namespace CtrDxEditor.Core.Editing
         /// changes. The length can't drop below the hook's offset (or <see cref="MinLength"/>), keeping
         /// the hook on the rail. Returns the new length.
         /// </summary>
+        /// <param name="g">The rail geometry, from <see cref="Of"/>.</param>
+        /// <param name="point">The drag position, in level units.</param>
         public static double ResizeEnd(Geometry g, Vec2 point)
         {
             double start = Axis(g.Start, g.Vertical);

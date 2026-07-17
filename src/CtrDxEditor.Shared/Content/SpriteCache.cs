@@ -314,6 +314,10 @@ namespace CtrDxEditor.Content
         /// Cached per (element, candy skin). <paramref name="candySkin"/> only affects candy elements.
         /// Call on the UI thread; warm non-default candy skins first with <see cref="PreloadCandySkin"/>.
         /// </summary>
+        /// <param name="element">The object's XML element name.</param>
+        /// <param name="candySkin">The candy skin index; ignored for non-candy elements.</param>
+        /// <param name="omNomSupport">The support-platform frame index; ignored for elements other than the target.</param>
+        /// <returns>The cached preview, or null when the element has no sprite or its atlas is unavailable.</returns>
         public Bitmap? GetThumbnail(string element, int candySkin = 0, int omNomSupport = 0)
         {
             string key = candySkin == 0 && omNomSupport == 0 ? element : $"{element}#c{candySkin}#s{omNomSupport}";
@@ -500,6 +504,10 @@ namespace CtrDxEditor.Content
         /// quad index); for the target, the platform layer is drawn from <paramref name="omNomSupport"/>'s
         /// frame of the char_supports atlas. Both parameters are ignored for every other element.
         /// </summary>
+        /// <param name="element">The object's XML element name.</param>
+        /// <param name="candySkin">The candy skin index; ignored for non-candy elements.</param>
+        /// <param name="omNomSupport">The support-platform frame index; ignored for elements other than the target.</param>
+        /// <returns>The resolved layers, or null when unavailable.</returns>
         public ObjectSprite? GetSprite(string element, int candySkin = 0, int omNomSupport = 0)
         {
             VisualDescriptor? v = VisualDescriptorMap.For(element);

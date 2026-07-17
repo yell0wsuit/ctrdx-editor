@@ -108,6 +108,9 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>World-space position of a disc handle.</summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="h">Which handle to locate.</param>
+        /// <returns>The handle's position on the disc rim, in level units.</returns>
         public static Vec2 HandlePosition(LevelObject obj, Handle h)
         {
             double radial = HandleAngleDegrees(obj) + (h == Handle.Left ? 180.0 : 0.0);
@@ -120,6 +123,9 @@ namespace CtrDxEditor.Core.Editing
         /// Radial distance in level units from the disc center to a controller handle's center, matching the
         /// game's <c>controllerXOffset</c> in <c>RotatedCircle.UpdateChildPositions</c> (RTPD is identity on desktop).
         /// </summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="mapScale">Atlas pixels per level unit; defaults to the standard map scale.</param>
+        /// <returns>The distance in level units, which is shorter than the disc radius because the game insets the controller.</returns>
         public static double VisualHandleOffset(LevelObject obj, double mapScale = SpritePlacement.MapScale)
         {
             double sizeInPixels = HighlightFrameWidth * LayerScale(obj);
@@ -129,6 +135,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>World-space center of the visible controller art, including the game's size-dependent inset.</summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="h">Which handle to locate.</param>
+        /// <param name="mapScale">Atlas pixels per level unit; defaults to the standard map scale.</param>
+        /// <returns>The center of the drawn controller art, inset from the rim position <see cref="HandlePosition"/> reports.</returns>
         public static Vec2 VisualHandlePosition(LevelObject obj, Handle h, double mapScale = SpritePlacement.MapScale)
         {
             double offset = VisualHandleOffset(obj, mapScale);
@@ -138,12 +148,19 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The level-unit radius of the drawn disc body, for framing a preview thumbnail around it.</summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="mapScale">Atlas pixels per level unit; defaults to the standard map scale.</param>
+        /// <returns>The drawn body radius in level units.</returns>
         public static double BodyRadius(LevelObject obj, double mapScale = SpritePlacement.MapScale)
         {
             return BodyFrameWidth / 2.0 * LayerScale(obj) / mapScale;
         }
 
         /// <summary>The handle within <paramref name="tolerance"/> of <paramref name="point"/>, nearest first.</summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="point">The position to test, in level units; typically the cursor.</param>
+        /// <param name="tolerance">The hit radius in level units.</param>
+        /// <returns>The nearer handle, or <see cref="Handle.None"/> when neither is within <paramref name="tolerance"/>. The left handle never matches while <c>oneHandle</c> is set.</returns>
         public static Handle HitTest(LevelObject obj, Vec2 point, double tolerance)
         {
             double right = Distance(HandlePosition(obj, Handle.Right), point);
@@ -154,6 +171,10 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The <c>handleAngle</c> to store when <paramref name="h"/> is dragged to <paramref name="point"/>.</summary>
+        /// <param name="obj">The vinyl disc.</param>
+        /// <param name="h">The handle being dragged.</param>
+        /// <param name="point">The drag position, in level units.</param>
+        /// <returns>The angle in degrees to store, normalized to (-180, 180]. Dragging the left handle stores the opposite angle, since <c>handleAngle</c> tracks the right one.</returns>
         public static double AngleFor(LevelObject obj, Handle h, Vec2 point)
         {
             double deg = Math.Atan2(point.Y - obj.Y, point.X - obj.X) * 180.0 / Math.PI;

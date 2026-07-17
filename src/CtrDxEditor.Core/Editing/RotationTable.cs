@@ -18,6 +18,12 @@ namespace CtrDxEditor.Core.Editing
     /// <c>+90</c>, rocket <c>-180</c>, most others <c>0</c>). Positive is clockwise, matching the game's
     /// Y-down projection and Avalonia's Y-down screen space.
     /// </summary>
+    /// <param name="DisplayOffset">Degrees added to the stored angle when rendering; positive is clockwise.</param>
+    /// <param name="AttributeName">The XML attribute holding the angle.</param>
+    /// <param name="SnapStep">Snap increment in degrees while dragging the dial.</param>
+    /// <param name="Editable">Whether the object exposes a rotation dial at all.</param>
+    /// <param name="StoredAngleSign">Use -1 for objects whose stored angle runs counter to screen rotation.</param>
+    /// <param name="CenterKind">How the pivot is resolved from the object's geometry.</param>
     public sealed record RotationSpec(
         double DisplayOffset,
         string AttributeName = "angle",

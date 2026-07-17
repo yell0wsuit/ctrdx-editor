@@ -23,18 +23,24 @@ namespace CtrDxEditor.Core.Document
         }
 
         /// <summary>Parses a level document from an XML string.</summary>
+        /// <param name="xml">The level XML.</param>
+        /// <returns>The parsed document.</returns>
         public static LevelDocument Parse(string xml)
         {
             return new(XDocument.Parse(xml));
         }
 
         /// <summary>Loads a level document from disk.</summary>
+        /// <param name="path">Filesystem path to the level XML.</param>
+        /// <returns>The parsed document.</returns>
         public static LevelDocument Load(string path)
         {
             return new(XDocument.Load(path));
         }
 
         /// <summary>Builds a fresh level document with the given settings and an empty Objects layer.</summary>
+        /// <param name="settings">The level-wide settings to write into the settings layer.</param>
+        /// <returns>A document with no objects.</returns>
         public static LevelDocument CreateNew(LevelSettings settings)
         {
             XElement gameDesignEl = new("gameDesign",
@@ -125,6 +131,7 @@ namespace CtrDxEditor.Core.Document
         public XElement? ObjectsLayer => Layer("Objects");
 
         /// <summary>Adds an object to the Objects layer, creating the layer when needed.</summary>
+        /// <param name="obj">The object to append.</param>
         public void Add(LevelObject obj)
         {
             XElement layer = ObjectsLayer ?? CreateObjectsLayer();
@@ -132,6 +139,7 @@ namespace CtrDxEditor.Core.Document
         }
 
         /// <summary>Writes level-wide settings back into the settings layer and adjusts candy objects when split mode changes.</summary>
+        /// <param name="settings">The new level-wide settings. Toggling <c>TwoParts</c> converts candy objects in place: on splits <c>candy</c> into <c>candyL</c> plus a centered <c>candyR</c>, off merges them back.</param>
         public void UpdateSettings(LevelSettings settings)
         {
             bool wasTwoParts = TwoParts;

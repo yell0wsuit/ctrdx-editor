@@ -26,6 +26,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Changes the spike size and renames the backing XML element to the matching spikeN name.</summary>
+        /// <param name="obj">The spike to resize.</param>
+        /// <param name="size">One of 1-4. Anything else is ignored, leaving the spike untouched.</param>
         public static void SetSize(LevelObject obj, string? size)
         {
             if (!IsValidSize(size))
@@ -64,6 +66,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Sets or clears spike rotation grouping.</summary>
+        /// <param name="obj">The spike to update.</param>
+        /// <param name="toggled">True to put the spike in its current group; false to clear grouping.</param>
         public static void SetToggled(LevelObject obj, bool toggled)
         {
             obj.SetAttr("toggled", toggled ? Group(obj) : "false");
@@ -77,6 +81,8 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>Sets the spike toggle group to one of the game-supported values.</summary>
+        /// <param name="obj">The spike to update.</param>
+        /// <param name="group">One of "0", "1", or "2". Unrecognized values fall back to group 1.</param>
         public static void SetGroup(LevelObject obj, string? group)
         {
             obj.SetAttr("toggled", group is "0" or "2" ? group : "1");
