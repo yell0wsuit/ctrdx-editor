@@ -7,16 +7,18 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the rocket sprite descriptors.</summary>
     public class VisualDescriptorMapRocketTests
     {
+        /// <summary>The rocket body draws as a single quad-10 layer at the 0.7 scale LoadRocket applies in game.</summary>
         [Fact]
         public void RocketBodyUsesQuad10AtGameScale()
         {
             VisualDescriptor? rocket = VisualDescriptorMap.For("rocket");
             Assert.NotNull(rocket);
             Assert.Equal(0.7, rocket.Scale);
-            Assert.Single(rocket.Layers);
+            _ = Assert.Single(rocket.Layers);
             Assert.Equal(10, rocket.Layers[0].Quad);
         }
 
+        /// <summary>The launcher marker keeps quad 0 at full scale, because only the body carries the 0.7 shrink.</summary>
         [Fact]
         public void RocketLauncherUsesQuad0AtFullScale()
         {
@@ -27,6 +29,9 @@ namespace CtrDxEditor.Tests
             Assert.Equal(1.0, launcher.Scale);
         }
 
+        /// <summary>
+        /// Whether the rocket assets and atlas are present
+        /// </summary>
         [Fact]
         public void RocketAtlasIsRequired()
         {

@@ -25,6 +25,7 @@ namespace CtrDxEditor.Tests
             return (fields, rocket);
         }
 
+        /// <summary>Both impulse fields carry help text, since neither name explains its units on its own.</summary>
         [Fact]
         public void ImpulseFieldsCarryHelpText()
         {
@@ -33,6 +34,7 @@ namespace CtrDxEditor.Tests
             Assert.True(fields.Single(f => f.Name == "impulseFactor").HasHelp);
         }
 
+        /// <summary>A negative <c>time</c> means the rocket burns forever, so the toggle reads false and the burn-time field stays hidden.</summary>
         [Fact]
         public void UntimedRocketHidesBurnTimeAndTogglesOff()
         {
@@ -41,6 +43,7 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(fields, f => f.Name == "time");
         }
 
+        /// <summary>A positive <c>time</c> flips the toggle on and reveals the burn-time field for editing.</summary>
         [Fact]
         public void TimedRocketShowsBurnTimeField()
         {
@@ -49,6 +52,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains(fields, f => f.Name == "time");
         }
 
+        /// <summary>Turning the toggle on replaces the sentinel with a positive default rather than leaving -1 in the document.</summary>
         [Fact]
         public void TogglingTimedOnWritesPositiveTime()
         {
@@ -57,6 +61,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("5", rocket.GetAttr("time"));
         }
 
+        /// <summary>Turning the toggle off writes the -1 sentinel back, which is how the game encodes an untimed rocket.</summary>
         [Fact]
         public void TogglingTimedOffWritesMinusOne()
         {

@@ -198,12 +198,12 @@ namespace CtrDxEditor.Views
             return _notifications;
         }
 
-        private void OnPaletteScrollChanged(object? sender, Avalonia.Controls.ScrollChangedEventArgs e)
+        private void OnPaletteScrollChanged(object? sender, ScrollChangedEventArgs e)
         {
-            if (this.FindControl<Avalonia.Controls.ScrollViewer>("PaletteScroll") is not { } scroll
-                || this.FindControl<Avalonia.Controls.ItemsControl>("PaletteList") is not { } list
-                || this.FindControl<Avalonia.Controls.Border>("StickyHeaderHost") is not { } host
-                || this.FindControl<Avalonia.Controls.TextBlock>("StickyHeaderText") is not { } text)
+            if (this.FindControl<ScrollViewer>("PaletteScroll") is not { } scroll
+                || this.FindControl<ItemsControl>("PaletteList") is not { } list
+                || this.FindControl<Border>("StickyHeaderHost") is not { } host
+                || this.FindControl<TextBlock>("StickyHeaderText") is not { } text)
             {
                 return;
             }
@@ -211,11 +211,11 @@ namespace CtrDxEditor.Views
             string? topGroup = null;
             for (int i = 0; i < list.ItemCount; i++)
             {
-                if (list.ContainerFromIndex(i) is not Avalonia.Controls.Control container)
+                if (list.ContainerFromIndex(i) is not Control container)
                 {
                     continue;
                 }
-                if (container.TranslatePoint(new Avalonia.Point(0, container.Bounds.Height), scroll) is not { } p)
+                if (container.TranslatePoint(new Point(0, container.Bounds.Height), scroll) is not { } p)
                 {
                     continue;
                 }

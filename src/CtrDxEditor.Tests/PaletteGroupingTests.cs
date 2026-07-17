@@ -10,8 +10,12 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the palette's per-game section headers and divider flags.</summary>
     public class PaletteGroupingTests
     {
-        private static EditorViewModel NewEditor() => new(new SpriteCache(new EmptyContentStore()));
+        private static EditorViewModel NewEditor()
+        {
+            return new(new SpriteCache(new EmptyContentStore()));
+        }
 
+        /// <summary>Each group opens with a header, but only groups after the first draw a divider above it.</summary>
         [Fact]
         public void FirstItemOfEachGroupGetsAHeaderAndLaterGroupsGetADivider()
         {
@@ -44,6 +48,7 @@ namespace CtrDxEditor.Tests
             Assert.False(view[rocketIndex - 1].ShowDivider);
         }
 
+        /// <summary>Filtering recomputes headers against the visible items, so a lone survivor keeps its header but loses its divider.</summary>
         [Fact]
         public void SearchRecomputesHeadersForVisibleGroupsOnly()
         {

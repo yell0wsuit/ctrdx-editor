@@ -27,7 +27,7 @@ namespace CtrDxEditor.Tests
             return doc.Objects[0].Type;
         }
 
-        /// <inheritdoc/>
+        /// <summary>A spike tag disagreeing with its <c>size</c> attribute is renamed to match, since the game reads the size only from the attribute.</summary>
         [Fact]
         public void SpikeTagRenamedToMatchSizeAttribute()
         {
@@ -37,7 +37,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("3", doc.Objects[0].GetAttr("size"));
         }
 
-        /// <inheritdoc/>
+        /// <summary>Bouncers normalize the same way as spikes, so the two sized elements stay consistent.</summary>
         [Fact]
         public void BouncerTagRenamedToMatchSizeAttribute()
         {
@@ -47,7 +47,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("2", doc.Objects[0].GetAttr("size"));
         }
 
-        /// <inheritdoc/>
+        /// <summary>A tag that already agrees with its size is left alone, so normalization is idempotent.</summary>
         [Fact]
         public void MatchingSpikeTagLeftUnchanged()
         {
@@ -56,7 +56,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("spike3", TypeOfFirst(doc));
         }
 
-        /// <inheritdoc/>
+        /// <summary>Electro carries a <c>size</c> attribute but has no per-size tag, so it must be exempt from renaming.</summary>
         [Fact]
         public void ElectroTagLeftUnchanged()
         {
@@ -65,7 +65,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("electro", TypeOfFirst(doc));
         }
 
-        /// <inheritdoc/>
+        /// <summary>With no size attribute there is nothing to match, so the tag and the absent attribute both survive.</summary>
         [Fact]
         public void SpikeWithoutSizeAttributeLeftUnchanged()
         {
@@ -75,7 +75,7 @@ namespace CtrDxEditor.Tests
             Assert.Null(doc.Objects[0].GetAttr("size"));
         }
 
-        /// <inheritdoc/>
+        /// <summary>An out-of-range size has no corresponding tag, so the element is left as-is rather than renamed to a nonexistent one.</summary>
         [Fact]
         public void SpikeWithOutOfRangeSizeLeftUnchanged()
         {
@@ -84,7 +84,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("spike2", TypeOfFirst(doc));
         }
 
-        /// <inheritdoc/>
+        /// <summary>Bouncers reject out-of-range sizes the same way spikes do.</summary>
         [Fact]
         public void BouncerWithOutOfRangeSizeLeftUnchanged()
         {
@@ -93,7 +93,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal("bouncer2", TypeOfFirst(doc));
         }
 
-        /// <inheritdoc/>
+        /// <summary>The method reports true when it rewrites a tag, which is what marks the document modified.</summary>
         [Fact]
         public void ReportsChangedWhenATagIsRenamed()
         {
@@ -102,7 +102,7 @@ namespace CtrDxEditor.Tests
             Assert.True(LevelObjectPolicy.NormalizeSizedElements(doc));
         }
 
-        /// <inheritdoc/>
+        /// <summary>The method reports false when nothing moved, so merely opening a level does not mark it dirty.</summary>
         [Fact]
         public void ReportsUnchangedWhenAllTagsAlreadyMatch()
         {

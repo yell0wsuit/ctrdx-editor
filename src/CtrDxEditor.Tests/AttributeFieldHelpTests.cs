@@ -11,20 +11,25 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the optional help-text metadata on attribute fields.</summary>
     public class AttributeFieldHelpTests
     {
-        private static LevelObject Obj() => new(new XElement("rocket"));
+        private static LevelObject Obj()
+        {
+            return new(new XElement("rocket"));
+        }
 
+        /// <summary>Help text is opt-in, so a field left without it reports no help rather than an empty tooltip.</summary>
         [Fact]
         public void FieldWithoutHelpTextHasNoHelp()
         {
-            var field = new AttributeFieldViewModel(Obj(), "impulse", AttrType.Number, null, () => { });
+            AttributeFieldViewModel field = new(Obj(), "impulse", AttrType.Number, null, () => { });
             Assert.False(field.HasHelp);
             Assert.Null(field.HelpText);
         }
 
+        /// <summary>Setting help text flips <see cref="AttributeFieldViewModel.HasHelp"/>, which is what shows the hint icon in the panel.</summary>
         [Fact]
         public void FieldWithHelpTextReportsHasHelp()
         {
-            var field = new AttributeFieldViewModel(Obj(), "impulse", AttrType.Number, null, () => { })
+            AttributeFieldViewModel field = new(Obj(), "impulse", AttrType.Number, null, () => { })
             {
                 HelpText = "Thrust strength.",
             };
@@ -32,10 +37,11 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Thrust strength.", field.HelpText);
         }
 
+        /// <summary>The <c>time</c> field clamps to 1 so the spinner cannot reach 0, which the game would read as an instant burnout.</summary>
         [Fact]
         public void TimeFieldMinimumIsOne()
         {
-            var field = new AttributeFieldViewModel(Obj(), "time", AttrType.Number, null, () => { });
+            AttributeFieldViewModel field = new(Obj(), "time", AttrType.Number, null, () => { });
             Assert.Equal(1, field.NumericMinimum);
         }
     }

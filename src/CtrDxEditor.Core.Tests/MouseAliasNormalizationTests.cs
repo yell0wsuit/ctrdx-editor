@@ -19,7 +19,7 @@ namespace CtrDxEditor.Core.Tests
                 "<layer name=\"Objects\">" + objectsXml + "</layer></map>");
         }
 
-        /// <inheritdoc/>
+        /// <summary>A legacy <c>mouse</c> tag becomes a <c>gap</c>, carrying its attributes across untouched.</summary>
         [Fact]
         public void MouseTagRenamedToGap()
         {
@@ -33,7 +33,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("1", doc.Objects[0].GetAttr("index"));
         }
 
-        /// <inheritdoc/>
+        /// <summary>A tag that is already <c>gap</c> reports no change, so opening a normalized level does not mark it dirty.</summary>
         [Fact]
         public void GapTagLeftUnchanged()
         {

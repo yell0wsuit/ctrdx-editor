@@ -9,6 +9,7 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Tests the rocket object descriptor and the descriptor Game grouping label.</summary>
     public class RocketDescriptorTests
     {
+        /// <summary>The rocket is an Experiments-era object, so it groups apart from the base-game palette items.</summary>
         [Fact]
         public void RocketIsRegisteredInTheExperimentsGroup()
         {
@@ -19,12 +20,14 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("Cut the Rope: Experiments", rocket.Game);
         }
 
+        /// <summary>Objects that predate the Game label fall back to the base game, so adding the label was not a breaking change.</summary>
         [Fact]
         public void ExistingObjectsDefaultToTheBaseGame()
         {
             Assert.Equal("Cut the Rope", DescriptorTable.CtrObjects.For("pump")!.Game);
         }
 
+        /// <summary>Every launch attribute defaults to the value the game itself uses, so a freshly placed rocket round-trips unchanged.</summary>
         [Fact]
         public void RocketExposesLaunchAttributesWithGameDefaults()
         {

@@ -18,7 +18,7 @@ namespace CtrDxEditor.Core.Tests
         </map>
         """;
 
-        /// <inheritdoc/>
+        /// <summary>The gameDesign element populates both the document properties and the <see cref="LevelSettings"/> snapshot.</summary>
         [Fact]
         public void ReadsGameDesignSettings()
         {
@@ -37,7 +37,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(s.NightLevel);
         }
 
-        /// <inheritdoc/>
+        /// <summary>A level with no gameDesign element falls back to defaults instead of failing to parse.</summary>
         [Fact]
         public void DefaultsWhenGameDesignMissing()
         {
@@ -49,7 +49,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(doc.NightLevel);
         }
 
-        /// <inheritdoc/>
+        /// <summary>A new level starts with an empty Objects layer and serializes its bools lowercase, the way real maps store them.</summary>
         [Fact]
         public void CreateNewProducesSettingsAndEmptyObjectsLayer()
         {
@@ -70,7 +70,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains("nightLevel=\"true\"", doc.Save());
         }
 
-        /// <inheritdoc/>
+        /// <summary>Updating settings rewrites resolution, special, and both flags together.</summary>
         [Fact]
         public void UpdateSettingsChangesResolutionSpecialAndFlags()
         {
@@ -86,7 +86,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(doc.NightLevel);
         }
 
-        /// <inheritdoc/>
+        /// <summary>Leaving two-part mode promotes candyL to the single candy in place and drops candyR, so no candy is left orphaned.</summary>
         [Fact]
         public void TurningOffTwoPartsUsesCandyLAsFullCandyAndRemovesCandyR()
         {
@@ -112,7 +112,7 @@ namespace CtrDxEditor.Core.Tests
                 target => Assert.Equal("target", target.Type));
         }
 
-        /// <inheritdoc/>
+        /// <summary>Mobile physics is written out explicitly when enabled.</summary>
         [Fact]
         public void CreateNewWithMobilePhysicsWritesAttribute()
         {
@@ -122,7 +122,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains("useMobilePhysics=\"true\"", doc.Save());
         }
 
-        /// <inheritdoc/>
+        /// <summary>Mobile physics is omitted rather than written false, since the game treats an absent attribute as the desktop default.</summary>
         [Fact]
         public void CreateNewWithoutMobilePhysicsOmitsAttribute()
         {
@@ -132,7 +132,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.DoesNotContain("useMobilePhysics", doc.Save());
         }
 
-        /// <inheritdoc/>
+        /// <summary>Toggling mobile physics off removes the attribute and back on restores it, so the flag survives a round trip either way.</summary>
         [Fact]
         public void UpdateSettingsTogglesMobilePhysicsBothWays()
         {
@@ -145,7 +145,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(doc.UseMobilePhysics);
         }
 
-        /// <inheritdoc/>
+        /// <summary>Entering two-part mode demotes the existing candy to candyL and centers a fresh candyR, which lands after the objects already present.</summary>
         [Fact]
         public void TurningOnTwoPartsUsesCandyAsCandyLAndAddsCenteredCandyR()
         {
