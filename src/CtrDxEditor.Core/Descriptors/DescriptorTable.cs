@@ -218,15 +218,6 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("isRotatable", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
 
-            // Mechanical hand: an articulated arm whose segments live in numbered slots
-            // (segment1Angle/Length/Rotatable, ...) gated by segmentsCount. LoadHands.cs loops
-            // i = 1..segmentsCount with no upper bound, so the count is deliberately uncapped. The slot
-            // attributes are index-dependent and therefore built by HandFieldBuilder, not declared here.
-            new ObjectDescriptor("hand", "Mechanical Hand",
-            [
-                new AttributeSpec("segmentsCount", AttrType.Whole, "1"),
-            ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
-
             // Snail (Cut the Rope: Experiments). LoadSnails.cs reads x/y only — the snail has no
             // attributes; it wakes and clings to any candy whose capabilities allow snail dragging.
             new ObjectDescriptor(
@@ -236,6 +227,12 @@ namespace CtrDxEditor.Core.Descriptors
                 MaxCount: int.MaxValue,
                 LocalizationName: "snail",
                 Game: "Cut the Rope: Experiments"),
+
+             // Mechanical hand
+            new ObjectDescriptor("hand", "Mechanical hand",
+            [
+                new AttributeSpec("segmentsCount", AttrType.Whole, "1"),
+            ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
         ]);
     }
 }
