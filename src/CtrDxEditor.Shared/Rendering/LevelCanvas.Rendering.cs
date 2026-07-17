@@ -234,9 +234,15 @@ namespace CtrDxEditor.Rendering
                 context.DrawLine(_palette.OrbitPathArrow, new Point(left.X, left.Y), new Point(right.X, right.Y));
             }
 
-            if (selected is not null && EditableRotationSpec(selected) is { } rotSpec)
+            if (selected is not null && EditableRotationTarget(selected) is { } rotTarget)
             {
-                RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
+                RotationDialRenderer.Draw(
+                    context,
+                    v,
+                    rotTarget.Center,
+                    rotTarget.StoredAngle,
+                    rotTarget.Spec,
+                    _rotating || _dialKnobHovered);
             }
 
             // Translucent preview of the object being dragged from the palette, at its snapped drop spot.

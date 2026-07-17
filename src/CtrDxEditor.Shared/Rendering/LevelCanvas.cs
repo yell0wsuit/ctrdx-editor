@@ -315,6 +315,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>The hand joint under the cursor, or 0 when none; drives Delete/Backspace.</summary>
         private int _handHoverJoint;
 
+        /// <summary>The hand segment whose rotation dial is active, or 0 when no hand segment is active.</summary>
+        private int _handActiveSegment;
+
         /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;
 
@@ -418,6 +421,8 @@ namespace CtrDxEditor.Rendering
                 _ghostPreview.Clear();
                 _ghostIconHits.Clear();
                 _polylinePointDrag = -1;
+                _handActiveSegment = 0;
+                _handHoverJoint = 0;
                 ResetPolylineHover();
                 InvalidateVisual();
             }

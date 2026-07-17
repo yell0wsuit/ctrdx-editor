@@ -9,6 +9,79 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Rendering
 {
+    /// <summary>Resolved rotation-dial data for an ordinary object or one active hand segment.</summary>
+    /// <param name="Spec">Angle mapping used by dial geometry.</param>
+    /// <param name="Center">Dial pivot in level coordinates.</param>
+    /// <param name="StoredAngle">Current XML angle in degrees.</param>
+    /// <param name="HandSegmentIndex">Active 1-based hand segment, or 0 for an ordinary object.</param>
+    public readonly record struct RotationDialTarget(
+        RotationSpec Spec,
+        Vec2 Center,
+        double StoredAngle,
+        int HandSegmentIndex);
+
+    /// <summary>Pure target resolution and writes shared by rotation-dial rendering and input.</summary>
+    public static class RotationDialTargetResolver
+    {
+        /// <summary>Resolves a hand segment target or passes an ordinary object's registered target through.</summary>
+        public static RotationDialTarget? Resolve(
+            LevelObject obj, int activeHandSegment, RotationSpec? ordinarySpec)
+        {
+            if (HandObject.IsHand(obj.Type))
+            {
+                int count = HandObject.SegmentCount(obj);
+                if (activeHandSegment < 1 || activeHandSegment > count)
+                {
+                    return null;
+                }
+
+                RotationSpec spec = HandGeometry.SegmentSpec(activeHandSegment);
+                return new RotationDialTarget(
+                    spec,
+                    HandGeometry.Joint(obj, activeHandSegment - 1),
+                    HandObject.Angle(obj, activeHandSegment),
+                    activeHandSegment);
+            }
+
+            return ordinarySpec is null
+                ? null
+                : new RotationDialTarget(
+                    ordinarySpec,
+                    ObjectRotation.Center(obj, ordinarySpec),
+                    ObjectRotation.StoredAngle(obj, ordinarySpec),
+                    0);
+        }
+
+        /// <summary>Clamps transient hand-segment state to the live chain, or clears it for another object.</summary>
+        public static int ClampActiveHandSegment(LevelObject? obj, int requested)
+        {
+            if (obj is null || !HandObject.IsHand(obj.Type) || requested < 1)
+            {
+                return 0;
+            }
+
+            int count = HandObject.SegmentCount(obj);
+            return count > 0 ? Math.Min(requested, count) : 0;
+        }
+
+        /// <summary>Writes a dial-produced angle through the target object's canonical writer.</summary>
+        public static void ApplyAngle(LevelObject obj, RotationDialTarget target, double angle, Vec2 stableCenter)
+        {
+            if (target.HandSegmentIndex > 0 && HandObject.IsHand(obj.Type))
+            {
+                HandObject.SetAngle(obj, target.HandSegmentIndex, angle);
+            }
+            else if (target.Spec.CenterKind == RotationCenterKind.ConveyorMidpoint)
+            {
+                ConveyorGeometry.ApplyRotationAroundCenter(obj, angle, stableCenter);
+            }
+            else
+            {
+                obj.SetAttr(target.Spec.AttributeName, ObjectRotation.Format(angle));
+            }
+        }
+    }
+
     /// <summary>
     /// Draws the rotation dial for a rotatable object: a ring, a tick every 15° of a turn, and a knob at
     /// the object's facing. Mirrors <see cref="GrabRenderer"/> (static, UI owns the invocation). The
@@ -38,14 +111,31 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         public static void Draw(DrawingContext ctx, ViewTransform v, LevelObject obj, RotationSpec spec, bool active)
         {
+            Draw(
+                ctx,
+                v,
+                ObjectRotation.Center(obj, spec),
+                ObjectRotation.StoredAngle(obj, spec),
+                spec,
+                active);
+        }
+
+        /// <summary>Draws a dial using an explicit pivot and stored angle.</summary>
+        public static void Draw(
+            DrawingContext ctx,
+            ViewTransform v,
+            Vec2 center,
+            double storedAngle,
+            RotationSpec spec,
+            bool active)
+        {
             if (v.Zoom <= 0)
             {
                 return;
             }
 
-            Vec2 c = ObjectRotation.Center(obj, spec);
             double radius = RadiusPx / v.Zoom;
-            Vec2 cs = v.LevelToScreen(c);
+            Vec2 cs = v.LevelToScreen(center);
             const double rs = RadiusPx; // screen radius = level radius * zoom = px constant
             ctx.DrawEllipse(null, RingPen, new Point(cs.X, cs.Y), rs, rs);
 
@@ -59,7 +149,7 @@ namespace CtrDxEditor.Rendering
                     new Point(cs.X + (dx * rs), cs.Y + (dy * rs)));
             }
 
-            Vec2 knob = v.LevelToScreen(ObjectRotation.KnobPosition(c, ObjectRotation.StoredAngle(obj, spec), spec, radius));
+            Vec2 knob = v.LevelToScreen(ObjectRotation.KnobPosition(center, storedAngle, spec, radius));
             ctx.DrawEllipse(active ? KnobActiveBrush : KnobBrush, null, new Point(knob.X, knob.Y), KnobPx, KnobPx);
         }
     }

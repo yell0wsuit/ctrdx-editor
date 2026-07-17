@@ -169,24 +169,24 @@ namespace CtrDxEditor.Rendering
         /// <returns>The dial handle under the point, or <see cref="ObjectRotation.Handle.None"/>.</returns>
         private ObjectRotation.Handle HitRotationDial(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || EditableRotationSpec(obj) is not { } spec)
+            if (SelectedObject is not { } obj || View.Zoom <= 0 || EditableRotationTarget(obj) is not { } target)
             {
                 return ObjectRotation.Handle.None;
             }
-            Vec2 c = ObjectRotation.Center(obj, spec);
             double radius = RotationDialRenderer.RadiusPx / View.Zoom;
             return ObjectRotation.HitTest(
-                c, ObjectRotation.StoredAngle(obj, spec), spec, radius, levelPt,
+                target.Center, target.StoredAngle, target.Spec, radius, levelPt,
                 ringTolerance: RotationDialRenderer.RingTolerancePx / View.Zoom,
                 knobTolerance: RotationDialRenderer.KnobTolerancePx / View.Zoom);
         }
 
-        /// <summary>Resolves an object's ordinary rotation spec or the ghost's preview-only bouncer spec.</summary>
-        private RotationSpec? EditableRotationSpec(LevelObject obj)
+        /// <summary>Resolves an ordinary object or the active hand segment into one dial target.</summary>
+        private RotationDialTarget? EditableRotationTarget(LevelObject obj)
         {
-            return obj.Type == "ghost" && _ghostPreview.ShowsRotationDial(obj)
+            RotationSpec? ordinarySpec = obj.Type == "ghost" && _ghostPreview.ShowsRotationDial(obj)
                 ? GhostBouncerRotation
                 : RotationTable.EditableFor(obj.Type);
+            return RotationDialTargetResolver.Resolve(obj, _handActiveSegment, ordinarySpec);
         }
 
         /// <summary>
@@ -194,23 +194,16 @@ namespace CtrDxEditor.Rendering
         /// is held, which snaps to the spec's step (15°).
         /// </summary>
         /// <param name="obj">The rotatable object being edited.</param>
-        /// <param name="spec">Rotation spec describing the object's angle attribute and snap step.</param>
+        /// <param name="target">Resolved object or hand-segment dial target.</param>
         /// <param name="center">Stable pivot captured when the dial gesture began.</param>
         /// <param name="levelPt">The pointer position in level coordinates.</param>
         /// <param name="mods">Active keyboard modifiers; Alt enables snapping.</param>
         private static void ApplyRotation(
-            LevelObject obj, RotationSpec spec, Vec2 center, Vec2 levelPt, KeyModifiers mods)
+            LevelObject obj, RotationDialTarget target, Vec2 center, Vec2 levelPt, KeyModifiers mods)
         {
             bool snap = mods.HasFlag(KeyModifiers.Alt);
-            double angle = ObjectRotation.AngleFromPoint(center, levelPt, spec, snap);
-            if (spec.CenterKind == RotationCenterKind.ConveyorMidpoint)
-            {
-                ConveyorGeometry.ApplyRotationAroundCenter(obj, angle, center);
-            }
-            else
-            {
-                obj.SetAttr(spec.AttributeName, ObjectRotation.Format(angle));
-            }
+            double angle = ObjectRotation.AngleFromPoint(center, levelPt, target.Spec, snap);
+            RotationDialTargetResolver.ApplyAngle(obj, target, angle, center);
         }
 
         /// <summary>
@@ -468,6 +461,7 @@ namespace CtrDxEditor.Rendering
 
             BeginDocumentEdit?.Invoke();
             HandObject.DeleteSegment(hand, index);
+            _handActiveSegment = RotationDialTargetResolver.ClampActiveHandSegment(hand, _handActiveSegment);
             SelectedObjectMoved?.Invoke();
             CompleteDocumentEdit?.Invoke();
             InvalidateVisual();
@@ -725,12 +719,12 @@ namespace CtrDxEditor.Rendering
             // Grabbing the selected object's rotation dial (knob or ring) rotates it; takes priority over
             // object hit-testing so the dial wins over anything beneath it.
             if (HitRotationDial(levelPt) != ObjectRotation.Handle.None
-                && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
+                && SelectedObject is { } rotObj && EditableRotationTarget(rotObj) is { } rotTarget)
             {
                 BeginDocumentEdit?.Invoke();
-                _rotationDragCenter = ObjectRotation.Center(rotObj, rotSpec);
+                _rotationDragCenter = rotTarget.Center;
                 _rotating = true;
-                ApplyRotation(rotObj, rotSpec, _rotationDragCenter, levelPt, e.KeyModifiers);
+                ApplyRotation(rotObj, rotTarget, _rotationDragCenter, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Pointer.Capture(this);
@@ -795,6 +789,7 @@ namespace CtrDxEditor.Rendering
                     case HandGeometry.HandleKind.Joint:
                         BeginDocumentEdit?.Invoke();
                         _handJointDrag = handHit.Index;
+                        _handActiveSegment = handHit.Index;
                         HandSegmentActivated?.Invoke(handHit.Index);
                         e.Handled = true;
                         e.Pointer.Capture(this);
@@ -810,6 +805,7 @@ namespace CtrDxEditor.Rendering
                     case HandGeometry.HandleKind.Bone:
                         BeginDocumentEdit?.Invoke();
                         _handJointDrag = HandGeometry.SplitBone(handObj, handHit.Index, levelPt);
+                        _handActiveSegment = _handJointDrag;
                         SelectedObjectMoved?.Invoke();
                         InvalidateVisual();
                         e.Handled = true;
@@ -819,6 +815,7 @@ namespace CtrDxEditor.Rendering
                     case HandGeometry.HandleKind.Nub:
                         BeginDocumentEdit?.Invoke();
                         _handJointDrag = HandGeometry.AppendSegment(handObj);
+                        _handActiveSegment = _handJointDrag;
                         SelectedObjectMoved?.Invoke();
                         InvalidateVisual();
                         e.Handled = true;
@@ -987,9 +984,9 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (_rotating && SelectedObject is { } rotObj && EditableRotationSpec(rotObj) is { } rotSpec)
+            if (_rotating && SelectedObject is { } rotObj && EditableRotationTarget(rotObj) is { } rotTarget)
             {
-                ApplyRotation(rotObj, rotSpec, _rotationDragCenter, levelPt, e.KeyModifiers);
+                ApplyRotation(rotObj, rotTarget, _rotationDragCenter, levelPt, e.KeyModifiers);
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
