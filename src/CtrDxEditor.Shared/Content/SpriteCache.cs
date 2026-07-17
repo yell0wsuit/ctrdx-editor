@@ -34,11 +34,16 @@ namespace CtrDxEditor.Content
     /// <summary>The rope Christmas lights atlas: its bitmap and the light bulb frames.</summary>
     public sealed record ChristmasLightsArt(Bitmap Bitmap, IReadOnlyList<AtlasFrame> Frames);
 
+    /// <summary>The water tile atlas: quads 0-3 are shadow-down, shadow-up, back, and top.</summary>
+    public sealed record WaterArt(Bitmap Bitmap, IReadOnlyList<AtlasFrame> Frames);
+
     /// <summary>Reads sprite atlases from a preloaded platform content store.</summary>
     public sealed class SpriteCache(IContentStore store, string imageExtension = ".png")
     {
         private const string XmasLightsJson = "images/christmas_lights.json";
         private const string XmasLightsImageBase = "images/christmas_lights";
+        private const string WaterTileJson = "images/water_tile.json";
+        private const string WaterTileImageBase = "images/water_tile";
         private const int EarthArtQuad = 23;
 
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
@@ -188,6 +193,28 @@ namespace CtrDxEditor.Content
             catch (Exception)
             {
             }
+
+            // Water tile art. Optional, mirroring the game: WaterElement.IsWaterTextureAvailable
+            // disables water outright when the texture is missing, so a bundle without it must
+            // render the level water-free rather than fail the whole preload.
+            try
+            {
+                string imagePath = WaterTileImageBase + imageExtension;
+                if (!_bitmaps.ContainsKey(imagePath))
+                {
+                    byte[] bytes = await store.ReadBytesAsync(imagePath);
+                    using MemoryStream ms = new(bytes);
+                    _bitmaps[imagePath] = new Bitmap(ms);
+                }
+                if (!_atlases.ContainsKey(WaterTileJson))
+                {
+                    string json = await store.ReadTextAsync(WaterTileJson);
+                    _atlases[WaterTileJson] = new Atlas(AtlasJsonLoader.ParseFrames(json));
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
 
         /// <summary>The rope Christmas lights art, or null when the bundle doesn't include it.</summary>
@@ -198,6 +225,19 @@ namespace CtrDxEditor.Content
             return bitmap is null || atlas is null || atlas.Frames.Count == 0
                 ? null
                 : new ChristmasLightsArt(bitmap, atlas.Frames);
+        }
+
+        /// <summary>
+        /// The water tile art, or null when the bundle doesn't include it. Needs at least the four
+        /// band quads (0-3); the remaining frames are bubbles and lights the editor does not draw.
+        /// </summary>
+        public WaterArt? GetWaterArt()
+        {
+            Bitmap? bitmap = LoadBitmap(WaterTileImageBase + imageExtension);
+            Atlas? atlas = LoadAtlas(WaterTileJson);
+            return bitmap is null || atlas is null || atlas.Frames.Count < 4
+                ? null
+                : new WaterArt(bitmap, atlas.Frames);
         }
 
         /// <summary>Decode width for the canvas background; the full p1 art (~2560px) is far larger than
