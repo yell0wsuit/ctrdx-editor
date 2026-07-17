@@ -284,6 +284,15 @@ namespace CtrDxEditor.Rendering
             return deg is > 45 and < 135 ? VResizeCursor : ResizeCursor;
         }
 
+        /// <summary>Cursor for a hand joint whose drag changes only its segment length.</summary>
+        private Cursor CursorForHandJoint(int index)
+        {
+            return SelectedObject is { } hand
+                && HandGeometry.SegmentResizeAxis(hand, index) == HandGeometry.ResizeAxis.Vertical
+                ? VResizeCursor
+                : ResizeCursor;
+        }
+
         /// <summary>Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.</summary>
         /// <param name="hovered">True when the pointer is over the selected grab's hook.</param>
         private void SetHookHovered(bool hovered)
@@ -1067,9 +1076,10 @@ namespace CtrDxEditor.Rendering
                 }
                 Cursor = tutorialTextResizeHover ? ResizeCursor
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
+                    : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
+                    : _handHoverJoint > 0 ? CursorForHandJoint(_handHoverJoint)
                     : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert || overHandEdit
                     ? new Cursor(StandardCursorType.Hand)
-                    : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
                     : conveyorHover != ConveyorGeometry.Handle.None ? ResizeCursor
                     : OnRadiusEdge(levelPt) ? ResizeCursor

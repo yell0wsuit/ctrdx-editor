@@ -38,6 +38,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(1, spec.StoredAngleSign);
         }
 
+        /// <summary>Joint length cursors follow the segment's nearest screen axis.</summary>
+        [Theory]
+        [InlineData(0, HandGeometry.ResizeAxis.Horizontal)]
+        [InlineData(45, HandGeometry.ResizeAxis.Horizontal)]
+        [InlineData(46, HandGeometry.ResizeAxis.Vertical)]
+        [InlineData(90, HandGeometry.ResizeAxis.Vertical)]
+        [InlineData(134, HandGeometry.ResizeAxis.Vertical)]
+        [InlineData(135, HandGeometry.ResizeAxis.Horizontal)]
+        [InlineData(-90, HandGeometry.ResizeAxis.Vertical)]
+        [InlineData(180, HandGeometry.ResizeAxis.Horizontal)]
+        public void SegmentResizeAxisUsesNearestCardinalAxis(double angle, HandGeometry.ResizeAxis expected)
+        {
+            LevelObject hand = Hand(100, 200, (angle, 50, true));
+
+            Assert.Equal(expected, HandGeometry.SegmentResizeAxis(hand, 1));
+        }
+
         /// <summary>Joint 0 is the hand's own anchor.</summary>
         [Fact]
         public void JointZeroIsTheBase()

@@ -29,6 +29,16 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Padding added around the joint chain when computing selection bounds, in level units.</summary>
         private const double BoundsPadding = 17;
 
+        /// <summary>The screen-axis resize cursor that best matches a segment's current direction.</summary>
+        public enum ResizeAxis
+        {
+            /// <summary>Use the west/east resize cursor.</summary>
+            Horizontal,
+
+            /// <summary>Use the north/south resize cursor.</summary>
+            Vertical,
+        }
+
         /// <summary>
         /// The rotation convention for segment <paramref name="index"/>. The game renders each segment at its
         /// stored angle with no offset; the 90-degree snap step matches every authored hand, whose angles are
@@ -42,6 +52,21 @@ namespace CtrDxEditor.Core.Editing
                 DisplayOffset: 0,
                 AttributeName: HandObject.AngleAttr(index),
                 SnapStep: 90);
+        }
+
+        /// <summary>Chooses the nearest horizontal or vertical cursor axis for a segment's stored angle.</summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment index.</param>
+        /// <returns>Vertical between the 45° diagonals; horizontal at the boundaries and otherwise.</returns>
+        public static ResizeAxis SegmentResizeAxis(LevelObject hand, int index)
+        {
+            if (index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return ResizeAxis.Horizontal;
+            }
+
+            double degrees = Math.Abs(ObjectRotation.Normalize(HandObject.Angle(hand, index)));
+            return degrees is > 45 and < 135 ? ResizeAxis.Vertical : ResizeAxis.Horizontal;
         }
 
         /// <summary>What part of a hand a point is over, so the canvas can route a drag.</summary>
