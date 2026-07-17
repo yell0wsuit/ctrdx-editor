@@ -68,6 +68,13 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Attribute fields for the selected object.</summary>
         public ObservableCollection<AttributeFieldViewModel> Fields { get; } = [];
 
+        /// <summary>
+        /// <see cref="Fields"/> partitioned into panel sections. Consecutive fields sharing a group are drawn
+        /// together; fields with no group land in an anonymous section that renders bare. The panel binds to
+        /// this, while <see cref="Fields"/> remains the flat source of truth for field builders.
+        /// </summary>
+        public ObservableCollection<PropertyGroupViewModel> FieldGroups { get; } = [];
+
         /// <summary>Objects in the current level, mirrored for list binding.</summary>
         public ObservableCollection<LevelObject> ObjectList { get; } = [];
 
@@ -155,6 +162,7 @@ namespace CtrDxEditor.ViewModels
             RebuildPaletteView();
             ObjectList.Clear();
             Fields.Clear();
+            FieldGroups.Clear();
         }
 
         /// <summary>
@@ -529,6 +537,7 @@ namespace CtrDxEditor.ViewModels
                 if (showsWidth != shouldShowWidth)
                 {
                     PopulateFields(selected);
+                    RebuildFieldGroups();
                     return;
                 }
             }
@@ -539,10 +548,52 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        /// <summary>Partitions fields into sections by their consecutive group tags.</summary>
+        /// <param name="fields">The flat field list, in panel order.</param>
+        /// <returns>One section per run of fields sharing a group tag.</returns>
+        public static IEnumerable<PropertyGroupViewModel> GroupFields(IEnumerable<AttributeFieldViewModel> fields)
+        {
+            List<PropertyGroupViewModel> groups = [];
+            PropertyGroupViewModel? current = null;
+            foreach (AttributeFieldViewModel field in fields)
+            {
+                if (current is null || current.Header != field.GroupHeader || current.Index != field.GroupIndex)
+                {
+                    current = new PropertyGroupViewModel(field.GroupHeader, field.GroupIndex);
+                    groups.Add(current);
+                }
+                current.Fields.Add(field);
+            }
+            return groups;
+        }
+
+        /// <summary>Expands the section with the given identity, leaving the others untouched.</summary>
+        /// <param name="index">The section identity to expand; ignored when no section matches.</param>
+        public void ExpandFieldGroup(int index)
+        {
+            foreach (PropertyGroupViewModel group in FieldGroups)
+            {
+                if (group.Index == index)
+                {
+                    group.IsExpanded = true;
+                }
+            }
+        }
+
+        private void RebuildFieldGroups()
+        {
+            FieldGroups.Clear();
+            foreach (PropertyGroupViewModel group in GroupFields(Fields))
+            {
+                FieldGroups.Add(group);
+            }
+        }
+
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
             OnPropertyChanged(nameof(CanEditPolyline));
             PopulateFields(value);
+            RebuildFieldGroups();
         }
 
         /// <summary>
@@ -628,55 +679,55 @@ namespace CtrDxEditor.ViewModels
 
             if (TutorialObject.IsText(value.Type) || TutorialObject.IsImage(value.Type))
             {
-                TutorialFieldBuilder.Build(Fields, value, Sprites, Changed, Changing, () => PopulateFields(value));
+                TutorialFieldBuilder.Build(Fields, value, Sprites, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "star")
             {
-                StarFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                StarFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "rocket")
             {
-                RocketFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                RocketFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "grab" && Document is not null)
             {
-                GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => PopulateFields(value));
+                GrabFieldBuilder.Build(Fields, value, Document, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "lantern")
             {
-                LanternFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                LanternFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (SpikeObject.IsSpike(value.Type))
             {
-                SpikeFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                SpikeFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (BouncerObject.IsBouncer(value.Type))
             {
-                BouncerFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                BouncerFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "ghost")
             {
-                GhostFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                GhostFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
             if (value.Type == "transporter")
             {
-                ConveyorFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                ConveyorFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
                 return;
             }
 
@@ -699,7 +750,7 @@ namespace CtrDxEditor.ViewModels
                         spec.LocalizationName));
                 }
 
-                SpinFieldBuilder.Build(Fields, value, Changed, Changing, () => PopulateFields(value));
+                SpinFieldBuilder.Build(Fields, value, Changed, Changing, () => { PopulateFields(value); RebuildFieldGroups(); });
             }
         }
 

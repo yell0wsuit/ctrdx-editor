@@ -13,61 +13,80 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Disabled}" />
     </Style>
   </UserControl.Styles>
+  <UserControl.Resources>
+    <DataTemplate x:Key="FieldTemplate" x:DataType="vm:AttributeFieldViewModel">
+      <Grid Margin="0,2"
+            Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
+          <ColumnDefinition Width="100" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal"
+                    VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
+          <TextBlock Classes="field-label" Text="{Binding Label}"
+                     IsEnabled="{Binding IsEnabled}" VerticalAlignment="Center" />
+          <icons:MaterialIcon Kind="HelpCircleOutline" Width="14" Height="14"
+                              VerticalAlignment="Center"
+                              IsVisible="{Binding HasHelp}"
+                              Foreground="{DynamicResource EditorBrush.Text.Subtle}"
+                              ToolTip.Tip="{Binding HelpText}" />
+        </StackPanel>
+        <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsEnabled="{Binding IsEnabled}"
+                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                  ItemsSource="{Binding EnumOptions}"
+                  SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:AttributeOptionViewModel">
+              <ctl:MarqueeTextBlock Text="{Binding Label}" HorizontalAlignment="Stretch" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
+                  IsEnabled="{Binding IsEnabled}"
+                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                  IsChecked="{Binding BoolValue, Mode=TwoWay}" />
+        <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
+                 IsEnabled="{Binding IsEnabled}"
+                 Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                 Minimum="{Binding NumericMinimum}"
+                 AcceptDecimal="{Binding AllowsDecimal}"
+                 Text="{Binding Value, Mode=TwoWay}" />
+        <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
+                 IsEnabled="{Binding IsEnabled}"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 MinHeight="72"
+                 MaxHeight="200"
+                 VerticalContentAlignment="Top"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                 Text="{Binding Value, Mode=TwoWay}" />
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
   <DockPanel>
     <TextBlock DockPanel.Dock="Top" Text="{loc:Tr Panel.Properties}" FontWeight="Bold" Margin="8,8,8,4" />
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-      <ItemsControl ItemsSource="{Binding Fields}" Margin="8,0,8,14" Grid.IsSharedSizeScope="True">
+      <ItemsControl ItemsSource="{Binding FieldGroups}" Margin="8,0,8,14" Grid.IsSharedSizeScope="True">
         <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:AttributeFieldViewModel">
-            <Grid Margin="0,2"
-                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
-                <ColumnDefinition Width="100" />
-              </Grid.ColumnDefinitions>
-              <StackPanel Grid.Column="0" Orientation="Horizontal"
-                          VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
-                <TextBlock Classes="field-label" Text="{Binding Label}"
-                           IsEnabled="{Binding IsEnabled}" VerticalAlignment="Center" />
-                <icons:MaterialIcon Kind="HelpCircleOutline" Width="14" Height="14"
-                                    VerticalAlignment="Center"
-                                    IsVisible="{Binding HasHelp}"
-                                    Foreground="{DynamicResource EditorBrush.Text.Subtle}"
-                                    ToolTip.Tip="{Binding HelpText}" />
-              </StackPanel>
-              <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        IsEnabled="{Binding IsEnabled}"
-                        Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
-                        ItemsSource="{Binding EnumOptions}"
-                        SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
-                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate x:DataType="vm:AttributeOptionViewModel">
-                    <ctl:MarqueeTextBlock Text="{Binding Label}" HorizontalAlignment="Stretch" />
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
-              <CheckBox Grid.Column="1" IsVisible="{Binding IsBool}"
-                        IsEnabled="{Binding IsEnabled}"
-                        Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
-                        IsChecked="{Binding BoolValue, Mode=TwoWay}" />
-              <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
-                       IsEnabled="{Binding IsEnabled}"
-                       Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
-                       Minimum="{Binding NumericMinimum}"
-                       AcceptDecimal="{Binding AllowsDecimal}"
-                       Text="{Binding Value, Mode=TwoWay}" />
-              <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
-                       IsEnabled="{Binding IsEnabled}"
-                       AcceptsReturn="True"
-                       TextWrapping="Wrap"
-                       MinHeight="72"
-                       MaxHeight="200"
-                       VerticalContentAlignment="Top"
-                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                       Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
-                       Text="{Binding Value, Mode=TwoWay}" />
-            </Grid>
+          <DataTemplate x:DataType="vm:PropertyGroupViewModel">
+            <StackPanel>
+              <!-- Ungrouped fields render bare, exactly as before groups existed. -->
+              <ItemsControl ItemsSource="{Binding Fields}"
+                            ItemTemplate="{StaticResource FieldTemplate}"
+                            IsVisible="{Binding !HasHeader}" />
+              <!-- Grouped fields (mechanical hand segments) get a collapsible section. -->
+              <Expander Header="{Binding Header}"
+                        IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                        IsVisible="{Binding HasHeader}"
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Stretch">
+                <ItemsControl ItemsSource="{Binding Fields}"
+                              ItemTemplate="{StaticResource FieldTemplate}" />
+              </Expander>
+            </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

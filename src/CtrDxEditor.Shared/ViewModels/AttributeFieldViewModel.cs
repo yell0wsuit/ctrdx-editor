@@ -103,6 +103,18 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Optional help text; when set, the panel shows a help icon with this as its tooltip.</summary>
         public string? HelpText { get; init; }
 
+        /// <summary>
+        /// The title of the collapsible section this field belongs to, or null to render it bare. Null on
+        /// every field unless a builder opts in, so ungrouped panels are unchanged.
+        /// </summary>
+        public string? GroupHeader { get; init; }
+
+        /// <summary>
+        /// A stable identity for this field's section, letting two sections share a header text without
+        /// merging. -1 means the anonymous ungrouped section.
+        /// </summary>
+        public int GroupIndex { get; init; } = -1;
+
         /// <summary>Whether this field has help text to surface via a help icon.</summary>
         public bool HasHelp => !string.IsNullOrEmpty(HelpText);
 
