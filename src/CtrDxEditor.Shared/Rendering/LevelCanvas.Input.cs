@@ -1043,7 +1043,6 @@ namespace CtrDxEditor.Rendering
                 GrabRail.Handle handle = HitRail(levelPt);
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
-                SetDialKnobHovered(dial == ObjectRotation.Handle.Knob);
                 SpikeResize.Handle stripHandle = HitStripResize(levelPt);
                 ConveyorGeometry.Handle conveyorHover = HitConveyor(levelPt);
                 VinylGeometry.Handle vinylHover = HitVinylHandle(levelPt);
@@ -1058,17 +1057,23 @@ namespace CtrDxEditor.Rendering
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
                 _handHoverJoint = 0;
                 bool overHandEdit = false;
+                HandGeometry.HandleKind hoverHandKind = HandGeometry.HandleKind.None;
                 if (SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
                 {
                     double hoverTolerance = 9 / View.Zoom;
                     HandGeometry.Handle hoverHit = HandGeometry.HitTest(
                         hoverHand, levelPt, hoverTolerance, hoverTolerance / 2, NubDistance / View.Zoom);
+                    hoverHandKind = hoverHit.Kind;
                     overHandEdit = hoverHit.Kind != HandGeometry.HandleKind.None;
                     if (hoverHit.Kind == HandGeometry.HandleKind.Joint)
                     {
                         _handHoverJoint = hoverHit.Index;
                     }
                 }
+                HandPointerAffordance handAffordance =
+                    RotationDialTargetResolver.ResolveHandAffordance(dial, hoverHandKind);
+                SetDialKnobHovered(
+                    handAffordance == HandPointerAffordance.Dial && dial == ObjectRotation.Handle.Knob);
                 bool waterHovered = HitsWaterHandle(p);
                 if (waterHovered != _waterHandleHovered)
                 {
@@ -1081,8 +1086,8 @@ namespace CtrDxEditor.Rendering
                 }
                 Cursor = tutorialTextResizeHover ? ResizeCursor
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
-                    : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
-                    : _handHoverJoint > 0 ? CursorForHandJoint(_handHoverJoint)
+                    : handAffordance == HandPointerAffordance.JointResize ? CursorForHandJoint(_handHoverJoint)
+                    : handAffordance == HandPointerAffordance.Dial ? new Cursor(StandardCursorType.Hand)
                     : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert || overHandEdit
                     ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()

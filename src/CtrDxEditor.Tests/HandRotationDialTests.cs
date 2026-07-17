@@ -81,6 +81,10 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void HandRotationDialYieldsToCoincidentJoint()
         {
+            Assert.Equal(HandPointerAffordance.JointResize, RotationDialTargetResolver.ResolveHandAffordance(
+                ObjectRotation.Handle.Knob, HandGeometry.HandleKind.Joint));
+            Assert.Equal(HandPointerAffordance.Dial, RotationDialTargetResolver.ResolveHandAffordance(
+                ObjectRotation.Handle.Knob, HandGeometry.HandleKind.Bone));
             Assert.False(RotationDialTargetResolver.DialHasPriority(
                 ObjectRotation.Handle.Knob, HandGeometry.HandleKind.Joint));
             Assert.True(RotationDialTargetResolver.DialHasPriority(

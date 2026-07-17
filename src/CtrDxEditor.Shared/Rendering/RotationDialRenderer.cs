@@ -9,6 +9,22 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Rendering
 {
+    /// <summary>The interactive affordance that wins where a hand dial and hand art overlap.</summary>
+    public enum HandPointerAffordance
+    {
+        /// <summary>No hand-specific interaction.</summary>
+        None,
+
+        /// <summary>Rotate with the explicit dial.</summary>
+        Dial,
+
+        /// <summary>Resize segment length from its end joint.</summary>
+        JointResize,
+
+        /// <summary>Another hand edit such as base drag, bone split, or append.</summary>
+        HandEdit,
+    }
+
     /// <summary>Resolved rotation-dial data for an ordinary object or one active hand segment.</summary>
     /// <param name="Spec">Angle mapping used by dial geometry.</param>
     /// <param name="Center">Dial pivot in level coordinates.</param>
@@ -84,7 +100,20 @@ namespace CtrDxEditor.Rendering
         /// <summary>Whether a dial hit wins over coincident hand art; length joints deliberately take priority.</summary>
         public static bool DialHasPriority(ObjectRotation.Handle dial, HandGeometry.HandleKind handHandle)
         {
-            return dial != ObjectRotation.Handle.None && handHandle != HandGeometry.HandleKind.Joint;
+            return ResolveHandAffordance(dial, handHandle) == HandPointerAffordance.Dial;
+        }
+
+        /// <summary>Resolves one consistent press, cursor, and highlight affordance for overlapping hand hits.</summary>
+        public static HandPointerAffordance ResolveHandAffordance(
+            ObjectRotation.Handle dial, HandGeometry.HandleKind handHandle)
+        {
+            return handHandle == HandGeometry.HandleKind.Joint
+                ? HandPointerAffordance.JointResize
+                : dial != ObjectRotation.Handle.None
+                    ? HandPointerAffordance.Dial
+                    : handHandle == HandGeometry.HandleKind.None
+                        ? HandPointerAffordance.None
+                        : HandPointerAffordance.HandEdit;
         }
     }
 
