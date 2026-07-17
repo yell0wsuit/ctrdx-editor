@@ -17,6 +17,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Screen-space grab tolerance for the water surface line.</summary>
         private const double WaterHandleTolerance = 6.0;
 
+        /// <summary>Screen-space distance from the claw to the append-segment nub.</summary>
+        private const double NubDistance = 24;
+
         /// <summary>
         /// Horizontal-resize cursor (col-resize) shown over the auto-catch radius ring or a horizontal rail end/hook.
         /// Created lazily rather than in the static constructor: eager creation would touch Avalonia's cursor factory
@@ -454,6 +457,22 @@ namespace CtrDxEditor.Rendering
             InvalidateVisual();
         }
 
+        /// <summary>Deletes one segment from the selected hand, shifting the live slots above it down.</summary>
+        /// <param name="index">The 1-based segment to remove.</param>
+        private void DeleteSelectedHandSegment(int index)
+        {
+            if (SelectedObject is not { } hand || !HandObject.IsHand(hand.Type) || index < 1)
+            {
+                return;
+            }
+
+            BeginDocumentEdit?.Invoke();
+            HandObject.DeleteSegment(hand, index);
+            SelectedObjectMoved?.Invoke();
+            CompleteDocumentEdit?.Invoke();
+            InvalidateVisual();
+        }
+
         /// <summary>Finds the index of an object within the list by reference/value equality.</summary>
         /// <param name="objects">The object list to search.</param>
         /// <param name="target">The object to locate.</param>
@@ -576,6 +595,19 @@ namespace CtrDxEditor.Rendering
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
             if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
             {
+                if (SelectedObject is { } rightHand && HandObject.IsHand(rightHand.Type))
+                {
+                    double rightTolerance = 9 / View.Zoom;
+                    HandGeometry.Handle rightHandHit = HandGeometry.HitTest(
+                        rightHand, levelPt, rightTolerance, rightTolerance / 2, NubDistance / View.Zoom);
+                    if (rightHandHit.Kind == HandGeometry.HandleKind.Joint)
+                    {
+                        DeleteSelectedHandSegment(rightHandHit.Index);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+
                 int rightHit = HitPolylinePoint(levelPt);
                 if (rightHit > 0)
                 {
@@ -752,6 +784,55 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (SelectedObject is { } handObj && HandObject.IsHand(handObj.Type))
+            {
+                double tolerance = 9 / View.Zoom;
+                HandGeometry.Handle handHit = HandGeometry.HitTest(
+                    handObj, levelPt, tolerance, tolerance / 2, NubDistance / View.Zoom);
+
+                switch (handHit.Kind)
+                {
+                    case HandGeometry.HandleKind.Joint:
+                        BeginDocumentEdit?.Invoke();
+                        _handJointDrag = handHit.Index;
+                        HandSegmentActivated?.Invoke(handHit.Index);
+                        e.Handled = true;
+                        e.Pointer.Capture(this);
+                        return;
+
+                    case HandGeometry.HandleKind.Base:
+                        BeginDocumentEdit?.Invoke();
+                        _handBaseDrag = true;
+                        e.Handled = true;
+                        e.Pointer.Capture(this);
+                        return;
+
+                    case HandGeometry.HandleKind.Bone:
+                        BeginDocumentEdit?.Invoke();
+                        _handJointDrag = HandGeometry.SplitBone(handObj, handHit.Index, levelPt);
+                        SelectedObjectMoved?.Invoke();
+                        InvalidateVisual();
+                        e.Handled = true;
+                        e.Pointer.Capture(this);
+                        return;
+
+                    case HandGeometry.HandleKind.Nub:
+                        BeginDocumentEdit?.Invoke();
+                        _handJointDrag = HandGeometry.AppendSegment(handObj);
+                        SelectedObjectMoved?.Invoke();
+                        InvalidateVisual();
+                        e.Handled = true;
+                        e.Pointer.Capture(this);
+                        return;
+
+                    case HandGeometry.HandleKind.None:
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"Unknown hand handle kind: {handHit.Kind}");
+                }
+            }
+
             List<LevelBounds> bounds = BuildHitBounds(doc);
 
             // Double-click toggles the lock. ClickCount keeps climbing (3, 4, ...) while clicking in the
@@ -820,6 +901,25 @@ namespace CtrDxEditor.Rendering
             base.OnPointerMoved(e);
             Point p = e.GetPosition(this);
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
+
+            if (_handJointDrag > 0 && SelectedObject is { } draggedHand)
+            {
+                HandGeometry.ApplyJointDrag(
+                    draggedHand, _handJointDrag, levelPt, e.KeyModifiers.HasFlag(KeyModifiers.Shift));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Handled = true;
+                return;
+            }
+
+            if (_handBaseDrag && SelectedObject is { } movedHand)
+            {
+                HandGeometry.ApplyBaseDrag(movedHand, levelPt);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Handled = true;
+                return;
+            }
 
             if (_resizingTutorialText && SelectedObject is { } tutorialText)
             {
@@ -946,6 +1046,19 @@ namespace CtrDxEditor.Rendering
                 _polylineNubHot = HitPolylineNub(levelPt);
                 _polylineAtLimitHint = HoveringPolylineLimit(levelPt);
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
+                _handHoverJoint = 0;
+                bool overHandEdit = false;
+                if (SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
+                {
+                    double hoverTolerance = 9 / View.Zoom;
+                    HandGeometry.Handle hoverHit = HandGeometry.HitTest(
+                        hoverHand, levelPt, hoverTolerance, hoverTolerance / 2, NubDistance / View.Zoom);
+                    overHandEdit = hoverHit.Kind != HandGeometry.HandleKind.None;
+                    if (hoverHit.Kind == HandGeometry.HandleKind.Joint)
+                    {
+                        _handHoverJoint = hoverHit.Index;
+                    }
+                }
                 bool waterHovered = HitsWaterHandle(p);
                 if (waterHovered != _waterHandleHovered)
                 {
@@ -958,7 +1071,7 @@ namespace CtrDxEditor.Rendering
                 }
                 Cursor = tutorialTextResizeHover ? ResizeCursor
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
-                    : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
+                    : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert || overHandEdit
                     ? new Cursor(StandardCursorType.Hand)
                     : dial != ObjectRotation.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
@@ -1001,6 +1114,7 @@ namespace CtrDxEditor.Rendering
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
             bool gestureActive = _dragging || _panning || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
+                || _handJointDrag > 0 || _handBaseDrag
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered || _waterDrag;
@@ -1010,6 +1124,7 @@ namespace CtrDxEditor.Rendering
             }
 
             bool editedDocument = _dragging || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
+                || _handJointDrag > 0 || _handBaseDrag
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag;
@@ -1028,6 +1143,8 @@ namespace CtrDxEditor.Rendering
             _rotating = false;
             _rotationDragCenter = default;
             _polylinePointDrag = -1;
+            _handJointDrag = 0;
+            _handBaseDrag = false;
             if (editedDocument)
             {
                 CompleteDocumentEdit?.Invoke();
@@ -1044,6 +1161,7 @@ namespace CtrDxEditor.Rendering
             SetDialKnobHovered(false); // nor the rotation knob
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
+            _handHoverJoint = 0;
             if (_waterHandleHovered)
             {
                 _waterHandleHovered = false;
@@ -1054,6 +1172,14 @@ namespace CtrDxEditor.Rendering
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e)
         {
+            if ((e.Key == Key.Delete || e.Key == Key.Back) && _handHoverJoint > 0)
+            {
+                DeleteSelectedHandSegment(_handHoverJoint);
+                _handHoverJoint = 0;
+                e.Handled = true;
+                return;
+            }
+
             if ((e.Key == Key.Delete || e.Key == Key.Back) && _polylineHoverPoint > 0)
             {
                 DeleteSelectedPolylineVertex(_polylineHoverPoint);

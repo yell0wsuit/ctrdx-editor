@@ -194,6 +194,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 
+        /// <summary>Raised with a segment index when a hand joint is pressed, so the panel can expand it.</summary>
+        public Action<int>? HandSegmentActivated { get; set; }
+
         /// <summary>Callback raised (F2) to open the inline text editor over the given tutorial text.</summary>
         public Action<LevelObject>? EditTutorialTextRequested { get; set; }
 
@@ -302,6 +305,15 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>True while hovering the end of a selected polyline that has hit its point cap (shows the limit hint).</summary>
         private bool _polylineAtLimitHint;
+
+        /// <summary>The hand segment whose joint is being dragged, or 0 when no hand joint drag is active.</summary>
+        private int _handJointDrag;
+
+        /// <summary>True while the hand's base is being dragged.</summary>
+        private bool _handBaseDrag;
+
+        /// <summary>The hand joint under the cursor, or 0 when none; drives Delete/Backspace.</summary>
+        private int _handHoverJoint;
 
         /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;

@@ -41,6 +41,7 @@ namespace CtrDxEditor.Views
                 DataContext is EditorViewModel vm ? vm.PlaceObject(element, x, y) : null;
             canvas.ToggleLock = obj => (DataContext as EditorViewModel)?.ToggleLock(obj);
             canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
+            canvas.HandSegmentActivated = index => (DataContext as EditorViewModel)?.ExpandFieldGroup(index);
             canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();
             canvas.CompleteDocumentEdit = () => (DataContext as EditorViewModel)?.CompleteUndoTransaction();
             canvas.EditTutorialTextRequested = BeginTextEdit;
