@@ -16,7 +16,7 @@ namespace CtrDxEditor.Core.Tests
             ObjectDescriptor? d = DescriptorTable.CtrObjects.For("hand");
 
             Assert.NotNull(d);
-            Assert.Equal("Mechanical Hand", d!.DisplayName);
+            Assert.Equal("Mechanical hand", d!.DisplayName);
             Assert.Equal(int.MaxValue, d.MaxCount);
             Assert.Equal("Cut the Rope: Experiments", d.Game);
         }
