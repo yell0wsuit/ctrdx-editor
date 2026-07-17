@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Xml.Linq;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
@@ -55,6 +57,30 @@ namespace CtrDxEditor.Tests
             Assert.Equal(70.0 / 3.0, placement.Sprite.Dest.H, 6);
         }
 
+        /// <summary>The palette composition crops to a short arm and the visible claw.</summary>
+        [Fact]
+        public void HandRenderThumbnailBoundsContainShortArmAndClaw()
+        {
+            HandThumbnailComposition composition = HandThumbnailLayout.Compute(BoneFrame(), Frame(), armLength: 24);
+
+            Assert.Equal(24, composition.ArmLength);
+            Assert.Equal(0, composition.Bounds.X, 6);
+            Assert.Equal(-41.0 / 3.0, composition.Bounds.Y, 6);
+            Assert.Equal(100.0 / 3.0, composition.Bounds.W, 6);
+            Assert.Equal(70.0 / 3.0, composition.Bounds.H, 6);
+        }
+
+        /// <summary>Hands bypass the generic multi-layer atlas thumbnail compositor.</summary>
+        [Fact]
+        public void HandRenderUsesCompositedThumbnailRoute()
+        {
+            MethodInfo? method = typeof(SpriteCache).GetMethod(
+                "UsesCompositedThumbnail", BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+            Assert.True((bool)method.Invoke(null, ["hand"])!);
+        }
+
         private static AtlasFrame Frame()
         {
             return new AtlasFrame(
@@ -64,6 +90,17 @@ namespace CtrDxEditor.Tests
                 new IntSize(96, 96),
                 Rotated: false,
                 Trimmed: true);
+        }
+
+        private static AtlasFrame BoneFrame()
+        {
+            return new AtlasFrame(
+                "bone.png",
+                new IntRect(0, 0, 12, 6),
+                new IntRect(0, 0, 12, 6),
+                new IntSize(12, 6),
+                Rotated: false,
+                Trimmed: false);
         }
     }
 }

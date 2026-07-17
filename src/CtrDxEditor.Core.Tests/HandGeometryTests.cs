@@ -34,7 +34,7 @@ namespace CtrDxEditor.Core.Tests
             RotationSpec spec = HandGeometry.SegmentSpec(2);
             Assert.Equal("segment2Angle", spec.AttributeName);
             Assert.Equal(0, spec.DisplayOffset);
-            Assert.Equal(90, spec.SnapStep);
+            Assert.Equal(15, spec.SnapStep);
             Assert.Equal(1, spec.StoredAngleSign);
         }
 

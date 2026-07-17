@@ -80,6 +80,12 @@ namespace CtrDxEditor.Rendering
                 obj.SetAttr(target.Spec.AttributeName, ObjectRotation.Format(angle));
             }
         }
+
+        /// <summary>Whether a dial hit wins over coincident hand art; length joints deliberately take priority.</summary>
+        public static bool DialHasPriority(ObjectRotation.Handle dial, HandGeometry.HandleKind handHandle)
+        {
+            return dial != ObjectRotation.Handle.None && handHandle != HandGeometry.HandleKind.Joint;
+        }
     }
 
     /// <summary>

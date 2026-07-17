@@ -77,6 +77,20 @@ namespace CtrDxEditor.Tests
             Assert.Equal(30, resolved.StoredAngle);
         }
 
+        /// <summary>A coincident length joint beats the dial, while the dial beats non-joint hand art.</summary>
+        [Fact]
+        public void HandRotationDialYieldsToCoincidentJoint()
+        {
+            Assert.False(RotationDialTargetResolver.DialHasPriority(
+                ObjectRotation.Handle.Knob, HandGeometry.HandleKind.Joint));
+            Assert.True(RotationDialTargetResolver.DialHasPriority(
+                ObjectRotation.Handle.Knob, HandGeometry.HandleKind.Bone));
+            Assert.True(RotationDialTargetResolver.DialHasPriority(
+                ObjectRotation.Handle.Ring, HandGeometry.HandleKind.None));
+            Assert.False(RotationDialTargetResolver.DialHasPriority(
+                ObjectRotation.Handle.None, HandGeometry.HandleKind.None));
+        }
+
         private static LevelObject Hand()
         {
             return new LevelObject(new XElement(

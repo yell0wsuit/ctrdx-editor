@@ -1,7 +1,9 @@
 using System;
+using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Atlas;
@@ -33,6 +35,31 @@ namespace CtrDxEditor.Rendering
         }
     }
 
+    /// <summary>Pure crop data for the palette's composed claw-and-short-arm preview.</summary>
+    /// <param name="ArmLength">Visible arm length in level units.</param>
+    /// <param name="Bounds">Union of the tiled arm and visible claw pixels.</param>
+    public readonly record struct HandThumbnailComposition(double ArmLength, LevelBounds Bounds);
+
+    /// <summary>Computes a tight crop around a short horizontal arm ending in the idle claw.</summary>
+    public static class HandThumbnailLayout
+    {
+        /// <summary>Returns the visible bounds for the thumbnail composition.</summary>
+        public static HandThumbnailComposition Compute(AtlasFrame bone, AtlasFrame claw, double armLength)
+        {
+            double length = Math.Max(1, armLength);
+            double halfBoneHeight = bone.Frame.H / SpritePlacement.MapScale / 2;
+            SpriteLayout clawPlacement = SpritePlacement.Compute(claw, length, 0);
+            LevelBounds clawBounds = clawPlacement.Dest;
+            double minX = Math.Min(0, clawBounds.X);
+            double minY = Math.Min(-halfBoneHeight, clawBounds.Y);
+            double maxX = Math.Max(length, clawBounds.X + clawBounds.W);
+            double maxY = Math.Max(halfBoneHeight, clawBounds.Y + clawBounds.H);
+            return new HandThumbnailComposition(
+                length,
+                new LevelBounds(minX, minY, maxX - minX, maxY - minY));
+        }
+    }
+
     /// <summary>
     /// Draws a mechanical hand from the `hand_parts` strip: the base on joint 0, a tiled bone per segment,
     /// a joint marker per segment origin, and the idle claw on the last joint.
@@ -49,6 +76,52 @@ namespace CtrDxEditor.Rendering
         private const int PartBone = 2;
         private const int PartBase = 3;
         private const int PartClaw = 4;
+
+        /// <summary>Renders a palette icon containing only a short arm and the terminal claw.</summary>
+        public static RenderTargetBitmap? RenderThumbnail(SpriteCache sprites, int px)
+        {
+            if (px <= 0 || sprites.GetSprite("hand_parts", 0, 0) is not { Layers.Count: >= 5 } parts)
+            {
+                return null;
+            }
+
+            const double armLength = 24;
+            HandThumbnailComposition composition = HandThumbnailLayout.Compute(
+                parts.Layers[PartBone].Frame,
+                parts.Layers[PartClaw].Frame,
+                armLength);
+            const double margin = 1;
+            double available = Math.Max(1, px - (2 * margin));
+            double zoom = Math.Min(
+                available / composition.Bounds.W,
+                available / composition.Bounds.H);
+            ViewTransform view = new(
+                zoom,
+                ((px - (composition.Bounds.W * zoom)) / 2) - (composition.Bounds.X * zoom),
+                ((px - (composition.Bounds.H * zoom)) / 2) - (composition.Bounds.Y * zoom));
+            LevelObject hand = new(new XElement(
+                "hand",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("segmentsCount", "1"),
+                new XAttribute("segment1Angle", "0"),
+                new XAttribute("segment1Length", armLength),
+                new XAttribute("segment1Rotatable", "true")));
+
+            RenderTargetBitmap thumbnail = new(new PixelSize(px, px), new Vector(96, 96));
+            using (DrawingContext ctx = thumbnail.CreateDrawingContext())
+            {
+                DrawBone(
+                    ctx,
+                    parts.Layers[PartBone],
+                    view.LevelToScreen(new Vec2(0, 0)),
+                    0,
+                    armLength,
+                    view.Zoom);
+                DrawClaw(ctx, view, parts.Layers[PartClaw], hand);
+            }
+            return thumbnail;
+        }
 
         /// <summary>Draws <paramref name="hand"/> using the hand_parts pieces.</summary>
         /// <param name="ctx">Destination drawing context.</param>

@@ -725,9 +725,18 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            // Grabbing the selected object's rotation dial (knob or ring) rotates it; takes priority over
-            // object hit-testing so the dial wins over anything beneath it.
-            if (HitRotationDial(levelPt) != ObjectRotation.Handle.None
+            HandGeometry.Handle pressedHandHit = new(HandGeometry.HandleKind.None, 0);
+            if (SelectedObject is { } pressedHand && HandObject.IsHand(pressedHand.Type))
+            {
+                double handTolerance = 9 / View.Zoom;
+                pressedHandHit = HandGeometry.HitTest(
+                    pressedHand, levelPt, handTolerance, handTolerance / 2, NubDistance / View.Zoom);
+            }
+
+            // The dial wins over underlying hand art except an end joint: a coincident joint must remain a
+            // length resize target so dragging the claw can never rotate the segment implicitly.
+            ObjectRotation.Handle pressedDialHit = HitRotationDial(levelPt);
+            if (RotationDialTargetResolver.DialHasPriority(pressedDialHit, pressedHandHit.Kind)
                 && SelectedObject is { } rotObj && EditableRotationTarget(rotObj) is { } rotTarget)
             {
                 BeginDocumentEdit?.Invoke();
@@ -789,17 +798,13 @@ namespace CtrDxEditor.Rendering
 
             if (SelectedObject is { } handObj && HandObject.IsHand(handObj.Type))
             {
-                double tolerance = 9 / View.Zoom;
-                HandGeometry.Handle handHit = HandGeometry.HitTest(
-                    handObj, levelPt, tolerance, tolerance / 2, NubDistance / View.Zoom);
-
-                switch (handHit.Kind)
+                switch (pressedHandHit.Kind)
                 {
                     case HandGeometry.HandleKind.Joint:
                         BeginDocumentEdit?.Invoke();
-                        _handJointDrag = handHit.Index;
-                        _handActiveSegment = handHit.Index;
-                        HandSegmentActivated?.Invoke(handHit.Index);
+                        _handJointDrag = pressedHandHit.Index;
+                        _handActiveSegment = pressedHandHit.Index;
+                        HandSegmentActivated?.Invoke(pressedHandHit.Index);
                         e.Handled = true;
                         e.Pointer.Capture(this);
                         return;
@@ -813,7 +818,7 @@ namespace CtrDxEditor.Rendering
 
                     case HandGeometry.HandleKind.Bone:
                         BeginDocumentEdit?.Invoke();
-                        _handJointDrag = HandGeometry.SplitBone(handObj, handHit.Index, levelPt);
+                        _handJointDrag = HandGeometry.SplitBone(handObj, pressedHandHit.Index, levelPt);
                         _handActiveSegment = _handJointDrag;
                         SelectedObjectMoved?.Invoke();
                         InvalidateVisual();
@@ -835,7 +840,7 @@ namespace CtrDxEditor.Rendering
                         break;
 
                     default:
-                        throw new InvalidOperationException($"Unknown hand handle kind: {handHit.Kind}");
+                        throw new InvalidOperationException($"Unknown hand handle kind: {pressedHandHit.Kind}");
                 }
             }
 

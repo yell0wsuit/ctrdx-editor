@@ -41,8 +41,7 @@ namespace CtrDxEditor.Core.Editing
 
         /// <summary>
         /// The rotation convention for segment <paramref name="index"/>. The game renders each segment at its
-        /// stored angle with no offset; the 90-degree snap step matches every authored hand, whose angles are
-        /// exclusively cardinal.
+        /// stored angle with no offset; the editor snaps dial drags in 15-degree increments when requested.
         /// </summary>
         /// <param name="index">The 1-based segment index.</param>
         /// <returns>A spec naming that segment's angle attribute.</returns>
@@ -51,7 +50,7 @@ namespace CtrDxEditor.Core.Editing
             return new RotationSpec(
                 DisplayOffset: 0,
                 AttributeName: HandObject.AngleAttr(index),
-                SnapStep: 90);
+                SnapStep: 15);
         }
 
         /// <summary>Chooses the nearest horizontal or vertical cursor axis for a segment's stored angle.</summary>

@@ -341,6 +341,9 @@ namespace CtrDxEditor.Content
         /// <summary>Bitmap side for the complete conveyor palette thumbnail.</summary>
         private const int ConveyorThumbnailPx = 32;
 
+        /// <summary>Bitmap side for the composed claw-and-short-arm palette thumbnail.</summary>
+        private const int HandThumbnailPx = 32;
+
         /// <summary>Bitmap side for the tutorial-text "Text" palette thumbnail.</summary>
         private const int TutorialTextThumbnailPx = 40;
 
@@ -359,9 +362,13 @@ namespace CtrDxEditor.Content
 
             if (UsesCompositedThumbnail(element))
             {
-                return GetSprite("transporter_belt", candySkin, omNomSupport) is not { Layers.Count: >= 7 }
-                    ? null
-                    : Rendering.ConveyorRenderer.RenderThumbnail(this, ConveyorThumbnailPx);
+                return element == ConveyorObject.Element
+                    ? GetSprite("transporter_belt", candySkin, omNomSupport) is not { Layers.Count: >= 7 }
+                        ? null
+                        : Rendering.ConveyorRenderer.RenderThumbnail(this, ConveyorThumbnailPx)
+                    : GetSprite("hand_parts", candySkin, omNomSupport) is not { Layers.Count: >= 5 }
+                        ? null
+                        : Rendering.HandRenderer.RenderThumbnail(this, HandThumbnailPx);
             }
 
             // Tutorial text has no atlas sprite; draw the word "Text" once the tutorial art (i.e. content)
@@ -451,7 +458,7 @@ namespace CtrDxEditor.Content
 
         private static bool UsesCompositedThumbnail(string element)
         {
-            return element == ConveyorObject.Element;
+            return element == ConveyorObject.Element || HandObject.IsHand(element);
         }
 
         /// <summary>Game-space layer offsets used only by the puff-free Steam Pipe thumbnail.</summary>
