@@ -611,6 +611,14 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // Water's back layer sits under the scene objects, matching GameScene.Draw's split
+            // (DrawBack at :93, DrawFront at :329). Under the grid too, so the grid stays readable.
+            LevelBounds? waterBand = WaterGeometry.Band(doc.Width, doc.Height, CurrentWaterHeight(doc));
+            if (waterBand is { } backBand)
+            {
+                WaterRenderer.DrawBack(context, v, sprites, backBand, doc.Height);
+            }
+
             if (drawGrid)
             {
                 context.DrawRectangle(null, _palette.LevelBorder,
@@ -719,6 +727,12 @@ namespace CtrDxEditor.Rendering
                     ObjectRotation.StoredAngle(steamTube, RotationTable.For("steamTube")!));
             }
 
+            // Water's front layer — surface tile and top shadow — draws over the scene objects.
+            if (waterBand is { } frontBand)
+            {
+                WaterRenderer.DrawFront(context, v, sprites, frontBand);
+            }
+
             if (grabRadiusPen is not null)
             {
                 GrabRenderer.DrawGrabRadiusRings(context, v, objects, grabRadiusPen);
@@ -774,6 +788,12 @@ namespace CtrDxEditor.Rendering
         private double? PreviewAnimationSeconds(LevelObject obj)
         {
             return IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null;
+        }
+
+        /// <summary>The water height to render, in level units.</summary>
+        private static double CurrentWaterHeight(LevelDocument doc)
+        {
+            return doc.Water;
         }
     }
 }
