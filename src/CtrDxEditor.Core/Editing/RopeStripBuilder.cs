@@ -6,6 +6,10 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>An RGBA color with straight (non-premultiplied) 0-1 channels. Channels may exceed 1 (clamped at raster time).</summary>
+    /// <param name="R">The red channel, nominally 0-1; values above 1 are allowed and clamped when rasterized.</param>
+    /// <param name="G">The green channel, nominally 0-1; values above 1 are allowed and clamped when rasterized.</param>
+    /// <param name="B">The blue channel, nominally 0-1; values above 1 are allowed and clamped when rasterized.</param>
+    /// <param name="A">The alpha channel, 0-1, straight rather than premultiplied into the color channels.</param>
     public readonly record struct RopeRgba(double R, double G, double B, double A);
 
     /// <summary>One triangle strip of a rendered rope: parallel position/color arrays in strip order.</summary>

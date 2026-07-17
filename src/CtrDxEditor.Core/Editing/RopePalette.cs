@@ -1,6 +1,9 @@
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>An RGB color with channels in the 0-1 range. Framework-free.</summary>
+    /// <param name="R">The red channel, 0-1 rather than 0-255.</param>
+    /// <param name="G">The green channel, 0-1 rather than 0-255.</param>
+    /// <param name="B">The blue channel, 0-1 rather than 0-255.</param>
     public readonly record struct RopeRgb(double R, double G, double B);
 
     /// <summary>

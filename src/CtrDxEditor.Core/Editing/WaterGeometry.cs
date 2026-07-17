@@ -6,6 +6,10 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>A sub-rect of an atlas image, in texture pixels.</summary>
+    /// <param name="X">The left edge in texture pixels, measured from the atlas's left.</param>
+    /// <param name="Y">The top edge in texture pixels, measured from the atlas's top.</param>
+    /// <param name="W">The width in texture pixels, extending right from <paramref name="X"/>.</param>
+    /// <param name="H">The height in texture pixels, extending down from <paramref name="Y"/>.</param>
     public readonly record struct AtlasRect(double X, double Y, double W, double H);
 
     /// <summary>One tile of a tiled quad: the atlas pixels to sample and where they land in level space.</summary>

@@ -7,6 +7,10 @@ using CtrDxEditor.Core.Geometry;
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>A center-relative collision rectangle in cuttherope-dx world units.</summary>
+    /// <param name="X">The left edge as an offset from the object's center, not an absolute coordinate; negative places it left of center.</param>
+    /// <param name="Y">The top edge as an offset from the object's center; negative places it above center.</param>
+    /// <param name="W">The width in world units, extending right from <paramref name="X"/>.</param>
+    /// <param name="H">The height in world units, extending down from <paramref name="Y"/>.</param>
     public readonly record struct GameRect(double X, double Y, double W, double H);
 
     /// <summary>One object's desktop and mobile collision rectangles in game world space.</summary>
