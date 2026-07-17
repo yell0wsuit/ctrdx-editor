@@ -4,12 +4,35 @@ using Avalonia;
 using Avalonia.Media;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Rendering
 {
+    /// <summary>Pure placement data for the mechanical hand's terminal claw.</summary>
+    /// <param name="Sprite">Atlas source and unrotated level-space destination.</param>
+    /// <param name="Pivot">Terminal joint around which the claw inherits rotation.</param>
+    /// <param name="AngleDegrees">Final segment's absolute world angle.</param>
+    public readonly record struct HandClawPlacement(SpriteLayout Sprite, Vec2 Pivot, double AngleDegrees);
+
+    /// <summary>Computes the game-authored terminal claw transform without requiring a drawing backend.</summary>
+    public static class HandClawLayout
+    {
+        /// <summary>Places the claw's untrimmed source box on the terminal joint and resolves inherited rotation.</summary>
+        public static HandClawPlacement Compute(AtlasFrame frame, LevelObject hand)
+        {
+            int count = HandObject.SegmentCount(hand);
+            Vec2 pivot = HandGeometry.ClawPosition(hand);
+            double angle = count > 0 ? HandObject.Angle(hand, count) : 0;
+            return new HandClawPlacement(
+                SpritePlacement.Compute(frame, pivot.X, pivot.Y),
+                pivot,
+                angle);
+        }
+    }
+
     /// <summary>
     /// Draws a mechanical hand from the `hand_parts` strip: the base on joint 0, a tiled bone per segment,
     /// a joint marker per segment origin, and the idle claw on the last joint.
@@ -65,7 +88,7 @@ namespace CtrDxEditor.Rendering
                 DrawCentered(ctx, parts.Layers[part], v.LevelToScreen(joints[i - 1]), z);
             }
 
-            DrawCentered(ctx, parts.Layers[PartClaw], v.LevelToScreen(joints[^1]), z);
+            DrawClaw(ctx, v, parts.Layers[PartClaw], hand);
         }
 
         private static void DrawCentered(DrawingContext ctx, SpriteLayerDraw layer, Vec2 center, double z)
@@ -82,6 +105,29 @@ namespace CtrDxEditor.Rendering
                 layer.Bitmap,
                 SourceRect(source),
                 new Rect(center.X - (w / 2), center.Y - (h / 2), w, h));
+        }
+
+        private static void DrawClaw(DrawingContext ctx, ViewTransform v, SpriteLayerDraw layer, LevelObject hand)
+        {
+            if (layer.Frame.Frame.W <= 0 || layer.Frame.Frame.H <= 0)
+            {
+                return;
+            }
+
+            HandClawPlacement placement = HandClawLayout.Compute(layer.Frame, hand);
+            Vec2 pivot = v.LevelToScreen(placement.Pivot);
+            LevelBounds dest = placement.Sprite.Dest;
+            Rect localDest = new(
+                (dest.X - placement.Pivot.X) * v.Zoom,
+                (dest.Y - placement.Pivot.Y) * v.Zoom,
+                dest.W * v.Zoom,
+                dest.H * v.Zoom);
+            Matrix transform = Matrix.CreateRotation(placement.AngleDegrees * Math.PI / 180)
+                * Matrix.CreateTranslation(pivot.X, pivot.Y);
+            using (ctx.PushTransform(transform))
+            {
+                ctx.DrawImage(layer.Bitmap, SourceRect(placement.Sprite.Source), localDest);
+            }
         }
 
         // The game stretches a TiledImage of the bone quad along the segment (armImage.width = length) in a
