@@ -46,6 +46,7 @@ namespace CtrDxEditor.Core.Document
             {
                 gameDesignEl.SetAttributeValue("useMobilePhysics", "true");
             }
+            ApplyWater(gameDesignEl, settings);
 
             XElement settingsLayer = new("layer",
                 new XAttribute("name", "settings"),
@@ -104,9 +105,21 @@ namespace CtrDxEditor.Core.Document
         public bool UseMobilePhysics =>
             bool.TryParse(GameDesign?.Attribute("useMobilePhysics")?.Value, out bool v) && v;
 
+        /// <summary>
+        /// Height of the bottom-pinned water band in level units, or 0 when the level has no water.
+        /// The game scales this by MapScale and builds the band in GameScene.LoadMetadata.
+        /// </summary>
+        public float Water => ReadFloat(GameDesign, "water", 0f);
+
+        /// <summary>
+        /// Rate at which the water drains, in level units per second, or 0 for a static pool. Positive
+        /// values lower the water over time (GameScene.Update); it never rises.
+        /// </summary>
+        public float WaterSpeed => ReadFloat(GameDesign, "waterSpeed", 0f);
+
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
-            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics);
+            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed);
 
         /// <summary>The Objects layer element, or null when the document has none yet.</summary>
         public XElement? ObjectsLayer => Layer("Objects");
@@ -141,6 +154,7 @@ namespace CtrDxEditor.Core.Document
             {
                 gameDesign.Attribute("useMobilePhysics")?.Remove();
             }
+            ApplyWater(gameDesign, settings);
 
             if (wasTwoParts != settings.TwoParts)
             {
@@ -193,6 +207,28 @@ namespace CtrDxEditor.Core.Document
                 out float v)
                 ? v
                 : fallback;
+        }
+
+        /// <summary>
+        /// Writes the water attributes when set and removes them when zero, matching how the game treats a
+        /// missing attribute as no water and keeping water-free levels free of noise attributes.
+        /// </summary>
+        private static void ApplyWater(XElement gameDesign, LevelSettings settings)
+        {
+            SetOrRemoveFloat(gameDesign, "water", settings.Water);
+            SetOrRemoveFloat(gameDesign, "waterSpeed", settings.WaterSpeed);
+        }
+
+        /// <summary>Sets an invariant-formatted float attribute, or removes it when the value is zero.</summary>
+        private static void SetOrRemoveFloat(XElement el, string attr, float value)
+        {
+            if (value == 0f)
+            {
+                el.Attribute(attr)?.Remove();
+                return;
+            }
+
+            el.SetAttributeValue(attr, value.ToString(CultureInfo.InvariantCulture));
         }
 
         private XElement CreateSettingsLayer()
