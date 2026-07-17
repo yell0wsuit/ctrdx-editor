@@ -274,6 +274,12 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (HandObject.IsHand(obj.Type))
+            {
+                HandRenderer.Draw(ctx, v, sprites, obj);
+                return;
+            }
+
             if (obj.Type == "gap")
             {
                 if (sprites.GetSprite(CanvasSpriteKey("gap", nightLevel), candySkin, omNomSupport) is { } mouseSprite
