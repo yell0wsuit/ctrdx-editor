@@ -119,6 +119,11 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add(new LevelWarning("Validation.CandyInHazard", CandyLabel(candy)));
             }
 
+            foreach (LevelObject candy in MouthOverlap.CandiesOnMouth(document))
+            {
+                warnings.Add(new LevelWarning("Validation.CandyOnMouth", CandyLabel(candy)));
+            }
+
             return warnings;
         }
 

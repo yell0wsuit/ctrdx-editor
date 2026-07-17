@@ -258,5 +258,6 @@
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
     "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing.",
-    "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately."
+    "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately.",
+    "Validation.CandyOnMouth": "Candy {0} starts on Om Nom's mouth and will be eaten immediately, winning the level."
 }
