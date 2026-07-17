@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 using Avalonia.Media;
 
@@ -97,6 +99,9 @@ namespace CtrDxEditor.ViewModels
     /// <summary>View model for the New / Level Settings dialog.</summary>
     public sealed partial class LevelSettingsViewModel : ViewModelBase
     {
+        private static readonly CompositeFormat WaterDrainHintFormat =
+            CompositeFormat.Parse(Localizer.Get("Dialog.LevelSettings.WaterDrainHint"));
+
         private const int MinWidth = 320;
         private const int MinHeight = 480;
         private const int MaxDimension = 9999;
@@ -155,6 +160,28 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
         [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
+
+        /// <summary>Height of the water pool in level units; 0 means the level has no water.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
+        public partial decimal Water { get; set; }
+
+        /// <summary>Rate at which the water drains, in level units per second; 0 is a static pool.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
+        public partial decimal WaterSpeed { get; set; }
+
+        /// <summary>
+        /// How long the pool takes to empty, or empty text when there is no water or no drain. Derived so
+        /// authors can see what a raw speed value actually means.
+        /// </summary>
+        public string WaterDrainHint =>
+            Water > 0m && WaterSpeed > 0m
+                ? string.Format(
+                    CultureInfo.CurrentCulture,
+                    WaterDrainHintFormat,
+                    Water / WaterSpeed)
+                : string.Empty;
 
         /// <summary>Highest background id (bgr_01..bgr_17); ids map to the game's box backgrounds.</summary>
         private const int BackgroundCount = 17;
@@ -383,6 +410,8 @@ namespace CtrDxEditor.ViewModels
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
                 UseMobilePhysics = current.UseMobilePhysics,
+                Water = (decimal)current.Water,
+                WaterSpeed = (decimal)current.WaterSpeed,
                 CustomWidth = current.Width,
                 CustomHeight = current.Height,
                 SelectedRopeSkin = ropeSkin,
@@ -404,7 +433,7 @@ namespace CtrDxEditor.ViewModels
             int height = IsCustom ? ClampOrDefault(CustomHeight, MinHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
             int special = IsSpecialCustom ? ClampOrDefault(CustomSpecial, 0, 0, MaxSpecial) : SelectedSpecial.Value;
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
-            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics);
+            return new LevelSettings(width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics, (float)Water, (float)WaterSpeed);
         }
 
         private static RopeSkinOption[] BuildRopeSkinOptions()

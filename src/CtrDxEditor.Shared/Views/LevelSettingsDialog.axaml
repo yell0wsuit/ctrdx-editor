@@ -218,6 +218,29 @@
           </CheckBox>
         </StackPanel>
 
+        <StackPanel Spacing="4">
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.Water}" />
+          <NumericUpDown Minimum="0"
+                         Maximum="10000"
+                         Increment="1"
+                         Value="{Binding Water}" />
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterDescription}"
+                     TextWrapping="Wrap"
+                     Opacity="0.7" />
+
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeed}" />
+          <NumericUpDown Minimum="0"
+                         Maximum="10000"
+                         Increment="1"
+                         Value="{Binding WaterSpeed}" />
+          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeedDescription}"
+                     TextWrapping="Wrap"
+                     Opacity="0.7" />
+          <TextBlock Text="{Binding WaterDrainHint}"
+                     TextWrapping="Wrap"
+                     Opacity="0.7" />
+        </StackPanel>
+
         <!-- Editor-decoration pickers, shown in both New and Edit modes. -->
         <StackPanel Spacing="8">
 
