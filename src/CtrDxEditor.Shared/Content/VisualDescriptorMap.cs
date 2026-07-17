@@ -48,6 +48,8 @@ namespace CtrDxEditor.Content
         private const string ConveyorImageBase = "images/obj_conveyor";
         private const string RocketJson = "images/obj_rocket.json";
         private const string RocketImageBase = "images/obj_rocket";
+        private const string RoboHandJson = "images/obj_robohand.json";
+        private const string RoboHandImageBase = "images/obj_robohand";
         private const string SnailJson = "images/obj_snail.json";
         private const string SnailImageBase = "images/obj_snail";
         private const string TutorialSignsJson = "images/tutorial_signs.json";
@@ -285,6 +287,28 @@ namespace CtrDxEditor.Content
             // Rocket body (obj_rocket quad 10, frame_10_rocket), drawn at the game's 0.7 scale. Palette
             // thumbnail + the rotated body on canvas.
             new("rocket", [new SpriteLayer(RocketJson, RocketImageBase, 10)], Scale: 0.7),
+
+            // Mechanical hand palette icon: the base (quad 4) with the idle claw (quad 5) on top. The arm
+            // itself is custom-rendered on canvas by HandRenderer from `hand_parts` below, so this descriptor
+            // exists only to give the palette a recognizable thumbnail.
+            new("hand",
+            [
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 4),
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 5),
+            ]),
+
+            // Mechanical hand pieces for HandRenderer (not placeable). Ordered so the renderer indexes them
+            // directly, matching the quads MechanicalHandSegment/MechanicalHandClaw pick in the game:
+            // 0 button_idle (rotatable joint), 1 button_none (fixed joint), 2 bone_tile, 3 base, 4 claw idle.
+            // Quad 8 (put_candy_here) is the runtime candy-attach marker and is intentionally excluded.
+            new("hand_parts",
+            [
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 1),
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 2),
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 3),
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 4),
+                new SpriteLayer(RoboHandJson, RoboHandImageBase, 5),
+            ]),
 
             // Rocket launcher base (quad 0, frame_00_launcher). Non-placeable; drawn upright behind the
             // body only when isRotatable, matching LoadRocket's decalsLayer marker. The game leaves the

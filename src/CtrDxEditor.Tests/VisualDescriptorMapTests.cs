@@ -346,5 +346,27 @@ namespace CtrDxEditor.Tests
             VisualDescriptor belt = VisualDescriptorMap.For("transporter_belt")!;
             Assert.Equal(7, belt.Layers.Count);
         }
+
+        /// <summary>The hand palette icon draws the robohand base and claw.</summary>
+        [Fact]
+        public void HandIconUsesBaseAndClaw()
+        {
+            VisualDescriptor? d = VisualDescriptorMap.For("hand");
+
+            Assert.NotNull(d);
+            Assert.Equal(2, d!.Layers.Count);
+            Assert.Equal(4, d.Layers[0].Quad);
+            Assert.Equal(5, d.Layers[1].Quad);
+        }
+
+        /// <summary>The hand part strip is ordered for direct indexing by HandRenderer.</summary>
+        [Fact]
+        public void HandPartsAreOrderedForTheRenderer()
+        {
+            VisualDescriptor? d = VisualDescriptorMap.For("hand_parts");
+
+            Assert.NotNull(d);
+            Assert.Equal([1, 2, 3, 4, 5], d!.Layers.Select(l => l.Quad).ToArray());
+        }
     }
 }
