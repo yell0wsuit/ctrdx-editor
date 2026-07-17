@@ -14,6 +14,9 @@ namespace CtrDxEditor.Rendering
     /// <summary>Pointer, wheel, and touch input: hit-testing, dragging, and gesture handling.</summary>
     public sealed partial class LevelCanvas
     {
+        /// <summary>Screen-space grab tolerance for the water surface line.</summary>
+        private const double WaterHandleTolerance = 6.0;
+
         /// <summary>
         /// Horizontal-resize cursor (col-resize) shown over the auto-catch radius ring or a horizontal rail end/hook.
         /// Created lazily rather than in the static constructor: eager creation would touch Avalonia's cursor factory
@@ -491,6 +494,38 @@ namespace CtrDxEditor.Rendering
                 && LevelSceneRenderer.SelectionContains(obj, bounds, point, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
         }
 
+        /// <summary>
+        /// Whether a screen-space point is on the water surface line. Water spans the whole level, so this
+        /// is only ever consulted after every object hit-test has missed — objects always win.
+        /// </summary>
+        private bool HitsWaterHandle(Point screen)
+        {
+            if (Document is not { } doc
+                || WaterGeometry.Band(doc.Width, doc.Height, doc.Water) is not { } band)
+            {
+                return false;
+            }
+
+            Vec2 surface = View.LevelToScreen(new Vec2(band.X, band.Y));
+            Vec2 right = View.LevelToScreen(new Vec2(band.X + band.W, band.Y));
+            return screen.X >= surface.X
+                && screen.X <= right.X
+                && Math.Abs(screen.Y - surface.Y) <= WaterHandleTolerance;
+        }
+
+        /// <summary>Writes a dragged water height back to the document, clamped to the level.</summary>
+        private void SetWaterHeight(double levelY)
+        {
+            if (Document is not { } doc)
+            {
+                return;
+            }
+
+            double water = Math.Clamp(doc.Height - levelY, 0, doc.Height);
+            doc.UpdateSettings(doc.Settings with { Water = (float)water });
+            InvalidateVisual();
+        }
+
         private int TopmostHit(IReadOnlyList<LevelObject> objects, List<LevelBounds> bounds, Vec2 point, int afterIndex = -1)
         {
             int n = bounds.Count;
@@ -749,6 +784,14 @@ namespace CtrDxEditor.Rendering
 
             if (hit < 0)
             {
+                if (HitsWaterHandle(p))
+                {
+                    BeginDocumentEdit?.Invoke();
+                    _waterDrag = true;
+                    e.Pointer.Capture(this);
+                    return;
+                }
+
                 SelectedObject = null;
                 _panning = true;
                 _panLast = p;
@@ -863,6 +906,12 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_waterDrag)
+            {
+                SetWaterHeight(levelPt.Y);
+                return;
+            }
+
             if (_panning)
             {
                 ScrollBy(_panLast.X - p.X, _panLast.Y - p.Y);
@@ -890,6 +939,12 @@ namespace CtrDxEditor.Rendering
                 _polylineNubHot = HitPolylineNub(levelPt);
                 _polylineAtLimitHint = HoveringPolylineLimit(levelPt);
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
+                bool waterHovered = HitsWaterHandle(p);
+                if (waterHovered != _waterHandleHovered)
+                {
+                    _waterHandleHovered = waterHovered;
+                    InvalidateVisual();
+                }
                 if (oldHoverPoint != _polylineHoverPoint || oldNubHot != _polylineNubHot || oldLimitHint != _polylineAtLimitHint)
                 {
                     InvalidateVisual();
@@ -938,7 +993,7 @@ namespace CtrDxEditor.Rendering
             bool gestureActive = _dragging || _panning || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
-                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered;
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered || _waterDrag;
             if (!gestureActive)
             {
                 return;
@@ -947,8 +1002,9 @@ namespace CtrDxEditor.Rendering
             bool editedDocument = _dragging || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
-                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating;
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag;
             _dragging = false;
+            _waterDrag = false;
             _panning = false;
             _resizingRadius = false;
             _resizingTutorialText = false;
@@ -978,6 +1034,11 @@ namespace CtrDxEditor.Rendering
             SetDialKnobHovered(false); // nor the rotation knob
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
+            if (_waterHandleHovered)
+            {
+                _waterHandleHovered = false;
+                InvalidateVisual();
+            }
         }
 
         /// <inheritdoc />

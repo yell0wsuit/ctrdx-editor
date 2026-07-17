@@ -225,6 +225,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while dragging the selected object (or a grab via its move-bar) to a new position.</summary>
         private bool _dragging;
 
+        /// <summary>True while the water surface line is being dragged.</summary>
+        private bool _waterDrag;
+
+        /// <summary>True while the pointer is over the water surface line.</summary>
+        private bool _waterHandleHovered;
+
         /// <summary>True while dragging the selected object's rotation dial.</summary>
         private bool _rotating;
 

@@ -224,6 +224,16 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
+            // The water surface doubles as its own drag handle; it only exists when the level has water,
+            // so a water-free level shows nothing to grab and the settings dialog is the way in.
+            if (WaterGeometry.Band(doc.Width, doc.Height, doc.Water) is { } handleBand
+                && (_waterHandleHovered || _waterDrag))
+            {
+                Vec2 left = v.LevelToScreen(new Vec2(handleBand.X, handleBand.Y));
+                Vec2 right = v.LevelToScreen(new Vec2(handleBand.X + handleBand.W, handleBand.Y));
+                context.DrawLine(_palette.OrbitPathArrow, new Point(left.X, left.Y), new Point(right.X, right.Y));
+            }
+
             if (selected is not null && EditableRotationSpec(selected) is { } rotSpec)
             {
                 RotationDialRenderer.Draw(context, v, selected, rotSpec, _rotating || _dialKnobHovered);
