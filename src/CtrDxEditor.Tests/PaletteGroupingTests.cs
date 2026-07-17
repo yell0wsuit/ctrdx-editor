@@ -25,11 +25,17 @@ namespace CtrDxEditor.Tests
             Assert.True(view[0].ShowGroupHeader);
             Assert.False(view[0].ShowDivider);
 
-            // The rocket is the first (only) item of the Experiments group: header + divider.
+            // The rocket is the first item of the Experiments group: header + divider.
             PaletteItemViewModel rocket = view.Single(i => i.Element == "rocket");
             Assert.True(rocket.ShowGroupHeader);
             Assert.True(rocket.ShowDivider);
             Assert.Equal("Cut the Rope: Experiments", rocket.GroupName);
+
+            // The snail continues the Experiments group, so it repeats neither header nor divider.
+            PaletteItemViewModel snail = view.Single(i => i.Element == "load");
+            Assert.Equal("Cut the Rope: Experiments", snail.GroupName);
+            Assert.False(snail.ShowGroupHeader);
+            Assert.False(snail.ShowDivider);
 
             // The item just before the rocket is the last base-group item: no header, no divider.
             int rocketIndex = System.Array.IndexOf(view, rocket);

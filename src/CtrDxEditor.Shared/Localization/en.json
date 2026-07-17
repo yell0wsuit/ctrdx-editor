@@ -167,6 +167,7 @@
     "Object.tutorial": "Tutorial icon",
     "Object.tutorialText": "Tutorial text",
     "Object.rocket": "Rocket",
+    "Object.snail": "Snail",
 
     "Attr.velocity": "Velocity",
     "Attr.width": "Width",

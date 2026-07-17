@@ -69,6 +69,11 @@ namespace CtrDxEditor.Core.Editing
                     "rocket",
                     Centered(214.8, 8.95, centerX: -21.5, centerY: -0.5),
                     Centered(208.8, 8.7, centerX: -25.5, centerY: 0)),
+
+                // GameScene.GetSnailBoundingBox. The desktop row is obj_snail frame_08_shell's trim
+                // within its 393x418 canvas; Snail.InitWithTexture calls DoRestoreCutTransparency, so
+                // the element keeps that untrimmed size and anchor 18 centers it (393>>1, 418>>1).
+                new("load", new(-63, -38, 120, 138), new(-67, -44, 114, 132)),
             }.ToDictionary(d => d.Element);
 
         /// <summary>Returns the active model selected by a level's <c>useMobilePhysics</c> setting.</summary>

@@ -217,6 +217,16 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("time", AttrType.Number, "-1"),
                 new AttributeSpec("isRotatable", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
+
+            // Snail (Cut the Rope: Experiments). LoadSnails.cs reads x/y only — the snail has no
+            // attributes; it wakes and clings to any candy whose capabilities allow snail dragging.
+            new ObjectDescriptor(
+                "load",
+                "Snail",
+                [],
+                MaxCount: int.MaxValue,
+                LocalizationName: "snail",
+                Game: "Cut the Rope: Experiments"),
         ]);
     }
 }

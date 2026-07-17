@@ -102,6 +102,26 @@ namespace CtrDxEditor.Core.Tests
                 Normalize(XDocument.Parse(original)), Normalize(after)));
         }
 
+        /// <summary>The snail keeps its <c>load</c> element name and any mover attributes the editor
+        /// never turns into fields.</summary>
+        [Fact]
+        public void SnailSurvivesRoundTrip()
+        {
+            const string original =
+                "<level width=\"640\" height=\"480\">" +
+                "<load x=\"100\" y=\"120\" path=\"R,80\" moveSpeed=\"60\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(original);
+            XDocument after = XDocument.Parse(doc.Save());
+
+            XElement snail = after.Root!.Element("load")!;
+            Assert.Equal("100", (string?)snail.Attribute("x"));
+            Assert.Equal("R,80", (string?)snail.Attribute("path"));
+            Assert.True(XNode.DeepEquals(
+                Normalize(XDocument.Parse(original)), Normalize(after)));
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {

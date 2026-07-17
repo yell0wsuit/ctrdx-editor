@@ -68,6 +68,11 @@ namespace CtrDxEditor.Core.Tests
         [InlineData("star", HitboxModel.Phone, -52, -51, 90, 90)]
         [InlineData("target", HitboxModel.Desktop, -56, 30, 108, 2)]
         [InlineData("target", HitboxModel.Phone, -50, 10, 75, 3)]
+
+        // GetSnailBoundingBox desktop (133,171,120,138) and phone (43,55,38,44) x Wp7ToWorldScale(3)
+        // = (129,165,114,132), each less obj_snail's (196,209) center anchor.
+        [InlineData("load", HitboxModel.Desktop, -63, -38, 120, 138)]
+        [InlineData("load", HitboxModel.Phone, -67, -44, 114, 132)]
         public void BoundingBoxesMatchDxWorldGeometry(
             string element,
             HitboxModel model,

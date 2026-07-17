@@ -48,6 +48,8 @@ namespace CtrDxEditor.Content
         private const string ConveyorImageBase = "images/obj_conveyor";
         private const string RocketJson = "images/obj_rocket.json";
         private const string RocketImageBase = "images/obj_rocket";
+        private const string SnailJson = "images/obj_snail.json";
+        private const string SnailImageBase = "images/obj_snail";
         private const string TutorialSignsJson = "images/tutorial_signs.json";
         private const string TutorialSignsImageBase = "images/tutorial_signs";
 
@@ -289,6 +291,16 @@ namespace CtrDxEditor.Content
             // marker Image at the default scale 1.0 (only the rocket body is scaled to 0.7), so the base
             // renders larger than the body.
             new("rocket_launcher", [new SpriteLayer(RocketJson, RocketImageBase, 0)]),
+
+            // Snail at rest (Snail.InitWithTexture leaves it in SNAIL_STATE_INACTIVE): the sleepy eyes
+            // (quad 2) sit in backContainer behind the shell (quad 8). Both share obj_snail's 393x418
+            // canvas, so their trims align with no manual offset. The spawn/pulse scale timelines are
+            // runtime-only, so the palette and canvas draw at scale 1.
+            new("load",
+            [
+                new SpriteLayer(SnailJson, SnailImageBase, 2),
+                new SpriteLayer(SnailJson, SnailImageBase, 8),
+            ]),
 
             // Tutorial icons map tutorial01..tutorial11 to tutorial_signs quads 0..10.
             new("tutorial01", [new SpriteLayer(TutorialSignsJson, TutorialSignsImageBase, 0)]),
