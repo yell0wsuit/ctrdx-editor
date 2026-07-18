@@ -140,13 +140,16 @@ namespace CtrDxEditor.ViewModels
         /// negative in game; coordinates and sentinel fields (e.g. timeout = -1) can, so they keep the
         /// default lower bound.
         /// </summary>
-        public int NumericMinimum => Name switch
+        public int NumericMinimum => NumericMinimumOverride ?? (Name switch
         {
             "timeout" or "time" => 1,
             "spinSpeed" or "orbitRadius" or "orbitSpeed" or "polylineSpeed" => 1,
             "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" or "group" or "segmentsCount" => 0,
             _ => -9999,
-        };
+        });
+
+        /// <summary>Optional per-field lower bound for semantic numeric fields sharing an attribute label.</summary>
+        public int? NumericMinimumOverride { get; init; }
 
         /// <summary>
         /// Whether this numeric field renders as an up/down spinner (like the level-settings numbers) instead

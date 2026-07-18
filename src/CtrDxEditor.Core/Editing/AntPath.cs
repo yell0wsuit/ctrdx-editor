@@ -6,7 +6,7 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
 {
-    /// <summary>Provides forward-only open and explicitly closed ant-conveyor path semantics.</summary>
+    /// <summary>Provides open and explicitly closed ant-conveyor path semantics.</summary>
     public static class AntPath
     {
         /// <summary>XML element name used by ant conveyors.</summary>
@@ -65,6 +65,32 @@ namespace CtrDxEditor.Core.Editing
         public static bool CanSetClosed(LevelObject ants)
         {
             return IsClosed(ants.GetAttr("path")) || CanAddPoint(ants);
+        }
+
+        /// <summary>Returns whether a closed path winds clockwise in screen coordinates.</summary>
+        public static bool IsClockwise(LevelObject ants)
+        {
+            return SignedArea(Points(ants)) >= 0;
+        }
+
+        /// <summary>Returns whether a path is a closed, non-degenerate loop with meaningful winding.</summary>
+        public static bool CanSetClockwise(LevelObject ants)
+        {
+            return IsClosed(ants.GetAttr("path")) && Math.Abs(SignedArea(Points(ants))) > double.Epsilon;
+        }
+
+        /// <summary>Reverses a closed path's unique vertices while retaining its anchor and closure marker.</summary>
+        public static void SetClockwise(LevelObject ants, bool clockwise)
+        {
+            if (!CanSetClockwise(ants) || IsClockwise(ants) == clockwise)
+            {
+                return;
+            }
+
+            Vec2 anchor = Anchor(ants);
+            Vec2[] points = Points(ants);
+            Array.Reverse(points, 1, points.Length - 1);
+            Write(ants, anchor, points, closed: true);
         }
 
         /// <summary>Returns whether another unique vertex can fit while retaining explicit closure.</summary>
@@ -183,6 +209,19 @@ namespace CtrDxEditor.Core.Editing
         private static bool IsClosedPoints(Vec2[] points)
         {
             return points.Length > 1 && points[^1] == points[0];
+        }
+
+        private static double SignedArea(Vec2[] points)
+        {
+            double signedArea = 0;
+            for (int i = 0; i < points.Length; i++)
+            {
+                Vec2 current = points[i];
+                Vec2 next = points[(i + 1) % points.Length];
+                signedArea += (current.X * next.Y) - (current.Y * next.X);
+            }
+
+            return signedArea;
         }
 
         private static void Write(LevelObject ants, Vec2 anchor, IReadOnlyList<Vec2> uniquePoints, bool closed)

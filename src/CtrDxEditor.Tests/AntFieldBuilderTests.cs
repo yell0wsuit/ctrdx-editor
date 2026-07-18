@@ -29,25 +29,70 @@ namespace CtrDxEditor.Tests
 
         /// <summary>Path geometry stays canvas-only while semantic controls remain in the property panel.</summary>
         [Fact]
-        public void FieldsExposeSpeedAndClosedLoopOnly()
+        public void FieldsExposeSpeedClosureAndDirection()
         {
             (ObservableCollection<AttributeFieldViewModel> fields, _, _, _) = Build("100,0");
 
-            Assert.Equal(["moveSpeed", "closedLoop"], fields.Select(f => f.Name));
+            Assert.Equal(["moveSpeed", "closedLoop", "polylineClockwise"], fields.Select(f => f.Name));
             Assert.True(fields[0].IsNumeric);
             Assert.True(fields[1].IsBool);
+            Assert.True(fields[2].IsBool);
         }
 
-        /// <summary>Negative speed remains authorable so the preview can run in reverse.</summary>
+        /// <summary>Direction is editable only for a loop and reverses traversal without changing its shape.</summary>
         [Fact]
-        public void MoveSpeedAllowsNegativeValues()
+        public void ClockwiseFieldReversesClosedPathOrder()
         {
-            (ObservableCollection<AttributeFieldViewModel> fields, LevelObject ants, _, _) = Build("100,0");
-            AttributeFieldViewModel speed = fields.Single(f => f.Name == "moveSpeed");
+            (ObservableCollection<AttributeFieldViewModel> openFields, _, _, _) = Build("100,0,100,100");
+            Assert.False(openFields.Single(f => f.Name == "polylineClockwise").IsEnabled);
+            (ObservableCollection<AttributeFieldViewModel> lineLoopFields, _, _, _) = Build("100,0,0,0");
+            Assert.False(lineLoopFields.Single(f => f.Name == "polylineClockwise").IsEnabled);
 
-            Assert.Equal(-9999, speed.NumericMinimum);
-            speed.Value = "-75";
-            Assert.Equal("-75", ants.GetAttr("moveSpeed"));
+            (ObservableCollection<AttributeFieldViewModel> fields, LevelObject ants, _, _) =
+                Build("100,0,100,100,0,0");
+            AttributeFieldViewModel clockwise = fields.Single(f => f.Name == "polylineClockwise");
+
+            Assert.True(clockwise.IsEnabled);
+            Assert.True(clockwise.BoolValue);
+
+            clockwise.BoolValue = false;
+
+            Assert.Equal("100,100,100,0,0,0", ants.GetAttr("path"));
+            Assert.Equal("100", ants.GetAttr("moveSpeed"));
+        }
+
+        /// <summary>Changing closure immediately refreshes whether direction is editable.</summary>
+        [Fact]
+        public void ClosedLoopFieldRefreshesClockwiseAvailability()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, _, _, _) = Build("100,0,100,100");
+            AttributeFieldViewModel closed = fields.Single(f => f.Name == "closedLoop");
+            AttributeFieldViewModel clockwise = fields.Single(f => f.Name == "polylineClockwise");
+            Assert.False(clockwise.IsEnabled);
+
+            closed.BoolValue = true;
+
+            Assert.True(clockwise.IsEnabled);
+        }
+
+        /// <summary>Direction owns traversal while speed edits expose and store a positive magnitude.</summary>
+        [Fact]
+        public void MoveSpeedIsPositiveMagnitudeWithoutChangingImportedDirection()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, LevelObject ants, _, _) =
+                Build("100,0,100,100,0,0", moveSpeed: "-100");
+            AttributeFieldViewModel speed = fields.Single(f => f.Name == "moveSpeed");
+            AttributeFieldViewModel clockwise = fields.Single(f => f.Name == "polylineClockwise");
+
+            Assert.Equal(1, speed.NumericMinimum);
+            Assert.Equal("100", speed.Value);
+            Assert.False(clockwise.BoolValue);
+
+            speed.Value = "75";
+
+            Assert.Equal("75", ants.GetAttr("moveSpeed"));
+            Assert.Equal("100,100,100,0,0,0", ants.GetAttr("path"));
+            Assert.False(clockwise.BoolValue);
         }
 
         /// <summary>Semantic closure participates in the same changing/changed undo callbacks as attributes.</summary>
@@ -77,14 +122,14 @@ namespace CtrDxEditor.Tests
             ObservableCollection<AttributeFieldViewModel> Fields,
             LevelObject Ants,
             Counter Changing,
-            Counter Changed) Build(string path)
+            Counter Changed) Build(string path, string moveSpeed = "100")
         {
             LevelObject ants = new(new XElement(
                 "ants",
                 new XAttribute("x", "0"),
                 new XAttribute("y", "0"),
                 new XAttribute("path", path),
-                new XAttribute("moveSpeed", "100")));
+                new XAttribute("moveSpeed", moveSpeed)));
             ObservableCollection<AttributeFieldViewModel> fields = [];
             Counter changing = new();
             Counter changed = new();
