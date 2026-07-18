@@ -745,6 +745,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (AntPath.IsAnts(value.Type))
+            {
+                AntFieldBuilder.Build(Fields, value, Changed, Changing);
+                return;
+            }
+
             ObjectDescriptor? d = _descriptors.For(value.Type);
             if (d is not null)
             {
