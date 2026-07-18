@@ -766,7 +766,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab")
                 {
-                    RopeVisual? rope = RopeRenderer.BuildRope(obj, objects, doc.TwoParts, ActiveRopeSkin);
+                    RopeVisual? rope = BuildRopeForVisibleGrab(obj, doc);
                     // The movable hook lights up while the selected grab's hook is hovered or being slid.
                     bool hookHighlighted =
                         (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
@@ -830,6 +830,11 @@ namespace CtrDxEditor.Rendering
             {
                 GrabRenderer.DrawGrabRadiusRings(context, v, objects, grabRadiusPen);
             }
+        }
+
+        private RopeVisual? BuildRopeForVisibleGrab(LevelObject grab, LevelDocument doc)
+        {
+            return RopeRenderer.BuildRope(grab, doc.AllObjects, doc.TwoParts, ActiveRopeSkin);
         }
 
         /// <summary>
