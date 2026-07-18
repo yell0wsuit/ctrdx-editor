@@ -32,6 +32,12 @@ namespace CtrDxEditor.Rendering
         /// but the editor keeps it faintly visible so it stays selectable and editable).</summary>
         private const double CapturedPrimaryCandyOpacity = 0.3;
 
+        /// <summary>Bamboo-tube bounding-box half-size in game points (BambooTube.BambooBaseBbSize).</summary>
+        private const double BambooBbHalfSize = 75.0;
+
+        /// <summary>Bamboo-tube candy-capture radius in game points (BambooTube.BambooCaptureRadius).</summary>
+        private const double BambooCaptureRadius = 17.5;
+
         /// <summary>Maps a level-space rectangle to its axis-aligned screen rectangle.</summary>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="x">Left edge of the rectangle in level units.</param>
@@ -182,6 +188,9 @@ namespace CtrDxEditor.Rendering
                 // Mice bodies draw via DrawMice() after the bouncers and just before the socks.
                 "gap" => 7,
                 "sock" => 7,
+                // Bamboo tubes draw right after the bouncers and before the socks and steam tubes,
+                // matching GameScene.Draw (bouncers → bamboo tubes → hands → socks → steam tubes).
+                "pipe" => 7,
                 "steamTube" => 8,
                 "ghost" => 9,
                 "grab" => 10,
@@ -311,6 +320,26 @@ namespace CtrDxEditor.Rendering
                     for (int i = 1; i < mouseSprite.Layers.Count; i++)
                     {
                         DrawLayer(ctx, v, mouseSprite.Layers[i], x, y, mouseSprite.Scale, deg);
+                    }
+                }
+                DrawOverlays(ctx, v, sprites, obj, x, y);
+                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                return;
+            }
+
+            if (obj.Type == "pipe")
+            {
+                if (sprites.GetSprite(CanvasSpriteKey("pipe", nightLevel), candySkin, omNomSupport) is { } pipeSprite
+                    && pipeSprite.Layers.Count > 0)
+                {
+                    // The core (layer 0) stays upright as the pivot, matching BambooTube's unrotated core
+                    // quad; the back and front shells (layers 1+) rotate by the authored angle, as
+                    // UpdateBambooRotation spins the shell sprites but leaves the core still.
+                    double deg = ObjectRotation.DisplayDegrees(obj, RotationTable.For("pipe")!) + (spinRotation ?? 0.0);
+                    DrawLayer(ctx, v, pipeSprite.Layers[0], x, y, pipeSprite.Scale, null);
+                    for (int i = 1; i < pipeSprite.Layers.Count; i++)
+                    {
+                        DrawLayer(ctx, v, pipeSprite.Layers[i], x, y, pipeSprite.Scale, deg);
                     }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
@@ -1360,6 +1389,52 @@ namespace CtrDxEditor.Rendering
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
                 DrawLayer(ctx, v, layer, x, y, sprite.Scale, rotationOrNone, offsetY);
+            }
+        }
+
+        /// <summary>
+        /// Computes the two bamboo-tube hole centres in level space. The holes sit half a bounding box
+        /// from the centre along perpendicular axes, then rotate by (angle − 90°) about the origin,
+        /// matching BambooTube.UpdateBambooRotation. Returned as [entry-axis, exit-axis].
+        /// </summary>
+        /// <param name="origin">The tube's level-space centre.</param>
+        /// <param name="angleDegrees">The tube's on-screen rotation in degrees.</param>
+        /// <returns>The two hole centres in level space.</returns>
+        public static Vec2[] ComputeBambooHoles(Vec2 origin, double angleDegrees)
+        {
+            double offset = BambooBbHalfSize * 0.5 / SpritePlacement.MapScale;
+            double radians = (angleDegrees - 90.0) * Math.PI / 180.0;
+            double sin = Math.Sin(radians);
+            double cos = Math.Cos(radians);
+            Vec2 Rotate(double localX, double localY)
+            {
+                return new Vec2(
+                    origin.X + (localX * cos) - (localY * sin),
+                    origin.Y + (localX * sin) + (localY * cos));
+            }
+
+            return [Rotate(offset, 0), Rotate(0, offset)];
+        }
+
+        /// <summary>
+        /// Draws the bamboo tube's two candy-capture holes as collision circles for the hitbox overlay.
+        /// The game catches candy when its physics point comes within <see cref="BambooCaptureRadius"/>
+        /// (world units) of either hole, so the circles mark exactly where candy makes contact.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="obj">The bamboo-tube object whose holes are drawn.</param>
+        /// <param name="pen">Pen for the collision-hole outline (the hitbox pen).</param>
+        /// <param name="previewSpinDegrees">Extra live-preview rotation in degrees, or 0 when static.</param>
+        public static void DrawBambooHitbox(
+            DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pen, double previewSpinDegrees = 0.0)
+        {
+            double angle = ObjectRotation.DisplayDegrees(obj, RotationTable.For("pipe")!) + previewSpinDegrees;
+            double screenRadius = BambooCaptureRadius / SpritePlacement.MapScale * v.Zoom;
+            foreach (Vec2 hole in ComputeBambooHoles(new Vec2(obj.X, obj.Y), angle))
+            {
+                Vec2 s = v.LevelToScreen(hole);
+                ctx.DrawEllipse(null, pen, new Point(s.X, s.Y), screenRadius, screenRadius);
             }
         }
 

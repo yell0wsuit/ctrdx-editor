@@ -28,6 +28,8 @@ namespace CtrDxEditor.Content
         private const string GhostImageBase = "images/obj_ghost";
         private const string PipeJson = "images/obj_pipe.json";
         private const string PipeImageBase = "images/obj_pipe";
+        private const string BambooTubeJson = "images/obj_bamboo_tube.json";
+        private const string BambooTubeImageBase = "images/obj_bamboo_tube";
         private const string SpikesJson = "images/obj_spikes.json";
         private const string SpikesImageBase = "images/obj_spikes";
         private const string ElectrodesJson = "images/obj_electrodes.json";
@@ -384,6 +386,16 @@ namespace CtrDxEditor.Content
             // All three 11-frame puff loops (2-12, 13-23, 24-34). The canvas freezes a steady-state
             // 20-puff maximum plume by indexing these layers; none are part of the palette thumbnail.
             new("steamTube_puffs", PipePuffLayers()),
+
+            // Bamboo tube teleporter (game element `pipe`). Core (quad 0) is drawn upright as the pivot;
+            // the back shell (quad 1) and front shell (quad 2) rotate with the authored angle. The game
+            // scales the tube to 0.9 (scaleX/scaleY in BambooTube.InitWithPositionAngle).
+            new("pipe",
+            [
+                new SpriteLayer(BambooTubeJson, BambooTubeImageBase, 0),
+                new SpriteLayer(BambooTubeJson, BambooTubeImageBase, 1),
+                new SpriteLayer(BambooTubeJson, BambooTubeImageBase, 2),
+            ], Scale: 0.9),
 
             // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
             // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.

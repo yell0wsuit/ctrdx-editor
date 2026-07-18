@@ -92,6 +92,18 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Closed loop", strings["Attr.closedLoop"]);
         }
 
+        /// <summary>The bamboo tube (game element <c>pipe</c>) carries its own readable palette label.</summary>
+        [Fact]
+        public void BambooTubeIsLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Bamboo tube", strings["Object.pipe"]);
+            Assert.Equal("Bamboo tube", Localizer.ObjectName("pipe"));
+        }
+
         private static string FindRepositoryFile(string relativePath)
         {
             DirectoryInfo? dir = new(AppContext.BaseDirectory);

@@ -243,6 +243,21 @@ namespace CtrDxEditor.Core.Tests
             Assert.Same(spec, RotationTable.EditableFor("steamTube"));
         }
 
+        /// <summary>
+        /// The bamboo tube (pipe) stores and renders its authored angle directly, matching
+        /// BambooTube.InitWithPositionAngle, and reuses the standard editor dial.
+        /// </summary>
+        [Fact]
+        public void BambooTubeRotationIsEditableWithoutDisplayOffset()
+        {
+            RotationSpec spec = RotationTable.For("pipe")!;
+
+            Assert.Equal(0, spec.DisplayOffset);
+            Assert.Equal("angle", spec.AttributeName);
+            Assert.True(spec.Editable);
+            Assert.Same(spec, RotationTable.EditableFor("pipe"));
+        }
+
         /// <summary>Bouncer XML angles map directly to editable canvas rotation for both widths.</summary>
         [Theory]
         [InlineData("bouncer1")]

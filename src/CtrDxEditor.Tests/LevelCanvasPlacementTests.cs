@@ -61,5 +61,23 @@ namespace CtrDxEditor.Tests
             Assert.Equal(AntPath.DefaultPath, created!.GetAttr("path"));
             Assert.Equal(AntPath.DefaultMoveSpeed, created.GetAttr("moveSpeed"));
         }
+
+        /// <summary>Placing a bamboo tube yields a <c>pipe</c> object carrying the default angle.</summary>
+        [Fact]
+        public void AddAtCenterPlacesBambooTubeWithDefaultAngle()
+        {
+            LevelObject? created = null;
+            LevelCanvas canvas = new()
+            {
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                PlaceAt = (_, x, y) => created = Placement.CreateObject(
+                    DescriptorTable.CtrObjects.For("pipe")!, x, y),
+            };
+
+            Assert.True(canvas.AddAtCenter("pipe"));
+            Assert.NotNull(created);
+            Assert.Equal("pipe", created!.Type);
+            Assert.Equal("0", created.GetAttr("angle"));
+        }
     }
 }

@@ -119,6 +119,13 @@ namespace CtrDxEditor.Rendering
                         _palette.HitboxDesktop,
                         PreviewSpinDegrees(obj),
                         PreviewAnimationSeconds(obj));
+                    // The bamboo tube has no rectangular bb; its collision is the two circular capture
+                    // holes candy contacts, so draw those in place of a box hitbox.
+                    if (obj.Type == "pipe")
+                    {
+                        LevelSceneRenderer.DrawBambooHitbox(
+                            context, v, obj, _palette.HitboxDesktop, PreviewSpinDegrees(obj));
+                    }
                     if (obj.Type is "candy" or "candyL" or "candyR")
                     {
                         Pen crosshairPen = hazardCandies.Contains(obj)

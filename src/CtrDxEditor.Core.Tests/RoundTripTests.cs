@@ -138,6 +138,26 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(XNode.DeepEquals(Normalize(XDocument.Parse(original)), Normalize(after)));
         }
 
+        /// <summary>The bamboo tube keeps its <c>pipe</c> element name and authored angle.</summary>
+        [Fact]
+        public void BambooTubeSurvivesRoundTrip()
+        {
+            const string original =
+                "<level width=\"640\" height=\"480\">" +
+                "<pipe x=\"100\" y=\"120\" angle=\"45\" />" +
+                "</level>";
+
+            LevelDocument doc = LevelDocument.Parse(original);
+            XDocument after = XDocument.Parse(doc.Save());
+
+            XElement pipe = after.Root!.Element("pipe")!;
+            Assert.Equal("100", (string?)pipe.Attribute("x"));
+            Assert.Equal("120", (string?)pipe.Attribute("y"));
+            Assert.Equal("45", (string?)pipe.Attribute("angle"));
+            Assert.True(XNode.DeepEquals(
+                Normalize(XDocument.Parse(original)), Normalize(after)));
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {

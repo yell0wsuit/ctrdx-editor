@@ -47,6 +47,12 @@ namespace CtrDxEditor.Tests
             Assert.False(ants.ShowGroupHeader);
             Assert.False(ants.ShowDivider);
 
+            // The bamboo tube also continues the Experiments group without a new header or divider.
+            PaletteItemViewModel bambooTube = view.Single(i => i.Element == "pipe");
+            Assert.Equal("Cut the Rope: Experiments", bambooTube.GroupName);
+            Assert.False(bambooTube.ShowGroupHeader);
+            Assert.False(bambooTube.ShowDivider);
+
             // The item just before the rocket is the last base-group item: no header, no divider.
             int rocketIndex = System.Array.IndexOf(view, rocket);
             Assert.True(rocketIndex > 0);

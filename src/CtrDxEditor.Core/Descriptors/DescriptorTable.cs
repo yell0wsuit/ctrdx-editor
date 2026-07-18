@@ -206,9 +206,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("type", AttrType.Enum, ConveyorObject.DefaultType, EnumValues: ["manual"]),
             ], MaxCount: int.MaxValue),
 
-            // Rocket (Cut the Rope: Experiments). Attributes ported from LoadRockets.cs:
-            // impulseFactor defaults to 0.6 in-game; time = -1 fires until impact, a positive
-            // value burns for that many seconds then exhausts (star-timeout-shaped).
+            // Rocket
             new ObjectDescriptor("rocket", "Rocket",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
@@ -218,8 +216,7 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("isRotatable", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
 
-            // Snail (Cut the Rope: Experiments). LoadSnails.cs reads x/y only — the snail has no
-            // attributes; it wakes and clings to any candy whose capabilities allow snail dragging.
+            // Snail
             new ObjectDescriptor(
                 "load",
                 "Snail",
@@ -234,12 +231,17 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("segmentsCount", AttrType.Whole, "1"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
 
-            // Ant conveyor (Cut the Rope: Experiments). The anchor is the first vertex; path stores
-            // subsequent vertices as relative offsets, with a terminal 0,0 representing closure.
+            // Ant conveyor
             new ObjectDescriptor(AntPath.Element, "Ant conveyor",
             [
                 new AttributeSpec("path", AttrType.Text, AntPath.DefaultPath),
                 new AttributeSpec("moveSpeed", AttrType.Number, AntPath.DefaultMoveSpeed),
+            ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
+
+            // Bamboo tube
+            new ObjectDescriptor("pipe", "Bamboo tube",
+            [
+                new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
         ]);
     }

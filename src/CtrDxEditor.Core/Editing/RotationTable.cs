@@ -45,6 +45,8 @@ namespace CtrDxEditor.Core.Editing
             ["pump"] = new RotationSpec(DisplayOffset: 90),
             // SteamTube.InitWithPositionAngle stores and renders the authored angle directly.
             ["steamTube"] = new RotationSpec(DisplayOffset: 0),
+            // BambooTube.InitWithPositionAngle stores and renders the authored angle directly.
+            ["pipe"] = new RotationSpec(DisplayOffset: 0),
             // Tutorial images store and render the authored angle directly.
             ["tutorial01"] = new RotationSpec(DisplayOffset: 0),
             ["tutorial02"] = new RotationSpec(DisplayOffset: 0),

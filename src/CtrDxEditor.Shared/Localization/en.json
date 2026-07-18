@@ -171,6 +171,7 @@
     "Object.hand": "Mechanical hand",
     "Object.snail": "Snail",
     "Object.ants": "Ant conveyor",
+    "Object.pipe": "Bamboo tube",
 
     "Attr.velocity": "Velocity",
     "Attr.width": "Width",
