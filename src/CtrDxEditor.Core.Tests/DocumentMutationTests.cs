@@ -30,7 +30,7 @@ namespace CtrDxEditor.Core.Tests
             _ = Assert.Single(doc.AllObjects);
 
             LevelObject star = Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, 50, 60);
-            doc.Add(star);
+            doc.Add(star, doc.Layers[0]);
             Assert.Equal(2, doc.AllObjects.Count);
 
             LevelDocument.Remove(star);
@@ -43,7 +43,7 @@ namespace CtrDxEditor.Core.Tests
         public void AddedObjectAppearsInSavedXml()
         {
             LevelDocument doc = LevelDocument.Parse(Level);
-            doc.Add(Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, 50, 60));
+            doc.Add(Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, 50, 60), doc.Layers[0]);
 
             Assert.Contains("<star", doc.Save());
         }

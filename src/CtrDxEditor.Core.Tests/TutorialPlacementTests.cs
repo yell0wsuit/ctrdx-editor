@@ -48,7 +48,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = EmptyDoc();
             LevelObject o = Placement.CreateObject(DescriptorTable.CtrObjects.For("tutorialText")!, 10, 20);
             LevelObjectPolicy.ApplyDefaults(o, doc);
-            doc.Add(o);
+            doc.Add(o, doc.Layers[0]);
 
             Assert.True(TutorialObject.IsAutoWidth(o));
             Assert.Null(o.GetAttr("autoWidth"));

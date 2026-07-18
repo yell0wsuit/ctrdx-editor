@@ -133,12 +133,94 @@ namespace CtrDxEditor.Core.Document
                 .Where(l => (string?)l.Attribute("name") != "settings")
                 .Select(l => new LevelLayer(l))];
 
-        /// <summary>Adds an object to the Objects layer, creating the layer when needed.</summary>
-        /// <param name="obj">The object to append.</param>
-        public void Add(LevelObject obj)
+        /// <summary>Appends a new empty object layer with the given name.</summary>
+        /// <param name="name">The new layer's name.</param>
+        /// <returns>The created layer wrapper.</returns>
+        public LevelLayer AddLayer(string name)
         {
-            XElement layer = Layer("Objects") ?? CreateObjectsLayer();
-            layer.Add(obj.Element);
+            XElement el = new("layer", new XAttribute("name", name));
+            Root.Add(el);
+            return new LevelLayer(el);
+        }
+
+        /// <summary>Removes an object layer and every object inside it.</summary>
+        /// <param name="layer">The layer to remove.</param>
+        public void RemoveLayer(LevelLayer layer)
+        {
+            if (!ReferenceEquals(layer.Element.Parent, Root))
+            {
+                return;
+            }
+
+            layer.Element.Remove();
+        }
+
+        /// <summary>Reorders an object layer among the other object layers, clamped to the valid range.</summary>
+        /// <param name="layer">The layer to move.</param>
+        /// <param name="delta">Positions to shift; negative moves earlier, positive later.</param>
+        public void MoveLayer(LevelLayer layer, int delta)
+        {
+            List<XElement> objectLayers = [.. Root.Elements("layer")
+                .Where(l => (string?)l.Attribute("name") != "settings")];
+            int from = objectLayers.IndexOf(layer.Element);
+            if (from < 0)
+            {
+                return;
+            }
+
+            int to = Math.Clamp(from + delta, 0, objectLayers.Count - 1);
+            if (to == from)
+            {
+                return;
+            }
+
+            layer.Element.Remove();
+            if (to == 0)
+            {
+                objectLayers[0].AddBeforeSelf(layer.Element);
+            }
+            else
+            {
+                objectLayers[to <= from ? to - 1 : to].AddAfterSelf(layer.Element);
+            }
+        }
+
+        /// <summary>Appends an object to a specific layer.</summary>
+        /// <param name="obj">The object to add.</param>
+        /// <param name="target">The layer to add it to.</param>
+        public void Add(LevelObject obj, LevelLayer target)
+        {
+            if (!ReferenceEquals(target.Element.Parent, Root))
+            {
+                return;
+            }
+
+            target.Element.Add(obj.Element);
+        }
+
+        /// <summary>Moves an object out of its current layer and appends it to another.</summary>
+        /// <param name="obj">The object to move.</param>
+        /// <param name="target">The destination layer.</param>
+        public void MoveObject(LevelObject obj, LevelLayer target)
+        {
+            if (!ReferenceEquals(target.Element.Parent, Root))
+            {
+                return;
+            }
+
+            obj.Element.Remove();
+            target.Element.Add(obj.Element);
+        }
+
+        /// <summary>True when a layer name is non-empty and not already used by another object layer.</summary>
+        /// <param name="name">The candidate name.</param>
+        /// <param name="excluding">A layer to ignore in the uniqueness check (the one being renamed).</param>
+        /// <returns>Whether the name may be applied.</returns>
+        public bool IsLayerNameAvailable(string name, LevelLayer? excluding = null)
+        {
+            return !string.IsNullOrWhiteSpace(name)
+                && !Layers.Any(l =>
+                    !ReferenceEquals(l.Element, excluding?.Element) && l.Name == name);
         }
 
         /// <summary>Writes level-wide settings back into the settings layer and adjusts candy objects when split mode changes.</summary>
@@ -260,16 +342,9 @@ namespace CtrDxEditor.Core.Document
             return child;
         }
 
-        private XElement CreateObjectsLayer()
-        {
-            XElement layer = new("layer", new XAttribute("name", "Objects"));
-            Root.Add(layer);
-            return layer;
-        }
-
         private void ConvertCandyForTwoParts(bool twoParts, int width, int height)
         {
-            XElement objects = Layer("Objects") ?? CreateObjectsLayer();
+            XElement objects = Layers.Count > 0 ? Layers[0].Element : AddLayer("Objects").Element;
             if (twoParts)
             {
                 XElement? candy = objects.Elements("candy").FirstOrDefault();

@@ -454,7 +454,9 @@ namespace CtrDxEditor.ViewModels
             {
                 TutorialRenderer.ApplyAutoWidth(Sprites, obj);
             }
-            Document.Add(obj);
+            IReadOnlyList<LevelLayer> layers = Document.Layers;
+            LevelLayer target = layers.Count > 0 ? layers[^1] : Document.AddLayer("Objects");
+            Document.Add(obj, target);
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
             RefreshObjectList();

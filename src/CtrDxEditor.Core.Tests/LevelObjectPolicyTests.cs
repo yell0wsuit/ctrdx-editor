@@ -64,7 +64,7 @@ namespace CtrDxEditor.Core.Tests
         public void SecondSockCompletesFirstPair()
         {
             LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
-            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))));
+            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
             LevelObject sock = new(new XElement("sock"));
 
             LevelObjectPolicy.ApplyDefaults(sock, doc);
@@ -77,8 +77,8 @@ namespace CtrDxEditor.Core.Tests
         public void ThirdSockStartsNewGroup()
         {
             LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
-            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))));
-            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))));
+            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
+            doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
             LevelObject sock = new(new XElement("sock"));
 
             LevelObjectPolicy.ApplyDefaults(sock, doc);
@@ -115,8 +115,8 @@ namespace CtrDxEditor.Core.Tests
         public void GapIndexTakesMaxExistingPlusOne()
         {
             LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
-            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "1"))));
-            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "3"))));
+            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "1"))), doc.Layers[0]);
+            doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "3"))), doc.Layers[0]);
             LevelObject gap = new(new XElement("gap"));
 
             LevelObjectPolicy.ApplyDefaults(gap, doc);
