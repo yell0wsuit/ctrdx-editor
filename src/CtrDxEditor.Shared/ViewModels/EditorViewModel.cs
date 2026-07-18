@@ -64,6 +64,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The locale whose localized objects are shown. Session-only.</summary>
         [ObservableProperty] public partial string DisplayLocale { get; set; } = "en";
 
+        /// <summary>The currently selected layer-tree row.</summary>
+        [ObservableProperty] public partial object? SelectedTreeItem { get; set; }
+
         // Session-only visibility keyed by XML identity (objects) and layer name (layers).
         private readonly HashSet<XElement> _hiddenObjectElements = [];
         private readonly HashSet<string> _hiddenLayerNames = [];
@@ -605,6 +608,19 @@ namespace CtrDxEditor.ViewModels
                 SelectedObject = null;
             }
             ObjectMutated?.Invoke();
+        }
+
+        partial void OnSelectedTreeItemChanged(object? value)
+        {
+            switch (value)
+            {
+                case LayerViewModel layer:
+                    ActiveLayer = layer;
+                    break;
+                case LevelObject obj:
+                    SelectedObject = obj;
+                    break;
+            }
         }
 
         /// <summary>Refreshes palette availability from descriptor cardinality and loaded objects.</summary>

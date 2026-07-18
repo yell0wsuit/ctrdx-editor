@@ -27,6 +27,8 @@
     "Menu.View.ShowMovementPaths": "Show Movement Paths",
 
     "Panel.Objects": "Objects",
+    "Panel.Layers": "Layers",
+    "Panel.Language": "Tutorial language",
     "Panel.Properties": "Properties",
     "Panel.HandSegment": "Segment {0}",
     "Palette.SearchPlaceholder": "Search…",
@@ -142,6 +144,14 @@
     "Dialog.Unsaved.New": "Discard and continue",
     "Dialog.Unsaved.Quit": "Discard and quit",
 
+    "Layer.Add": "Add layer",
+    "Layer.Delete": "Delete active layer",
+    "Layer.MoveUp": "Move active layer up",
+    "Layer.MoveDown": "Move active layer down",
+    "Layer.Rename": "Rename layer",
+    "Object.MoveToLayer": "Move to layer",
+    "Tooltip.LayerVisibility": "Show or hide this layer",
+    "Tooltip.ObjectVisibility": "Show or hide this object",
     "Tooltip.ObjectLock": "Lock or unlock this object\nYou can also double click this object on the level canvas to lock/unlock it",
     "Tooltip.ObjectAnimationPreview": "Play or stop this object's animation",
 

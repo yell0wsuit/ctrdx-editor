@@ -142,6 +142,30 @@ namespace CtrDxEditor.Tests
             Assert.Equal(candy, vm.SelectedObject);
         }
 
+        /// <summary>Selecting a layer row makes it active without selecting an object.</summary>
+        [Fact]
+        public void SelectingLayerTreeItemChangesActiveLayer()
+        {
+            EditorViewModel vm = Create();
+
+            vm.SelectedTreeItem = vm.Layers[1];
+
+            Assert.Same(vm.Layers[1], vm.ActiveLayer);
+            Assert.Null(vm.SelectedObject);
+        }
+
+        /// <summary>Selecting an object row updates the editor's object selection.</summary>
+        [Fact]
+        public void SelectingObjectTreeItemChangesSelectedObject()
+        {
+            EditorViewModel vm = Create();
+            LevelObject star = vm.Layers[1].Objects[0];
+
+            vm.SelectedTreeItem = star;
+
+            Assert.Equal(star, vm.SelectedObject);
+        }
+
         private static EditorViewModel Create()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));

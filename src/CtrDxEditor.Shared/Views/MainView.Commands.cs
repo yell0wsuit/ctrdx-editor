@@ -1,7 +1,13 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Localization;
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
 
@@ -93,6 +99,118 @@ namespace CtrDxEditor.Views
                 e.Handled = true;
             }
         }
+
+        private void LayerMoveUp_Click(object? sender, RoutedEventArgs e)
+        {
+            (DataContext as EditorViewModel)?.MoveActiveLayer(-1);
+        }
+
+        private void LayerMoveDown_Click(object? sender, RoutedEventArgs e)
+        {
+            (DataContext as EditorViewModel)?.MoveActiveLayer(1);
+        }
+
+        private void LayerVisibility_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm
+                && sender is ToggleButton { Tag: LayerViewModel row } toggle)
+            {
+                vm.SetLayerHidden(row.Layer, toggle.IsChecked != true);
+                e.Handled = true;
+            }
+        }
+
+        private void ObjectVisibility_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm
+                && sender is ToggleButton { Tag: LevelObject obj })
+            {
+                vm.SetObjectHidden(obj, !vm.IsObjectHidden(obj));
+                e.Handled = true;
+            }
+        }
+
+        private void LayerName_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox { Tag: LayerViewModel row })
+            {
+                return;
+            }
+
+            if (e.Key == Key.Escape)
+            {
+                row.Name = row.Layer.Name;
+                _ = _canvas.Focus();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Enter)
+            {
+                _ = _canvas.Focus();
+                e.Handled = true;
+            }
+        }
+
+        private void LayerName_Commit(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm
+                || sender is not TextBox { Tag: LayerViewModel row, Text: { } name }
+                || name == row.Layer.Name)
+            {
+                return;
+            }
+
+            if (!vm.RenameLayer(row.Layer, name))
+            {
+                row.Name = row.Layer.Name;
+            }
+        }
+
+        private void ObjectContextMenu_Opening(object? sender, CancelEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm
+                || sender is not ContextMenu { Tag: LevelObject obj } menu)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            List<MenuItem> targets = [];
+            foreach (LayerViewModel row in vm.Layers)
+            {
+                if (ReferenceEquals(obj.Element.Parent, row.Layer.Element))
+                {
+                    continue;
+                }
+
+                MenuItem target = new()
+                {
+                    Header = row.Name,
+                    Tag = new MoveTarget(obj, row.Layer),
+                };
+                target.Click += MoveObjectToLayer_Click;
+                targets.Add(target);
+            }
+
+            menu.ItemsSource = new[]
+            {
+                new MenuItem
+                {
+                    Header = Localizer.Get("Object.MoveToLayer"),
+                    ItemsSource = targets,
+                    IsEnabled = targets.Count > 0,
+                },
+            };
+        }
+
+        private void MoveObjectToLayer_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: MoveTarget target })
+            {
+                vm.MoveObjectToLayer(target.Object, target.Layer);
+            }
+        }
+
+        private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
 
         private void ZoomIn_Click(object? sender, RoutedEventArgs e)
         {
