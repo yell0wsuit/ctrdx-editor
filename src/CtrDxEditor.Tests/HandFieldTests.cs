@@ -106,7 +106,7 @@ namespace CtrDxEditor.Tests
             fields.Single(f => f.Name == "segmentsCount").Value = "2";
 
             Assert.Equal("2", hand.GetAttr("segmentsCount"));
-            Assert.Equal("10", hand.GetAttr("segment2Length"));
+            Assert.Equal("50", hand.GetAttr("segment2Length"));
             Assert.Equal("true", hand.GetAttr("segment2Rotatable"));
             Assert.Equal(1, rebuilds);
         }
@@ -137,7 +137,7 @@ namespace CtrDxEditor.Tests
             fields.Single(f => f.Name == "segmentsCount").Value = "5";
 
             Assert.Equal("5", hand.GetAttr("segmentsCount"));
-            Assert.Equal("10", hand.GetAttr("segment5Length"));
+            Assert.Equal("50", hand.GetAttr("segment5Length"));
         }
 
         /// <summary>Shrinking the count hides a slot without destroying it, so re-growing restores it.</summary>

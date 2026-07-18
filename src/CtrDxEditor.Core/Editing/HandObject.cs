@@ -24,8 +24,8 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Angle seeded into an absent slot, matching authored inactive slots.</summary>
         public const string DefaultAngle = "0";
 
-        /// <summary>Length seeded into an absent slot, matching authored inactive slots.</summary>
-        public const string DefaultLength = "10";
+        /// <summary>Length seeded into an absent slot, long enough that a newly added segment is easy to see.</summary>
+        public const string DefaultLength = "50";
 
         /// <summary>Rotatable flag seeded into an absent slot, matching authored inactive slots.</summary>
         public const string DefaultRotatable = "true";

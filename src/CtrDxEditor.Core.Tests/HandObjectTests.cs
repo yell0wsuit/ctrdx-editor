@@ -112,9 +112,9 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal("2", hand.GetAttr("segmentsCount"));
             Assert.Equal("0", hand.GetAttr("segment1Angle"));
-            Assert.Equal("10", hand.GetAttr("segment1Length"));
+            Assert.Equal("50", hand.GetAttr("segment1Length"));
             Assert.Equal("true", hand.GetAttr("segment1Rotatable"));
-            Assert.Equal("10", hand.GetAttr("segment2Length"));
+            Assert.Equal("50", hand.GetAttr("segment2Length"));
         }
 
         /// <summary>Growing the count restores an existing orphan slot rather than overwriting it.</summary>
