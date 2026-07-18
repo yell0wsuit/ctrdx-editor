@@ -136,6 +136,37 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>Records a hand press without opening an undo transaction until it becomes a drag.</summary>
+        private void PrepareHandDrag(Vec2 pointer, Vec2 target)
+        {
+            _handDragStartPointer = pointer;
+            _handDragStartTarget = target;
+            _handDragHasMoved = false;
+        }
+
+        /// <summary>Starts the pending hand edit once pointer travel reaches the screen-space threshold.</summary>
+        private bool BeginHandDrag(Vec2 levelPt)
+        {
+            if (_handDragHasMoved)
+            {
+                return true;
+            }
+            if (!HandGeometry.HasDragged(_handDragStartPointer, levelPt, View.Zoom))
+            {
+                return false;
+            }
+
+            _handDragHasMoved = true;
+            BeginDocumentEdit?.Invoke();
+            return true;
+        }
+
+        /// <summary>Moves a hand button by pointer delta so grabbing off-centre never makes it jump.</summary>
+        private Vec2 HandDragTarget(Vec2 levelPt)
+        {
+            return _handDragStartTarget + (levelPt - _handDragStartPointer);
+        }
+
         /// <summary>Which vinyl handle a level point is over, or <see cref="VinylGeometry.Handle.None"/>.</summary>
         private VinylGeometry.Handle HitVinylHandle(Vec2 levelPt)
         {
@@ -853,17 +884,17 @@ namespace CtrDxEditor.Rendering
                 switch (pressedHandHit.Kind)
                 {
                     case HandGeometry.HandleKind.Joint:
-                        BeginDocumentEdit?.Invoke();
                         _handJointDrag = pressedHandHit.Index;
                         _handActiveSegment = pressedHandHit.Index;
+                        PrepareHandDrag(levelPt, HandGeometry.Joint(handObj, pressedHandHit.Index));
                         HandSegmentActivated?.Invoke(pressedHandHit.Index);
                         e.Handled = true;
                         e.Pointer.Capture(this);
                         return;
 
                     case HandGeometry.HandleKind.Base:
-                        BeginDocumentEdit?.Invoke();
                         _handBaseDrag = true;
+                        PrepareHandDrag(levelPt, new Vec2(handObj.X, handObj.Y));
                         e.Handled = true;
                         e.Pointer.Capture(this);
                         return;
@@ -877,6 +908,9 @@ namespace CtrDxEditor.Rendering
                             _handSplitPreview = null;
                             _handJointDrag = HandGeometry.SplitBone(handObj, pressedHandHit.Index, levelPt);
                             _handActiveSegment = _handJointDrag;
+                            _handDragStartPointer = levelPt;
+                            _handDragStartTarget = HandGeometry.Joint(handObj, _handJointDrag);
+                            _handDragHasMoved = true;
                             HandSegmentActivated?.Invoke(_handActiveSegment);
                             SelectedObjectMoved?.Invoke();
                             InvalidateVisual();
@@ -923,9 +957,17 @@ namespace CtrDxEditor.Rendering
                 if (li >= 0 && HitBoundContains(locked, bounds[li], levelPt))
                 {
                     SelectedObject = locked;
-                    BeginDocumentEdit?.Invoke();
                     _dragOffset = levelPt - new Vec2(locked.X, locked.Y);
                     _dragging = true;
+                    _handObjectDrag = HandObject.IsHand(locked.Type);
+                    if (_handObjectDrag)
+                    {
+                        PrepareHandDrag(levelPt, new Vec2(locked.X, locked.Y));
+                    }
+                    else
+                    {
+                        BeginDocumentEdit?.Invoke();
+                    }
                     e.Pointer.Capture(this);
                 }
                 return;
@@ -955,9 +997,17 @@ namespace CtrDxEditor.Rendering
 
             LevelObject obj = doc.Objects[hit];
             SelectedObject = obj;
-            BeginDocumentEdit?.Invoke();
             _dragOffset = levelPt - new Vec2(obj.X, obj.Y);
             _dragging = true;
+            _handObjectDrag = HandObject.IsHand(obj.Type);
+            if (_handObjectDrag)
+            {
+                PrepareHandDrag(levelPt, new Vec2(obj.X, obj.Y));
+            }
+            else
+            {
+                BeginDocumentEdit?.Invoke();
+            }
             e.Pointer.Capture(this);
         }
 
@@ -970,7 +1020,12 @@ namespace CtrDxEditor.Rendering
 
             if (_handJointDrag > 0 && SelectedObject is { } draggedHand)
             {
-                HandGeometry.ApplyLengthDrag(draggedHand, _handJointDrag, levelPt);
+                if (!BeginHandDrag(levelPt))
+                {
+                    e.Handled = true;
+                    return;
+                }
+                HandGeometry.ApplyLengthDrag(draggedHand, _handJointDrag, HandDragTarget(levelPt));
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Handled = true;
@@ -979,7 +1034,12 @@ namespace CtrDxEditor.Rendering
 
             if (_handBaseDrag && SelectedObject is { } movedHand)
             {
-                HandGeometry.ApplyBaseDrag(movedHand, levelPt);
+                if (!BeginHandDrag(levelPt))
+                {
+                    e.Handled = true;
+                    return;
+                }
+                HandGeometry.ApplyBaseDrag(movedHand, HandDragTarget(levelPt));
                 SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Handled = true;
@@ -1157,6 +1217,11 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_handObjectDrag && !BeginHandDrag(levelPt))
+            {
+                return;
+            }
+
             (int gx, int gy) = Snap(levelPt - _dragOffset);
             selected.X = gx;
             selected.Y = gy;
@@ -1197,8 +1262,10 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            bool editedDocument = _dragging || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
-                || _handJointDrag > 0 || _handBaseDrag
+            bool handHandleEdited = (_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved;
+            bool editedDocument = (_dragging && (!_handObjectDrag || _handDragHasMoved))
+                || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
+                || handHandleEdited
                 || _railDrag != GrabRail.Handle.None || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag;
@@ -1219,6 +1286,10 @@ namespace CtrDxEditor.Rendering
             _polylinePointDrag = -1;
             _handJointDrag = 0;
             _handBaseDrag = false;
+            _handObjectDrag = false;
+            _handDragStartPointer = default;
+            _handDragStartTarget = default;
+            _handDragHasMoved = false;
             if (editedDocument)
             {
                 CompleteDocumentEdit?.Invoke();

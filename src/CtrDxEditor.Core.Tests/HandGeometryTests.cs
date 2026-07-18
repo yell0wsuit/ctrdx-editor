@@ -55,6 +55,27 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(expected, HandGeometry.SegmentResizeAxis(hand, 1));
         }
 
+        /// <summary>Clicks and sub-threshold jitter do not become hand drags at any canvas zoom.</summary>
+        [Theory]
+        [InlineData(100, 200, 100, 200, 1, false)]
+        [InlineData(100, 200, 101, 201, 1, false)]
+        [InlineData(100, 200, 102, 200, 1, true)]
+        [InlineData(100, 200, 101, 200, 2, true)]
+        [InlineData(100, 200, 100.5, 200.5, 2, false)]
+        public void HasDraggedUsesTwoDimensionalScreenSpaceThreshold(
+            double startX,
+            double startY,
+            double currentX,
+            double currentY,
+            double zoom,
+            bool expected)
+        {
+            Assert.Equal(expected, HandGeometry.HasDragged(
+                new Vec2(startX, startY),
+                new Vec2(currentX, currentY),
+                zoom));
+        }
+
         /// <summary>Joint 0 is the hand's own anchor.</summary>
         [Fact]
         public void JointZeroIsTheBase()

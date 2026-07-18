@@ -312,6 +312,18 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while the hand's base is being dragged.</summary>
         private bool _handBaseDrag;
 
+        /// <summary>True when the ordinary object-drag path is moving a mechanical hand.</summary>
+        private bool _handObjectDrag;
+
+        /// <summary>Pointer position where the current hand body/base/joint gesture began, in level units.</summary>
+        private Vec2 _handDragStartPointer;
+
+        /// <summary>Original base or joint position, preserving the pointer's grab offset once a button drag begins.</summary>
+        private Vec2 _handDragStartTarget;
+
+        /// <summary>True after the current hand gesture crosses its screen-space drag threshold.</summary>
+        private bool _handDragHasMoved;
+
         /// <summary>The hand joint under the cursor, or 0 when none; drives Delete/Backspace.</summary>
         private int _handHoverJoint;
 

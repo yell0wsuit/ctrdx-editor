@@ -24,6 +24,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("CompleteDocumentEdit?.Invoke();", source, StringComparison.Ordinal);
         }
 
+        /// <summary>Hand body and button presses remain selection-only until deliberate pointer travel.</summary>
+        [Fact]
+        public void HandDragsWaitForThresholdBeforeEditing()
+        {
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            Assert.Contains("HandGeometry.HasDragged(_handDragStartPointer, levelPt, View.Zoom)", source, StringComparison.Ordinal);
+            Assert.Contains("if (!BeginHandDrag(levelPt))", source, StringComparison.Ordinal);
+            Assert.Contains("_handObjectDrag = HandObject.IsHand(obj.Type);", source, StringComparison.Ordinal);
+            Assert.Contains("(_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved", source, StringComparison.Ordinal);
+        }
+
         /// <summary>Movement path visibility is exposed through the View menu and bound into the canvas.</summary>
         [Fact]
         public void ViewMenuWiresMovementPathToggleToCanvas()

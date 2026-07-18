@@ -29,6 +29,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Padding added around the joint chain when computing selection bounds, in level units.</summary>
         private const double BoundsPadding = 17;
 
+        /// <summary>Screen-space pointer travel required before a hand press becomes a drag.</summary>
+        public const double DragThreshold = 2;
+
         /// <summary>The screen-axis resize cursor that best matches a segment's current direction.</summary>
         public enum ResizeAxis
         {
@@ -91,6 +94,17 @@ namespace CtrDxEditor.Core.Editing
         /// <see cref="HandleKind.Bone"/>; 0 for <see cref="HandleKind.Base"/>.
         /// </param>
         public readonly record struct Handle(HandleKind Kind, int Index);
+
+        /// <summary>Returns whether two-dimensional pointer travel has crossed the screen-space drag threshold.</summary>
+        /// <param name="start">Pointer position when the hand gesture began, in level units.</param>
+        /// <param name="current">Current pointer position, in level units.</param>
+        /// <param name="zoom">Screen pixels per level unit.</param>
+        public static bool HasDragged(Vec2 start, Vec2 current, double zoom)
+        {
+            double dx = (current.X - start.X) * zoom;
+            double dy = (current.Y - start.Y) * zoom;
+            return (dx * dx) + (dy * dy) >= DragThreshold * DragThreshold;
+        }
 
         /// <summary>
         /// Classifies what a point is over. Joints are scanned tip-first and beat the bones they terminate,
