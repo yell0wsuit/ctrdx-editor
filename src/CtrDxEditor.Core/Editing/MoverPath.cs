@@ -12,7 +12,7 @@ namespace CtrDxEditor.Core.Editing
     public static class MoverPath
     {
         /// <summary>DX allocates 100 points for non-R paths and prepends the authored start point.</summary>
-        public const int MaxStoredPlainOffsetPoints = 99;
+        public const int MaxStoredPlainOffsetPoints = RelativePolyline.MaxStoredOffsetPoints;
 
         /// <summary>Returns true when the object has a path with positive movement speed.</summary>
         public static bool HasActiveMovement(LevelObject obj)
@@ -175,11 +175,7 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
-            return string.Join(",", stored.SelectMany(p =>
-            {
-                Vec2 offset = new(p.X - start.X, p.Y - start.Y);
-                return new[] { Format(offset.X), Format(offset.Y) };
-            }));
+            return RelativePolyline.Serialize(start, [start, .. stored]);
         }
 
         /// <summary>Compatibility wrapper for serializing a looping or out-and-back plain path.</summary>
@@ -240,24 +236,9 @@ namespace CtrDxEditor.Core.Editing
         /// </returns>
         public static int HitCanonicalPoint(Vec2 start, string? path, Vec2 point, double tolerance)
         {
-            if (string.IsNullOrWhiteSpace(path) || IsCircularPath(path))
-            {
-                return -1;
-            }
-
-            Vec2[] pts = CanonicalPoints(start, path);
-            double toleranceSquared = tolerance * tolerance;
-            for (int i = 1; i < pts.Length; i++)
-            {
-                double dx = pts[i].X - point.X;
-                double dy = pts[i].Y - point.Y;
-                if ((dx * dx) + (dy * dy) <= toleranceSquared)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+            return string.IsNullOrWhiteSpace(path) || IsCircularPath(path)
+                ? -1
+                : RelativePolyline.HitPoint(start, CanonicalPath(start, path), point, tolerance);
         }
 
         /// <summary>Whether one more canonical waypoint can fit without truncating the serialized DX path.</summary>
@@ -266,7 +247,10 @@ namespace CtrDxEditor.Core.Editing
         public static bool CanAddCanonicalPoint(Vec2 start, string? path)
         {
             return !IsCircularPath(path)
-                && CanonicalPoints(start, path).Length < MaxCanonicalPointCount(IsRetrace(path));
+                && RelativePolyline.CanAddPoint(
+                    start,
+                    CanonicalPath(start, path),
+                    MaxCanonicalPointCount(IsRetrace(path)) - 1);
         }
 
         /// <summary>Moves one canonical waypoint and re-serializes, preserving retrace/circuit state.</summary>
@@ -277,14 +261,17 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the move does not apply.</returns>
         public static string MoveCanonicalPoint(Vec2 start, string? path, int index, Vec2 newPoint)
         {
-            Vec2[] pts = CanonicalPoints(start, path);
-            if (index <= 0 || index >= pts.Length || IsCircularPath(path))
+            if (IsCircularPath(path))
             {
                 return path ?? string.Empty;
             }
 
-            pts[index] = newPoint;
-            return Serialize(start, pts, IsRetrace(path));
+            bool retrace = IsRetrace(path);
+            string canonicalPath = CanonicalPath(start, path);
+            string edited = RelativePolyline.MovePoint(start, canonicalPath, index, newPoint);
+            return edited == canonicalPath
+                ? path ?? string.Empty
+                : Serialize(start, RelativePolyline.Points(start, edited), retrace);
         }
 
         /// <summary>Inserts a canonical waypoint after <paramref name="segmentIndex"/> and re-serializes.</summary>
@@ -295,8 +282,7 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the edit does not apply.</returns>
         public static string InsertCanonicalPoint(Vec2 start, string? path, int segmentIndex, Vec2 newPoint)
         {
-            Vec2[] pts = CanonicalPoints(start, path);
-            if (segmentIndex < 0 || segmentIndex >= pts.Length - 1 || IsCircularPath(path))
+            if (IsCircularPath(path))
             {
                 return path ?? string.Empty;
             }
@@ -305,9 +291,12 @@ namespace CtrDxEditor.Core.Editing
                 return path ?? string.Empty;
             }
 
-            List<Vec2> list = [.. pts];
-            list.Insert(segmentIndex + 1, newPoint);
-            return Serialize(start, list, IsRetrace(path));
+            bool retrace = IsRetrace(path);
+            string canonicalPath = CanonicalPath(start, path);
+            string edited = RelativePolyline.InsertPoint(start, canonicalPath, segmentIndex, newPoint);
+            return edited == canonicalPath
+                ? path ?? string.Empty
+                : Serialize(start, RelativePolyline.Points(start, edited), retrace);
         }
 
         /// <summary>Appends a canonical waypoint, preserving retrace/circuit state.</summary>
@@ -322,10 +311,9 @@ namespace CtrDxEditor.Core.Editing
                 return path ?? string.Empty;
             }
 
-            Vec2[] pts = CanonicalPoints(start, path);
-            List<Vec2> list = [.. pts];
-            list.Add(newPoint);
-            return Serialize(start, list, IsRetrace(path));
+            bool retrace = IsRetrace(path);
+            string edited = RelativePolyline.AppendPoint(start, CanonicalPath(start, path), newPoint);
+            return Serialize(start, RelativePolyline.Points(start, edited), retrace);
         }
 
         /// <summary>Removes a single canonical waypoint (index >= 1) and re-serializes, preserving retrace/circuit state.</summary>
@@ -335,15 +323,17 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The re-serialized path, or <paramref name="path"/> unchanged when the edit does not apply.</returns>
         public static string DeleteCanonicalPoint(Vec2 start, string? path, int index)
         {
-            Vec2[] pts = CanonicalPoints(start, path);
-            if (index <= 0 || index >= pts.Length || IsCircularPath(path))
+            if (IsCircularPath(path))
             {
                 return path ?? string.Empty;
             }
 
-            List<Vec2> list = [.. pts];
-            list.RemoveAt(index);
-            return Serialize(start, list, IsRetrace(path));
+            bool retrace = IsRetrace(path);
+            string canonicalPath = CanonicalPath(start, path);
+            string edited = RelativePolyline.DeletePoint(start, canonicalPath, index);
+            return edited == canonicalPath
+                ? path ?? string.Empty
+                : Serialize(start, RelativePolyline.Points(start, edited), retrace);
         }
 
         /// <summary>Re-serializes the canonical points as an out-and-back retrace or a plain circuit.</summary>
@@ -447,6 +437,11 @@ namespace CtrDxEditor.Core.Editing
                 : MaxStoredPlainOffsetPoints + 1;
         }
 
+        private static string CanonicalPath(Vec2 start, string? path)
+        {
+            return RelativePolyline.Serialize(start, CanonicalPoints(start, path));
+        }
+
         /// <summary>Returns true when <paramref name="path"/> is DX circular movement syntax.</summary>
         public static bool IsCircularPath(string? path)
         {
@@ -501,26 +496,7 @@ namespace CtrDxEditor.Core.Editing
 
         private static Vec2[] PlainPoints(Vec2 start, string path)
         {
-            if (path[^1] == ',')
-            {
-                path = path[..^1];
-            }
-
-            string[] parts = path.Split(',');
-            if (parts.Length % 2 != 0)
-            {
-                return [start];
-            }
-
-            List<Vec2> points = [start];
-            for (int i = 0; i < parts.Length; i += 2)
-            {
-                double x = ParseDoubleOrZero(parts[i]);
-                double y = ParseDoubleOrZero(parts[i + 1]);
-                points.Add(new Vec2(start.X + x, start.Y + y));
-            }
-
-            return [.. points];
+            return RelativePolyline.Points(start, path);
         }
 
         private static int RawMoveSpeed(LevelObject obj)
@@ -530,18 +506,5 @@ namespace CtrDxEditor.Core.Editing
                 : 0;
         }
 
-        private static double ParseDoubleOrZero(string value)
-        {
-            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
-                ? parsed
-                : 0.0;
-        }
-
-        private static string Format(double value)
-        {
-            return Math.Abs(value) < 0.0000001
-                ? "0"
-                : value.ToString("0.###", CultureInfo.InvariantCulture);
-        }
     }
 }
