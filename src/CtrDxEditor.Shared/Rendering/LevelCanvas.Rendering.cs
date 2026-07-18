@@ -201,6 +201,13 @@ namespace CtrDxEditor.Rendering
                 DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
 
+                // Ghost segment button showing where an Alt-click would split the hovered bone.
+                if (_handSplitPreview is { } splitPreview && HandObject.IsHand(selected.Type))
+                {
+                    HandRenderer.DrawSplitPreview(
+                        context, v, sprites, splitPreview.Position, splitPreview.Rotatable, 0.6);
+                }
+
                 if (selected.Type == "transporter")
                 {
                     ConveyorRenderer.DrawHandles(context, v, selected, _palette.OrbitPathArrow);

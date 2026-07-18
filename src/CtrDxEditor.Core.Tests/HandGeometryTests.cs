@@ -150,7 +150,7 @@ namespace CtrDxEditor.Core.Tests
         public void HitTestFindsBase()
         {
             LevelObject hand = Hand(100, 200, (0, 50, true));
-            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(101, 201), 6, 4, 24);
+            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(101, 201), 6, 4);
 
             Assert.Equal(HandGeometry.HandleKind.Base, h.Kind);
             Assert.Equal(0, h.Index);
@@ -162,11 +162,11 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelObject hand = Hand(100, 200, (0, 50, true), (90, 40, false));
 
-            HandGeometry.Handle first = HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4, 24);
+            HandGeometry.Handle first = HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4);
             Assert.Equal(HandGeometry.HandleKind.Joint, first.Kind);
             Assert.Equal(1, first.Index);
 
-            HandGeometry.Handle claw = HandGeometry.HitTest(hand, new Vec2(150, 240), 6, 4, 24);
+            HandGeometry.Handle claw = HandGeometry.HitTest(hand, new Vec2(150, 240), 6, 4);
             Assert.Equal(HandGeometry.HandleKind.Joint, claw.Kind);
             Assert.Equal(2, claw.Index);
         }
@@ -176,7 +176,7 @@ namespace CtrDxEditor.Core.Tests
         public void HitTestFindsBoneBetweenJoints()
         {
             LevelObject hand = Hand(100, 200, (0, 50, true));
-            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(125, 201), 6, 4, 24);
+            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(125, 201), 6, 4);
 
             Assert.Equal(HandGeometry.HandleKind.Bone, h.Kind);
             Assert.Equal(1, h.Index);
@@ -187,29 +187,7 @@ namespace CtrDxEditor.Core.Tests
         public void HitTestPrefersJointOverBone()
         {
             LevelObject hand = Hand(100, 200, (0, 50, true));
-            Assert.Equal(HandGeometry.HandleKind.Joint, HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4, 24).Kind);
-        }
-
-        /// <summary>The nub sits past the claw, continuing the last segment's direction.</summary>
-        [Fact]
-        public void NubContinuesLastSegmentDirection()
-        {
-            LevelObject hand = Hand(100, 200, (0, 50, true));
-            Vec2 nub = HandGeometry.NubPosition(hand, 24);
-
-            Assert.Equal(174, nub.X, 6);
-            Assert.Equal(200, nub.Y, 6);
-        }
-
-        /// <summary>The nub is hit and reports the index of the segment it would create.</summary>
-        [Fact]
-        public void HitTestFindsNub()
-        {
-            LevelObject hand = Hand(100, 200, (0, 50, true));
-            HandGeometry.Handle h = HandGeometry.HitTest(hand, new Vec2(174, 200), 6, 4, 24);
-
-            Assert.Equal(HandGeometry.HandleKind.Nub, h.Kind);
-            Assert.Equal(2, h.Index);
+            Assert.Equal(HandGeometry.HandleKind.Joint, HandGeometry.HitTest(hand, new Vec2(150, 200), 6, 4).Kind);
         }
 
         /// <summary>A point away from every handle reports None.</summary>
@@ -217,7 +195,7 @@ namespace CtrDxEditor.Core.Tests
         public void HitTestReturnsNoneWhenClear()
         {
             LevelObject hand = Hand(100, 200, (0, 50, true));
-            Assert.Equal(HandGeometry.HandleKind.None, HandGeometry.HitTest(hand, new Vec2(400, 400), 6, 4, 24).Kind);
+            Assert.Equal(HandGeometry.HandleKind.None, HandGeometry.HitTest(hand, new Vec2(400, 400), 6, 4).Kind);
         }
 
         /// <summary>Dragging the base rewrites only x/y, as whole numbers.</summary>
@@ -345,29 +323,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(1, HandObject.SegmentCount(hand));
         }
 
-        /// <summary>Appending continues the last segment's angle and returns the new index to drag.</summary>
+        /// <summary>The split point is the pointer projected onto the bone, where the inserted joint lands.</summary>
         [Fact]
-        public void AppendSegmentContinuesLastAngle()
+        public void SplitPointProjectsPointerOntoBone()
         {
-            LevelObject hand = Hand(100, 200, (90, 50, true));
-            int index = HandGeometry.AppendSegment(hand);
+            LevelObject hand = Hand(100, 200, (0, 60, true));
+            Vec2 p = HandGeometry.SplitPoint(hand, 1, new Vec2(125, 240));
 
-            Assert.Equal(2, index);
-            Assert.Equal(2, HandObject.SegmentCount(hand));
-            Assert.Equal("90", hand.GetAttr("segment2Angle"));
-            Assert.Equal("10", hand.GetAttr("segment2Length"));
+            Assert.Equal(125, p.X, 6);
+            Assert.Equal(200, p.Y, 6);
         }
 
-        /// <summary>Appending to an empty hand creates the first segment.</summary>
+        /// <summary>The split point clamps to leave each half at least one unit, matching <see cref="HandGeometry.SplitBone"/>.</summary>
         [Fact]
-        public void AppendSegmentSeedsFirstSegment()
+        public void SplitPointClampsToBone()
         {
-            LevelObject hand = Hand(100, 200);
-            int index = HandGeometry.AppendSegment(hand);
+            LevelObject hand = Hand(100, 200, (0, 60, true));
 
-            Assert.Equal(1, index);
-            Assert.Equal(1, HandObject.SegmentCount(hand));
-            Assert.Equal("0", hand.GetAttr("segment1Angle"));
+            Assert.Equal(159, HandGeometry.SplitPoint(hand, 1, new Vec2(400, 200)).X, 6);
+            Assert.Equal(101, HandGeometry.SplitPoint(hand, 1, new Vec2(50, 200)).X, 6);
         }
     }
 }

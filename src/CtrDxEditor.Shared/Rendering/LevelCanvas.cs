@@ -318,6 +318,15 @@ namespace CtrDxEditor.Rendering
         /// <summary>The hand segment whose rotation dial is active, or 0 when no hand segment is active.</summary>
         private int _handActiveSegment;
 
+        /// <summary>
+        /// Where an Alt-hover would split a bone: the ghost joint's level position and the rotatable flag it
+        /// would inherit, or null when no split is being previewed.
+        /// </summary>
+        private (Vec2 Position, bool Rotatable)? _handSplitPreview;
+
+        /// <summary>Last pointer position in level units while hovering, so an Alt press can refresh the split preview without a move.</summary>
+        private Vec2 _lastHoverLevel;
+
         /// <summary>Level-space offset from the dragged object's origin to the pointer, held constant during a drag.</summary>
         private Vec2 _dragOffset;
 
@@ -423,6 +432,7 @@ namespace CtrDxEditor.Rendering
                 _polylinePointDrag = -1;
                 _handActiveSegment = 0;
                 _handHoverJoint = 0;
+                _handSplitPreview = null;
                 ResetPolylineHover();
                 InvalidateVisual();
             }

@@ -17,9 +17,6 @@ namespace CtrDxEditor.Rendering
         /// <summary>Screen-space grab tolerance for the water surface line.</summary>
         private const double WaterHandleTolerance = 6.0;
 
-        /// <summary>Screen-space distance from the claw to the append-segment nub.</summary>
-        private const double NubDistance = 24;
-
         /// <summary>
         /// Horizontal-resize cursor (col-resize) shown over the auto-catch radius ring or a horizontal rail end/hook.
         /// Created lazily rather than in the static constructor: eager creation would touch Avalonia's cursor factory
@@ -291,6 +288,34 @@ namespace CtrDxEditor.Rendering
                 && HandGeometry.SegmentResizeAxis(hand, index) == HandGeometry.ResizeAxis.Vertical
                 ? VResizeCursor
                 : ResizeCursor;
+        }
+
+        /// <summary>
+        /// Recomputes the Alt-hover split preview from a hover point. Shows the ghost joint at the cursor's
+        /// projection onto a bone while Alt is held over the selected hand, and clears it otherwise. Repaints
+        /// on any change and while the ghost tracks the cursor, so the preview follows the pointer live.
+        /// </summary>
+        /// <param name="levelPt">The hover position in level units.</param>
+        /// <param name="altHeld">Whether the split modifier is currently down.</param>
+        private void UpdateHandSplitPreview(Vec2 levelPt, bool altHeld)
+        {
+            (Vec2 Position, bool Rotatable)? preview = null;
+            if (altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
+            {
+                double tolerance = 9 / View.Zoom;
+                HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
+                if (hit.Kind == HandGeometry.HandleKind.Bone)
+                {
+                    preview = (HandGeometry.SplitPoint(hand, hit.Index, levelPt), HandObject.Rotatable(hand, hit.Index));
+                }
+            }
+
+            bool wasShowing = _handSplitPreview is not null;
+            _handSplitPreview = preview;
+            if (preview is not null || wasShowing)
+            {
+                InvalidateVisual();
+            }
         }
 
         /// <summary>Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.</summary>
@@ -602,7 +627,7 @@ namespace CtrDxEditor.Rendering
                 {
                     double rightTolerance = 9 / View.Zoom;
                     HandGeometry.Handle rightHandHit = HandGeometry.HitTest(
-                        rightHand, levelPt, rightTolerance, rightTolerance / 2, NubDistance / View.Zoom);
+                        rightHand, levelPt, rightTolerance, rightTolerance / 2);
                     if (rightHandHit.Kind == HandGeometry.HandleKind.Joint)
                     {
                         DeleteSelectedHandSegment(rightHandHit.Index);
@@ -730,7 +755,7 @@ namespace CtrDxEditor.Rendering
             {
                 double handTolerance = 9 / View.Zoom;
                 pressedHandHit = HandGeometry.HitTest(
-                    pressedHand, levelPt, handTolerance, handTolerance / 2, NubDistance / View.Zoom);
+                    pressedHand, levelPt, handTolerance, handTolerance / 2);
             }
 
             // The dial wins over underlying hand art except an end joint: a coincident joint must remain a
@@ -817,23 +842,26 @@ namespace CtrDxEditor.Rendering
                         return;
 
                     case HandGeometry.HandleKind.Bone:
-                        BeginDocumentEdit?.Invoke();
-                        _handJointDrag = HandGeometry.SplitBone(handObj, pressedHandHit.Index, levelPt);
-                        _handActiveSegment = _handJointDrag;
-                        SelectedObjectMoved?.Invoke();
-                        InvalidateVisual();
-                        e.Handled = true;
-                        e.Pointer.Capture(this);
-                        return;
+                        // Alt splits the bone at the cursor; a plain click only selects that segment so the
+                        // arm is never lengthened by accident. A fresh split becomes the joint-length drag.
+                        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+                        {
+                            BeginDocumentEdit?.Invoke();
+                            _handSplitPreview = null;
+                            _handJointDrag = HandGeometry.SplitBone(handObj, pressedHandHit.Index, levelPt);
+                            _handActiveSegment = _handJointDrag;
+                            HandSegmentActivated?.Invoke(_handActiveSegment);
+                            SelectedObjectMoved?.Invoke();
+                            InvalidateVisual();
+                            e.Handled = true;
+                            e.Pointer.Capture(this);
+                            return;
+                        }
 
-                    case HandGeometry.HandleKind.Nub:
-                        BeginDocumentEdit?.Invoke();
-                        _handJointDrag = HandGeometry.AppendSegment(handObj);
-                        _handActiveSegment = _handJointDrag;
-                        SelectedObjectMoved?.Invoke();
+                        _handActiveSegment = pressedHandHit.Index;
+                        HandSegmentActivated?.Invoke(pressedHandHit.Index);
                         InvalidateVisual();
                         e.Handled = true;
-                        e.Pointer.Capture(this);
                         return;
 
                     case HandGeometry.HandleKind.None:
@@ -1062,7 +1090,7 @@ namespace CtrDxEditor.Rendering
                 {
                     double hoverTolerance = 9 / View.Zoom;
                     HandGeometry.Handle hoverHit = HandGeometry.HitTest(
-                        hoverHand, levelPt, hoverTolerance, hoverTolerance / 2, NubDistance / View.Zoom);
+                        hoverHand, levelPt, hoverTolerance, hoverTolerance / 2);
                     hoverHandKind = hoverHit.Kind;
                     overHandEdit = hoverHit.Kind != HandGeometry.HandleKind.None;
                     if (hoverHit.Kind == HandGeometry.HandleKind.Joint)
@@ -1070,6 +1098,8 @@ namespace CtrDxEditor.Rendering
                         _handHoverJoint = hoverHit.Index;
                     }
                 }
+                _lastHoverLevel = levelPt;
+                UpdateHandSplitPreview(levelPt, e.KeyModifiers.HasFlag(KeyModifiers.Alt));
                 HandPointerAffordance handAffordance =
                     RotationDialTargetResolver.ResolveHandAffordance(dial, hoverHandKind);
                 SetDialKnobHovered(
@@ -1085,6 +1115,7 @@ namespace CtrDxEditor.Rendering
                     InvalidateVisual();
                 }
                 Cursor = tutorialTextResizeHover ? ResizeCursor
+                    : _handSplitPreview is not null ? new Cursor(StandardCursorType.Cross)
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : handAffordance == HandPointerAffordance.JointResize ? CursorForHandJoint(_handHoverJoint)
                     : handAffordance == HandPointerAffordance.Dial ? new Cursor(StandardCursorType.Hand)
@@ -1178,6 +1209,11 @@ namespace CtrDxEditor.Rendering
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
             _handHoverJoint = 0;
+            if (_handSplitPreview is not null)
+            {
+                _handSplitPreview = null;
+                InvalidateVisual();
+            }
             if (_waterHandleHovered)
             {
                 _waterHandleHovered = false;
@@ -1211,7 +1247,25 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // Holding Alt over a hand bone reveals the split preview without moving the cursor.
+            if (e.Key is Key.LeftAlt or Key.RightAlt)
+            {
+                UpdateHandSplitPreview(_lastHoverLevel, true);
+            }
+
             base.OnKeyDown(e);
+        }
+
+        /// <inheritdoc />
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            // Releasing Alt hides the split preview even while the cursor stays put over the bone.
+            if (e.Key is Key.LeftAlt or Key.RightAlt)
+            {
+                UpdateHandSplitPreview(_lastHoverLevel, false);
+            }
+
+            base.OnKeyUp(e);
         }
 
         /// <inheritdoc />

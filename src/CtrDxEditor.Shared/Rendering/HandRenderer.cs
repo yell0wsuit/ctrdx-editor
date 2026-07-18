@@ -164,6 +164,32 @@ namespace CtrDxEditor.Rendering
             DrawClaw(ctx, v, parts.Layers[PartClaw], hand);
         }
 
+        /// <summary>
+        /// Draws a translucent segment button at <paramref name="levelPos"/>, previewing where an Alt-click
+        /// would insert a new joint. Uses the idle button for a rotatable segment and the plain button
+        /// otherwise, matching the flag the split would inherit.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the hand pieces.</param>
+        /// <param name="levelPos">The ghost joint position in level units.</param>
+        /// <param name="rotatable">Whether the previewed segment would be rotatable.</param>
+        /// <param name="opacity">Ghost opacity in the range 0..1.</param>
+        public static void DrawSplitPreview(
+            DrawingContext ctx, ViewTransform v, SpriteCache sprites, Vec2 levelPos, bool rotatable, double opacity)
+        {
+            if (sprites.GetSprite("hand_parts", 0, 0) is not { Layers.Count: >= 5 } parts)
+            {
+                return;
+            }
+
+            int part = rotatable ? PartButtonIdle : PartButtonNone;
+            using (ctx.PushOpacity(opacity))
+            {
+                DrawCentered(ctx, parts.Layers[part], v.LevelToScreen(levelPos), v.Zoom);
+            }
+        }
+
         private static void DrawCentered(DrawingContext ctx, SpriteLayerDraw layer, Vec2 center, double z)
         {
             IntRect source = layer.Frame.Frame;

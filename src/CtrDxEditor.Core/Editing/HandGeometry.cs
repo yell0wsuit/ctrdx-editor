@@ -80,52 +80,30 @@ namespace CtrDxEditor.Core.Editing
             /// <summary>A joint: dragging rewrites its segment's angle and length together.</summary>
             Joint,
 
-            /// <summary>A bone: clicking splits it into two collinear segments.</summary>
+            /// <summary>A bone: clicking selects its segment, and Alt-clicking splits it into two collinear segments.</summary>
             Bone,
-
-            /// <summary>The tip nub: clicking appends a segment.</summary>
-            Nub,
         }
 
         /// <summary>A hit-tested hand handle.</summary>
         /// <param name="Kind">Which handle kind is under the point.</param>
         /// <param name="Index">
         /// The 1-based segment index for <see cref="HandleKind.Joint"/> (the segment the joint terminates) and
-        /// <see cref="HandleKind.Bone"/>; 0 for <see cref="HandleKind.Base"/>; and the index the new segment
-        /// would take for <see cref="HandleKind.Nub"/>.
+        /// <see cref="HandleKind.Bone"/>; 0 for <see cref="HandleKind.Base"/>.
         /// </param>
         public readonly record struct Handle(HandleKind Kind, int Index);
 
         /// <summary>
-        /// The append nub's position: <paramref name="distance"/> past the claw, continuing the last segment's
-        /// direction. A hand with no live segments places the nub along +X from its base.
-        /// </summary>
-        /// <param name="hand">The hand object.</param>
-        /// <param name="distance">How far past the claw to place the nub, in level units.</param>
-        /// <returns>The nub position in level units.</returns>
-        public static Vec2 NubPosition(LevelObject hand, double distance)
-        {
-            int n = HandObject.SegmentCount(hand);
-            Vec2 tip = Joints(hand)[^1];
-            double angle = n >= 1 ? HandObject.Angle(hand, n) : 0;
-            // Only the spec's display offset and stored-angle sign affect the projection, and both are
-            // constant across segments, so the index used to build the spec is immaterial here.
-            return ObjectRotation.KnobPosition(tip, angle, SegmentSpec(Math.Max(1, n)), distance);
-        }
-
-        /// <summary>
         /// Classifies what a point is over. Joints are scanned tip-first and beat the bones they terminate,
-        /// then bones, then the nub — mirroring the polyline editor's point-before-segment-before-nub order.
-        /// Tolerances are in level units, so the caller converts screen pixels via the zoom.
+        /// then bones — mirroring the polyline editor's point-before-segment order. Tolerances are in level
+        /// units, so the caller converts screen pixels via the zoom.
         /// </summary>
         /// <param name="hand">The hand object.</param>
         /// <param name="point">The position to classify, in level units.</param>
-        /// <param name="jointTolerance">Hit radius around joints, the base, and the nub.</param>
+        /// <param name="jointTolerance">Hit radius around joints and the base.</param>
         /// <param name="boneTolerance">Hit distance from a bone's centre line.</param>
-        /// <param name="nubDistance">How far past the claw the nub sits.</param>
         /// <returns>The handle under the point, or <see cref="HandleKind.None"/>.</returns>
         public static Handle HitTest(
-            LevelObject hand, Vec2 point, double jointTolerance, double boneTolerance, double nubDistance)
+            LevelObject hand, Vec2 point, double jointTolerance, double boneTolerance)
         {
             Vec2[] points = Joints(hand);
 
@@ -150,13 +128,8 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
-            return Distance(NubPosition(hand, nubDistance), point) <= jointTolerance
-                ? new Handle(HandleKind.Nub, points.Length)
-                : new Handle(HandleKind.None, 0);
+            return new Handle(HandleKind.None, 0);
         }
-
-        /// <summary>Length seeded into a segment created by the nub, before the drag overwrites it.</summary>
-        public const double AppendLength = 10;
 
         /// <summary>Moves the whole hand by rewriting its anchor; the chain follows unchanged.</summary>
         /// <param name="hand">The hand object.</param>
@@ -211,6 +184,28 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
+        /// Where bone <paramref name="index"/> would split for a cut at <paramref name="point"/>: the pointer
+        /// projected onto the bone, clamped so neither half is shorter than one unit. Shared by the split
+        /// itself and its hover preview so the ghost joint sits exactly where <see cref="SplitBone"/> lands it.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <param name="index">The 1-based segment being split.</param>
+        /// <param name="point">The cut position in level units.</param>
+        /// <returns>The insertion position in level units, or the bone start when <paramref name="index"/> is out of range.</returns>
+        public static Vec2 SplitPoint(LevelObject hand, int index, Vec2 point)
+        {
+            Vec2 start = Joint(hand, index - 1);
+            if (index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return start;
+            }
+
+            double along = AlongBone(hand, index, start, point);
+            double radians = HandObject.Angle(hand, index) * Math.PI / 180;
+            return new Vec2(start.X + (along * Math.Cos(radians)), start.Y + (along * Math.Sin(radians)));
+        }
+
+        /// <summary>
         /// Splits bone <paramref name="index"/> at <paramref name="point"/> into two collinear segments. Both
         /// halves inherit the original angle and rotatable flag, so the rendered arm is unchanged; only the
         /// joint count grows. Each half is kept at least one unit long.
@@ -231,28 +226,19 @@ namespace CtrDxEditor.Core.Editing
             double angle = HandObject.Angle(hand, index);
             bool rotatable = HandObject.Rotatable(hand, index);
 
-            double radians = angle * Math.PI / 180;
-            double along = ((point.X - start.X) * Math.Cos(radians)) + ((point.Y - start.Y) * Math.Sin(radians));
-            along = Math.Clamp(along, 1, Math.Max(1, total - 1));
-
+            double along = AlongBone(hand, index, start, point);
             HandObject.SetLength(hand, index, along);
             HandObject.InsertSegment(hand, index + 1, angle, total - along, rotatable);
             return index;
         }
 
-        /// <summary>
-        /// Appends a segment past the claw, continuing the last segment's angle and rotatable flag. The seeded
-        /// length is a placeholder the caller's drag immediately overwrites.
-        /// </summary>
-        /// <param name="hand">The hand object.</param>
-        /// <returns>The new segment's index, ready to drag.</returns>
-        public static int AppendSegment(LevelObject hand)
+        /// <summary>The pointer's distance along bone <paramref name="index"/> from <paramref name="start"/>, clamped to leave each half at least one unit.</summary>
+        private static double AlongBone(LevelObject hand, int index, Vec2 start, Vec2 point)
         {
-            int n = HandObject.SegmentCount(hand);
-            double angle = n >= 1 ? HandObject.Angle(hand, n) : 0;
-            bool rotatable = n < 1 || HandObject.Rotatable(hand, n);
-            HandObject.InsertSegment(hand, n + 1, angle, AppendLength, rotatable);
-            return n + 1;
+            double total = HandObject.Length(hand, index);
+            double radians = HandObject.Angle(hand, index) * Math.PI / 180;
+            double along = ((point.X - start.X) * Math.Cos(radians)) + ((point.Y - start.Y) * Math.Sin(radians));
+            return Math.Clamp(along, 1, Math.Max(1, total - 1));
         }
 
         /// <summary>The world position of joint <paramref name="index"/>, where 0 is the hand base.</summary>
