@@ -52,6 +52,8 @@ namespace CtrDxEditor.Content
         private const string RoboHandImageBase = "images/obj_robohand";
         private const string SnailJson = "images/obj_snail.json";
         private const string SnailImageBase = "images/obj_snail";
+        private const string AntJson = "images/obj_ant.json";
+        private const string AntImageBase = "images/obj_ant";
         private const string TutorialSignsJson = "images/tutorial_signs.json";
         private const string TutorialSignsImageBase = "images/tutorial_signs";
 
@@ -308,6 +310,20 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(RoboHandJson, RoboHandImageBase, 3),
                 new SpriteLayer(RoboHandJson, RoboHandImageBase, 4),
                 new SpriteLayer(RoboHandJson, RoboHandImageBase, 5),
+            ]),
+
+            // Ant conveyor palette icon and renderer parts. Quads 0-5 are the walk animation;
+            // quad 6 is the entrance/exit hole drawn only for open paths.
+            new("ants", [new SpriteLayer(AntJson, AntImageBase, 0)]),
+            new("ant_parts",
+            [
+                new SpriteLayer(AntJson, AntImageBase, 0),
+                new SpriteLayer(AntJson, AntImageBase, 1),
+                new SpriteLayer(AntJson, AntImageBase, 2),
+                new SpriteLayer(AntJson, AntImageBase, 3),
+                new SpriteLayer(AntJson, AntImageBase, 4),
+                new SpriteLayer(AntJson, AntImageBase, 5),
+                new SpriteLayer(AntJson, AntImageBase, 6),
             ]),
 
             // Rocket launcher base (quad 0, frame_00_launcher). Non-placeable; drawn upright behind the
