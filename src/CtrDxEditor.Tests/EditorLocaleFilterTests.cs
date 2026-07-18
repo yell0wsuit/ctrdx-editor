@@ -44,6 +44,7 @@ namespace CtrDxEditor.Tests
             EditorViewModel vm = Create();
 
             Assert.Equal("en", vm.AvailableLocales[0]);
+            Assert.Equal(0, vm.DisplayLocaleIndex);
             Assert.Contains("es", vm.AvailableLocales);
             Assert.Contains("ru", vm.AvailableLocales);
         }
@@ -58,7 +59,21 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(["fr", "es"], vm.AvailableLocales);
             Assert.Equal("fr", vm.DisplayLocale);
+            Assert.Equal(0, vm.DisplayLocaleIndex);
             Assert.True(vm.HasLocalizedText);
+        }
+
+        /// <summary>The picker index and display locale remain synchronized in both directions.</summary>
+        [Fact]
+        public void DisplayLocaleIndexSynchronizesPickerSelection()
+        {
+            EditorViewModel vm = Create();
+
+            vm.DisplayLocaleIndex = 1;
+            Assert.Equal("es", vm.DisplayLocale);
+
+            vm.DisplayLocale = "ru";
+            Assert.Equal(2, vm.DisplayLocaleIndex);
         }
 
         /// <summary>A single localized language is selected but does not need a visible picker.</summary>

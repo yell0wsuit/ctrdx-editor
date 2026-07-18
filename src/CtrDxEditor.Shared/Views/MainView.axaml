@@ -586,7 +586,7 @@
             <icons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
           </Button>
           <ComboBox Grid.Column="5" ItemsSource="{Binding AvailableLocales}"
-                    SelectedItem="{Binding DisplayLocale, Mode=TwoWay}"
+                    SelectedIndex="{Binding DisplayLocaleIndex, Mode=TwoWay}"
                     IsVisible="{Binding HasLocalizedText, FallbackValue=False}"
                     MinWidth="96" Height="24" Padding="6,0"
                     ToolTip.Tip="{loc:Tr Panel.Language}" />

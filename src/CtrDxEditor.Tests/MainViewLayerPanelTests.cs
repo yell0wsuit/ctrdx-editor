@@ -138,6 +138,8 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("IsVisible=\"{Binding HasLocalizedText, FallbackValue=False}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding HasDocument, FallbackValue=False}\"", view, StringComparison.Ordinal);
+            Assert.Contains("SelectedIndex=\"{Binding DisplayLocaleIndex, Mode=TwoWay}\"", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("SelectedItem=\"{Binding DisplayLocale, Mode=TwoWay}\"", view, StringComparison.Ordinal);
         }
 
         /// <summary>Selection changes queue a null-safe scroll after the tree has laid out expanded children.</summary>

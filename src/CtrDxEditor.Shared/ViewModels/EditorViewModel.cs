@@ -64,6 +64,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The locale whose localized objects are shown. Session-only.</summary>
         [ObservableProperty] public partial string DisplayLocale { get; set; } = "en";
 
+        /// <summary>The selected locale's stable index in <see cref="AvailableLocales" />, or -1 when unavailable.</summary>
+        [ObservableProperty] public partial int DisplayLocaleIndex { get; set; } = -1;
+
         /// <summary>The currently selected layer-tree row.</summary>
         [ObservableProperty] public partial object? SelectedTreeItem { get; set; }
 
@@ -571,6 +574,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(EffectivelyLockedObjects));
             SelectedTreeItem = null;
             DisplayLocale = "en";
+            DisplayLocaleIndex = -1;
         }
 
         private bool IsLocaleHidden(LevelObject obj)
@@ -580,6 +584,7 @@ namespace CtrDxEditor.ViewModels
 
         private void RefreshLocales()
         {
+            DisplayLocaleIndex = -1;
             AvailableLocales.Clear();
             if (Document is not null)
             {
@@ -592,9 +597,11 @@ namespace CtrDxEditor.ViewModels
                 }
             }
 
-            DisplayLocale = AvailableLocales.FirstOrDefault(locale => locale == "en")
+            string selectedLocale = AvailableLocales.FirstOrDefault(locale => locale == "en")
                 ?? AvailableLocales.FirstOrDefault()
                 ?? "en";
+            DisplayLocale = selectedLocale;
+            DisplayLocaleIndex = AvailableLocales.IndexOf(selectedLocale);
             OnPropertyChanged(nameof(HasLocalizedText));
         }
 
@@ -793,12 +800,28 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnDisplayLocaleChanged(string value)
         {
+            int index = AvailableLocales.IndexOf(value);
+            if (DisplayLocaleIndex != index)
+            {
+                DisplayLocaleIndex = index;
+            }
+
             RecomputeHiddenObjects();
             if (SelectedObject is { } selected && EffectivelyHiddenObjects.Contains(selected))
             {
                 SelectedObject = null;
             }
             ObjectMutated?.Invoke();
+        }
+
+        partial void OnDisplayLocaleIndexChanged(int value)
+        {
+            if (value >= 0
+                && value < AvailableLocales.Count
+                && DisplayLocale != AvailableLocales[value])
+            {
+                DisplayLocale = AvailableLocales[value];
+            }
         }
 
         partial void OnSelectedTreeItemChanged(object? value)
