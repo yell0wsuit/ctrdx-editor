@@ -47,6 +47,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Selection marquee for an unlocked object.</summary>
         public Pen ObjectSelected { get; private set; } = OverlayPen(Brushes.DeepSkyBlue, 1.5);
 
+        /// <summary>Translucent fill tinting the active hand segment's bone, so the selection reads on the art.</summary>
+        public IBrush HandSegmentTint { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x4D);
+
+        /// <summary>Stronger fill marking the active hand segment's joint button, drawn over <see cref="HandSegmentTint"/>.</summary>
+        public IBrush HandSegmentMark { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x99);
+
         /// <summary>Solid arrow marking a directional force field's push direction (pump, and later steam).
         /// Solid rather than dashed so it reads as an arrow against the dashed hitbox boxes.</summary>
         public Pen ForceArrow { get; private set; } = new(new SolidColorBrush(Color.FromRgb(0x7F, 0x22, 0xFE)), 2);
@@ -82,7 +88,10 @@ namespace CtrDxEditor.Rendering
             CandyCrosshair = SolidPen(hitboxColor, 1.5);
             CandyCrosshairAlert = SolidPen(ThemeColor(host, "EditorColor.OverlayHitboxAlert", Colors.Red), 2);
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
-            ObjectSelected = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue), 1.5);
+            Color selectedColor = ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue);
+            ObjectSelected = OverlayPen(selectedColor, 1.5);
+            HandSegmentTint = Translucent(selectedColor, 0x4D);
+            HandSegmentMark = Translucent(selectedColor, 0x99);
             ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);
             SpinArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlaySpinArrow", Color.FromRgb(0x0E, 0x74, 0x9A))), 2);
             Color orbitColor = ThemeColor(host, "EditorColor.OverlayOrbitPath", Color.FromRgb(0x25, 0x63, 0xEB));
@@ -98,6 +107,12 @@ namespace CtrDxEditor.Rendering
             return host.TryFindResource(key, host.ActualThemeVariant, out object? value) && value is Color color
                 ? color
                 : fallback;
+        }
+
+        /// <summary>Builds a solid brush from <paramref name="color"/> at the given alpha.</summary>
+        private static SolidColorBrush Translucent(Color color, byte alpha)
+        {
+            return new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
         }
 
         /// <summary>Builds a dashed overlay pen with the shared editor dash pattern.</summary>

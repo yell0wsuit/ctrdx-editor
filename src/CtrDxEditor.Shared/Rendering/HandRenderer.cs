@@ -190,6 +190,72 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>
+        /// Tints the active segment so the current selection reads on the art: a translucent fill over the
+        /// segment's bone and a stronger fill over its origin joint button. Reuses the same bone/joint geometry
+        /// as <see cref="Draw"/>, so the tint lines up with the drawn pieces. A no-op for an out-of-range
+        /// <paramref name="index"/>, a non-hand object, or a hand whose parts sprite is missing.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the hand pieces.</param>
+        /// <param name="hand">The mechanical hand.</param>
+        /// <param name="index">The 1-based active segment.</param>
+        /// <param name="boneTint">Translucent fill for the segment's bone.</param>
+        /// <param name="jointMark">Fill marking the segment's origin joint button.</param>
+        public static void DrawActiveSegment(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject hand,
+            int index,
+            IBrush boneTint,
+            IBrush jointMark)
+        {
+            if (!HandObject.IsHand(hand.Type) || index < 1 || index > HandObject.SegmentCount(hand))
+            {
+                return;
+            }
+            if (sprites.GetSprite("hand_parts", 0, 0) is not { Layers.Count: >= 5 } parts)
+            {
+                return;
+            }
+
+            double z = v.Zoom;
+            Vec2 origin = HandGeometry.Joint(hand, index - 1);
+            Vec2 screenOrigin = v.LevelToScreen(origin);
+
+            // The joint-button radius both sizes the joint mark and insets the bone fill, so the tint never
+            // slides under the neighbouring segment's button or the claw at the far joint.
+            IntRect buttonSource = parts.Layers[HandObject.Rotatable(hand, index) ? PartButtonIdle : PartButtonNone].Frame.Frame;
+            double buttonRadius = Math.Max(buttonSource.W, buttonSource.H) / SpritePlacement.MapScale / 2 * z;
+            double length = HandObject.Length(hand, index) * z;
+
+            // Bone fill: an oriented rectangle matching the drawn bone thickness, inset at both ends by the
+            // joint radius so it stays on the exposed bone between the two joint buttons.
+            IntRect boneSource = parts.Layers[PartBone].Frame.Frame;
+            double thickness = boneSource.H / SpritePlacement.MapScale * z;
+            double boneStart = buttonRadius;
+            double boneEnd = length - buttonRadius;
+            if (thickness > 0 && boneEnd > boneStart)
+            {
+                Matrix m = Matrix.CreateRotation(HandObject.Angle(hand, index) * Math.PI / 180)
+                    * Matrix.CreateTranslation(screenOrigin.X, screenOrigin.Y);
+                using (ctx.PushTransform(m))
+                {
+                    ctx.DrawRectangle(boneTint, null, new Rect(boneStart, -thickness / 2, boneEnd - boneStart, thickness));
+                }
+            }
+
+            // Joint mark: a disc over the segment's origin button, capped to half the segment length so a
+            // short segment's mark cannot spill past its far joint.
+            if (buttonRadius > 0 && length > 0)
+            {
+                double r = Math.Min(buttonRadius, length / 2);
+                ctx.DrawEllipse(jointMark, null, new Point(screenOrigin.X, screenOrigin.Y), r, r);
+            }
+        }
+
         private static void DrawCentered(DrawingContext ctx, SpriteLayerDraw layer, Vec2 center, double z)
         {
             IntRect source = layer.Frame.Frame;

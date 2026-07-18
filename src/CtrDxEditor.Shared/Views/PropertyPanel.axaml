@@ -12,6 +12,30 @@
     <Style Selector="TextBlock.field-label:disabled">
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Disabled}" />
     </Style>
+
+    <!-- Flat collapsible header for grouped fields (mechanical hand segments): reads as part of the panel
+         rather than a stock expander box, so the section title and its fields line up with the bare fields. -->
+    <Style Selector="ToggleButton.segment-header">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="2,4" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton.segment-header /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="ToggleButton.segment-header:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardHover}" />
+    </Style>
+    <Style Selector="ToggleButton.segment-header:checked /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="ToggleButton.segment-header:checked:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardHover}" />
+    </Style>
   </UserControl.Styles>
   <UserControl.Resources>
     <DataTemplate x:Key="FieldTemplate" x:DataType="vm:AttributeFieldViewModel">
@@ -77,15 +101,27 @@
               <ItemsControl ItemsSource="{Binding Fields}"
                             ItemTemplate="{StaticResource FieldTemplate}"
                             IsVisible="{Binding !HasHeader}" />
-              <!-- Grouped fields (mechanical hand segments) get a collapsible section. -->
-              <Expander Header="{Binding Header}"
-                        IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-                        IsVisible="{Binding HasHeader}"
-                        Margin="0,4,0,0"
-                        HorizontalAlignment="Stretch">
+              <!-- Grouped fields (mechanical hand segments): a flat collapsible section whose fields line up
+                   with the bare fields above, instead of a stock expander that indents and boxes them. -->
+              <StackPanel IsVisible="{Binding HasHeader}" Margin="0,6,0,0">
+                <ToggleButton Classes="segment-header" IsChecked="{Binding IsExpanded, Mode=TwoWay}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Panel Width="16" Height="16" VerticalAlignment="Center">
+                      <icons:MaterialIcon Kind="ChevronRight" Width="16" Height="16"
+                                          IsVisible="{Binding !IsExpanded}"
+                                          Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+                      <icons:MaterialIcon Kind="ChevronDown" Width="16" Height="16"
+                                          IsVisible="{Binding IsExpanded}"
+                                          Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+                    </Panel>
+                    <TextBlock Text="{Binding Header}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </StackPanel>
+                </ToggleButton>
+                <Border Height="1" Background="{DynamicResource EditorBrush.Surface.Divider}" Margin="0,2,0,4" />
                 <ItemsControl ItemsSource="{Binding Fields}"
-                              ItemTemplate="{StaticResource FieldTemplate}" />
-              </Expander>
+                              ItemTemplate="{StaticResource FieldTemplate}"
+                              IsVisible="{Binding IsExpanded}" />
+              </StackPanel>
             </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
