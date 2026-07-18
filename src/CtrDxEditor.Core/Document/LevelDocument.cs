@@ -130,6 +130,12 @@ namespace CtrDxEditor.Core.Document
         /// <summary>The Objects layer element, or null when the document has none yet.</summary>
         public XElement? ObjectsLayer => Layer("Objects");
 
+        /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
+        public IReadOnlyList<LevelLayer> Layers =>
+            [.. Root.Elements("layer")
+                .Where(l => (string?)l.Attribute("name") != "settings")
+                .Select(l => new LevelLayer(l))];
+
         /// <summary>Adds an object to the Objects layer, creating the layer when needed.</summary>
         /// <param name="obj">The object to append.</param>
         public void Add(LevelObject obj)
