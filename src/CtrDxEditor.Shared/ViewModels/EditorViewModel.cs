@@ -808,33 +808,32 @@ namespace CtrDxEditor.ViewModels
                 return null;
             }
 
-            IReadOnlyList<LevelObject> objects = Document.AllObjects;
-            int[] autoWidthIndices = [.. objects
-                .Select((obj, index) => (obj, index))
-                .Where(item => TutorialObject.IsAutoWidth(item.obj))
-                .Select(item => item.index)];
+            ObjectRef[] autoWidthRefs = [.. Document.AllObjects
+                .Where(TutorialObject.IsAutoWidth)
+                .Select(Document.RefOf)
+                .Where(reference => reference is not null)
+                .Select(reference => reference!.Value)];
             return new HistoryState(
                 Document.Save(),
-                IndexOf(objects, SelectedObject),
-                IndexOf(objects, LockedObject),
-                autoWidthIndices);
+                SelectedObject is { } selected ? Document.RefOf(selected) : null,
+                LockedObject is { } locked ? Document.RefOf(locked) : null,
+                autoWidthRefs);
         }
 
         private void RestoreHistoryState(HistoryState state)
         {
             Document = LevelDocument.Parse(state.Xml);
-            IReadOnlyList<LevelObject> objects = Document.AllObjects;
-            foreach (int index in state.AutoWidthIndices)
+            foreach (ObjectRef reference in state.AutoWidthRefs)
             {
-                if (index >= 0 && index < objects.Count && TutorialObject.IsText(objects[index].Type))
+                if (Document.Resolve(reference) is { } obj && TutorialObject.IsText(obj.Type))
                 {
-                    TutorialObject.SetAutoWidth(objects[index], true);
+                    TutorialObject.SetAutoWidth(obj, true);
                 }
             }
             RefreshPalette();
             RefreshObjectList();
-            SelectedObject = ObjectAt(state.SelectedIndex);
-            LockedObject = ObjectAt(state.LockedIndex);
+            SelectedObject = state.SelectedRef is { } selectedRef ? Document.Resolve(selectedRef) : null;
+            LockedObject = state.LockedRef is { } lockedRef ? Document.Resolve(lockedRef) : null;
             // A restore repaints in place; it must not refit/refocus the canvas the way opening a
             // level does (LevelLoaded), or every undo/redo would throw away the user's zoom and pan.
             ObjectMutated?.Invoke();
@@ -842,31 +841,7 @@ namespace CtrDxEditor.ViewModels
 
         private static bool HistoryStatesEqual(HistoryState left, HistoryState right)
         {
-            return left.Xml == right.Xml && left.AutoWidthIndices.SequenceEqual(right.AutoWidthIndices);
-        }
-
-        private LevelObject? ObjectAt(int index)
-        {
-            return Document is { } doc && index >= 0 && index < doc.AllObjects.Count
-                ? doc.AllObjects[index]
-                : null;
-        }
-
-        private static int IndexOf(IReadOnlyList<LevelObject> objects, LevelObject? target)
-        {
-            if (target is null)
-            {
-                return -1;
-            }
-
-            for (int i = 0; i < objects.Count; i++)
-            {
-                if (Equals(objects[i], target))
-                {
-                    return i;
-                }
-            }
-            return -1;
+            return left.Xml == right.Xml && left.AutoWidthRefs.SequenceEqual(right.AutoWidthRefs);
         }
 
         private static HistoryState PopLast(List<HistoryState> states)
@@ -893,8 +868,8 @@ namespace CtrDxEditor.ViewModels
 
         private sealed record HistoryState(
             string Xml,
-            int SelectedIndex,
-            int LockedIndex,
-            int[] AutoWidthIndices);
+            ObjectRef? SelectedRef,
+            ObjectRef? LockedRef,
+            ObjectRef[] AutoWidthRefs);
     }
 }

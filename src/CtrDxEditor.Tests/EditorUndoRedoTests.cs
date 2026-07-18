@@ -50,6 +50,21 @@ namespace CtrDxEditor.Tests
         </map>
         """;
 
+        private const string MultiLayerLevel = """
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings">
+                <map gridSize="32" width="640" height="480" />
+            </layer>
+            <layer name="first">
+                <candy x="100" y="100" />
+            </layer>
+            <layer name="second">
+                <star x="200" y="200" timeout="-1" />
+            </layer>
+        </map>
+        """;
+
         /// <summary>Verifies that undoing and redoing placement removes and restores the object.</summary>
         [Fact]
         public void UndoAndRedoRestorePlacedObject()
@@ -213,10 +228,32 @@ namespace CtrDxEditor.Tests
             Assert.False(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
         }
 
+        /// <summary>Restores selection to the same structural object in a later layer after undo.</summary>
+        [Fact]
+        public void UndoRestoresSelectionInSecondLayer()
+        {
+            EditorViewModel vm = CreateLoadedViewModel(MultiLayerLevel);
+            LevelObject star = vm.Document!.Layers[1].Objects[0];
+            vm.SelectedObject = star;
+            AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
+
+            xField.Value = "250";
+            vm.Undo();
+
+            LevelObject restored = vm.Document.Layers[1].Objects[0];
+            Assert.Equal(200, restored.X);
+            Assert.Same(restored.Element, vm.SelectedObject!.Element);
+        }
+
         private static EditorViewModel CreateLoadedViewModel()
         {
+            return CreateLoadedViewModel(Level);
+        }
+
+        private static EditorViewModel CreateLoadedViewModel(string xml)
+        {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
-            vm.LoadLevelXml(Level);
+            vm.LoadLevelXml(xml);
             return vm;
         }
     }

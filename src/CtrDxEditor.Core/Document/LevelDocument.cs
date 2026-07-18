@@ -269,6 +269,44 @@ namespace CtrDxEditor.Core.Document
         public IReadOnlyList<LevelObject> AllObjects =>
             [.. Layers.SelectMany(l => l.Objects)];
 
+        /// <summary>Resolves a structural coordinate to the live object it points at, or null when out of range.</summary>
+        /// <param name="reference">The coordinate to resolve.</param>
+        /// <returns>The live object, or null.</returns>
+        public LevelObject? Resolve(ObjectRef reference)
+        {
+            IReadOnlyList<LevelLayer> layers = Layers;
+            if (reference.LayerIndex < 0 || reference.LayerIndex >= layers.Count)
+            {
+                return null;
+            }
+
+            IReadOnlyList<LevelObject> objects = layers[reference.LayerIndex].Objects;
+            return reference.IndexInLayer >= 0 && reference.IndexInLayer < objects.Count
+                ? objects[reference.IndexInLayer]
+                : null;
+        }
+
+        /// <summary>Finds the structural coordinate of a live object, or null when it is not in any layer.</summary>
+        /// <param name="obj">The object to locate.</param>
+        /// <returns>Its coordinate, or null.</returns>
+        public ObjectRef? RefOf(LevelObject obj)
+        {
+            IReadOnlyList<LevelLayer> layers = Layers;
+            for (int layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+            {
+                IReadOnlyList<LevelObject> objects = layers[layerIndex].Objects;
+                for (int indexInLayer = 0; indexInLayer < objects.Count; indexInLayer++)
+                {
+                    if (Equals(objects[indexInLayer], obj))
+                    {
+                        return new ObjectRef(layerIndex, indexInLayer);
+                    }
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Serializes game level XML, preserving the original declaration and unknown data while omitting
         /// editor-only tutorial auto-width attributes emitted by pre-release editor builds.
