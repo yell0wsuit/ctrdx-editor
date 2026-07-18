@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 using CtrDxEditor.Core.Document;
 
 using Xunit;
@@ -36,6 +38,22 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(4, doc.AllObjects.Count);
             Assert.Equal("candyL", doc.AllObjects[0].Type);
             Assert.Equal(165, doc.AllObjects[2].X);
+        }
+
+        /// <summary>Saving an unchanged multi-layer level preserves every layer and object semantically.</summary>
+        [Fact]
+        public void MultiLayerLevelRoundTripsUnchanged()
+        {
+            const string xml =
+                "<map custom='keep'><layer name='settings'><map gridSize='32' width='640' height='480'/>"
+                + "<gameDesign twoParts='false'/></layer>"
+                + "<layer name='Foreground' depth='near'><star x='100' y='120' timeout='-1'/></layer>"
+                + "<layer name='Background' depth='far'><bubble x='220' y='240' custom='value'/></layer></map>";
+
+            XDocument before = XDocument.Parse(xml);
+            XDocument after = XDocument.Parse(LevelDocument.Parse(xml).Save());
+
+            Assert.True(XNode.DeepEquals(before, after));
         }
     }
 }
