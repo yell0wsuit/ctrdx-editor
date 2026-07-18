@@ -411,35 +411,36 @@ namespace CtrDxEditor.Rendering
         /// <summary>Whether an object has real polyline movement that supports direct node editing.</summary>
         private static bool IsEditablePolyline(LevelObject obj)
         {
-            return MoverPath.IsPolylineMovement(obj.GetAttr("path"));
+            return EditablePath.For(obj) is not null;
         }
 
         /// <summary>Returns the selected canonical waypoint under a level point, or -1.</summary>
         private int HitPolylinePoint(Vec2 levelPt)
         {
             return SelectedObject is { } obj && View.Zoom > 0 && IsEditablePolyline(obj)
-                ? MoverPath.HitCanonicalPoint(
-                    new Vec2(obj.X, obj.Y), obj.GetAttr("path"), levelPt, tolerance: 9 / View.Zoom)
+                && EditablePath.For(obj) is { } path
+                ? path.HitPoint(levelPt, tolerance: 9 / View.Zoom)
                 : -1;
         }
 
         /// <summary>Returns the segment whose midpoint insert handle is under a level point, or -1.</summary>
         private int HitPolylineSegment(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
-                || !MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
+            if (SelectedObject is not { } obj || View.Zoom <= 0
+                || EditablePath.For(obj) is not { CanAdd: true } path)
             {
                 return -1;
             }
 
-            Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), obj.GetAttr("path"));
+            Vec2[] points = path.Points;
             double tolerance = 7 / View.Zoom;
             double toleranceSquared = tolerance * tolerance;
-            for (int i = 0; i < points.Length - 1; i++)
+            for (int i = 0; i < path.SegmentCount; i++)
             {
+                Vec2 next = points[(i + 1) % points.Length];
                 Vec2 midpoint = new(
-                    (points[i].X + points[i + 1].X) / 2,
-                    (points[i].Y + points[i + 1].Y) / 2);
+                    (points[i].X + next.X) / 2,
+                    (points[i].Y + next.Y) / 2);
                 double dx = midpoint.X - levelPt.X;
                 double dy = midpoint.Y - levelPt.Y;
                 if ((dx * dx) + (dy * dy) <= toleranceSquared)
@@ -454,7 +455,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Level-space position of the append "+" nub: ~24 px past the last waypoint along the last segment.</summary>
         private Vec2 PolylineNubPoint(LevelObject obj)
         {
-            Vec2[] points = MoverPath.CanonicalPoints(new Vec2(obj.X, obj.Y), obj.GetAttr("path"));
+            Vec2[] points = EditablePath.For(obj)?.Points ?? [new Vec2(obj.X, obj.Y)];
             Vec2 tip = points[^1];
             Vec2 direction = points.Length >= 2
                 ? new Vec2(tip.X - points[^2].X, tip.Y - points[^2].Y)
@@ -475,8 +476,8 @@ namespace CtrDxEditor.Rendering
         /// <summary>True when the pointer is over the append nub for the selected editable polyline.</summary>
         private bool HitPolylineNub(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
-                || !MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
+            if (SelectedObject is not { } obj || View.Zoom <= 0
+                || EditablePath.For(obj) is not { CanAdd: true })
             {
                 return false;
             }
@@ -494,9 +495,10 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private bool HoveringPolylineLimit(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || !IsEditablePolyline(obj)
+            if (SelectedObject is not { } obj || View.Zoom <= 0
+                || EditablePath.For(obj) is not { } path
                 || IsAnimatingInPreview(obj)
-                || MoverPath.CanAddCanonicalPoint(new Vec2(obj.X, obj.Y), obj.GetAttr("path")))
+                || path.CanAdd)
             {
                 return false;
             }
@@ -528,14 +530,13 @@ namespace CtrDxEditor.Rendering
         /// <summary>Deletes a single canonical waypoint from the selected polyline, reconnecting neighbors.</summary>
         private void DeleteSelectedPolylineVertex(int index)
         {
-            if (index <= 0 || SelectedObject is not { } obj)
+            if (index <= 0 || SelectedObject is not { } obj || EditablePath.For(obj) is not { } path)
             {
                 return;
             }
 
             BeginDocumentEdit?.Invoke();
-            obj.SetAttr("path", MoverPath.DeleteCanonicalPoint(
-                new Vec2(obj.X, obj.Y), obj.GetAttr("path"), index));
+            path.DeletePoint(index);
             _polylineHoverPoint = -1;
             SelectedObjectMoved?.Invoke();
             CompleteDocumentEdit?.Invoke();
@@ -843,16 +844,15 @@ namespace CtrDxEditor.Rendering
             }
 
             int segmentHit = HitPolylineSegment(levelPt);
-            if (segmentHit >= 0 && SelectedObject is { } segmentObj)
+            if (segmentHit >= 0 && SelectedObject is { } segmentObj
+                && EditablePath.For(segmentObj) is { } segmentPath)
             {
-                Vec2 start = new(segmentObj.X, segmentObj.Y);
-                Vec2[] points = MoverPath.CanonicalPoints(start, segmentObj.GetAttr("path"));
+                Vec2[] points = segmentPath.Points;
                 (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
                     ? SnapAngle(points[segmentHit], levelPt)
                     : Snap(levelPt);
                 BeginDocumentEdit?.Invoke();
-                segmentObj.SetAttr("path", MoverPath.InsertCanonicalPoint(
-                    start, segmentObj.GetAttr("path"), segmentHit, new Vec2(x, y)));
+                segmentPath.InsertPoint(segmentHit, new Vec2(x, y));
                 SelectedObjectMoved?.Invoke();
                 _polylinePointDrag = segmentHit + 1;
                 InvalidateVisual();
@@ -861,18 +861,17 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (HitPolylineNub(levelPt) && SelectedObject is { } nubObj)
+            if (HitPolylineNub(levelPt) && SelectedObject is { } nubObj
+                && EditablePath.For(nubObj) is { } nubPath)
             {
-                Vec2 start = new(nubObj.X, nubObj.Y);
-                Vec2[] points = MoverPath.CanonicalPoints(start, nubObj.GetAttr("path"));
+                Vec2[] points = nubPath.Points;
                 (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
                     ? SnapAngle(points[^1], levelPt)
                     : Snap(levelPt);
                 BeginDocumentEdit?.Invoke();
-                nubObj.SetAttr("path", MoverPath.AppendCanonicalPoint(
-                    start, nubObj.GetAttr("path"), new Vec2(x, y)));
+                nubPath.AppendPoint(new Vec2(x, y));
                 SelectedObjectMoved?.Invoke();
-                _polylinePointDrag = MoverPath.CanonicalPoints(start, nubObj.GetAttr("path")).Length - 1;
+                _polylinePointDrag = nubPath.Points.Length - 1;
                 InvalidateVisual();
                 e.Handled = true;
                 e.Pointer.Capture(this);
@@ -1121,17 +1120,16 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (_polylinePointDrag > 0 && SelectedObject is { } pathObj)
+            if (_polylinePointDrag > 0 && SelectedObject is { } pathObj
+                && EditablePath.For(pathObj) is { } path)
             {
-                Vec2 start = new(pathObj.X, pathObj.Y);
-                Vec2[] points = MoverPath.CanonicalPoints(start, pathObj.GetAttr("path"));
+                Vec2[] points = path.Points;
                 if (_polylinePointDrag < points.Length)
                 {
                     (int x, int y) = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
                         ? SnapAngle(points[_polylinePointDrag - 1], levelPt)
                         : Snap(levelPt);
-                    pathObj.SetAttr("path", MoverPath.MoveCanonicalPoint(
-                        start, pathObj.GetAttr("path"), _polylinePointDrag, new Vec2(x, y)));
+                    path.MovePoint(_polylinePointDrag, new Vec2(x, y));
                     SelectedObjectMoved?.Invoke();
                     InvalidateVisual();
                 }

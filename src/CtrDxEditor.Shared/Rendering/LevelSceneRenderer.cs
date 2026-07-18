@@ -840,6 +840,11 @@ namespace CtrDxEditor.Rendering
             double previewRotationDegrees = 0.0,
             double? animationPreviewSeconds = null)
         {
+            if (AntPath.IsAnts(obj.Type))
+            {
+                return AntPathContains(obj, point, tolerance: 16);
+            }
+
             bounds = PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
             RotationSpec? rotSpec = RotationTable.For(obj.Type);
             double degrees = previewRotationDegrees + AuthoredSelectionDegrees(obj, rotSpec);
@@ -1684,6 +1689,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Draws the movement path used by active DX mover data.</summary>
         public static void DrawMovementPath(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pathPen, Pen arrowPen)
         {
+            if (AntPath.IsAnts(obj.Type))
+            {
+                DrawAntMovementPath(ctx, v, obj, pathPen, arrowPen);
+                return;
+            }
+
             if (ObjectSpin.IsOrbital(obj))
             {
                 DrawOrbitPath(ctx, v, obj, pathPen, arrowPen);
@@ -1750,6 +1761,18 @@ namespace CtrDxEditor.Rendering
         /// <summary>Computes screen-space points for the active DX movement path.</summary>
         public static Point[] ComputeMovementPathPoints(ViewTransform v, LevelObject obj)
         {
+            if (AntPath.IsAnts(obj.Type))
+            {
+                Vec2[] antPoints = AntPath.Points(obj);
+                Point[] antScreenPoints = new Point[antPoints.Length];
+                for (int i = 0; i < antPoints.Length; i++)
+                {
+                    Vec2 screen = v.LevelToScreen(antPoints[i]);
+                    antScreenPoints[i] = new Point(screen.X, screen.Y);
+                }
+                return antScreenPoints;
+            }
+
             if (!MoverPath.HasActiveMovement(obj))
             {
                 return [];
@@ -1769,6 +1792,60 @@ namespace CtrDxEditor.Rendering
             }
 
             return screenPoints;
+        }
+
+        private static void DrawAntMovementPath(
+            DrawingContext ctx,
+            ViewTransform view,
+            LevelObject ants,
+            Pen pathPen,
+            Pen arrowPen)
+        {
+            if (EditablePath.For(ants) is not { } path || path.Points is not { Length: >= 2 } points)
+            {
+                return;
+            }
+
+            for (int i = 0; i < path.SegmentCount; i++)
+            {
+                Vec2 a = view.LevelToScreen(points[i]);
+                Vec2 b = view.LevelToScreen(points[(i + 1) % points.Length]);
+                Point start = new(a.X, a.Y);
+                Point end = new(b.X, b.Y);
+                ctx.DrawLine(pathPen, start, end);
+                DrawSegmentArrow(ctx, arrowPen, start, end);
+            }
+        }
+
+        private static bool AntPathContains(LevelObject ants, Vec2 point, double tolerance)
+        {
+            if (EditablePath.For(ants) is not { } path || path.Points is not { Length: >= 2 } points)
+            {
+                return AntRenderer.Bounds(ants).Contains(point);
+            }
+
+            double toleranceSquared = tolerance * tolerance;
+            for (int i = 0; i < path.SegmentCount; i++)
+            {
+                Vec2 a = points[i];
+                Vec2 b = points[(i + 1) % points.Length];
+                double dx = b.X - a.X;
+                double dy = b.Y - a.Y;
+                double lengthSquared = (dx * dx) + (dy * dy);
+                double t = lengthSquared <= 0
+                    ? 0
+                    : Math.Clamp((((point.X - a.X) * dx) + ((point.Y - a.Y) * dy)) / lengthSquared, 0, 1);
+                double nearestX = a.X + (dx * t);
+                double nearestY = a.Y + (dy * t);
+                double pointDx = point.X - nearestX;
+                double pointDy = point.Y - nearestY;
+                if ((pointDx * pointDx) + (pointDy * pointDy) <= toleranceSquared)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Computes screen-space points for the circular orbit path centered on authored object coordinates.</summary>

@@ -83,17 +83,23 @@ namespace CtrDxEditor.Tests
         {
             string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
             string rendering = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Rendering.cs"));
+            string adapter = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "EditablePath.cs"));
 
             Assert.Contains("HitPolylineNub", input, StringComparison.Ordinal);
-            Assert.Contains("MoverPath.AppendCanonicalPoint", input, StringComparison.Ordinal);
-            Assert.Contains("MoverPath.DeleteCanonicalPoint", input, StringComparison.Ordinal);
-            Assert.Contains("MoverPath.MoveCanonicalPoint", input, StringComparison.Ordinal);
-            Assert.Contains("MoverPath.InsertCanonicalPoint", input, StringComparison.Ordinal);
-            Assert.Contains("MoverPath.CanAddCanonicalPoint", input, StringComparison.Ordinal);
+            Assert.Contains("EditablePath.For", input, StringComparison.Ordinal);
+            Assert.Contains(".AppendPoint(", input, StringComparison.Ordinal);
+            Assert.Contains(".DeletePoint(", input, StringComparison.Ordinal);
+            Assert.Contains(".MovePoint(", input, StringComparison.Ordinal);
+            Assert.Contains(".InsertPoint(", input, StringComparison.Ordinal);
+            Assert.Contains("MoverPath.AppendCanonicalPoint", adapter, StringComparison.Ordinal);
+            Assert.Contains("AntPath.AppendPoint", adapter, StringComparison.Ordinal);
+            Assert.DoesNotContain("MoverPath.", input, StringComparison.Ordinal);
             Assert.DoesNotContain("PolylineEditMode", input, StringComparison.Ordinal);
             Assert.DoesNotContain("MoverPath.TruncateCanonicalFrom", input, StringComparison.Ordinal);
             Assert.DoesNotContain("_altCloseHot", rendering, StringComparison.Ordinal);
             Assert.Contains("DrawPolylinePointHandles", rendering, StringComparison.Ordinal);
+            Assert.Contains("BeginDocumentEdit?.Invoke();", input, StringComparison.Ordinal);
+            Assert.Contains("CompleteDocumentEdit?.Invoke();", input, StringComparison.Ordinal);
         }
 
         /// <summary>The canvas treats only real polyline movement—not spin's static path—as node-editable.</summary>
