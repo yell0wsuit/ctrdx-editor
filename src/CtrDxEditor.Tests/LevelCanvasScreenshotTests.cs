@@ -240,6 +240,28 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected.H, actual.H, 6);
         }
 
+        /// <summary>Static screenshots frame the complete ant path for both open and explicitly closed data.</summary>
+        [Theory]
+        [InlineData("100,0,100,80")]
+        [InlineData("100,0,100,80,0,0")]
+        public void AntSelectionBoundsFrameCompleteStaticPath(string path)
+        {
+            SpriteCache sprites = new(new FakeStore());
+            LevelObject ants = new(new XElement(
+                "ants",
+                new XAttribute("x", "20"),
+                new XAttribute("y", "30"),
+                new XAttribute("path", path),
+                new XAttribute("moveSpeed", "100")));
+            MethodInfo method = SceneRenderer.GetMethod(
+                "SelectionBounds",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!;
+
+            LevelBounds actual = (LevelBounds)method.Invoke(null, [sprites, ants, 0, 0, false])!;
+
+            Assert.Equal(new LevelBounds(4, 14, 132, 112), actual);
+        }
+
         /// <summary>Spike selection uses the trimmed visible strip, like other sprite-backed objects.</summary>
         [Fact]
         public void SpikeSelectionBoundsUseTrimmedSpriteBounds()

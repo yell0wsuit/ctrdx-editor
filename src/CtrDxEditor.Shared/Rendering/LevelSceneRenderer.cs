@@ -61,6 +61,11 @@ namespace CtrDxEditor.Rendering
         /// <returns>The selection bounds in level units.</returns>
         public static LevelBounds SelectionBounds(SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel)
         {
+            if (AntPath.IsAnts(obj.Type))
+            {
+                return AntRenderer.Bounds(obj);
+            }
+
             if (HandObject.IsHand(obj.Type))
             {
                 return HandGeometry.Bounds(obj);
@@ -168,6 +173,8 @@ namespace CtrDxEditor.Rendering
                 // Conveyors draw right after the vinyl discs and before bubbles (GameScene.Draw), so they
                 // share the vinyl tier: behind bubbles, pumps, spikes, bouncers, mice, grabs, and candy.
                 "transporter" => 2,
+                // Ant conveyors sit immediately after ordinary conveyors and remain behind candy.
+                "ants" => 3,
                 "bubble" => 3,
                 "pump" => 4,
                 "spike1" or "spike2" or "spike3" or "spike4" or "electro" => 5,
@@ -276,6 +283,12 @@ namespace CtrDxEditor.Rendering
             {
                 ConveyorRenderer.Draw(ctx, v, sprites, obj);
                 DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                return;
+            }
+
+            if (AntPath.IsAnts(obj.Type))
+            {
+                AntRenderer.Draw(ctx, v, sprites, obj, animationPreviewSeconds);
                 return;
             }
 

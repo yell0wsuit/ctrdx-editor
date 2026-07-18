@@ -345,6 +345,18 @@ namespace CtrDxEditor.Rendering
                         context, v, sprites, previewHand, 0.7,
                         TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0);
                 }
+                else if (AntPath.IsAnts(dragPreviewElement)
+                    && DescriptorTable.CtrObjects.For(dragPreviewElement) is { } antDescriptor)
+                {
+                    LevelObject previewAnts = Placement.CreateObject(
+                        antDescriptor,
+                        (int)Math.Round(_dragPreviewLevel.X),
+                        (int)Math.Round(_dragPreviewLevel.Y));
+                    using (context.PushOpacity(0.7))
+                    {
+                        AntRenderer.Draw(context, v, sprites, previewAnts, elapsedSeconds: null);
+                    }
+                }
                 else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,
                     doc.NightLevel), ActiveCandySkin, ActiveOmNomSupport) is { } dragPreviewSprite)
