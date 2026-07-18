@@ -354,7 +354,7 @@ namespace CtrDxEditor.Tests
             VisualDescriptor? d = VisualDescriptorMap.For("hand");
 
             Assert.NotNull(d);
-            Assert.Equal(2, d!.Layers.Count);
+            Assert.Equal(2, d.Layers.Count);
             Assert.Equal(4, d.Layers[0].Quad);
             Assert.Equal(5, d.Layers[1].Quad);
         }
@@ -366,7 +366,7 @@ namespace CtrDxEditor.Tests
             VisualDescriptor? d = VisualDescriptorMap.For("hand_parts");
 
             Assert.NotNull(d);
-            Assert.Equal([1, 2, 3, 4, 5], [.. d!.Layers.Select(l => l.Quad)]);
+            Assert.Equal([1, 2, 3, 4, 5], [.. d.Layers.Select(l => l.Quad)]);
         }
     }
 }

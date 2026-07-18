@@ -389,7 +389,7 @@ namespace CtrDxEditor.Content
             // Some skins pad an unused layer with a tiny placeholder frame parked in a corner (e.g. candy
             // skins whose "top" quad is a 3x3 sprite at 0,0). Folding that into the crop bounds would
             // balloon the preview and shove the real art off-center, so drop such layers from the thumbnail.
-            List<SpriteLayerDraw> drawn = new(sprite.Layers.Count);
+            List<SpriteLayerDraw> drawn = [with(sprite.Layers.Count)];
             foreach (SpriteLayerDraw layer in sprite.Layers)
             {
                 if (layer.Frame.Frame.W >= MinThumbnailFrameSide && layer.Frame.Frame.H >= MinThumbnailFrameSide)
@@ -528,7 +528,7 @@ namespace CtrDxEditor.Content
             bool isCandy = element is "candy" or "candyL" or "candyR";
             (Bitmap? candyBitmap, Atlas? candyAtlas) = isCandy ? LoadCandySkin(candySkin) : (null, null);
 
-            List<SpriteLayerDraw> layers = new(v.Layers.Count);
+            List<SpriteLayerDraw> layers = [with(v.Layers.Count)];
             foreach (SpriteLayer layer in v.Layers)
             {
                 Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(layer.AtlasImageBasePath + imageExtension);
@@ -543,7 +543,7 @@ namespace CtrDxEditor.Content
                 }
             }
 
-            List<SpriteLayerDraw> variants = new(v.RandomBackLayers.Count);
+            List<SpriteLayerDraw> variants = [with(v.RandomBackLayers.Count)];
             foreach (SpriteLayer layer in v.RandomBackLayers)
             {
                 Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);

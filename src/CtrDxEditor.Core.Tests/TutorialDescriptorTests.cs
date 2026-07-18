@@ -50,7 +50,7 @@ namespace CtrDxEditor.Core.Tests
             {
                 RotationSpec? spec = RotationTable.For(TutorialObject.TagForQuad(q));
                 Assert.NotNull(spec);
-                Assert.Equal(0, spec!.DisplayOffset);
+                Assert.Equal(0, spec.DisplayOffset);
             }
         }
 

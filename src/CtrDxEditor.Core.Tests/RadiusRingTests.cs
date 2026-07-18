@@ -18,7 +18,7 @@ namespace CtrDxEditor.Core.Tests
                 new XAttribute("x", 0), new XAttribute("y", 0), new XAttribute("size", 120)));
             (double Radius, string Attr)? ring = RadiusRing.Of(v);
             Assert.True(ring.HasValue);
-            Assert.Equal(120, ring!.Value.Radius);
+            Assert.Equal(120, ring.Value.Radius);
             Assert.Equal("size", ring.Value.Attr);
         }
 
@@ -30,7 +30,7 @@ namespace CtrDxEditor.Core.Tests
                 new XAttribute("x", 0), new XAttribute("y", 0), new XAttribute("radius", 50)));
             (double Radius, string Attr)? ring = RadiusRing.Of(gap);
             Assert.True(ring.HasValue);
-            Assert.Equal(50, ring!.Value.Radius);
+            Assert.Equal(50, ring.Value.Radius);
             Assert.Equal("radius", ring.Value.Attr);
         }
 

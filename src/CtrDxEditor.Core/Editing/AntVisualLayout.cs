@@ -76,7 +76,7 @@ namespace CtrDxEditor.Core.Editing
                 ];
 
             int antCount = (int)(pathLength / AntSpacing);
-            List<AntVisual> ants = new(antCount);
+            List<AntVisual> ants = [with(antCount)];
             double elapsed = elapsedSeconds is double value && double.IsFinite(value) ? value : 0;
             double speed = double.IsFinite(moveSpeed) ? moveSpeed : 0;
             for (int i = 0; i < antCount; i++)

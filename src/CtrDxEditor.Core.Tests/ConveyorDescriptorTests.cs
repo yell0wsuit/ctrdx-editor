@@ -16,7 +16,7 @@ namespace CtrDxEditor.Core.Tests
         {
             ObjectDescriptor? d = DescriptorTable.CtrObjects.For("transporter");
             Assert.NotNull(d);
-            Assert.Equal("Conveyor", d!.DisplayName);
+            Assert.Equal("Conveyor", d.DisplayName);
             Assert.Equal(int.MaxValue, d.MaxCount);
         }
 
