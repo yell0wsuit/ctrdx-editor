@@ -122,6 +122,22 @@ namespace CtrDxEditor.Core.Tests
                 Normalize(XDocument.Parse(original)), Normalize(after)));
         }
 
+        /// <summary>The Experiments 7-1 ant line preserves its authored path, including the trailing comma.</summary>
+        [Fact]
+        public void AntConveyorFromExperimentsSevenOneSurvivesRoundTrip()
+        {
+            const string original =
+                "<map><layer name=\"Objects\">" +
+                "<ants x=\"33\" y=\"224\" path=\"64,-40,130,-76,201,-75,\" moveSpeed=\"100\" />" +
+                "</layer></map>";
+
+            XDocument after = XDocument.Parse(LevelDocument.Parse(original).Save());
+            XElement ants = after.Root!.Element("layer")!.Element("ants")!;
+
+            Assert.Equal("64,-40,130,-76,201,-75,", (string?)ants.Attribute("path"));
+            Assert.True(XNode.DeepEquals(Normalize(XDocument.Parse(original)), Normalize(after)));
+        }
+
         // Re-serialize with normalized whitespace so DeepEquals compares structure, not formatting.
         private static XDocument Normalize(XDocument d)
         {

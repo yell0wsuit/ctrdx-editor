@@ -170,6 +170,7 @@
     "Object.rocket": "Rocket",
     "Object.hand": "Mechanical hand",
     "Object.snail": "Snail",
+    "Object.ants": "Ant conveyor",
 
     "Attr.velocity": "Velocity",
     "Attr.width": "Width",
@@ -211,6 +212,9 @@
     "Attr.moveLength": "Rail length",
     "Attr.moveVertical": "Vertical rail",
     "Attr.moveOffset": "Start offset",
+    "Attr.path": "Path",
+    "Attr.moveSpeed": "Move speed",
+    "Attr.closedLoop": "Closed loop",
     "Attr.spider": "Spider",
     "Attr.kickable": "Suction cup",
     "Attr.kicked": "Detached",

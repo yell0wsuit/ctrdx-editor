@@ -43,5 +43,23 @@ namespace CtrDxEditor.Tests
 
             Assert.True(placed);
         }
+
+        /// <summary>Adding an ant conveyor from the palette carries the editable path defaults onto the canvas.</summary>
+        [Fact]
+        public void AddAtCenterPlacesAntConveyorWithPathDefaults()
+        {
+            LevelObject? created = null;
+            LevelCanvas canvas = new()
+            {
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                PlaceAt = (_, x, y) => created = Placement.CreateObject(
+                    DescriptorTable.CtrObjects.For(AntPath.Element)!, x, y),
+            };
+
+            Assert.True(canvas.AddAtCenter(AntPath.Element));
+            Assert.NotNull(created);
+            Assert.Equal(AntPath.DefaultPath, created!.GetAttr("path"));
+            Assert.Equal(AntPath.DefaultMoveSpeed, created.GetAttr("moveSpeed"));
+        }
     }
 }

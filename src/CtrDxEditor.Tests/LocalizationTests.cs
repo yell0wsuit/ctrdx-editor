@@ -78,6 +78,20 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Hide pollen path", strings["Attr.hidePath"]);
         }
 
+        /// <summary>The ant conveyor and its raw and semantic path fields have user-facing labels.</summary>
+        [Fact]
+        public void AntConveyorAndFieldsAreLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Ant conveyor", strings["Object.ants"]);
+            Assert.Equal("Path", strings["Attr.path"]);
+            Assert.Equal("Move speed", strings["Attr.moveSpeed"]);
+            Assert.Equal("Closed loop", strings["Attr.closedLoop"]);
+        }
+
         private static string FindRepositoryFile(string relativePath)
         {
             DirectoryInfo? dir = new(AppContext.BaseDirectory);

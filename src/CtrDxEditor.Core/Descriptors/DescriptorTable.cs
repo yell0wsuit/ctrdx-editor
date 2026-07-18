@@ -233,6 +233,14 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec("segmentsCount", AttrType.Whole, "1"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
+
+            // Ant conveyor (Cut the Rope: Experiments). The anchor is the first vertex; path stores
+            // subsequent vertices as relative offsets, with a terminal 0,0 representing closure.
+            new ObjectDescriptor(AntPath.Element, "Ant conveyor",
+            [
+                new AttributeSpec("path", AttrType.Text, AntPath.DefaultPath),
+                new AttributeSpec("moveSpeed", AttrType.Number, AntPath.DefaultMoveSpeed),
+            ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
         ]);
     }
 }

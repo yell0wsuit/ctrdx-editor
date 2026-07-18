@@ -41,6 +41,12 @@ namespace CtrDxEditor.Tests
             Assert.False(snail.ShowGroupHeader);
             Assert.False(snail.ShowDivider);
 
+            // Ant conveyors remain in the same Experiments group without opening another section.
+            PaletteItemViewModel ants = view.Single(i => i.Element == "ants");
+            Assert.Equal("Cut the Rope: Experiments", ants.GroupName);
+            Assert.False(ants.ShowGroupHeader);
+            Assert.False(ants.ShowDivider);
+
             // The item just before the rocket is the last base-group item: no header, no divider.
             int rocketIndex = System.Array.IndexOf(view, rocket);
             Assert.True(rocketIndex > 0);
