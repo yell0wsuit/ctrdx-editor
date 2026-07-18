@@ -70,6 +70,7 @@ namespace CtrDxEditor.ViewModels
         // Session-only visibility keyed by XML identity (objects) and layer name (layers).
         private readonly HashSet<XElement> _hiddenObjectElements = [];
         private readonly HashSet<string> _hiddenLayerNames = [];
+        private readonly HashSet<string> _lockedLayerNames = [];
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
@@ -98,6 +99,9 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Objects currently hidden by layer or individual visibility settings.</summary>
         public IReadOnlySet<LevelObject> EffectivelyHiddenObjects { get; private set; } = new HashSet<LevelObject>();
+
+        /// <summary>Objects that render normally but are non-interactive because their layer is locked.</summary>
+        public IReadOnlySet<LevelObject> EffectivelyLockedObjects { get; private set; } = new HashSet<LevelObject>();
 
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
@@ -372,6 +376,7 @@ namespace CtrDxEditor.ViewModels
                 LayerViewModel row = new(layer)
                 {
                     IsVisible = !_hiddenLayerNames.Contains(layer.Name),
+                    IsLocked = _lockedLayerNames.Contains(layer.Name),
                 };
                 foreach (LevelObject obj in layer.Objects)
                 {
@@ -384,6 +389,7 @@ namespace CtrDxEditor.ViewModels
                 ?? Layers.FirstOrDefault();
             SyncActiveFlags();
             RecomputeHiddenObjects();
+            RecomputeLockedObjects();
             SelectedTreeItem = SelectedObject
                 ?? (object?)Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, selectedLayerElement));
         }
@@ -429,6 +435,58 @@ namespace CtrDxEditor.ViewModels
             ObjectMutated?.Invoke();
         }
 
+        /// <summary>Whether a layer is locked against editing.</summary>
+        /// <param name="layer">The layer to inspect.</param>
+        /// <returns>True when the layer is locked.</returns>
+        public bool IsLayerLocked(LevelLayer layer)
+        {
+            return _lockedLayerNames.Contains(layer.Name);
+        }
+
+        /// <summary>Locks or unlocks an entire layer against editing.</summary>
+        /// <param name="layer">The layer to update.</param>
+        /// <param name="locked">Whether the layer should be locked.</param>
+        public void SetLayerLocked(LevelLayer layer, bool locked)
+        {
+            _ = locked ? _lockedLayerNames.Add(layer.Name) : _lockedLayerNames.Remove(layer.Name);
+
+            if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } row)
+            {
+                row.IsLocked = locked;
+            }
+            RecomputeLockedObjects();
+            ObjectMutated?.Invoke();
+        }
+
+        private void RecomputeLockedObjects()
+        {
+            HashSet<LevelObject> lockedObjects = [];
+            if (Document is not null)
+            {
+                foreach (LevelLayer layer in Document.Layers)
+                {
+                    if (!_lockedLayerNames.Contains(layer.Name))
+                    {
+                        continue;
+                    }
+                    foreach (LevelObject obj in layer.Objects)
+                    {
+                        _ = lockedObjects.Add(obj);
+                    }
+                }
+            }
+            EffectivelyLockedObjects = lockedObjects;
+            OnPropertyChanged(nameof(EffectivelyLockedObjects));
+            if (LockedObject is { } pinned && lockedObjects.Contains(pinned))
+            {
+                LockedObject = null;
+            }
+            if (SelectedObject is { } selected && lockedObjects.Contains(selected))
+            {
+                SelectedObject = null;
+            }
+        }
+
         private void RecomputeHiddenObjects()
         {
             HashSet<LevelObject> hiddenObjects = [];
@@ -466,8 +524,11 @@ namespace CtrDxEditor.ViewModels
         {
             _hiddenObjectElements.Clear();
             _hiddenLayerNames.Clear();
+            _lockedLayerNames.Clear();
             EffectivelyHiddenObjects = new HashSet<LevelObject>();
             OnPropertyChanged(nameof(EffectivelyHiddenObjects));
+            EffectivelyLockedObjects = new HashSet<LevelObject>();
+            OnPropertyChanged(nameof(EffectivelyLockedObjects));
             SelectedTreeItem = null;
             DisplayLocale = "en";
         }
@@ -546,6 +607,7 @@ namespace CtrDxEditor.ViewModels
             }
             Document.RemoveLayer(layer);
             _ = _hiddenLayerNames.Remove(layer.Name);
+            _ = _lockedLayerNames.Remove(layer.Name);
             RefreshPalette();
             RefreshObjectList();
         }
@@ -563,10 +625,15 @@ namespace CtrDxEditor.ViewModels
 
             CaptureUndoSnapshot();
             bool wasHidden = _hiddenLayerNames.Remove(layer.Name);
+            bool wasLocked = _lockedLayerNames.Remove(layer.Name);
             layer.Rename(name);
             if (wasHidden)
             {
                 _ = _hiddenLayerNames.Add(name);
+            }
+            if (wasLocked)
+            {
+                _ = _lockedLayerNames.Add(name);
             }
             RefreshObjectList();
             return true;

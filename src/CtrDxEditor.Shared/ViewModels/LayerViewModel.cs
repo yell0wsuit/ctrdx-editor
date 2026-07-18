@@ -24,6 +24,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this layer receives newly placed objects.</summary>
         [ObservableProperty] public partial bool IsActive { get; set; }
 
+        /// <summary>Whether editing of this layer's objects is blocked. Session-only.</summary>
+        [ObservableProperty] public partial bool IsLocked { get; set; }
+
         /// <summary>The layer's object rows, in XML order.</summary>
         public ObservableCollection<LevelObject> Objects { get; } = [];
     }
