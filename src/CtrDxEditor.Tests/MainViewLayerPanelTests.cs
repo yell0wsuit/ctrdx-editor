@@ -48,6 +48,16 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>Every in-process row drag also supplies native pasteboard data required by macOS.</summary>
+        [Fact]
+        public void RowDragPayloadsIncludeNativePasteboardData()
+        {
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("layerItem.SetText(LayerDragIdentifier);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("objectItem.SetText(ObjectDragIdentifier);", codeBehind, StringComparison.Ordinal);
+        }
+
         /// <summary>Object drag-over highlights the full destination layer and clears every terminal path.</summary>
         [Fact]
         public void ObjectDragHighlightsDestinationLayerRow()

@@ -279,10 +279,12 @@ namespace CtrDxEditor.Views
 
         private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
 
+        private const string LayerDragIdentifier = "ctrdx-layer-row";
+        private const string ObjectDragIdentifier = "ctrdx-object-row";
         private static readonly DataFormat<LayerViewModel> LayerDragFormat =
-            DataFormat.CreateInProcessFormat<LayerViewModel>("ctrdx-layer-row");
+            DataFormat.CreateInProcessFormat<LayerViewModel>(LayerDragIdentifier);
         private static readonly DataFormat<LevelObject> ObjectDragFormat =
-            DataFormat.CreateInProcessFormat<LevelObject>("ctrdx-object-row");
+            DataFormat.CreateInProcessFormat<LevelObject>(ObjectDragIdentifier);
         private LayerViewModel? _dragLayer;
         private PointerPressedEventArgs? _dragTrigger;
         private Point _dragStart;
@@ -342,7 +344,9 @@ namespace CtrDxEditor.Views
 
             ClearPendingLayerDrag();
             DataTransfer data = new();
-            data.Add(DataTransferItem.Create(LayerDragFormat, row));
+            DataTransferItem layerItem = DataTransferItem.Create(LayerDragFormat, row);
+            layerItem.SetText(LayerDragIdentifier);
+            data.Add(layerItem);
             _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
         }
 
@@ -394,7 +398,9 @@ namespace CtrDxEditor.Views
 
             ClearPendingObjectDrag();
             DataTransfer data = new();
-            data.Add(DataTransferItem.Create(ObjectDragFormat, obj));
+            DataTransferItem objectItem = DataTransferItem.Create(ObjectDragFormat, obj);
+            objectItem.SetText(ObjectDragIdentifier);
+            data.Add(objectItem);
             _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
             ClearLayerDropTarget();
         }
