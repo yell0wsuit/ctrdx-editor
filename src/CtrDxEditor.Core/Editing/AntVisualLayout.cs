@@ -42,6 +42,8 @@ namespace CtrDxEditor.Core.Editing
         private const double AntSpacing = 35;
         private const double FadeDistance = 15;
         private const double BoundsPadding = 16;
+        private const double WalkFrameSeconds = 0.05;
+        private const int WalkFrameCount = 6;
         private static readonly double[] BaseScales = [0.9, 1.05, 0.95, 1.1, 1.0];
 
         /// <summary>Builds a static or elapsed-time ant layout from relative path data.</summary>
@@ -79,6 +81,9 @@ namespace CtrDxEditor.Core.Editing
             List<AntVisual> ants = [with(antCount)];
             double elapsed = elapsedSeconds is double value && double.IsFinite(value) ? value : 0;
             double speed = double.IsFinite(moveSpeed) ? moveSpeed : 0;
+            int framePhase = elapsedSeconds.HasValue
+                ? (int)(Math.Floor(Math.Max(0, elapsed) / WalkFrameSeconds) % WalkFrameCount)
+                : 0;
             for (int i = 0; i < antCount; i++)
             {
                 double offset = (i * AntSpacing) + (speed * elapsed);
@@ -98,7 +103,7 @@ namespace CtrDxEditor.Core.Editing
                     heading,
                     edgeScale * baseScale,
                     opacity,
-                    i % 6,
+                    (i + framePhase) % WalkFrameCount,
                     baseScale));
             }
 

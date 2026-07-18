@@ -61,6 +61,12 @@ namespace CtrDxEditor.Core.Editing
             ants.SetAttr("path", RelativePolyline.Serialize(anchor, points));
         }
 
+        /// <summary>Returns whether the semantic closure control can change without exceeding path capacity.</summary>
+        public static bool CanSetClosed(LevelObject ants)
+        {
+            return IsClosed(ants.GetAttr("path")) || CanAddPoint(ants);
+        }
+
         /// <summary>Returns whether another unique vertex can fit while retaining explicit closure.</summary>
         public static bool CanAddPoint(LevelObject ants)
         {

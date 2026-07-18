@@ -35,7 +35,8 @@ namespace CtrDxEditor.ViewModels
                 () => AntPath.IsClosed(ants.GetAttr("path")) ? "true" : "false",
                 value => AntPath.SetClosed(ants, value == "true"),
                 onChanged,
-                onChanging));
+                onChanging,
+                () => AntPath.CanSetClosed(ants)));
 
             fields.Add(new AttributeFieldViewModel(
                 ants,

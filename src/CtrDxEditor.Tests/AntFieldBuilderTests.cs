@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -60,6 +61,17 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(1, changing.Value);
             Assert.Equal(1, changed.Value);
+        }
+
+        /// <summary>Closing is disabled when the terminal anchor cannot fit in the stored-point limit.</summary>
+        [Fact]
+        public void ClosedLoopIsDisabledForMaximumCapacityOpenPath()
+        {
+            string path = string.Join(",", Enumerable.Range(1, 99)
+                .SelectMany(i => new[] { i.ToString(CultureInfo.InvariantCulture), "0" }));
+            (ObservableCollection<AttributeFieldViewModel> fields, _, _, _) = Build(path);
+
+            Assert.False(fields.Single(f => f.Name == "closedLoop").IsEnabled);
         }
 
         private static (

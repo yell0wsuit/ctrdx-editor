@@ -79,6 +79,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal([0, 1, 2], first.Ants.Select(a => a.Frame));
         }
 
+        /// <summary>Live preview advances the six walk frames at the game's fifty-millisecond cadence.</summary>
+        [Fact]
+        public void LivePreviewAdvancesWalkFrames()
+        {
+            AntVisualLayout initial = AntVisualLayout.Build(new Vec2(0, 0), "105,0", 0, elapsedSeconds: 0);
+            AntVisualLayout advanced = AntVisualLayout.Build(new Vec2(0, 0), "105,0", 0, elapsedSeconds: 0.05);
+
+            Assert.Equal([0, 1, 2], initial.Ants.Select(a => a.Frame));
+            Assert.Equal([1, 2, 3], advanced.Ants.Select(a => a.Frame));
+        }
+
         /// <summary>Layout bounds cover the path and the fixed sixteen-unit artwork padding.</summary>
         [Fact]
         public void BoundsCoverAllVerticesAndArtworkPadding()
