@@ -42,8 +42,8 @@
       <Grid Margin="0,2"
             Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
-          <ColumnDefinition Width="*" MinWidth="100" />
+          <ColumnDefinition Width="Auto" MinWidth="124" SharedSizeGroup="LabelColumn" />
+          <ColumnDefinition Width="*" MinWidth="96" />
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0" Orientation="Horizontal"
                     VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
