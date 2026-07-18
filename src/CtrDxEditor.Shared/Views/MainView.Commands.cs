@@ -219,7 +219,7 @@ namespace CtrDxEditor.Views
                     _ = editor.Focus();
                     editor.SelectAll();
                 }
-            }, DispatcherPriority.Loaded);
+            }, DispatcherPriority.Normal);
         }
 
         private TextBox? FindLayerNameEditor(LayerViewModel row)
@@ -293,6 +293,12 @@ namespace CtrDxEditor.Views
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
+            if (IsLayerRowAction(e.Source))
+            {
+                ClearPendingLayerDrag();
+                return;
+            }
+
             if (sender is Control { DataContext: LayerViewModel row }
                 && e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
@@ -300,6 +306,19 @@ namespace CtrDxEditor.Views
                 _dragTrigger = e;
                 _dragStart = e.GetPosition(null);
             }
+        }
+
+        private static bool IsLayerRowAction(object? source)
+        {
+            for (Visual? current = source as Visual; current is not null; current = current.GetVisualParent())
+            {
+                if (current is Button or ToggleButton or TextBox)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private async void LayerRow_PointerMoved(object? sender, PointerEventArgs e)

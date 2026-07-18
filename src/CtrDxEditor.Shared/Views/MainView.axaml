@@ -495,7 +495,7 @@
                   </Grid>
                 </ToggleButton>
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                           Classes.object-name="True"
+                           Classes.object-name="True" Margin="6,0,0,0"
                            Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}">
                   <Classes.selected>
                     <MultiBinding Converter="{x:Static conv:ObjectEqualsConverter.Instance}">

@@ -117,6 +117,17 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Focusable=\"False\"", view, StringComparison.Ordinal);
             Assert.Contains("if (row.IsRenaming)", codeBehind, StringComparison.Ordinal);
             Assert.Contains("CommitLayerRename(row, editor?.Text ?? row.Name);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("IsLayerRowAction(e.Source)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("DispatcherPriority.Normal", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>Object labels keep a readable gap after their visibility control.</summary>
+        [Fact]
+        public void ObjectVisibilityIconHasNameSpacing()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("Classes.object-name=\"True\" Margin=\"6,0,0,0\"", view, StringComparison.Ordinal);
         }
 
         /// <summary>Startup bindings hide the locale picker and disable layer actions until a document exists.</summary>
