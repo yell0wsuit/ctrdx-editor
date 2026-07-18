@@ -1021,6 +1021,12 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
+            if (value is not null && EffectivelyLockedObjects.Contains(value))
+            {
+                SelectedObject = null;
+                return;
+            }
+
             SelectedTreeItem = value;
             OnPropertyChanged(nameof(CanEditPolyline));
             PopulateFields(value);
@@ -1068,6 +1074,12 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnLockedObjectChanged(LevelObject? value)
         {
+            if (value is not null && EffectivelyLockedObjects.Contains(value))
+            {
+                LockedObject = null;
+                return;
+            }
+
             RefreshPalette();
         }
 

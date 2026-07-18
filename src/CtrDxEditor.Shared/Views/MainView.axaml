@@ -361,6 +361,8 @@
               <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,8,0"
                     PointerPressed="LayerRow_PointerPressed"
                     PointerMoved="LayerRow_PointerMoved"
+                    PointerReleased="LayerRow_PointerReleased"
+                    PointerCaptureLost="LayerRow_PointerCaptureLost"
                     DragDrop.AllowDrop="True"
                     DragDrop.DragOver="LayerRow_DragOver"
                     DragDrop.Drop="LayerRow_Drop">
@@ -397,6 +399,7 @@
                   <MultiBinding Converter="{x:Static conv:LockRowEnabledConverter.Instance}">
                     <Binding Path="." />
                     <Binding Path="$parent[TreeView].((vm:EditorViewModel)DataContext).LockedObject" />
+                    <Binding Path="$parent[TreeView].((vm:EditorViewModel)DataContext).EffectivelyLockedObjects" />
                   </MultiBinding>
                 </Grid.IsEnabled>
                 <Grid.ContextMenu>

@@ -4,6 +4,8 @@ using System.Globalization;
 
 using Avalonia.Data.Converters;
 
+using CtrDxEditor.Core.Document;
+
 namespace CtrDxEditor.Converters
 {
     /// <summary>
@@ -18,9 +20,17 @@ namespace CtrDxEditor.Converters
         /// <inheritdoc />
         public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (values.Count != 2)
+            if (values.Count < 2)
             {
                 return true;
+            }
+
+            if (values.Count >= 3
+                && values[0] is LevelObject obj
+                && values[2] is IReadOnlySet<LevelObject> lockedOut
+                && lockedOut.Contains(obj))
+            {
+                return false;
             }
 
             object? locked = values[1];

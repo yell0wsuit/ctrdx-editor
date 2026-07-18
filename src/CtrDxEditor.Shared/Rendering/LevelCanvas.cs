@@ -119,6 +119,9 @@ namespace CtrDxEditor.Rendering
 
         static LevelCanvas()
         {
+            _ = LockedOutObjectsProperty.Changed.AddClassHandler<LevelCanvas>((canvas, _) => canvas.ClearLockedOutInteraction());
+            _ = SelectedObjectProperty.Changed.AddClassHandler<LevelCanvas>((canvas, _) => canvas.ClearLockedOutInteraction());
+            _ = LockedObjectProperty.Changed.AddClassHandler<LevelCanvas>((canvas, _) => canvas.ClearLockedOutInteraction());
             AffectsRender<LevelCanvas>(
                 DocumentProperty, HiddenObjectsProperty, SpritesProperty, ViewProperty, SnapEnabledProperty,
                 SelectedObjectProperty, LockedObjectProperty,
@@ -248,6 +251,18 @@ namespace CtrDxEditor.Rendering
         private bool IsLockedOut(LevelObject obj)
         {
             return LockedOutObjects?.Contains(obj) == true;
+        }
+
+        private void ClearLockedOutInteraction()
+        {
+            if (SelectedObject is { } selected && IsLockedOut(selected))
+            {
+                SelectedObject = null;
+            }
+            if (LockedObject is { } locked && IsLockedOut(locked))
+            {
+                LockedObject = null;
+            }
         }
 
         /// <summary>True while dragging the selected object (or a grab via its move-bar) to a new position.</summary>

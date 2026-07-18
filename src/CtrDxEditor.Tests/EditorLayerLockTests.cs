@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Globalization;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Converters;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
@@ -70,6 +72,56 @@ namespace CtrDxEditor.Tests
 
             Assert.True(vm.IsLayerLocked(vm.Layers[0].Layer));
             Assert.True(vm.Layers[0].IsLocked);
+        }
+
+        /// <summary>A locked layer's object cannot be selected through the layer tree.</summary>
+        [Fact]
+        public void LockedLayerObjectCannotBeSelectedFromTree()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.SetLayerLocked(vm.Layers[0].Layer, true);
+
+            vm.SelectedTreeItem = candy;
+
+            Assert.Null(vm.SelectedObject);
+            Assert.Null(vm.SelectedTreeItem);
+        }
+
+        /// <summary>Undo cannot restore a selected or pinned object while its layer remains locked.</summary>
+        [Fact]
+        public void UndoDoesNotRestoreSelectionOrPinInLockedLayer()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.ToggleLock(candy);
+            vm.BeginUndoTransaction();
+            candy.X = 20;
+            vm.CompleteUndoTransaction();
+            vm.SetLayerLocked(vm.Layers[0].Layer, true);
+
+            vm.Undo();
+
+            Assert.Null(vm.SelectedObject);
+            Assert.Null(vm.SelectedTreeItem);
+            Assert.Null(vm.LockedObject);
+        }
+
+        /// <summary>Object rows are disabled when their containing layer is locked.</summary>
+        [Fact]
+        public void LockedLayerDisablesObjectRow()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.SetLayerLocked(vm.Layers[0].Layer, true);
+
+            object enabled = LockRowEnabledConverter.Instance.Convert(
+                [candy, null, vm.EffectivelyLockedObjects],
+                typeof(bool),
+                null,
+                CultureInfo.InvariantCulture);
+
+            Assert.False(Assert.IsType<bool>(enabled));
         }
 
         private static EditorViewModel Create()

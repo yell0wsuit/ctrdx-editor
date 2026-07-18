@@ -235,9 +235,13 @@ namespace CtrDxEditor.Views
 
         private async void LayerRow_PointerMoved(object? sender, PointerEventArgs e)
         {
-            if (_dragLayer is not { } row
-                || _dragTrigger is not { } trigger
-                || !e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            {
+                ClearPendingLayerDrag();
+                return;
+            }
+
+            if (_dragLayer is not { } row || _dragTrigger is not { } trigger)
             {
                 return;
             }
@@ -248,11 +252,26 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            _dragLayer = null;
-            _dragTrigger = null;
+            ClearPendingLayerDrag();
             DataTransfer data = new();
             data.Add(DataTransferItem.Create(LayerDragFormat, row));
             _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
+        }
+
+        private void LayerRow_PointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            ClearPendingLayerDrag();
+        }
+
+        private void LayerRow_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+        {
+            ClearPendingLayerDrag();
+        }
+
+        private void ClearPendingLayerDrag()
+        {
+            _dragLayer = null;
+            _dragTrigger = null;
         }
 
         private void LayerRow_DragOver(object? sender, DragEventArgs e)

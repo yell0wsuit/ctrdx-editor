@@ -60,5 +60,21 @@ namespace CtrDxEditor.Tests
 
             Assert.False(hit);
         }
+
+        /// <summary>Publishing a locked-out set clears selected and pinned objects before direct editing.</summary>
+        [Fact]
+        public void LockedOutSetClearsSelectionAndPin()
+        {
+            LevelObject locked = new(new XElement("star", new XAttribute("x", "50"), new XAttribute("y", "50")));
+            LevelCanvas canvas = new()
+            {
+                SelectedObject = locked,
+                LockedObject = locked,
+                LockedOutObjects = new HashSet<LevelObject> { locked },
+            };
+
+            Assert.Null(canvas.SelectedObject);
+            Assert.Null(canvas.LockedObject);
+        }
     }
 }
