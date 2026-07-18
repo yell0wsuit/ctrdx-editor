@@ -62,9 +62,11 @@ namespace CtrDxEditor.Tests
             Assert.False(hit);
         }
 
-        /// <summary>A visible rope keeps its authored bulb target even when that bulb is hidden.</summary>
-        [Fact]
-        public void VisibleRopeStillResolvesHiddenBulbTarget()
+        /// <summary>A visible hook's cord follows the authored bulb target's visibility.</summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void BoundBulbVisibilityControlsVisibleHookCord(bool bulbHidden)
         {
             LevelDocument doc = LevelDocument.Parse("""
                 <map>
@@ -79,22 +81,22 @@ namespace CtrDxEditor.Tests
                     </layer>
                 </map>
                 """);
-            LevelObject candy = Assert.Single(doc.AllObjects, obj => obj.Type == "candy");
+            _ = Assert.Single(doc.AllObjects, obj => obj.Type == "candy");
             LevelObject bulb = Assert.Single(doc.AllObjects, obj => obj.Type == "lightBulb");
             LevelObject grab = Assert.Single(doc.AllObjects, obj => obj.Type == "grab");
+            HashSet<LevelObject> hiddenObjects = bulbHidden ? [bulb] : [];
             LevelCanvas canvas = new()
             {
-                HiddenObjects = new HashSet<LevelObject> { bulb },
+                HiddenObjects = hiddenObjects,
             };
             MethodInfo? method = typeof(LevelCanvas).GetMethod(
                 "BuildRopeForVisibleGrab",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(method);
 
-            RopeVisual rope = (RopeVisual)method.Invoke(canvas, [grab, doc])!;
+            RopeVisual? rope = (RopeVisual?)method.Invoke(canvas, [grab, doc]);
 
-            Assert.NotEqual(new Vec2(candy.X, candy.Y), rope.SamplePoints[^1]);
-            Assert.Equal(new Vec2(bulb.X, bulb.Y), rope.SamplePoints[^1]);
+            Assert.Equal(bulbHidden, rope is null);
         }
     }
 }

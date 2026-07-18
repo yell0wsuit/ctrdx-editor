@@ -25,14 +25,28 @@ namespace CtrDxEditor.Rendering
         /// hang from). The game reads the grab's length attribute for the bungee rest length; missing/0
         /// renders as a taut straight rope.
         /// </summary>
+        /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
+        /// <param name="objects">All level objects used to resolve the grab's candy or light-bulb target.</param>
+        /// <param name="twoParts">Whether the level uses separate left and right candy targets.</param>
+        /// <param name="skin">The active rope-skin index.</param>
+        /// <returns>The built rope visual, or null when the grab has no resolved target.</returns>
         public static RopeVisual? BuildRope(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts, int skin = 0)
+        {
+            return BuildRope(grab, RopeResolver.Resolve(grab, objects, twoParts), skin);
+        }
+
+        /// <summary>Builds a single grab's rope visual from an already resolved target.</summary>
+        /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
+        /// <param name="rope">The previously resolved candy or light-bulb target.</param>
+        /// <param name="skin">The active rope-skin index.</param>
+        /// <returns>The built rope visual, or null when the grab or resolved target cannot produce a rope.</returns>
+        public static RopeVisual? BuildRope(LevelObject grab, RopeTarget rope, int skin = 0)
         {
             if (grab.Type != "grab")
             {
                 return null;
             }
 
-            RopeTarget rope = RopeResolver.Resolve(grab, objects, twoParts);
             if (rope.Target is null)
             {
                 return null;
@@ -53,7 +67,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="ctx">Target drawing context.</param>
         /// <param name="v">Current level-to-screen transform.</param>
         /// <param name="sprites">Sprite cache holding the lights atlas.</param>
-        /// <param name="visual">The rope built by <see cref="BuildRope"/>.</param>
+        /// <param name="visual">The rope built by <see cref="BuildRope(LevelObject, RopeTarget, int)"/>.</param>
         /// <param name="ropeSeed">Per-rope seed keeping the random light frames stable across redraws.</param>
         /// <param name="opBounds">Control bounds for the custom draw operation.</param>
         /// <param name="opacity">Rope alpha multiplier; below 1 for an invisible grab drawn pale. The

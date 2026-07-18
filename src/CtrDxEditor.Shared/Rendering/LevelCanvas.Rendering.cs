@@ -834,7 +834,10 @@ namespace CtrDxEditor.Rendering
 
         private RopeVisual? BuildRopeForVisibleGrab(LevelObject grab, LevelDocument doc)
         {
-            return RopeRenderer.BuildRope(grab, doc.AllObjects, doc.TwoParts, ActiveRopeSkin);
+            RopeTarget target = RopeResolver.Resolve(grab, doc.AllObjects, doc.TwoParts);
+            return target.Target is { } boundObject && IsHidden(boundObject)
+                ? null
+                : RopeRenderer.BuildRope(grab, target, ActiveRopeSkin);
         }
 
         /// <summary>
