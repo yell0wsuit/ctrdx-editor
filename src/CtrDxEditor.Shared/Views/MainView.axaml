@@ -356,7 +356,6 @@
             </Style>
             <Style Selector="TreeViewItem:selected">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
-              <Setter Property="FontWeight" Value="Bold" />
             </Style>
             <Style Selector="Border.layer-row">
               <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -381,6 +380,9 @@
               <Setter Property="HorizontalAlignment" Value="Stretch" />
               <Setter Property="Padding" Value="2,1" />
               <Setter Property="Margin" Value="0,1,2,1" />
+            </Style>
+            <Style Selector="TextBlock.object-name.selected">
+              <Setter Property="FontWeight" Value="Bold" />
             </Style>
           </TreeView.Styles>
           <TreeView.DataTemplates>
@@ -493,7 +495,15 @@
                   </Grid>
                 </ToggleButton>
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                           Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}" />
+                           Classes.object-name="True"
+                           Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}">
+                  <Classes.selected>
+                    <MultiBinding Converter="{x:Static conv:ObjectEqualsConverter.Instance}">
+                      <Binding Path="." />
+                      <Binding Path="$parent[TreeView].SelectedItem" />
+                    </MultiBinding>
+                  </Classes.selected>
+                </TextBlock>
                 <Button Grid.Column="2" Width="16" Height="16" Padding="0" Margin="6,0,0,0"
                         Background="Transparent" BorderBrush="Transparent"
                         Tag="{Binding .}" Click="ObjectLock_Click"

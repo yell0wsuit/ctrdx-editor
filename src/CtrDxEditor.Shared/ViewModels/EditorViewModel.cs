@@ -195,6 +195,7 @@ namespace CtrDxEditor.ViewModels
             ActiveLayer = null;
             ResetDocumentSessionState();
             AvailableLocales.Clear();
+            OnPropertyChanged(nameof(HasLocalizedText));
             Fields.Clear();
             FieldGroups.Clear();
         }

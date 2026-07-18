@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -155,6 +156,20 @@ namespace CtrDxEditor.Tests
             """);
 
             Assert.False(vm.HasLocalizedText);
+        }
+
+        /// <summary>Closing a multilingual level notifies the picker that localized text is gone.</summary>
+        [Fact]
+        public void ClosingLevelNotifiesHasLocalizedTextChanged()
+        {
+            EditorViewModel vm = Create();
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            vm.CloseLevel();
+
+            Assert.False(vm.HasLocalizedText);
+            Assert.Contains(nameof(EditorViewModel.HasLocalizedText), changed);
         }
 
         private static EditorViewModel Create()

@@ -94,8 +94,12 @@ namespace CtrDxEditor.Tests
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
             Assert.Contains("Selector=\"TreeViewItem:selected\"", view, StringComparison.Ordinal);
-            Assert.Contains("Property=\"FontWeight\" Value=\"Bold\"", view, StringComparison.Ordinal);
+            Assert.Contains("Selector=\"TextBlock.object-name.selected\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.object-name=\"True\"", view, StringComparison.Ordinal);
+            Assert.Contains("<Classes.selected>", view, StringComparison.Ordinal);
+            Assert.Contains("$parent[TreeView].SelectedItem", view, StringComparison.Ordinal);
             Assert.DoesNotContain("TreeViewItem:selected Border.object-row", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("Selector=\"TreeViewItem:selected\">\n              <Setter Property=\"Background\" Value=\"{DynamicResource SystemControlHighlightListAccentLowBrush}\" />\n              <Setter Property=\"FontWeight\"", view, StringComparison.Ordinal);
             Assert.DoesNotContain("Value=\"3,0,0,0\"", view, StringComparison.Ordinal);
             Assert.True(
                 view.Split("SystemControlHighlightListAccentLowBrush", StringSplitOptions.None).Length >= 3,
