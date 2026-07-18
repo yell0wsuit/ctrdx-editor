@@ -25,6 +25,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<IReadOnlySet<LevelObject>?> HiddenObjectsProperty =
             AvaloniaProperty.Register<LevelCanvas, IReadOnlySet<LevelObject>?>(nameof(HiddenObjects));
 
+        /// <summary>Avalonia property backing <see cref="LockedOutObjects"/>.</summary>
+        public static readonly StyledProperty<IReadOnlySet<LevelObject>?> LockedOutObjectsProperty =
+            AvaloniaProperty.Register<LevelCanvas, IReadOnlySet<LevelObject>?>(nameof(LockedOutObjects));
+
         /// <summary>Avalonia property backing <see cref="Sprites"/>.</summary>
         public static readonly StyledProperty<SpriteCache?> SpritesProperty =
             AvaloniaProperty.Register<LevelCanvas, SpriteCache?>(nameof(Sprites));
@@ -129,6 +133,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Objects excluded from rendering and interaction by layer, object, or locale visibility.</summary>
         public IReadOnlySet<LevelObject>? HiddenObjects { get => GetValue(HiddenObjectsProperty); set => SetValue(HiddenObjectsProperty, value); }
+
+        /// <summary>Objects that render normally but are excluded from hit-testing because their layer is locked.</summary>
+        public IReadOnlySet<LevelObject>? LockedOutObjects { get => GetValue(LockedOutObjectsProperty); set => SetValue(LockedOutObjectsProperty, value); }
 
         /// <summary>Sprite cache used to render object art.</summary>
         public SpriteCache? Sprites { get => GetValue(SpritesProperty); set => SetValue(SpritesProperty, value); }
@@ -236,6 +243,11 @@ namespace CtrDxEditor.Rendering
         private bool IsHidden(LevelObject obj)
         {
             return HiddenObjects?.Contains(obj) == true;
+        }
+
+        private bool IsLockedOut(LevelObject obj)
+        {
+            return LockedOutObjects?.Contains(obj) == true;
         }
 
         /// <summary>True while dragging the selected object (or a grab via its move-bar) to a new position.</summary>

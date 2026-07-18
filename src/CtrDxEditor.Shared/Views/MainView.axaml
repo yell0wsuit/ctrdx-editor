@@ -299,6 +299,7 @@
                             ClipToBounds="True"
                             Document="{Binding Document}"
                             HiddenObjects="{Binding EffectivelyHiddenObjects}"
+                            LockedOutObjects="{Binding EffectivelyLockedObjects}"
                             Sprites="{Binding Sprites}"
                             View="{Binding View, Mode=TwoWay}"
                             SnapEnabled="{Binding SnapEnabled}"
