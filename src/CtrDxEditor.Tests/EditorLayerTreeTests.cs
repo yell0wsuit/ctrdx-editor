@@ -22,6 +22,14 @@ namespace CtrDxEditor.Tests
         </map>
         """;
 
+        private const string LayerWithTwoObjects = """
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings"><map width="320" height="480" /><gameDesign ropePhysicsSpeed="1" /></layer>
+            <layer name="objects"><candy x="1" y="2" /><star x="3" y="4" timeout="-1" /></layer>
+        </map>
+        """;
+
         /// <summary>Verifies that loading builds one tree row per object layer with object children.</summary>
         [Fact]
         public void LoadBuildsLayerTreeWithObjects()
@@ -114,6 +122,39 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains(candy, vm.EffectivelyHiddenObjects);
             Assert.DoesNotContain(vm.Layers[1].Objects[0], vm.EffectivelyHiddenObjects);
+        }
+
+        /// <summary>Revealing one child through a hidden parent keeps its siblings effectively hidden.</summary>
+        [Fact]
+        public void RevealObjectThroughHiddenLayerShowsOnlyRequestedObject()
+        {
+            EditorViewModel vm = Create(LayerWithTwoObjects);
+            LevelLayer layer = vm.Layers[0].Layer;
+            LevelObject requested = vm.Layers[0].Objects[0];
+            LevelObject sibling = vm.Layers[0].Objects[1];
+            vm.SetLayerHidden(layer, true);
+
+            vm.RevealObject(requested);
+
+            Assert.False(vm.IsLayerHidden(layer));
+            Assert.DoesNotContain(requested, vm.EffectivelyHiddenObjects);
+            Assert.Contains(sibling, vm.EffectivelyHiddenObjects);
+        }
+
+        /// <summary>Showing a parent layer preserves hidden state assigned directly to a child.</summary>
+        [Fact]
+        public void LayerVisibilityCyclePreservesIndividuallyHiddenObject()
+        {
+            EditorViewModel vm = Create(LayerWithTwoObjects);
+            LevelLayer layer = vm.Layers[0].Layer;
+            LevelObject hiddenChild = vm.Layers[0].Objects[1];
+            vm.SetObjectHidden(hiddenChild, true);
+
+            vm.SetLayerHidden(layer, true);
+            vm.SetLayerHidden(layer, false);
+
+            Assert.Contains(hiddenChild, vm.EffectivelyHiddenObjects);
+            Assert.DoesNotContain(vm.Layers[0].Objects[0], vm.EffectivelyHiddenObjects);
         }
 
         /// <summary>Publishes a new hidden-set instance so the canvas binding invalidates its styled property.</summary>
@@ -260,10 +301,10 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.SelectedObject);
         }
 
-        private static EditorViewModel Create()
+        private static EditorViewModel Create(string xml = TwoLayers)
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
-            vm.LoadLevelXml(TwoLayers);
+            vm.LoadLevelXml(xml);
             return vm;
         }
     }

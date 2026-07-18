@@ -419,6 +419,38 @@ namespace CtrDxEditor.ViewModels
             ObjectMutated?.Invoke();
         }
 
+        /// <summary>Shows one object, including through a hidden parent layer, without revealing its siblings.</summary>
+        /// <param name="obj">The object to reveal.</param>
+        public void RevealObject(LevelObject obj)
+        {
+            LevelLayer? layer = Document?.Layers.FirstOrDefault(candidate =>
+                ReferenceEquals(candidate.Element, obj.Element.Parent));
+            if (layer is null)
+            {
+                return;
+            }
+
+            if (_hiddenLayerNames.Remove(layer.Name))
+            {
+                if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } row)
+                {
+                    row.IsVisible = true;
+                }
+
+                foreach (LevelObject sibling in layer.Objects)
+                {
+                    if (!ReferenceEquals(sibling.Element, obj.Element))
+                    {
+                        _ = _hiddenObjectElements.Add(sibling.Element);
+                    }
+                }
+            }
+
+            _ = _hiddenObjectElements.Remove(obj.Element);
+            RecomputeHiddenObjects();
+            ObjectMutated?.Invoke();
+        }
+
         /// <summary>Whether a layer is hidden.</summary>
         /// <param name="layer">The layer to inspect.</param>
         /// <returns>True when the layer is hidden.</returns>
