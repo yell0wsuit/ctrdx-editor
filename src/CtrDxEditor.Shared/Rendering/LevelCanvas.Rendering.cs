@@ -211,7 +211,7 @@ namespace CtrDxEditor.Rendering
                     {
                         HandRenderer.DrawSegmentHighlight(
                             context, v, sprites, selected, _handHoverSegment,
-                            _palette.HandSegmentHoverTint, null);
+                            _palette.HandSegmentHoverTint, _palette.HandSegmentHoverTint);
                     }
                     if (_handActiveSegment > 0)
                     {

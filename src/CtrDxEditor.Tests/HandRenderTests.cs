@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -79,6 +81,33 @@ namespace CtrDxEditor.Tests
 
             Assert.NotNull(method);
             Assert.True((bool)method.Invoke(null, ["hand"])!);
+        }
+
+        /// <summary>Hovering a segment tints its origin joint button with the same faint blue as its bone.</summary>
+        [Fact]
+        public void HandSegmentHoverTintsBoneAndJointButton()
+        {
+            string source = File.ReadAllText(SourcePath(
+                "CtrDxEditor.Shared",
+                "Rendering",
+                "LevelCanvas.Rendering.cs"));
+
+            Assert.Contains(
+                "_palette.HandSegmentHoverTint, _palette.HandSegmentHoverTint",
+                source,
+                StringComparison.Ordinal);
+        }
+
+        private static string SourcePath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                    ?? throw new InvalidOperationException("Could not locate src directory.");
+            }
+
+            return Path.Combine([path, .. parts]);
         }
 
         private static AtlasFrame Frame()

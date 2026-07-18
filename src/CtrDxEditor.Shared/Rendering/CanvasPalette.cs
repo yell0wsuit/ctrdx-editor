@@ -53,7 +53,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Stronger fill marking the active hand segment's joint button, drawn over <see cref="HandSegmentTint"/>.</summary>
         public IBrush HandSegmentMark { get; private set; } = Translucent(Colors.DeepSkyBlue, 0xBF);
 
-        /// <summary>Fainter fill tinting the hand segment under the cursor, a "click to select" hover cue.</summary>
+        /// <summary>Fainter fill tinting the hand segment and joint button under the cursor, a "click to select" hover cue.</summary>
         public IBrush HandSegmentHoverTint { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x40);
 
         /// <summary>Solid arrow marking a directional force field's push direction (pump, and later steam).

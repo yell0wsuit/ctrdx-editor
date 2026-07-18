@@ -271,7 +271,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>
         /// Tints one segment so it reads on the art: a translucent fill over the segment's bone and, when
         /// <paramref name="jointMark"/> is given, a stronger fill over its origin joint button. Used for both
-        /// the active segment (bone + joint mark) and the hovered segment (bone only). Reuses the same
+        /// the active and hovered segments, with the caller choosing the strength of each fill. Reuses the same
         /// bone/joint geometry as <see cref="Draw"/>, so the tint lines up with the drawn pieces. A no-op for
         /// an out-of-range <paramref name="index"/>, a non-hand object, or a hand whose parts sprite is missing.
         /// </summary>
@@ -327,7 +327,7 @@ namespace CtrDxEditor.Rendering
             }
 
             // Joint mark: a disc over the segment's origin button, capped to half the segment length so a
-            // short segment's mark cannot spill past its far joint. Skipped for a bone-only (hover) tint.
+            // short segment's mark cannot spill past its far joint. Skipped when the caller requests bone-only tint.
             if (jointMark is not null && buttonRadius > 0 && length > 0)
             {
                 double r = Math.Min(buttonRadius, length / 2);
