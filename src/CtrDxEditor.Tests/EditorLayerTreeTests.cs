@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -39,6 +40,43 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("a", vm.ActiveLayer!.Name);
             Assert.True(vm.Layers[0].IsActive);
+        }
+
+        /// <summary>New layer rows begin expanded so their object children are immediately available.</summary>
+        [Fact]
+        public void LayersDefaultToExpanded()
+        {
+            EditorViewModel vm = Create();
+
+            Assert.All(vm.Layers, layer => Assert.True(layer.IsExpanded));
+        }
+
+        /// <summary>Refreshing the tree preserves expansion state for the same XML layer.</summary>
+        [Fact]
+        public void RefreshObjectListPreservesCollapsedLayer()
+        {
+            EditorViewModel vm = Create();
+            XElement layerElement = vm.Layers[1].Layer.Element;
+            vm.Layers[1].IsExpanded = false;
+
+            vm.RefreshObjectList();
+
+            LayerViewModel rebuilt = Assert.Single(vm.Layers, layer => ReferenceEquals(layer.Layer.Element, layerElement));
+            Assert.False(rebuilt.IsExpanded);
+        }
+
+        /// <summary>Canvas selection reveals the selected object's parent without expanding unrelated layers.</summary>
+        [Fact]
+        public void SelectingObjectExpandsOnlyItsParentLayer()
+        {
+            EditorViewModel vm = Create();
+            vm.Layers[0].IsExpanded = false;
+            vm.Layers[1].IsExpanded = false;
+
+            vm.SelectedObject = vm.Layers[1].Objects[0];
+
+            Assert.False(vm.Layers[0].IsExpanded);
+            Assert.True(vm.Layers[1].IsExpanded);
         }
 
         /// <summary>Verifies that placement appends to the active layer.</summary>

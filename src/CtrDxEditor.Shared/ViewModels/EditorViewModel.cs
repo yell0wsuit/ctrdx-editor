@@ -366,6 +366,9 @@ namespace CtrDxEditor.ViewModels
         {
             XElement? activeElement = ActiveLayer?.Layer.Element;
             XElement? selectedLayerElement = (SelectedTreeItem as LayerViewModel)?.Layer.Element;
+            Dictionary<XElement, bool> expansionByElement = Layers.ToDictionary(
+                row => row.Layer.Element,
+                row => row.IsExpanded);
             Layers.Clear();
             if (Document is null)
             {
@@ -380,6 +383,7 @@ namespace CtrDxEditor.ViewModels
                 {
                     IsVisible = !_hiddenLayerNames.Contains(layer.Name),
                     IsLocked = _lockedLayerNames.Contains(layer.Name),
+                    IsExpanded = !expansionByElement.TryGetValue(layer.Element, out bool isExpanded) || isExpanded,
                 };
                 foreach (LevelObject obj in layer.Objects)
                 {
@@ -1025,6 +1029,12 @@ namespace CtrDxEditor.ViewModels
             {
                 SelectedObject = null;
                 return;
+            }
+
+            if (value is not null
+                && Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, value.Element.Parent)) is { } parent)
+            {
+                parent.IsExpanded = true;
             }
 
             SelectedTreeItem = value;

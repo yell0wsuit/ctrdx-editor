@@ -27,6 +27,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether editing of this layer's objects is blocked. Session-only.</summary>
         [ObservableProperty] public partial bool IsLocked { get; set; }
 
+        /// <summary>Whether this layer's object children are expanded in the tree. Session-only.</summary>
+        [ObservableProperty] public partial bool IsExpanded { get; set; } = true;
+
         /// <summary>The layer's object rows, in XML order.</summary>
         public ObservableCollection<LevelObject> Objects { get; } = [];
     }
