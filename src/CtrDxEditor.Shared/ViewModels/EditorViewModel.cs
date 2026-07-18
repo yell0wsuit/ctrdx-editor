@@ -729,23 +729,44 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Moves an object into another layer.</summary>
         /// <param name="obj">The object to move.</param>
         /// <param name="target">The destination layer.</param>
-        public void MoveObjectToLayer(LevelObject obj, LevelLayer target)
+        /// <returns>True when the object was moved; otherwise false.</returns>
+        public bool MoveObjectToLayer(LevelObject obj, LevelLayer target)
         {
             if (Document is null)
             {
-                return;
+                return false;
             }
 
+            LevelLayer? source = Document.Layers.FirstOrDefault(layer =>
+                ReferenceEquals(layer.Element, obj.Element.Parent));
+            if (source is null
+                || ReferenceEquals(source.Element, target.Element)
+                || IsLayerLocked(source)
+                || IsLayerLocked(target))
+            {
+                return false;
+            }
+
+            XElement? activeElement = ActiveLayer?.Layer.Element;
             CaptureUndoSnapshot();
             bool wasSelected = Equals(SelectedObject, obj);
             Document.MoveObject(obj, target);
             RefreshPalette();
             RefreshObjectList();
+            ActiveLayer = Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, activeElement))
+                ?? ActiveLayer;
+            SyncActiveFlags();
             if (wasSelected)
             {
                 SelectedObject = obj;
+                SelectedTreeItem = obj;
+            }
+            if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, target.Element)) is { } targetRow)
+            {
+                targetRow.IsExpanded = true;
             }
             ObjectMutated?.Invoke();
+            return true;
         }
 
         private void SyncActiveFlags()

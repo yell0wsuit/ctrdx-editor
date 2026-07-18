@@ -216,7 +216,7 @@ namespace CtrDxEditor.Views
         {
             if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: MoveTarget target })
             {
-                vm.MoveObjectToLayer(target.Object, target.Layer);
+                _ = vm.MoveObjectToLayer(target.Object, target.Layer);
             }
         }
 
@@ -225,9 +225,14 @@ namespace CtrDxEditor.Views
         private TextBox? _layerRenameTarget;
         private static readonly DataFormat<LayerViewModel> LayerDragFormat =
             DataFormat.CreateInProcessFormat<LayerViewModel>("ctrdx-layer-row");
+        private static readonly DataFormat<LevelObject> ObjectDragFormat =
+            DataFormat.CreateInProcessFormat<LevelObject>("ctrdx-object-row");
         private LayerViewModel? _dragLayer;
         private PointerPressedEventArgs? _dragTrigger;
         private Point _dragStart;
+        private LevelObject? _dragObject;
+        private PointerPressedEventArgs? _objectDragTrigger;
+        private Point _objectDragStart;
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -281,9 +286,62 @@ namespace CtrDxEditor.Views
             _dragTrigger = null;
         }
 
+        private void ObjectRow_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Control { DataContext: LevelObject obj }
+                && e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            {
+                _dragObject = obj;
+                _objectDragTrigger = e;
+                _objectDragStart = e.GetPosition(null);
+            }
+        }
+
+        private async void ObjectRow_PointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            {
+                ClearPendingObjectDrag();
+                return;
+            }
+
+            if (_dragObject is not { } obj || _objectDragTrigger is not { } trigger)
+            {
+                return;
+            }
+
+            Point now = e.GetPosition(null);
+            if (Math.Abs(now.X - _objectDragStart.X) < 4 && Math.Abs(now.Y - _objectDragStart.Y) < 4)
+            {
+                return;
+            }
+
+            ClearPendingObjectDrag();
+            DataTransfer data = new();
+            data.Add(DataTransferItem.Create(ObjectDragFormat, obj));
+            _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
+        }
+
+        private void ObjectRow_PointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            ClearPendingObjectDrag();
+        }
+
+        private void ObjectRow_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+        {
+            ClearPendingObjectDrag();
+        }
+
+        private void ClearPendingObjectDrag()
+        {
+            _dragObject = null;
+            _objectDragTrigger = null;
+        }
+
         private void LayerRow_DragOver(object? sender, DragEventArgs e)
         {
-            e.DragEffects = e.DataTransfer.Contains(LayerDragFormat)
+            e.DragEffects = e.DataTransfer.Contains(ObjectDragFormat)
+                || e.DataTransfer.Contains(LayerDragFormat)
                 ? DragDropEffects.Move
                 : DragDropEffects.None;
         }
@@ -291,8 +349,21 @@ namespace CtrDxEditor.Views
         private void LayerRow_Drop(object? sender, DragEventArgs e)
         {
             if (DataContext is not EditorViewModel vm
-                || e.DataTransfer.TryGetValue(LayerDragFormat) is not LayerViewModel source
-                || sender is not Control { DataContext: LayerViewModel target }
+                || sender is not Control { DataContext: LayerViewModel target })
+            {
+                return;
+            }
+
+            if (e.DataTransfer.TryGetValue(ObjectDragFormat) is LevelObject obj)
+            {
+                e.DragEffects = vm.MoveObjectToLayer(obj, target.Layer)
+                    ? DragDropEffects.Move
+                    : DragDropEffects.None;
+                e.Handled = true;
+                return;
+            }
+
+            if (e.DataTransfer.TryGetValue(LayerDragFormat) is not LayerViewModel source
                 || ReferenceEquals(source, target))
             {
                 return;

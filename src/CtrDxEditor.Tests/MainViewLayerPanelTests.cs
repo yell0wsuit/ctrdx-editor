@@ -25,6 +25,29 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>Object rows start drags, clear terminal gesture state, and layers accept their payload.</summary>
+        [Fact]
+        public void ObjectRowsDragOntoLayerRows()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            string viewCodeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("PointerPressed=\"ObjectRow_PointerPressed\"", view, StringComparison.Ordinal);
+            Assert.Contains("PointerMoved=\"ObjectRow_PointerMoved\"", view, StringComparison.Ordinal);
+            Assert.Contains("PointerReleased=\"ObjectRow_PointerReleased\"", view, StringComparison.Ordinal);
+            Assert.Contains("PointerCaptureLost=\"ObjectRow_PointerCaptureLost\"", view, StringComparison.Ordinal);
+            Assert.Contains("DataTransferItem.Create(ObjectDragFormat, obj)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("ClearPendingObjectDrag();", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("e.DataTransfer.Contains(ObjectDragFormat)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("e.DataTransfer.TryGetValue(ObjectDragFormat) is LevelObject obj", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("vm.MoveObjectToLayer(obj, target.Layer)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains(
+                "PointerReleasedEvent, ObjectRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true",
+                viewCodeBehind,
+                StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

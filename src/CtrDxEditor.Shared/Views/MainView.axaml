@@ -394,7 +394,11 @@
               </Grid>
             </TreeDataTemplate>
             <DataTemplate x:DataType="core:LevelObject">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,8,0">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,8,0"
+                    PointerPressed="ObjectRow_PointerPressed"
+                    PointerMoved="ObjectRow_PointerMoved"
+                    PointerReleased="ObjectRow_PointerReleased"
+                    PointerCaptureLost="ObjectRow_PointerCaptureLost">
                 <Grid.IsEnabled>
                   <MultiBinding Converter="{x:Static conv:LockRowEnabledConverter.Instance}">
                     <Binding Path="." />

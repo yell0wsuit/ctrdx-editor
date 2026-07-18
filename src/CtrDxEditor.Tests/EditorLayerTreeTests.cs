@@ -237,14 +237,63 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Create();
             LevelObject candy = vm.Layers[0].Objects[0];
+            LayerViewModel active = vm.Layers[0];
+            vm.Layers[1].IsExpanded = false;
             vm.SelectedObject = candy;
 
-            vm.MoveObjectToLayer(candy, vm.Layers[1].Layer);
+            bool moved = vm.MoveObjectToLayer(candy, vm.Layers[1].Layer);
 
+            Assert.True(moved);
             Assert.Empty(vm.Layers[0].Objects);
             Assert.Contains(candy, vm.Layers[1].Objects);
             Assert.Equal(candy, vm.SelectedObject);
             Assert.Equal(candy, vm.SelectedTreeItem);
+            Assert.Same(active.Layer.Element, vm.ActiveLayer!.Layer.Element);
+            Assert.True(vm.Layers[1].IsExpanded);
+        }
+
+        /// <summary>Moving an object to its current parent is rejected without touching the XML.</summary>
+        [Fact]
+        public void MoveObjectToSameLayerReturnsFalseWithoutChangingXml()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            string? before = vm.ToXml();
+
+            bool moved = vm.MoveObjectToLayer(candy, vm.Layers[0].Layer);
+
+            Assert.False(moved);
+            Assert.Equal(before, vm.ToXml());
+        }
+
+        /// <summary>A locked source layer prevents moving its objects.</summary>
+        [Fact]
+        public void MoveObjectFromLockedLayerReturnsFalseWithoutChangingXml()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.SetLayerLocked(vm.Layers[0].Layer, true);
+            string? before = vm.ToXml();
+
+            bool moved = vm.MoveObjectToLayer(candy, vm.Layers[1].Layer);
+
+            Assert.False(moved);
+            Assert.Equal(before, vm.ToXml());
+        }
+
+        /// <summary>A locked target layer rejects incoming objects.</summary>
+        [Fact]
+        public void MoveObjectToLockedLayerReturnsFalseWithoutChangingXml()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.SetLayerLocked(vm.Layers[1].Layer, true);
+            string? before = vm.ToXml();
+
+            bool moved = vm.MoveObjectToLayer(candy, vm.Layers[1].Layer);
+
+            Assert.False(moved);
+            Assert.Equal(before, vm.ToXml());
         }
 
         /// <summary>Selecting a layer row makes it active without selecting an object.</summary>
