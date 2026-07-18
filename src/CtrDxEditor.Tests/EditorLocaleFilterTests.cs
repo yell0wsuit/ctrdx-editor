@@ -90,6 +90,31 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(objects.Objects[0], vm.EffectivelyHiddenObjects);
         }
 
+        /// <summary>A level with multiple locales has switchable localized text.</summary>
+        [Fact]
+        public void HasLocalizedTextTrueWithMultipleLocales()
+        {
+            EditorViewModel vm = Create();
+
+            Assert.True(vm.HasLocalizedText);
+        }
+
+        /// <summary>A level with no locale attributes has nothing to switch, so the picker is not useful.</summary>
+        [Fact]
+        public void HasLocalizedTextFalseWithoutLocales()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml("""
+            <?xml version='1.0' encoding='utf-8'?>
+            <map>
+                <layer name="settings"><map width="320" height="480" /><gameDesign ropePhysicsSpeed="1" /></layer>
+                <layer name="a"><candy x="1" y="2" /></layer>
+            </map>
+            """);
+
+            Assert.False(vm.HasLocalizedText);
+        }
+
         private static EditorViewModel Create()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));

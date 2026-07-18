@@ -97,6 +97,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Locales available in the current level, with English first.</summary>
         public ObservableCollection<string> AvailableLocales { get; } = [];
 
+        /// <summary>True when the level has localized text in more than one locale, so the language picker is useful.</summary>
+        public bool HasLocalizedText => AvailableLocales.Count > 1;
+
         /// <summary>Objects currently hidden by layer or individual visibility settings.</summary>
         public IReadOnlySet<LevelObject> EffectivelyHiddenObjects { get; private set; } = new HashSet<LevelObject>();
 
@@ -559,6 +562,7 @@ namespace CtrDxEditor.ViewModels
             {
                 DisplayLocale = "en";
             }
+            OnPropertyChanged(nameof(HasLocalizedText));
         }
 
         /// <summary>Adds a uniquely named empty layer and makes it active.</summary>
