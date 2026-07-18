@@ -9,7 +9,7 @@ namespace CtrDxEditor.ViewModels
     /// <summary>
     /// A layer row in the object panel: its name, visibility, active state, and object children.
     /// </summary>
-    /// <param name="layer"></param>
+    /// <param name="layer">The document layer represented by this row.</param>
     public sealed partial class LayerViewModel(LevelLayer layer) : ObservableObject
     {
         /// <summary>The underlying document layer.</summary>

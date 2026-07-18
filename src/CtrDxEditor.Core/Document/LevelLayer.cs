@@ -5,6 +5,7 @@ using System.Xml.Linq;
 namespace CtrDxEditor.Core.Document
 {
     /// <summary>A live wrapper over one non-settings <c>&lt;layer&gt;</c> element and its objects.</summary>
+    /// <param name="element">The object-layer XML element to wrap.</param>
     public sealed class LevelLayer(XElement element)
     {
         /// <summary>The wrapped <c>&lt;layer&gt;</c> element.</summary>

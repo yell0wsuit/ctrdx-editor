@@ -61,6 +61,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The layer that receives newly placed objects, or null when the level has none.</summary>
         [ObservableProperty] public partial LayerViewModel? ActiveLayer { get; set; }
 
+        /// <summary>The locale whose localized objects are shown. Session-only.</summary>
+        [ObservableProperty] public partial string DisplayLocale { get; set; } = "en";
+
         // Session-only visibility keyed by XML identity (objects) and layer name (layers).
         private readonly HashSet<XElement> _hiddenObjectElements = [];
         private readonly HashSet<string> _hiddenLayerNames = [];
@@ -87,6 +90,9 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Layer rows for the object panel tree.</summary>
         public ObservableCollection<LayerViewModel> Layers { get; } = [];
+
+        /// <summary>Locales available in the current level, with English first.</summary>
+        public ObservableCollection<string> AvailableLocales { get; } = [];
 
         /// <summary>Objects currently hidden by layer or individual visibility settings.</summary>
         public IReadOnlySet<LevelObject> EffectivelyHiddenObjects => _effectivelyHidden;
@@ -144,6 +150,7 @@ namespace CtrDxEditor.ViewModels
             // The canvas fits the level to the viewport once it is laid out (LevelCanvas.FitToView).
             RefreshPalette();
             RefreshObjectList();
+            RefreshLocales();
             // Baseline captured before size normalization so a level whose spike/bouncer tags
             // disagree with their size attribute loads as a pending (savable) change, while a
             // consistent level stays clean. See LevelObjectPolicy.NormalizeSizedElements.
@@ -178,6 +185,7 @@ namespace CtrDxEditor.ViewModels
             _hiddenObjectElements.Clear();
             _hiddenLayerNames.Clear();
             _effectivelyHidden.Clear();
+            AvailableLocales.Clear();
             Fields.Clear();
             FieldGroups.Clear();
         }
@@ -208,6 +216,7 @@ namespace CtrDxEditor.ViewModels
             ClearHistory();
             RefreshPalette();
             RefreshObjectList();
+            RefreshLocales();
             _savedBaselineXml = ToXml();
             LevelLoaded?.Invoke();
         }
@@ -438,7 +447,30 @@ namespace CtrDxEditor.ViewModels
 
         private bool IsLocaleHidden(LevelObject obj)
         {
-            return Document is null && obj.GetAttr("locale") is not null;
+            return obj.GetAttr("locale") is { } locale && locale != DisplayLocale;
+        }
+
+        private void RefreshLocales()
+        {
+            AvailableLocales.Clear();
+            AvailableLocales.Add("en");
+            if (Document is not null)
+            {
+                foreach (string locale in Document.AllObjects
+                    .Select(obj => obj.GetAttr("locale"))
+                    .OfType<string>()
+                    .Where(locale => locale != "en")
+                    .Distinct()
+                    .OrderBy(locale => locale, StringComparer.Ordinal))
+                {
+                    AvailableLocales.Add(locale);
+                }
+            }
+
+            if (!AvailableLocales.Contains(DisplayLocale))
+            {
+                DisplayLocale = "en";
+            }
         }
 
         /// <summary>Adds a uniquely named empty layer and makes it active.</summary>
@@ -562,6 +594,16 @@ namespace CtrDxEditor.ViewModels
         partial void OnActiveLayerChanged(LayerViewModel? value)
         {
             SyncActiveFlags();
+        }
+
+        partial void OnDisplayLocaleChanged(string value)
+        {
+            RecomputeHiddenObjects();
+            if (SelectedObject is { } selected && _effectivelyHidden.Contains(selected))
+            {
+                SelectedObject = null;
+            }
+            ObjectMutated?.Invoke();
         }
 
         /// <summary>Refreshes palette availability from descriptor cardinality and loaded objects.</summary>
@@ -1070,6 +1112,7 @@ namespace CtrDxEditor.ViewModels
             }
             RefreshPalette();
             RefreshObjectList();
+            RefreshLocales();
             SelectedObject = state.SelectedRef is { } selectedRef ? Document.Resolve(selectedRef) : null;
             LockedObject = state.LockedRef is { } lockedRef ? Document.Resolve(lockedRef) : null;
             // A restore repaints in place; it must not refit/refocus the canvas the way opening a
