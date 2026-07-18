@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Localization;
@@ -211,6 +213,107 @@ namespace CtrDxEditor.Views
         }
 
         private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
+
+        private TextBox? _layerRenameTarget;
+
+        private void LayerContextMenu_Opening(object? sender, CancelEventArgs e)
+        {
+            if (sender is not ContextMenu { Tag: LayerViewModel row } menu)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            _layerRenameTarget = (menu.PlacementTarget as Visual)?.FindDescendantOfType<TextBox>();
+
+            MenuItem rename = new() { Header = Localizer.Get("Layer.MenuRename") };
+            rename.Click += LayerRename_Click;
+
+            MenuItem moveUp = new() { Header = Localizer.Get("Layer.MenuMoveUp"), Tag = row };
+            moveUp.Click += LayerMenuMoveUp_Click;
+
+            MenuItem moveDown = new() { Header = Localizer.Get("Layer.MenuMoveDown"), Tag = row };
+            moveDown.Click += LayerMenuMoveDown_Click;
+
+            MenuItem lockItem = new()
+            {
+                Header = Localizer.Get(row.IsLocked ? "Layer.Unlock" : "Layer.Lock"),
+                Tag = row,
+            };
+            lockItem.Click += LayerLockToggle_Click;
+
+            MenuItem hideItem = new()
+            {
+                Header = Localizer.Get(row.IsVisible ? "Layer.Hide" : "Layer.Show"),
+                Tag = row,
+            };
+            hideItem.Click += LayerHideToggle_Click;
+
+            MenuItem delete = new() { Header = Localizer.Get("Layer.MenuDelete"), Tag = row };
+            delete.Click += LayerDelete_Click;
+
+            menu.ItemsSource = new Control[]
+            {
+                rename,
+                new Separator(),
+                moveUp,
+                moveDown,
+                new Separator(),
+                lockItem,
+                hideItem,
+                new Separator(),
+                delete,
+            };
+        }
+
+        private void LayerRename_Click(object? sender, RoutedEventArgs e)
+        {
+            if (_layerRenameTarget is { } target)
+            {
+                _ = target.Focus();
+                target.SelectAll();
+            }
+        }
+
+        private void LayerMenuMoveUp_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            {
+                vm.MoveLayer(row.Layer, -1);
+            }
+        }
+
+        private void LayerMenuMoveDown_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            {
+                vm.MoveLayer(row.Layer, 1);
+            }
+        }
+
+        private void LayerLockToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            {
+                vm.SetLayerLocked(row.Layer, !vm.IsLayerLocked(row.Layer));
+            }
+        }
+
+        private void LayerHideToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            {
+                vm.SetLayerHidden(row.Layer, row.IsVisible);
+            }
+        }
+
+        private void LayerDelete_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            {
+                vm.DeleteLayer(row.Layer);
+            }
+        }
 
         private void ZoomIn_Click(object? sender, RoutedEventArgs e)
         {

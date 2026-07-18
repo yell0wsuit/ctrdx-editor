@@ -359,7 +359,7 @@
             <TreeDataTemplate x:DataType="vm:LayerViewModel" ItemsSource="{Binding Objects}">
               <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,8,0">
                 <Grid.ContextMenu>
-                  <ContextMenu Tag="{Binding .}" />
+                  <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
                 </Grid.ContextMenu>
                 <ToggleButton Grid.Column="0" IsChecked="{Binding IsVisible, Mode=TwoWay}"
                               Click="LayerVisibility_Click" Tag="{Binding .}"
