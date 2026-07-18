@@ -143,8 +143,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
+            LevelDocument loaded = LevelDocument.Parse(xml);
             StopAnimationPreview();
-            Document = LevelDocument.Parse(xml);
+            ResetDocumentSessionState();
+            Document = loaded;
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             SelectedObject = null;
             LockedObject = null;
@@ -184,9 +186,7 @@ namespace CtrDxEditor.ViewModels
             RebuildPaletteView();
             Layers.Clear();
             ActiveLayer = null;
-            _hiddenObjectElements.Clear();
-            _hiddenLayerNames.Clear();
-            EffectivelyHiddenObjects = new HashSet<LevelObject>();
+            ResetDocumentSessionState();
             AvailableLocales.Clear();
             Fields.Clear();
             FieldGroups.Clear();
@@ -208,6 +208,7 @@ namespace CtrDxEditor.ViewModels
         public void NewLevel(LevelSettings settings, int ropeSkin = 0, int background = 0, int candySkin = 0, int omNomSupport = 0)
         {
             StopAnimationPreview();
+            ResetDocumentSessionState();
             Document = LevelDocument.CreateNew(settings);
             ActiveRopeSkin = ropeSkin;
             ActiveBackground = background;
@@ -357,10 +358,12 @@ namespace CtrDxEditor.ViewModels
         public void RefreshObjectList()
         {
             XElement? activeElement = ActiveLayer?.Layer.Element;
+            XElement? selectedLayerElement = (SelectedTreeItem as LayerViewModel)?.Layer.Element;
             Layers.Clear();
             if (Document is null)
             {
                 ActiveLayer = null;
+                SelectedTreeItem = null;
                 return;
             }
 
@@ -381,6 +384,8 @@ namespace CtrDxEditor.ViewModels
                 ?? Layers.FirstOrDefault();
             SyncActiveFlags();
             RecomputeHiddenObjects();
+            SelectedTreeItem = SelectedObject
+                ?? (object?)Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, selectedLayerElement));
         }
 
         /// <summary>Whether an object is individually hidden.</summary>
@@ -447,6 +452,24 @@ namespace CtrDxEditor.ViewModels
             }
             EffectivelyHiddenObjects = hiddenObjects;
             OnPropertyChanged(nameof(EffectivelyHiddenObjects));
+            if (LockedObject is { } locked && hiddenObjects.Contains(locked))
+            {
+                LockedObject = null;
+            }
+            if (SelectedObject is { } selected && hiddenObjects.Contains(selected))
+            {
+                SelectedObject = null;
+            }
+        }
+
+        private void ResetDocumentSessionState()
+        {
+            _hiddenObjectElements.Clear();
+            _hiddenLayerNames.Clear();
+            EffectivelyHiddenObjects = new HashSet<LevelObject>();
+            OnPropertyChanged(nameof(EffectivelyHiddenObjects));
+            SelectedTreeItem = null;
+            DisplayLocale = "en";
         }
 
         private bool IsLocaleHidden(LevelObject obj)
@@ -884,6 +907,7 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnSelectedObjectChanged(LevelObject? value)
         {
+            SelectedTreeItem = value;
             OnPropertyChanged(nameof(CanEditPolyline));
             PopulateFields(value);
             RebuildFieldGroups();

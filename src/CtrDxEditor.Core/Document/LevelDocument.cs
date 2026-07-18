@@ -382,33 +382,34 @@ namespace CtrDxEditor.Core.Document
 
         private void ConvertCandyForTwoParts(bool twoParts, int width, int height)
         {
-            XElement objects = Layers.Count > 0 ? Layers[0].Element : AddLayer("Objects").Element;
+            XElement[] objectLayers = [.. Layers.Select(layer => layer.Element)];
             if (twoParts)
             {
-                XElement? candy = objects.Elements("candy").FirstOrDefault();
-                XElement? candyL = objects.Elements("candyL").FirstOrDefault();
+                XElement? candy = objectLayers.SelectMany(layer => layer.Elements("candy")).FirstOrDefault();
+                XElement? candyL = objectLayers.SelectMany(layer => layer.Elements("candyL")).FirstOrDefault();
                 if (candyL is null && candy is not null)
                 {
                     candy.Name = "candyL";
                     candyL = candy;
                 }
 
-                if (candyL is not null && !objects.Elements("candyR").Any())
+                bool hasCandyR = objectLayers.SelectMany(layer => layer.Elements("candyR")).Any();
+                if (candyL?.Parent is XElement candyLayer && !hasCandyR)
                 {
                     XElement candyR = new("candyR",
                         new XAttribute("x", (width / 2).ToString(CultureInfo.InvariantCulture)),
                         new XAttribute("y", (height / 2).ToString(CultureInfo.InvariantCulture)));
-                    objects.Add(candyR);
+                    candyLayer.Add(candyR);
                 }
             }
             else
             {
-                if (objects.Elements("candyL").FirstOrDefault() is XElement candyL)
+                if (objectLayers.SelectMany(layer => layer.Elements("candyL")).FirstOrDefault() is XElement candyL)
                 {
                     candyL.Name = "candy";
                 }
 
-                foreach (XElement candyR in objects.Elements("candyR").ToList())
+                foreach (XElement candyR in objectLayers.SelectMany(layer => layer.Elements("candyR")).ToList())
                 {
                     candyR.Remove();
                 }

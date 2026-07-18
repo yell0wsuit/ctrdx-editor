@@ -120,11 +120,13 @@ namespace CtrDxEditor.Tests
         public void MoveActiveLayerReordersRowsAndPreservesActiveLayer()
         {
             EditorViewModel vm = Create();
+            vm.SelectedTreeItem = vm.Layers[0];
 
             vm.MoveActiveLayer(1);
 
             Assert.Equal(["b", "a"], vm.Layers.Select(layer => layer.Name));
             Assert.Equal("a", vm.ActiveLayer!.Name);
+            Assert.Same(vm.ActiveLayer, vm.SelectedTreeItem);
         }
 
         /// <summary>Verifies that moving an object reparents it and preserves selection.</summary>
@@ -140,6 +142,7 @@ namespace CtrDxEditor.Tests
             Assert.Empty(vm.Layers[0].Objects);
             Assert.Contains(candy, vm.Layers[1].Objects);
             Assert.Equal(candy, vm.SelectedObject);
+            Assert.Equal(candy, vm.SelectedTreeItem);
         }
 
         /// <summary>Selecting a layer row makes it active without selecting an object.</summary>
@@ -164,6 +167,36 @@ namespace CtrDxEditor.Tests
             vm.SelectedTreeItem = star;
 
             Assert.Equal(star, vm.SelectedObject);
+        }
+
+        /// <summary>Canvas and command selection stays aligned with the highlighted object tree row.</summary>
+        [Fact]
+        public void SelectedObjectChangesSelectedTreeItem()
+        {
+            EditorViewModel vm = Create();
+            LevelObject star = vm.Layers[1].Objects[0];
+
+            vm.SelectedObject = star;
+
+            Assert.Equal(star, vm.SelectedTreeItem);
+
+            vm.SelectedObject = null;
+
+            Assert.Null(vm.SelectedTreeItem);
+        }
+
+        /// <summary>Hiding the locked object releases both lock and selection so visible objects remain interactive.</summary>
+        [Fact]
+        public void HidingLockedObjectClearsLockAndSelection()
+        {
+            EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.ToggleLock(candy);
+
+            vm.SetLayerHidden(vm.Layers[0].Layer, true);
+
+            Assert.Null(vm.LockedObject);
+            Assert.Null(vm.SelectedObject);
         }
 
         private static EditorViewModel Create()

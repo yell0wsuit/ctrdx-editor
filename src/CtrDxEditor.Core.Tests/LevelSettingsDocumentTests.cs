@@ -1,3 +1,5 @@
+using System.Linq;
+
 using CtrDxEditor.Core.Document;
 
 using Xunit;
@@ -175,6 +177,31 @@ namespace CtrDxEditor.Core.Tests
                     Assert.Equal(320, candyR.X);
                     Assert.Equal(240, candyR.Y);
                 });
+        }
+
+        /// <summary>Two-part conversion follows candy objects into non-primary layers and keeps the pair together.</summary>
+        [Fact]
+        public void TwoPartConversionPreservesCandysSourceLayer()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+            <map>
+                <layer name="settings">
+                    <map gridSize="32" width="640" height="480" />
+                    <gameDesign twoParts="false" />
+                </layer>
+                <layer name="Foreground"><target x="3" y="3" /></layer>
+                <layer name="Gameplay"><candy x="101" y="170" /></layer>
+            </map>
+            """);
+
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+
+            Assert.Equal(["target"], doc.Layers[0].Objects.Select(obj => obj.Type));
+            Assert.Equal(["candyL", "candyR"], doc.Layers[1].Objects.Select(obj => obj.Type));
+
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.Equal(["candy"], doc.Layers[1].Objects.Select(obj => obj.Type));
         }
     }
 }

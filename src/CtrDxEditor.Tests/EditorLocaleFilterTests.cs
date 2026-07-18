@@ -74,6 +74,22 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(es, vm.EffectivelyHiddenObjects);
         }
 
+        /// <summary>Opening another document resets locale and visibility choices from the previous document.</summary>
+        [Fact]
+        public void LoadingAnotherLevelResetsDocumentVisibilityState()
+        {
+            EditorViewModel vm = Create();
+            vm.DisplayLocale = "es";
+            vm.SetLayerHidden(vm.Layers.First(layer => layer.Name == "objects").Layer, true);
+
+            vm.LoadLevelXml(Localized);
+
+            Assert.Equal("en", vm.DisplayLocale);
+            LayerViewModel objects = vm.Layers.First(layer => layer.Name == "objects");
+            Assert.True(objects.IsVisible);
+            Assert.DoesNotContain(objects.Objects[0], vm.EffectivelyHiddenObjects);
+        }
+
         private static EditorViewModel Create()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
