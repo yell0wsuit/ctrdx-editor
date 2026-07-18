@@ -643,6 +643,8 @@ namespace CtrDxEditor.ViewModels
                 case LevelObject obj:
                     SelectedObject = obj;
                     break;
+                default:
+                    break;
             }
         }
 

@@ -275,7 +275,7 @@ namespace CtrDxEditor.Rendering
         private readonly GhostPreviewState _ghostPreview = new();
 
         /// <summary>Screen-space state-selector hit targets populated while the ghost badge is drawn.</summary>
-        private readonly System.Collections.Generic.List<(Rect Rect, GhostMorph Morph)> _ghostIconHits = [];
+        private readonly List<(Rect Rect, GhostMorph Morph)> _ghostIconHits = [];
 
         /// <summary>
         /// Which movable-rail handle the current drag is manipulating (slide the hook or resize an end);
