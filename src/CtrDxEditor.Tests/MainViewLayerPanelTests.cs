@@ -48,6 +48,43 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>The redesigned layer row exposes organization state without staying permanently editable.</summary>
+        [Fact]
+        public void LayerRowsUseExplicitRenameModeAndOrganizationalStyling()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            string layerViewModel = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "ViewModels", "LayerViewModel.cs"));
+
+            Assert.Contains("Classes.layer-name-display=\"True\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding !IsRenaming}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.layer-name-editor=\"True\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding IsRenaming}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Kind=\"Pencil\"", view, StringComparison.Ordinal);
+            Assert.Contains("DoubleTapped=\"LayerName_DoubleTapped\"", view, StringComparison.Ordinal);
+            Assert.Contains("KeyDown=\"LayerTree_KeyDown\"", view, StringComparison.Ordinal);
+            Assert.Contains("Text=\"{Binding Objects.Count}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.active=\"{Binding IsActive}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Property=\"BorderThickness\" Value=\"3,0,0,0\"", view, StringComparison.Ordinal);
+            Assert.Contains("Property=\"IsExpanded\"", view, StringComparison.Ordinal);
+            Assert.Contains("((vm:LayerViewModel)DataContext).IsExpanded", view, StringComparison.Ordinal);
+            Assert.Contains("Mode=TwoWay", view, StringComparison.Ordinal);
+            Assert.Contains("e.Key == Key.F2", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("LayerRename_Click", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("IsRenaming", layerViewModel, StringComparison.Ordinal);
+        }
+
+        /// <summary>Selection changes queue a null-safe scroll after the tree has laid out expanded children.</summary>
+        [Fact]
+        public void TreeSelectionChangesBringRealizedItemIntoView()
+        {
+            string viewCodeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("nameof(EditorViewModel.SelectedTreeItem)", viewCodeBehind, StringComparison.Ordinal);
+            Assert.Contains("Dispatcher.UIThread.Post(BringSelectedTreeItemIntoView", viewCodeBehind, StringComparison.Ordinal);
+            Assert.Contains("container.BringIntoView();", viewCodeBehind, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

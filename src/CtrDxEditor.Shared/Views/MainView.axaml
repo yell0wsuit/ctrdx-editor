@@ -346,55 +346,105 @@
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
                   Background="Transparent"
                   DragDrop.AllowDrop="True"
+                  KeyDown="LayerTree_KeyDown"
                   ItemsSource="{Binding Layers}"
                   SelectedItem="{Binding SelectedTreeItem, Mode=TwoWay}">
           <TreeView.Styles>
-            <Style Selector="TextBox.layer-name.active">
+            <Style Selector="TreeViewItem">
+              <Setter Property="IsExpanded"
+                      Value="{Binding ((vm:LayerViewModel)DataContext).IsExpanded, RelativeSource={RelativeSource Self}, Mode=TwoWay}" />
+            </Style>
+            <Style Selector="Border.layer-row">
+              <Setter Property="HorizontalAlignment" Value="Stretch" />
+              <Setter Property="Padding" Value="3,2" />
+              <Setter Property="Margin" Value="0,1,2,1" />
+              <Setter Property="BorderThickness" Value="3,0,0,0" />
+              <Setter Property="BorderBrush" Value="Transparent" />
+            </Style>
+            <Style Selector="Border.layer-row.active">
+              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+              <Setter Property="BorderThickness" Value="3,0,0,0" />
+            </Style>
+            <Style Selector="TextBlock.layer-name-display.active">
               <Setter Property="FontWeight" Value="Bold" />
             </Style>
-            <Style Selector="TextBox.layer-name.locked">
+            <Style Selector="TextBlock.layer-name-display.locked">
               <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Warning}" />
+            </Style>
+            <Style Selector="Border.object-row">
+              <Setter Property="HorizontalAlignment" Value="Stretch" />
+              <Setter Property="Padding" Value="2,1" />
+              <Setter Property="Margin" Value="0,1,2,1" />
+            </Style>
+            <Style Selector="TreeViewItem:selected Border.object-row">
+              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
             </Style>
           </TreeView.Styles>
           <TreeView.DataTemplates>
             <TreeDataTemplate x:DataType="vm:LayerViewModel" ItemsSource="{Binding Objects}">
-              <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,8,0"
-                    PointerPressed="LayerRow_PointerPressed"
-                    PointerMoved="LayerRow_PointerMoved"
-                    PointerReleased="LayerRow_PointerReleased"
-                    PointerCaptureLost="LayerRow_PointerCaptureLost"
-                    DragDrop.AllowDrop="True"
-                    DragDrop.DragOver="LayerRow_DragOver"
-                    DragDrop.Drop="LayerRow_Drop">
-                <Grid.ContextMenu>
+              <Border Classes.layer-row="True" Classes.active="{Binding IsActive}"
+                      PointerPressed="LayerRow_PointerPressed"
+                      PointerMoved="LayerRow_PointerMoved"
+                      PointerReleased="LayerRow_PointerReleased"
+                      PointerCaptureLost="LayerRow_PointerCaptureLost"
+                      DragDrop.AllowDrop="True"
+                      DragDrop.DragOver="LayerRow_DragOver"
+                      DragDrop.Drop="LayerRow_Drop">
+                <Border.ContextMenu>
                   <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
-                </Grid.ContextMenu>
-                <ToggleButton Grid.Column="0" IsChecked="{Binding IsVisible, Mode=TwoWay}"
-                              Click="LayerVisibility_Click" Tag="{Binding .}"
-                              Width="20" Height="20" Padding="0"
-                              Background="Transparent" BorderBrush="Transparent"
-                              ToolTip.Tip="{loc:Tr Tooltip.LayerVisibility}">
-                  <Grid>
-                    <icons:MaterialIcon Kind="Eye" Width="15" Height="15" IsVisible="{Binding IsVisible}" />
-                    <icons:MaterialIcon Kind="EyeOff" Width="15" Height="15"
-                                        IsVisible="{Binding !IsVisible}" />
+                </Border.ContextMenu>
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                  <ToggleButton Grid.Column="0" IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                Click="LayerVisibility_Click" Tag="{Binding .}"
+                                Width="20" Height="20" Padding="0"
+                                Background="Transparent" BorderBrush="Transparent"
+                                ToolTip.Tip="{loc:Tr Tooltip.LayerVisibility}">
+                    <Grid>
+                      <icons:MaterialIcon Kind="Eye" Width="15" Height="15" IsVisible="{Binding IsVisible}" />
+                      <icons:MaterialIcon Kind="EyeOff" Width="15" Height="15"
+                                          IsVisible="{Binding !IsVisible}" />
+                    </Grid>
+                  </ToggleButton>
+                  <Grid Grid.Column="1" Margin="7,0,4,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}"
+                               Classes.layer-name-display="True"
+                               Classes.active="{Binding IsActive}"
+                               Classes.locked="{Binding IsLocked}"
+                               IsVisible="{Binding !IsRenaming}"
+                               DoubleTapped="LayerName_DoubleTapped"
+                               Tag="{Binding .}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBox Text="{Binding Name, Mode=TwoWay}"
+                             Classes.layer-name-editor="True"
+                             IsVisible="{Binding IsRenaming}"
+                             BorderThickness="0" Background="Transparent" Padding="0"
+                             KeyDown="LayerName_KeyDown" LostFocus="LayerName_Commit" Tag="{Binding .}"
+                             ToolTip.Tip="{loc:Tr Layer.Rename}" />
                   </Grid>
-                </ToggleButton>
-                <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}"
-                         Classes.layer-name="True" Classes.active="{Binding IsActive}"
-                         Classes.locked="{Binding IsLocked}"
-                         VerticalAlignment="Center" BorderThickness="0" Background="Transparent"
-                         Margin="8,0,0,0"
-                         KeyDown="LayerName_KeyDown" LostFocus="LayerName_Commit" Tag="{Binding .}"
-                         ToolTip.Tip="{loc:Tr Layer.Rename}" />
-                <icons:MaterialIcon Grid.Column="2" Kind="Lock" Width="14" Height="14"
-                                    VerticalAlignment="Center" Margin="6,0,0,0"
-                                    Foreground="{DynamicResource EditorBrush.Warning}"
-                                    IsVisible="{Binding IsLocked}" />
-              </Grid>
+                  <Border Grid.Column="2" CornerRadius="8" Padding="5,1" Margin="3,0"
+                          VerticalAlignment="Center"
+                          Background="{DynamicResource EditorBrush.Surface.Divider}"
+                          ToolTip.Tip="{loc:Tr Layer.ObjectCount}">
+                    <TextBlock Text="{Binding Objects.Count}" FontSize="10"
+                               Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+                  </Border>
+                  <Button Grid.Column="3" Width="20" Height="20" Padding="0" Margin="2,0"
+                          Background="Transparent" BorderBrush="Transparent"
+                          IsVisible="{Binding IsActive}" Tag="{Binding .}"
+                          Click="LayerRename_Click" ToolTip.Tip="{loc:Tr Layer.Rename}">
+                    <icons:MaterialIcon Kind="Pencil" Width="13" Height="13" />
+                  </Button>
+                  <icons:MaterialIcon Grid.Column="4" Kind="Lock" Width="14" Height="14"
+                                      VerticalAlignment="Center" Margin="4,0,0,0"
+                                      Foreground="{DynamicResource EditorBrush.Warning}"
+                                      IsVisible="{Binding IsLocked}" />
+                </Grid>
+              </Border>
             </TreeDataTemplate>
             <DataTemplate x:DataType="core:LevelObject">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,8,0"
+              <Border Classes.object-row="True">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,5,0"
                     PointerPressed="ObjectRow_PointerPressed"
                     PointerMoved="ObjectRow_PointerMoved"
                     PointerReleased="ObjectRow_PointerReleased"
@@ -499,6 +549,7 @@
                   </Grid>
                 </Button>
               </Grid>
+              </Border>
             </DataTemplate>
           </TreeView.DataTemplates>
         </TreeView>

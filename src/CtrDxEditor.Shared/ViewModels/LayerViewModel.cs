@@ -30,6 +30,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this layer's object children are expanded in the tree. Session-only.</summary>
         [ObservableProperty] public partial bool IsExpanded { get; set; } = true;
 
+        /// <summary>Whether the layer name is currently being edited inline. Session-only.</summary>
+        [ObservableProperty] public partial bool IsRenaming { get; set; }
+
         /// <summary>The layer's object rows, in XML order.</summary>
         public ObservableCollection<LevelObject> Objects { get; } = [];
     }

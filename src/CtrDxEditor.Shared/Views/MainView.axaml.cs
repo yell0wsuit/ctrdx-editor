@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -7,6 +8,8 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Rendering;
@@ -97,6 +100,24 @@ namespace CtrDxEditor.Views
             {
                 SyncAnimationPreviewTimer();
             }
+
+            if (e.PropertyName == nameof(EditorViewModel.SelectedTreeItem))
+            {
+                Dispatcher.UIThread.Post(BringSelectedTreeItemIntoView, DispatcherPriority.Loaded);
+            }
+        }
+
+        private void BringSelectedTreeItemIntoView()
+        {
+            if (DataContext is not EditorViewModel { SelectedTreeItem: { } selected }
+                || this.FindControl<TreeView>("LayersTree") is not { } tree
+                || tree.GetVisualDescendants().OfType<TreeViewItem>()
+                    .FirstOrDefault(item => ReferenceEquals(item.DataContext, selected)) is not { } container)
+            {
+                return;
+            }
+
+            container.BringIntoView();
         }
 
         private void FocusCanvasAfterLevelLoaded()

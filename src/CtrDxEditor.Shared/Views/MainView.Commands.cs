@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using CtrDxEditor.Core.Document;
@@ -150,11 +152,13 @@ namespace CtrDxEditor.Views
             if (e.Key == Key.Escape)
             {
                 row.Name = row.Layer.Name;
+                row.IsRenaming = false;
                 _ = _canvas.Focus();
                 e.Handled = true;
             }
             else if (e.Key == Key.Enter)
             {
+                CommitLayerRename(row, row.Name);
                 _ = _canvas.Focus();
                 e.Handled = true;
             }
@@ -162,17 +166,65 @@ namespace CtrDxEditor.Views
 
         private void LayerName_Commit(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is not EditorViewModel vm
-                || sender is not TextBox { Tag: LayerViewModel row, Text: { } name }
-                || name == row.Layer.Name)
+            if (sender is TextBox { Tag: LayerViewModel row, Text: { } name })
             {
-                return;
+                CommitLayerRename(row, name);
             }
+        }
 
-            if (!vm.RenameLayer(row.Layer, name))
+        private void CommitLayerRename(LayerViewModel row, string name)
+        {
+            if (DataContext is EditorViewModel vm
+                && name != row.Layer.Name
+                && !vm.RenameLayer(row.Layer, name))
             {
                 row.Name = row.Layer.Name;
             }
+            else if (DataContext is not EditorViewModel)
+            {
+                row.Name = row.Layer.Name;
+            }
+
+            row.IsRenaming = false;
+        }
+
+        private void LayerName_DoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (sender is Control { Tag: LayerViewModel row })
+            {
+                BeginLayerRename(row);
+                e.Handled = true;
+            }
+        }
+
+        private void LayerTree_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F2
+                && DataContext is EditorViewModel { SelectedTreeItem: LayerViewModel row })
+            {
+                BeginLayerRename(row);
+                e.Handled = true;
+            }
+        }
+
+        private void BeginLayerRename(LayerViewModel row)
+        {
+            row.Name = row.Layer.Name;
+            row.IsRenaming = true;
+            Dispatcher.UIThread.Post(() =>
+            {
+                TextBox? editor = this.FindControl<TreeView>("LayersTree")?
+                    .GetVisualDescendants()
+                    .OfType<TextBox>()
+                    .FirstOrDefault(candidate =>
+                        candidate.Classes.Contains("layer-name-editor")
+                        && ReferenceEquals(candidate.Tag, row));
+                if (editor is not null)
+                {
+                    _ = editor.Focus();
+                    editor.SelectAll();
+                }
+            }, DispatcherPriority.Loaded);
         }
 
         private void ObjectContextMenu_Opening(object? sender, CancelEventArgs e)
@@ -222,7 +274,6 @@ namespace CtrDxEditor.Views
 
         private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
 
-        private TextBox? _layerRenameTarget;
         private static readonly DataFormat<LayerViewModel> LayerDragFormat =
             DataFormat.CreateInProcessFormat<LayerViewModel>("ctrdx-layer-row");
         private static readonly DataFormat<LevelObject> ObjectDragFormat =
@@ -386,9 +437,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            _layerRenameTarget = (menu.PlacementTarget as Visual)?.FindDescendantOfType<TextBox>();
-
-            MenuItem rename = new() { Header = Localizer.Get("Layer.MenuRename") };
+            MenuItem rename = new() { Header = Localizer.Get("Layer.MenuRename"), Tag = row };
             rename.Click += LayerRename_Click;
 
             MenuItem moveUp = new() { Header = Localizer.Get("Layer.MenuMoveUp"), Tag = row };
@@ -430,10 +479,9 @@ namespace CtrDxEditor.Views
 
         private void LayerRename_Click(object? sender, RoutedEventArgs e)
         {
-            if (_layerRenameTarget is { } target)
+            if (sender is Control { Tag: LayerViewModel row })
             {
-                _ = target.Focus();
-                target.SelectAll();
+                BeginLayerRename(row);
             }
         }
 
