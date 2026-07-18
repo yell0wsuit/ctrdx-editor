@@ -51,7 +51,7 @@ namespace CtrDxEditor.Tests
             Assert.Contains("PointerMoved=\"ObjectRow_PointerMoved\"", view, StringComparison.Ordinal);
             Assert.Contains("PointerReleased=\"ObjectRow_PointerReleased\"", view, StringComparison.Ordinal);
             Assert.Contains("PointerCaptureLost=\"ObjectRow_PointerCaptureLost\"", view, StringComparison.Ordinal);
-            Assert.Contains("BeginRowDrag(sender as Visual, e.Pointer);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("BeginRowDrag(sender as Visual, e);", codeBehind, StringComparison.Ordinal);
             Assert.Contains("ClearPendingObjectDrag();", codeBehind, StringComparison.Ordinal);
             Assert.Contains("vm.MoveObjectToLayer(sourceObject, targetLayer.Layer)", codeBehind, StringComparison.Ordinal);
             Assert.Contains(
@@ -80,8 +80,24 @@ namespace CtrDxEditor.Tests
             Assert.Contains("x:Name=\"RowDragPreview\"", view, StringComparison.Ordinal);
             Assert.Contains("Opacity=\"0.65\"", view, StringComparison.Ordinal);
             Assert.True(
-                codeBehind.Split("BeginRowDrag(sender as Visual, e.Pointer);", StringSplitOptions.None).Length >= 3,
+                codeBehind.Split("BeginRowDrag(sender as Visual, e);", StringSplitOptions.None).Length >= 3,
                 "Expected both layer and object row handlers to start the shared internal drag.");
+        }
+
+        /// <summary>The drag preview preserves the grabbed point instead of extending from the cursor.</summary>
+        [Fact]
+        public void RowDragPreviewStaysAlignedWithGrabPoint()
+        {
+            MethodInfo? method = typeof(MainView).GetMethod(
+                "GetRowDragPreviewPosition",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            Point position = (Point)method.Invoke(
+                null,
+                [new Point(1700, 320), new Point(220, 12)])!;
+
+            Assert.Equal(new Point(1480, 308), position);
         }
 
         /// <summary>Template controls outside a layer row do not cancel an ordinary row drag gesture.</summary>

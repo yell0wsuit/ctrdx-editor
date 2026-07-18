@@ -286,6 +286,7 @@ namespace CtrDxEditor.Views
         private Point _objectDragStart;
         private Border? _layerDropTarget;
         private IPointer? _rowDragPointer;
+        private Point _rowDragGrabOffset;
         private bool _rowDragActive;
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -344,7 +345,7 @@ namespace CtrDxEditor.Views
                     return;
                 }
 
-                BeginRowDrag(sender as Visual, e.Pointer);
+                BeginRowDrag(sender as Visual, e);
             }
 
             UpdateRowDrag(e);
@@ -397,7 +398,7 @@ namespace CtrDxEditor.Views
                     return;
                 }
 
-                BeginRowDrag(sender as Visual, e.Pointer);
+                BeginRowDrag(sender as Visual, e);
             }
 
             UpdateRowDrag(e);
@@ -418,7 +419,7 @@ namespace CtrDxEditor.Views
             _dragObject = null;
         }
 
-        private void BeginRowDrag(Visual? row, IPointer pointer)
+        private void BeginRowDrag(Visual? row, PointerEventArgs e)
         {
             if (row is null)
             {
@@ -426,7 +427,8 @@ namespace CtrDxEditor.Views
             }
 
             _rowDragActive = true;
-            _rowDragPointer = pointer;
+            _rowDragPointer = e.Pointer;
+            _rowDragGrabOffset = e.GetPosition(row);
             double scale = TopLevel.GetTopLevel(row)?.RenderScaling ?? 1.0;
             PixelSize pixelSize = PixelSize.FromSize(row.Bounds.Size, scale);
             if (pixelSize.Width > 0 && pixelSize.Height > 0)
@@ -441,7 +443,7 @@ namespace CtrDxEditor.Views
                 _rowDragPreview.IsVisible = true;
             }
 
-            pointer.Capture(row as IInputElement);
+            e.Pointer.Capture(row as IInputElement);
         }
 
         private void UpdateRowDrag(PointerEventArgs e)
@@ -452,9 +454,17 @@ namespace CtrDxEditor.Views
             }
 
             Point previewPosition = e.GetPosition(this);
-            Avalonia.Controls.Canvas.SetLeft(_rowDragPreview, previewPosition.X + 12);
-            Avalonia.Controls.Canvas.SetTop(_rowDragPreview, previewPosition.Y + 12);
+            Point alignedPosition = GetRowDragPreviewPosition(previewPosition, _rowDragGrabOffset);
+            Avalonia.Controls.Canvas.SetLeft(_rowDragPreview, alignedPosition.X);
+            Avalonia.Controls.Canvas.SetTop(_rowDragPreview, alignedPosition.Y);
             UpdateLayerDropTarget(e.GetPosition(layersTree));
+        }
+
+        private static Point GetRowDragPreviewPosition(Point pointerPosition, Point grabOffset)
+        {
+            return new Point(
+                pointerPosition.X - grabOffset.X,
+                pointerPosition.Y - grabOffset.Y);
         }
 
         private void UpdateLayerDropTarget(Point position)
@@ -522,6 +532,7 @@ namespace CtrDxEditor.Views
             IPointer? pointer = _rowDragPointer;
             _rowDragActive = false;
             _rowDragPointer = null;
+            _rowDragGrabOffset = default;
             ClearPendingLayerDrag();
             ClearPendingObjectDrag();
             ClearLayerDropTarget();
