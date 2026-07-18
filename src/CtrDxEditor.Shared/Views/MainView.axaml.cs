@@ -59,6 +59,9 @@ namespace CtrDxEditor.Views
                 PointerReleasedEvent, _paletteDrag.OnPointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
                 PointerCaptureLostEvent, _paletteDrag.OnPointerCaptureLost, RoutingStrategies.Bubble, handledEventsToo: true);
+            // A pending layer drag does not capture the pointer because row controls still need normal click/edit
+            // behavior. Observe every release in the view so releasing outside the source row still clears it.
+            AddHandler(PointerReleasedEvent, LayerRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             // Delete and Space are focus-gated on the bubble path; the Cmd/Ctrl menu chords are handled
             // globally at the TopLevel (see MainView.Shortcuts.cs). Menu hint text is bound in XAML via
             // ShortcutHint.

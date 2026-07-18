@@ -14,10 +14,15 @@ namespace CtrDxEditor.Tests
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            string viewCodeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
 
             Assert.Contains("PointerReleased=\"LayerRow_PointerReleased\"", view, StringComparison.Ordinal);
             Assert.Contains("PointerCaptureLost=\"LayerRow_PointerCaptureLost\"", view, StringComparison.Ordinal);
             Assert.Contains("ClearPendingLayerDrag();", codeBehind, StringComparison.Ordinal);
+            Assert.Contains(
+                "PointerReleasedEvent, LayerRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true",
+                viewCodeBehind,
+                StringComparison.Ordinal);
         }
 
         private static string SourcePath(params string[] parts)
