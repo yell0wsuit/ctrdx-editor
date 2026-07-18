@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -215,6 +216,70 @@ namespace CtrDxEditor.Views
         private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
 
         private TextBox? _layerRenameTarget;
+        private static readonly DataFormat<LayerViewModel> LayerDragFormat =
+            DataFormat.CreateInProcessFormat<LayerViewModel>("ctrdx-layer-row");
+        private LayerViewModel? _dragLayer;
+        private PointerPressedEventArgs? _dragTrigger;
+        private Point _dragStart;
+
+        private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Control { DataContext: LayerViewModel row }
+                && e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            {
+                _dragLayer = row;
+                _dragTrigger = e;
+                _dragStart = e.GetPosition(null);
+            }
+        }
+
+        private async void LayerRow_PointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (_dragLayer is not { } row
+                || _dragTrigger is not { } trigger
+                || !e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
+
+            Point now = e.GetPosition(null);
+            if (Math.Abs(now.X - _dragStart.X) < 4 && Math.Abs(now.Y - _dragStart.Y) < 4)
+            {
+                return;
+            }
+
+            _dragLayer = null;
+            _dragTrigger = null;
+            DataTransfer data = new();
+            data.Add(DataTransferItem.Create(LayerDragFormat, row));
+            _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
+        }
+
+        private void LayerRow_DragOver(object? sender, DragEventArgs e)
+        {
+            e.DragEffects = e.DataTransfer.Contains(LayerDragFormat)
+                ? DragDropEffects.Move
+                : DragDropEffects.None;
+        }
+
+        private void LayerRow_Drop(object? sender, DragEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm
+                || e.DataTransfer.TryGetValue(LayerDragFormat) is not LayerViewModel source
+                || sender is not Control { DataContext: LayerViewModel target }
+                || ReferenceEquals(source, target))
+            {
+                return;
+            }
+
+            int targetIndex = vm.Layers.IndexOf(target);
+            if (targetIndex >= 0)
+            {
+                vm.MoveLayerToIndex(source.Layer, targetIndex);
+            }
+            e.DragEffects = DragDropEffects.Move;
+            e.Handled = true;
+        }
 
         private void LayerContextMenu_Opening(object? sender, CancelEventArgs e)
         {

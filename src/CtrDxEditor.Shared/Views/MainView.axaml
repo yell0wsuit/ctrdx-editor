@@ -345,6 +345,7 @@
                    VerticalAlignment="Center" Margin="8,8,8,4" />
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
                   Background="Transparent"
+                  DragDrop.AllowDrop="True"
                   ItemsSource="{Binding Layers}"
                   SelectedItem="{Binding SelectedTreeItem, Mode=TwoWay}">
           <TreeView.Styles>
@@ -357,7 +358,12 @@
           </TreeView.Styles>
           <TreeView.DataTemplates>
             <TreeDataTemplate x:DataType="vm:LayerViewModel" ItemsSource="{Binding Objects}">
-              <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,8,0">
+              <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,8,0"
+                    PointerPressed="LayerRow_PointerPressed"
+                    PointerMoved="LayerRow_PointerMoved"
+                    DragDrop.AllowDrop="True"
+                    DragDrop.DragOver="LayerRow_DragOver"
+                    DragDrop.Drop="LayerRow_Drop">
                 <Grid.ContextMenu>
                   <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
                 </Grid.ContextMenu>
