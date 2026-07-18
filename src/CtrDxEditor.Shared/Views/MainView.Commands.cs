@@ -213,18 +213,23 @@ namespace CtrDxEditor.Views
             row.IsRenaming = true;
             Dispatcher.UIThread.Post(() =>
             {
-                TextBox? editor = this.FindControl<TreeView>("LayersTree")?
-                    .GetVisualDescendants()
-                    .OfType<TextBox>()
-                    .FirstOrDefault(candidate =>
-                        candidate.Classes.Contains("layer-name-editor")
-                        && ReferenceEquals(candidate.Tag, row));
+                TextBox? editor = FindLayerNameEditor(row);
                 if (editor is not null)
                 {
                     _ = editor.Focus();
                     editor.SelectAll();
                 }
             }, DispatcherPriority.Loaded);
+        }
+
+        private TextBox? FindLayerNameEditor(LayerViewModel row)
+        {
+            return this.FindControl<TreeView>("LayersTree")?
+                .GetVisualDescendants()
+                .OfType<TextBox>()
+                .FirstOrDefault(candidate =>
+                    candidate.Classes.Contains("layer-name-editor")
+                    && ReferenceEquals(candidate.Tag, row));
         }
 
         private void ObjectContextMenu_Opening(object? sender, CancelEventArgs e)
@@ -521,7 +526,16 @@ namespace CtrDxEditor.Views
         {
             if (sender is Control { Tag: LayerViewModel row })
             {
-                BeginLayerRename(row);
+                if (row.IsRenaming)
+                {
+                    TextBox? editor = FindLayerNameEditor(row);
+                    CommitLayerRename(row, editor?.Text ?? row.Name);
+                    _ = _canvas.Focus();
+                }
+                else
+                {
+                    BeginLayerRename(row);
+                }
             }
         }
 

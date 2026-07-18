@@ -354,22 +354,22 @@
               <Setter Property="IsExpanded"
                       Value="{Binding ((vm:LayerViewModel)DataContext).IsExpanded, RelativeSource={RelativeSource Self}, Mode=TwoWay}" />
             </Style>
+            <Style Selector="TreeViewItem:selected">
+              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
+              <Setter Property="FontWeight" Value="Bold" />
+            </Style>
             <Style Selector="Border.layer-row">
               <Setter Property="HorizontalAlignment" Value="Stretch" />
-              <Setter Property="Padding" Value="3,2" />
+              <Setter Property="Padding" Value="6,2" />
               <Setter Property="Margin" Value="0,1,2,1" />
-              <Setter Property="BorderThickness" Value="3,0,0,0" />
+              <Setter Property="BorderThickness" Value="0" />
               <Setter Property="BorderBrush" Value="Transparent" />
             </Style>
             <Style Selector="Border.layer-row.active">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
-              <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
-              <Setter Property="BorderThickness" Value="3,0,0,0" />
             </Style>
             <Style Selector="Border.layer-row.drop-target">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
-              <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
-              <Setter Property="BorderThickness" Value="3,0,0,0" />
             </Style>
             <Style Selector="TextBlock.layer-name-display.active">
               <Setter Property="FontWeight" Value="Bold" />
@@ -381,9 +381,6 @@
               <Setter Property="HorizontalAlignment" Value="Stretch" />
               <Setter Property="Padding" Value="2,1" />
               <Setter Property="Margin" Value="0,1,2,1" />
-            </Style>
-            <Style Selector="TreeViewItem:selected Border.object-row">
-              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
             </Style>
           </TreeView.Styles>
           <TreeView.DataTemplates>
@@ -437,6 +434,7 @@
                   </Border>
                   <Button Grid.Column="3" Width="20" Height="20" Padding="0" Margin="2,0"
                           Background="Transparent" BorderBrush="Transparent"
+                          Focusable="False"
                           IsVisible="{Binding IsActive}" Tag="{Binding .}"
                           Click="LayerRename_Click" ToolTip.Tip="{loc:Tr Layer.Rename}">
                     <icons:MaterialIcon Kind="Pencil" Width="13" Height="13" />
@@ -559,7 +557,8 @@
             </DataTemplate>
           </TreeView.DataTemplates>
         </TreeView>
-        <Grid Grid.Row="2" Margin="4,4,4,6" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+        <Grid Grid.Row="2" Margin="4,4,4,6" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto"
+              IsEnabled="{Binding HasDocument, FallbackValue=False}">
           <Button Grid.Column="0" Command="{Binding AddLayerCommand}" ToolTip.Tip="{loc:Tr Layer.Add}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Plus" Width="16" Height="16" />
@@ -578,7 +577,7 @@
           </Button>
           <ComboBox Grid.Column="5" ItemsSource="{Binding AvailableLocales}"
                     SelectedItem="{Binding DisplayLocale, Mode=TwoWay}"
-                    IsVisible="{Binding HasLocalizedText}"
+                    IsVisible="{Binding HasLocalizedText, FallbackValue=False}"
                     MinWidth="96" Height="24" Padding="6,0"
                     ToolTip.Tip="{loc:Tr Panel.Language}" />
         </Grid>

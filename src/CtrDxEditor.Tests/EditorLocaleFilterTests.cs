@@ -25,6 +25,17 @@ namespace CtrDxEditor.Tests
         </map>
         """;
 
+        private const string LocalizedWithoutEnglish = """
+        <?xml version='1.0' encoding='utf-8'?>
+        <map>
+            <layer name="settings"><map width="320" height="480" /><gameDesign ropePhysicsSpeed="1" /></layer>
+            <layer name="text">
+                <tutorialText x="1" y="2" locale="fr" text="Bonjour" width="100" />
+                <tutorialText x="1" y="2" locale="es" text="Hola" width="100" />
+            </layer>
+        </map>
+        """;
+
         /// <summary>Verifies that document locales are discovered with English first.</summary>
         [Fact]
         public void AvailableLocalesUnionsDocumentLocalesWithEnFirst()
@@ -34,6 +45,37 @@ namespace CtrDxEditor.Tests
             Assert.Equal("en", vm.AvailableLocales[0]);
             Assert.Contains("es", vm.AvailableLocales);
             Assert.Contains("ru", vm.AvailableLocales);
+        }
+
+        /// <summary>Without English, the first locale encountered in the document is selected.</summary>
+        [Fact]
+        public void MultipleLocalesWithoutEnglishSelectFirstDocumentLocale()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml(LocalizedWithoutEnglish);
+
+            Assert.Equal(["fr", "es"], vm.AvailableLocales);
+            Assert.Equal("fr", vm.DisplayLocale);
+            Assert.True(vm.HasLocalizedText);
+        }
+
+        /// <summary>A single localized language is selected but does not need a visible picker.</summary>
+        [Fact]
+        public void SingleLocaleSelectsAvailableLanguageAndHidesPicker()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml("""
+            <?xml version='1.0' encoding='utf-8'?>
+            <map>
+                <layer name="settings"><map width="320" height="480" /><gameDesign ropePhysicsSpeed="1" /></layer>
+                <layer name="text"><tutorialText x="1" y="2" locale="es" text="Hola" width="100" /></layer>
+            </map>
+            """);
+
+            Assert.Equal(["es"], vm.AvailableLocales);
+            Assert.Equal("es", vm.DisplayLocale);
+            Assert.False(vm.HasLocalizedText);
         }
 
         /// <summary>Verifies that localized objects outside the selected locale are effectively hidden.</summary>

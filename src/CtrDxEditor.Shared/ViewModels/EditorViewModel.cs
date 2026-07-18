@@ -94,7 +94,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Layer rows for the object panel tree.</summary>
         public ObservableCollection<LayerViewModel> Layers { get; } = [];
 
-        /// <summary>Locales available in the current level, with English first.</summary>
+        /// <summary>Locales explicitly available in the current level, in document order.</summary>
         public ObservableCollection<string> AvailableLocales { get; } = [];
 
         /// <summary>True when the level has localized text in more than one locale, so the language picker is useful.</summary>
@@ -580,24 +580,20 @@ namespace CtrDxEditor.ViewModels
         private void RefreshLocales()
         {
             AvailableLocales.Clear();
-            AvailableLocales.Add("en");
             if (Document is not null)
             {
                 foreach (string locale in Document.AllObjects
                     .Select(obj => obj.GetAttr("locale"))
                     .OfType<string>()
-                    .Where(locale => locale != "en")
-                    .Distinct()
-                    .OrderBy(locale => locale, StringComparer.Ordinal))
+                    .Distinct(StringComparer.Ordinal))
                 {
                     AvailableLocales.Add(locale);
                 }
             }
 
-            if (!AvailableLocales.Contains(DisplayLocale))
-            {
-                DisplayLocale = "en";
-            }
+            DisplayLocale = AvailableLocales.FirstOrDefault(locale => locale == "en")
+                ?? AvailableLocales.FirstOrDefault()
+                ?? "en";
             OnPropertyChanged(nameof(HasLocalizedText));
         }
 

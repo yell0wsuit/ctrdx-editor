@@ -79,13 +79,50 @@ namespace CtrDxEditor.Tests
             Assert.Contains("KeyDown=\"LayerTree_KeyDown\"", view, StringComparison.Ordinal);
             Assert.Contains("Text=\"{Binding Objects.Count}\"", view, StringComparison.Ordinal);
             Assert.Contains("Classes.active=\"{Binding IsActive}\"", view, StringComparison.Ordinal);
-            Assert.Contains("Property=\"BorderThickness\" Value=\"3,0,0,0\"", view, StringComparison.Ordinal);
             Assert.Contains("Property=\"IsExpanded\"", view, StringComparison.Ordinal);
             Assert.Contains("((vm:LayerViewModel)DataContext).IsExpanded", view, StringComparison.Ordinal);
             Assert.Contains("Mode=TwoWay", view, StringComparison.Ordinal);
             Assert.Contains("e.Key == Key.F2", codeBehind, StringComparison.Ordinal);
             Assert.Contains("LayerRename_Click", codeBehind, StringComparison.Ordinal);
             Assert.Contains("IsRenaming", layerViewModel, StringComparison.Ordinal);
+        }
+
+        /// <summary>Active-layer and selected-object rows share one borderless, bold selection treatment.</summary>
+        [Fact]
+        public void SelectionBlueIsUniformAndDoesNotBleedIntoObjectChildren()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("Selector=\"TreeViewItem:selected\"", view, StringComparison.Ordinal);
+            Assert.Contains("Property=\"FontWeight\" Value=\"Bold\"", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("TreeViewItem:selected Border.object-row", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("Value=\"3,0,0,0\"", view, StringComparison.Ordinal);
+            Assert.True(
+                view.Split("SystemControlHighlightListAccentLowBrush", StringSplitOptions.None).Length >= 3,
+                "Expected the active layer and selected item to use the same low-accent brush.");
+        }
+
+        /// <summary>The pencil toggles rename without stealing focus before it can commit.</summary>
+        [Fact]
+        public void PencilClickTogglesLayerRename()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("Kind=\"Pencil\"", view, StringComparison.Ordinal);
+            Assert.Contains("Focusable=\"False\"", view, StringComparison.Ordinal);
+            Assert.Contains("if (row.IsRenaming)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("CommitLayerRename(row, editor?.Text ?? row.Name);", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>Startup bindings hide the locale picker and disable layer actions until a document exists.</summary>
+        [Fact]
+        public void StartupLayerControlsUseSafeDocumentFallbacks()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("IsVisible=\"{Binding HasLocalizedText, FallbackValue=False}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding HasDocument, FallbackValue=False}\"", view, StringComparison.Ordinal);
         }
 
         /// <summary>Selection changes queue a null-safe scroll after the tree has laid out expanded children.</summary>
