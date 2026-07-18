@@ -530,6 +530,14 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Re-reads every property field from the selected object, for canvas-driven mutations like dragging.</summary>
         public void RefreshFieldValues()
         {
+            if (SelectedObject is { } hand && HandObject.IsHand(hand.Type)
+                && FieldGroups.Count(group => group.Index > 0) != HandObject.SegmentCount(hand))
+            {
+                PopulateFields(hand);
+                RebuildFieldGroups();
+                return;
+            }
+
             if (SelectedObject is { } selected && TutorialObject.IsText(selected.Type))
             {
                 bool shouldShowWidth = !TutorialObject.IsAutoWidth(selected);

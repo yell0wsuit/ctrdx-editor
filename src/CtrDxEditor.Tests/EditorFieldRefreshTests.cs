@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
+using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -74,6 +76,32 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("250", changes);
             Assert.Equal("250", xField.Value);
+        }
+
+        /// <summary>A canvas split changes the hand's field structure, so refresh must add the new numbered section.</summary>
+        [Fact]
+        public void RefreshFieldValuesRebuildsHandSegmentsAfterCanvasSplit()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml("""
+                <map>
+                    <layer name="settings"><map gridSize="32" width="640" height="480" /></layer>
+                    <layer name="Objects">
+                        <hand x="100" y="200" segmentsCount="2"
+                              segment1Angle="0" segment1Length="60" segment1Rotatable="true"
+                              segment2Angle="90" segment2Length="40" segment2Rotatable="false" />
+                    </layer>
+                </map>
+                """);
+            LevelObject hand = vm.Document!.Objects[0];
+            vm.SelectedObject = hand;
+
+            _ = HandGeometry.SplitBone(hand, 1, new Vec2(125, 200));
+            vm.RefreshFieldValues();
+
+            Assert.Equal("3", vm.Fields.Single(field => field.Name == HandObject.CountAttr).Value);
+            Assert.Contains(vm.Fields, field => field.Name == HandObject.AngleAttr(3));
+            Assert.Equal([1, 2, 3], [.. vm.FieldGroups.Where(group => group.Index > 0).Select(group => group.Index)]);
         }
     }
 }
