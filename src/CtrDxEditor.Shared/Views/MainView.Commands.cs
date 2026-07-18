@@ -284,6 +284,7 @@ namespace CtrDxEditor.Views
         private LevelObject? _dragObject;
         private PointerPressedEventArgs? _objectDragTrigger;
         private Point _objectDragStart;
+        private Border? _layerDropTarget;
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -371,6 +372,7 @@ namespace CtrDxEditor.Views
             DataTransfer data = new();
             data.Add(DataTransferItem.Create(ObjectDragFormat, obj));
             _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
+            ClearLayerDropTarget();
         }
 
         private void ObjectRow_PointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -391,14 +393,31 @@ namespace CtrDxEditor.Views
 
         private void LayerRow_DragOver(object? sender, DragEventArgs e)
         {
-            e.DragEffects = e.DataTransfer.Contains(ObjectDragFormat)
-                || e.DataTransfer.Contains(LayerDragFormat)
+            bool acceptsObject = e.DataTransfer.Contains(ObjectDragFormat);
+            e.DragEffects = acceptsObject || e.DataTransfer.Contains(LayerDragFormat)
                 ? DragDropEffects.Move
                 : DragDropEffects.None;
+            if (acceptsObject)
+            {
+                SetLayerDropTarget(sender as Border);
+            }
+            else if (ReferenceEquals(sender, _layerDropTarget))
+            {
+                ClearLayerDropTarget();
+            }
+        }
+
+        private void LayerRow_DragLeave(object? sender, DragEventArgs e)
+        {
+            if (ReferenceEquals(sender, _layerDropTarget))
+            {
+                ClearLayerDropTarget();
+            }
         }
 
         private void LayerRow_Drop(object? sender, DragEventArgs e)
         {
+            ClearLayerDropTarget();
             if (DataContext is not EditorViewModel vm
                 || sender is not Control { DataContext: LayerViewModel target })
             {
@@ -427,6 +446,27 @@ namespace CtrDxEditor.Views
             }
             e.DragEffects = DragDropEffects.Move;
             e.Handled = true;
+        }
+
+        private void SetLayerDropTarget(Border? target)
+        {
+            if (ReferenceEquals(target, _layerDropTarget))
+            {
+                return;
+            }
+
+            ClearLayerDropTarget();
+            _layerDropTarget = target;
+            _layerDropTarget?.Classes.Add("drop-target");
+        }
+
+        private void ClearLayerDropTarget()
+        {
+            if (_layerDropTarget is not null)
+            {
+                _ = _layerDropTarget.Classes.Remove("drop-target");
+                _layerDropTarget = null;
+            }
         }
 
         private void LayerContextMenu_Opening(object? sender, CancelEventArgs e)

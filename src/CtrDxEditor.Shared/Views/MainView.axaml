@@ -366,6 +366,11 @@
               <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
               <Setter Property="BorderThickness" Value="3,0,0,0" />
             </Style>
+            <Style Selector="Border.layer-row.drop-target">
+              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+              <Setter Property="BorderThickness" Value="3,0,0,0" />
+            </Style>
             <Style Selector="TextBlock.layer-name-display.active">
               <Setter Property="FontWeight" Value="Bold" />
             </Style>
@@ -390,6 +395,7 @@
                       PointerCaptureLost="LayerRow_PointerCaptureLost"
                       DragDrop.AllowDrop="True"
                       DragDrop.DragOver="LayerRow_DragOver"
+                      DragDrop.DragLeave="LayerRow_DragLeave"
                       DragDrop.Drop="LayerRow_Drop">
                 <Border.ContextMenu>
                   <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />

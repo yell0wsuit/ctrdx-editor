@@ -296,6 +296,21 @@ namespace CtrDxEditor.Tests
             Assert.Equal(before, vm.ToXml());
         }
 
+        /// <summary>A layer from another document cannot produce a successful no-op move.</summary>
+        [Fact]
+        public void MoveObjectToForeignLayerReturnsFalseWithoutChangingXml()
+        {
+            EditorViewModel vm = Create();
+            EditorViewModel other = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            string? before = vm.ToXml();
+
+            bool moved = vm.MoveObjectToLayer(candy, other.Layers[1].Layer);
+
+            Assert.False(moved);
+            Assert.Equal(before, vm.ToXml());
+        }
+
         /// <summary>Selecting a layer row makes it active without selecting an object.</summary>
         [Fact]
         public void SelectingLayerTreeItemChangesActiveLayer()

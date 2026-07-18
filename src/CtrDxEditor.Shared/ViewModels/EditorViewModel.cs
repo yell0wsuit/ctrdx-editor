@@ -737,9 +737,11 @@ namespace CtrDxEditor.ViewModels
                 return false;
             }
 
-            LevelLayer? source = Document.Layers.FirstOrDefault(layer =>
+            IReadOnlyList<LevelLayer> documentLayers = Document.Layers;
+            LevelLayer? source = documentLayers.FirstOrDefault(layer =>
                 ReferenceEquals(layer.Element, obj.Element.Parent));
             if (source is null
+                || !documentLayers.Any(layer => ReferenceEquals(layer.Element, target.Element))
                 || ReferenceEquals(source.Element, target.Element)
                 || IsLayerLocked(source)
                 || IsLayerLocked(target))

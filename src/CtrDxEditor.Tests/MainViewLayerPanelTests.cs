@@ -48,6 +48,20 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>Object drag-over highlights the full destination layer and clears every terminal path.</summary>
+        [Fact]
+        public void ObjectDragHighlightsDestinationLayerRow()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("Selector=\"Border.layer-row.drop-target\"", view, StringComparison.Ordinal);
+            Assert.Contains("DragDrop.DragLeave=\"LayerRow_DragLeave\"", view, StringComparison.Ordinal);
+            Assert.Contains("SetLayerDropTarget(sender as Border);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("private void ClearLayerDropTarget()", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("_layerDropTarget.Classes.Remove(\"drop-target\")", codeBehind, StringComparison.Ordinal);
+        }
+
         /// <summary>The redesigned layer row exposes organization state without staying permanently editable.</summary>
         [Fact]
         public void LayerRowsUseExplicitRenameModeAndOrganizationalStyling()
