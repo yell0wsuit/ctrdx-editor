@@ -5,11 +5,13 @@ using System.Linq;
 using System.Xml.Linq;
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
@@ -318,6 +320,20 @@ namespace CtrDxEditor.Rendering
                             new Rect(Bounds.Size),
                             previewDark);
                     }
+                }
+                else if (HandObject.IsHand(dragPreviewElement)
+                    && DescriptorTable.CtrObjects.For(dragPreviewElement) is { } handDescriptor)
+                {
+                    // The hand is custom-rendered from hand_parts, so preview the real articulated arm built
+                    // exactly as the drop builds it (same placement defaults) rather than a composited sprite.
+                    // DrawGhost composites the whole arm as one layer so its pieces fade uniformly.
+                    LevelObject previewHand = Placement.CreateObject(
+                        handDescriptor,
+                        (int)Math.Round(_dragPreviewLevel.X),
+                        (int)Math.Round(_dragPreviewLevel.Y));
+                    HandRenderer.DrawGhost(
+                        context, v, sprites, previewHand, 0.7,
+                        TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0);
                 }
                 else if (sprites.GetSprite(LevelSceneRenderer.CanvasSpriteKey(
                     dragPreviewElement == "sock" && SpecialEvents.IsXmas ? "sock_xmas" : dragPreviewElement,

@@ -85,7 +85,7 @@ namespace CtrDxEditor.Rendering
                 return null;
             }
 
-            const double armLength = 24;
+            const double armLength = 48;
             HandThumbnailComposition composition = HandThumbnailLayout.Compute(
                 parts.Layers[PartBone].Frame,
                 parts.Layers[PartClaw].Frame,
@@ -162,6 +162,84 @@ namespace CtrDxEditor.Rendering
             }
 
             DrawClaw(ctx, v, parts.Layers[PartClaw], hand);
+        }
+
+        /// <summary>
+        /// Draws <paramref name="hand"/> as a uniformly translucent ghost for the palette drag preview. The
+        /// whole arm is composited opaque into an offscreen layer and faded once, so overlapping pieces (bone
+        /// tiles, joint buttons, claw, base) do not stack their alpha the way a per-primitive
+        /// <see cref="DrawingContext.PushOpacity(double)"/> would. Falls back to a plain faded draw when the
+        /// layer would be degenerate or unreasonably large (e.g. extreme zoom).
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache used to resolve the hand pieces.</param>
+        /// <param name="hand">The mechanical hand to preview.</param>
+        /// <param name="opacity">Ghost opacity in the range 0..1.</param>
+        /// <param name="renderScaling">Device pixels per DIP, so the offscreen layer stays crisp.</param>
+        public static void DrawGhost(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            LevelObject hand,
+            double opacity,
+            double renderScaling)
+        {
+            if (!HandObject.IsHand(hand.Type)
+                || sprites.GetSprite("hand_parts", 0, 0) is not { Layers.Count: >= 5 } parts)
+            {
+                return;
+            }
+
+            // Screen extent of every drawn piece: the joint chain expanded by the largest part sprite so the
+            // base, claw, and buttons all fit inside the layer.
+            double margin = 0;
+            foreach (SpriteLayerDraw layer in parts.Layers)
+            {
+                IntRect f = layer.Frame.Frame;
+                margin = Math.Max(margin, Math.Max(f.W, f.H) / SpritePlacement.MapScale);
+            }
+
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            foreach (Vec2 joint in HandGeometry.Joints(hand))
+            {
+                Vec2 s = v.LevelToScreen(joint);
+                minX = Math.Min(minX, s.X);
+                minY = Math.Min(minY, s.Y);
+                maxX = Math.Max(maxX, s.X);
+                maxY = Math.Max(maxY, s.Y);
+            }
+            double pad = margin * v.Zoom;
+            minX -= pad;
+            minY -= pad;
+            maxX += pad;
+            maxY += pad;
+
+            double scaling = renderScaling <= 0 ? 1 : renderScaling;
+            double dipW = maxX - minX;
+            double dipH = maxY - minY;
+            int pxW = (int)Math.Ceiling(dipW * scaling);
+            int pxH = (int)Math.Ceiling(dipH * scaling);
+            if (pxW <= 0 || pxH <= 0 || (long)pxW * pxH > 8_000_000)
+            {
+                using (ctx.PushOpacity(opacity))
+                {
+                    Draw(ctx, v, sprites, hand);
+                }
+                return;
+            }
+
+            using RenderTargetBitmap layerBitmap = new(new PixelSize(pxW, pxH), new Vector(96, 96));
+            ViewTransform layerView = new(v.Zoom * scaling, (v.PanX - minX) * scaling, (v.PanY - minY) * scaling);
+            using (DrawingContext layerCtx = layerBitmap.CreateDrawingContext())
+            {
+                Draw(layerCtx, layerView, sprites, hand);
+            }
+
+            using (ctx.PushOpacity(opacity))
+            {
+                ctx.DrawImage(layerBitmap, new Rect(0, 0, pxW, pxH), new Rect(minX, minY, dipW, dipH));
+            }
         }
 
         /// <summary>

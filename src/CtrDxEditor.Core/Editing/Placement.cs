@@ -9,6 +9,9 @@ namespace CtrDxEditor.Core.Editing
     /// <summary>Creates new XML-backed level objects from descriptors.</summary>
     public static class Placement
     {
+        /// <summary>Segment length seeded into a hand placed on the canvas, long enough to grab and rotate.</summary>
+        private const double HandSegmentLength = 50;
+
         /// <summary>Creates an object at the supplied level coordinates with descriptor defaults applied.</summary>
         public static LevelObject CreateObject(ObjectDescriptor descriptor, int x, int y)
         {
@@ -30,7 +33,14 @@ namespace CtrDxEditor.Core.Editing
             LevelObject result = new(element);
             if (HandObject.IsHand(descriptor.ElementName))
             {
-                HandObject.SetSegmentCount(result, HandObject.SegmentCount(result));
+                int count = HandObject.SegmentCount(result);
+                HandObject.SetSegmentCount(result, count);
+                // Seed a longer starting arm than the inactive-slot default so a freshly placed hand is easy
+                // to see and grab on the canvas.
+                for (int i = 1; i <= count; i++)
+                {
+                    HandObject.SetLength(result, i, HandSegmentLength);
+                }
             }
 
             return result;
