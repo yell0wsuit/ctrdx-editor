@@ -208,11 +208,11 @@ namespace CtrDxEditor.ViewModels
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
             RefreshObjectList();
-            if (SelectedObject is not null && !Document.Objects.Contains(SelectedObject))
+            if (SelectedObject is not null && !Document.AllObjects.Contains(SelectedObject))
             {
                 SelectedObject = null;
             }
-            if (LockedObject is not null && !Document.Objects.Contains(LockedObject))
+            if (LockedObject is not null && !Document.AllObjects.Contains(LockedObject))
             {
                 LockedObject = null;
             }
@@ -333,7 +333,7 @@ namespace CtrDxEditor.ViewModels
             {
                 return;
             }
-            foreach (LevelObject obj in Document.Objects)
+            foreach (LevelObject obj in Document.AllObjects)
             {
                 ObjectList.Add(obj);
             }
@@ -342,7 +342,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Refreshes palette availability from descriptor cardinality and loaded objects.</summary>
         public void RefreshPalette()
         {
-            IReadOnlyList<LevelObject> objs = Document?.Objects ?? [];
+            IReadOnlyList<LevelObject> objs = Document?.AllObjects ?? [];
             Palette.Clear();
             foreach (ObjectDescriptor d in _descriptors.ByElement.Values)
             {
@@ -442,7 +442,7 @@ namespace CtrDxEditor.ViewModels
         public LevelObject? PlaceObject(string element, int levelX, int levelY)
         {
             ObjectDescriptor? d = _descriptors.For(element);
-            if (d is null || Document is null || LockedObject is not null || Cardinality.IsAtCapacity(d, Document.Objects))
+            if (d is null || Document is null || LockedObject is not null || Cardinality.IsAtCapacity(d, Document.AllObjects))
             {
                 return null;
             }
@@ -806,7 +806,7 @@ namespace CtrDxEditor.ViewModels
                 return null;
             }
 
-            IReadOnlyList<LevelObject> objects = Document.Objects;
+            IReadOnlyList<LevelObject> objects = Document.AllObjects;
             int[] autoWidthIndices = [.. objects
                 .Select((obj, index) => (obj, index))
                 .Where(item => TutorialObject.IsAutoWidth(item.obj))
@@ -821,7 +821,7 @@ namespace CtrDxEditor.ViewModels
         private void RestoreHistoryState(HistoryState state)
         {
             Document = LevelDocument.Parse(state.Xml);
-            IReadOnlyList<LevelObject> objects = Document.Objects;
+            IReadOnlyList<LevelObject> objects = Document.AllObjects;
             foreach (int index in state.AutoWidthIndices)
             {
                 if (index >= 0 && index < objects.Count && TutorialObject.IsText(objects[index].Type))
@@ -845,8 +845,8 @@ namespace CtrDxEditor.ViewModels
 
         private LevelObject? ObjectAt(int index)
         {
-            return Document is { } doc && index >= 0 && index < doc.Objects.Count
-                ? doc.Objects[index]
+            return Document is { } doc && index >= 0 && index < doc.AllObjects.Count
+                ? doc.AllObjects[index]
                 : null;
         }
 

@@ -135,7 +135,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = ObjectsDoc($"<grab x=\"{raw}\" y=\"{raw}\" />");
 
             Assert.True(LevelObjectPolicy.DropCoordinateDecimals(doc));
-            LevelObject obj = doc.Objects[0];
+            LevelObject obj = doc.AllObjects[0];
             Assert.Equal(expected, obj.GetAttr("x"));
             Assert.Equal(expected, obj.GetAttr("y"));
         }
@@ -147,7 +147,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = ObjectsDoc("<grab x=\"100\" y=\"-40\" />");
 
             Assert.False(LevelObjectPolicy.DropCoordinateDecimals(doc));
-            LevelObject obj = doc.Objects[0];
+            LevelObject obj = doc.AllObjects[0];
             Assert.Equal("100", obj.GetAttr("x"));
             Assert.Equal("-40", obj.GetAttr("y"));
         }
@@ -161,7 +161,7 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = ObjectsDoc($"<grab x=\"{raw}\" y=\"10\" />");
 
             Assert.False(LevelObjectPolicy.DropCoordinateDecimals(doc));
-            Assert.Equal(raw, doc.Objects[0].GetAttr("x"));
+            Assert.Equal(raw, doc.AllObjects[0].GetAttr("x"));
         }
 
         /// <summary>gameDesign mapOffsetX/mapOffsetY decimals are truncated too, matching the game.</summary>

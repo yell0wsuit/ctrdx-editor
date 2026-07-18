@@ -54,7 +54,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject bouncer = vm.Document!.Objects[0];
+            LevelObject bouncer = vm.Document!.AllObjects[0];
             vm.SelectedObject = bouncer;
             AttributeFieldViewModel size = vm.Fields.Single(f => f.Name == "size");
             AttributeOptionViewModel[] options = Assert.IsType<AttributeOptionViewModel[]>(size.EnumOptions);
@@ -73,7 +73,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
 
             AttributeFieldViewModel angle = vm.Fields.Single(f => f.Name == "angle");
             Assert.True(angle.IsNumeric);
@@ -86,7 +86,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
 
             Assert.Contains(vm.Fields, f => f.Name == "spin" && f.IsBool);
             Assert.Contains(vm.Fields, f => f.Name == "movementMode" && f.EnumOptions is not null);

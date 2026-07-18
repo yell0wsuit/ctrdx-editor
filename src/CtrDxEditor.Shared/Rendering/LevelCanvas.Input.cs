@@ -579,11 +579,11 @@ namespace CtrDxEditor.Rendering
         /// <summary>Builds the per-object click-test bounds, one entry per object in document order.</summary>
         /// <remarks>Clicking uses the same box that the selection marquee draws (trimmed art + 25%).</remarks>
         /// <param name="doc">The level document whose objects are measured.</param>
-        /// <returns>Level-space hit-test bounds parallel to <see cref="LevelDocument.Objects"/>.</returns>
+        /// <returns>Level-space hit-test bounds parallel to <see cref="LevelDocument.AllObjects"/>.</returns>
         private List<LevelBounds> BuildHitBounds(LevelDocument doc)
         {
             List<LevelBounds> list = [];
-            foreach (LevelObject o in doc.Objects)
+            foreach (LevelObject o in doc.AllObjects)
             {
                 list.Add(Sprites is null
                     ? new LevelBounds(o.X - 8, o.Y - 8, 16, 16)
@@ -944,15 +944,15 @@ namespace CtrDxEditor.Rendering
                     ToggleLock?.Invoke(current);
                     return;
                 }
-                int dh = TopmostHit(doc.Objects, bounds, levelPt);
-                ToggleLock?.Invoke(dh >= 0 ? doc.Objects[dh] : null);
+                int dh = TopmostHit(doc.AllObjects, bounds, levelPt);
+                ToggleLock?.Invoke(dh >= 0 ? doc.AllObjects[dh] : null);
                 return;
             }
 
             // While an object is locked, only it is interactive — clicks never fall through to other objects.
             if (LockedObject is { } locked)
             {
-                int li = IndexOf(doc.Objects, locked);
+                int li = IndexOf(doc.AllObjects, locked);
                 if (li >= 0 && HitBoundContains(locked, bounds[li], levelPt))
                 {
                     SelectedObject = locked;
@@ -973,8 +973,8 @@ namespace CtrDxEditor.Rendering
             }
 
             int after = _lastHitIndex >= 0 && _lastHitIndex < bounds.Count
-                        && HitBoundContains(doc.Objects[_lastHitIndex], bounds[_lastHitIndex], levelPt) ? _lastHitIndex : -1;
-            int hit = TopmostHit(doc.Objects, bounds, levelPt, after);
+                        && HitBoundContains(doc.AllObjects[_lastHitIndex], bounds[_lastHitIndex], levelPt) ? _lastHitIndex : -1;
+            int hit = TopmostHit(doc.AllObjects, bounds, levelPt, after);
             _lastHitIndex = hit;
 
             if (hit < 0)
@@ -994,7 +994,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            LevelObject obj = doc.Objects[hit];
+            LevelObject obj = doc.AllObjects[hit];
             SelectedObject = obj;
             _dragOffset = levelPt - new Vec2(obj.X, obj.Y);
             _dragging = true;

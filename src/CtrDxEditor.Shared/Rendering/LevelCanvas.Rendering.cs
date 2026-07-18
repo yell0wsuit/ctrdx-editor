@@ -84,7 +84,7 @@ namespace CtrDxEditor.Rendering
             }
             DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true, grabRadiusPen: null, useAnimationPreview: true);
 
-            IReadOnlyList<LevelObject> objects = doc.Objects;
+            IReadOnlyList<LevelObject> objects = doc.AllObjects;
 
             GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius, PreviewAnimationSeconds);
 
@@ -727,7 +727,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            IReadOnlyList<LevelObject> objects = doc.Objects;
+            IReadOnlyList<LevelObject> objects = doc.AllObjects;
             Rect opBounds = new(renderSize);
 
             // Light-bulb lit-glow halos: an additive Skia pass under the bottles (game's DrawLight order).

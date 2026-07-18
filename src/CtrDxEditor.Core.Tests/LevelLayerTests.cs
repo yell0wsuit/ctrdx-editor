@@ -58,5 +58,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("renamed", doc.Layers[0].Name);
             Assert.Contains("name=\"renamed\"", doc.Save());
         }
+
+        /// <summary>Verifies that the aggregate object view flattens every object layer in document order.</summary>
+        [Fact]
+        public void AllObjectsFlattensEveryLayerInOrder()
+        {
+            LevelDocument doc = LevelDocument.Parse(MultiLayer);
+
+            Assert.Equal(3, doc.AllObjects.Count);
+            Assert.Equal("candy", doc.AllObjects[0].Type);
+            Assert.Equal("star", doc.AllObjects[1].Type);
+            Assert.Equal("lightBulb", doc.AllObjects[2].Type);
+        }
     }
 }

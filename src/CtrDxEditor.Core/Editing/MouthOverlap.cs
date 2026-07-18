@@ -21,7 +21,7 @@ namespace CtrDxEditor.Core.Editing
         public static IReadOnlyList<LevelObject> CandiesOnMouth(LevelDocument document)
         {
             HitboxModel model = HitboxTable.ModelFor(document.UseMobilePhysics);
-            IReadOnlyList<LevelObject> objects = document.Objects;
+            IReadOnlyList<LevelObject> objects = document.AllObjects;
             List<LevelObject> result = [];
             foreach (LevelObject candy in objects)
             {

@@ -24,7 +24,7 @@ namespace CtrDxEditor.Tests
 
         private static string TypeOfFirst(LevelDocument doc)
         {
-            return doc.Objects[0].Type;
+            return doc.AllObjects[0].Type;
         }
 
         /// <summary>A spike tag disagreeing with its <c>size</c> attribute is renamed to match, since the game reads the size only from the attribute.</summary>
@@ -34,7 +34,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<spike2 x=\"10\" y=\"20\" size=\"3\" />");
 
             Assert.Equal("spike3", TypeOfFirst(doc));
-            Assert.Equal("3", doc.Objects[0].GetAttr("size"));
+            Assert.Equal("3", doc.AllObjects[0].GetAttr("size"));
         }
 
         /// <summary>Bouncers normalize the same way as spikes, so the two sized elements stay consistent.</summary>
@@ -44,7 +44,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<bouncer1 x=\"10\" y=\"20\" size=\"2\" />");
 
             Assert.Equal("bouncer2", TypeOfFirst(doc));
-            Assert.Equal("2", doc.Objects[0].GetAttr("size"));
+            Assert.Equal("2", doc.AllObjects[0].GetAttr("size"));
         }
 
         /// <summary>A tag that already agrees with its size is left alone, so normalization is idempotent.</summary>
@@ -72,7 +72,7 @@ namespace CtrDxEditor.Tests
             LevelDocument doc = Load("<spike3 x=\"10\" y=\"20\" />");
 
             Assert.Equal("spike3", TypeOfFirst(doc));
-            Assert.Null(doc.Objects[0].GetAttr("size"));
+            Assert.Null(doc.AllObjects[0].GetAttr("size"));
         }
 
         /// <summary>An out-of-range size has no corresponding tag, so the element is left as-is rather than renamed to a nonexistent one.</summary>

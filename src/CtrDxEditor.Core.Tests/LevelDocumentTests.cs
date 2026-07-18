@@ -33,9 +33,9 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(320, doc.Width);
             Assert.Equal(480, doc.Height);
             Assert.True(doc.TwoParts);
-            Assert.Equal(4, doc.Objects.Count);
-            Assert.Equal("candyL", doc.Objects[0].Type);
-            Assert.Equal(165, doc.Objects[2].X);
+            Assert.Equal(4, doc.AllObjects.Count);
+            Assert.Equal("candyL", doc.AllObjects[0].Type);
+            Assert.Equal(165, doc.AllObjects[2].X);
         }
     }
 }

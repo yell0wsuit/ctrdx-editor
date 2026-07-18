@@ -140,8 +140,8 @@ namespace CtrDxEditor.Tests
             vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
 
             Assert.Equal(1, mutations);
-            Assert.Contains(vm.Document!.Objects, o => o.Type == "candyL");
-            Assert.Contains(vm.Document.Objects, o => o.Type == "candyR");
+            Assert.Contains(vm.Document!.AllObjects, o => o.Type == "candyL");
+            Assert.Contains(vm.Document.AllObjects, o => o.Type == "candyR");
         }
 
         /// <summary>The half-candy palette allows exactly one of each half; placing one disables it.</summary>
@@ -174,7 +174,7 @@ namespace CtrDxEditor.Tests
 
             Assert.All(vm.Palette, item => Assert.False(item.Enabled));
             Assert.Null(vm.PlaceObject("star", 100, 120));
-            Assert.DoesNotContain(vm.Document!.Objects, o => o.Type == "star");
+            Assert.DoesNotContain(vm.Document!.AllObjects, o => o.Type == "star");
 
             vm.ToggleLock(locked);
 

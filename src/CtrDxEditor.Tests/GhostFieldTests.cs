@@ -45,7 +45,7 @@ namespace CtrDxEditor.Tests
                 <layer name="Objects">{ghostXml}</layer>
             </map>
             """);
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
             return vm;
         }
 
@@ -82,7 +82,7 @@ namespace CtrDxEditor.Tests
             grab.Value = "true";
 
             Assert.Contains(vm.Fields, f => f.Name == "radius");
-            Assert.Equal("50", vm.Document!.Objects[0].GetAttr("radius"));
+            Assert.Equal("50", vm.Document!.AllObjects[0].GetAttr("radius"));
         }
 
         /// <summary>Toggling grab off sets radius to the -1 auto-rope sentinel and hides the field.</summary>
@@ -95,7 +95,7 @@ namespace CtrDxEditor.Tests
             grab.Value = "false";
 
             Assert.DoesNotContain(vm.Fields, f => f.Name == "radius");
-            Assert.Equal("-1", vm.Document!.Objects[0].GetAttr("radius"));
+            Assert.Equal("-1", vm.Document!.AllObjects[0].GetAttr("radius"));
         }
     }
 }

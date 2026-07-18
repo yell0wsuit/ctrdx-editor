@@ -31,10 +31,10 @@ namespace CtrDxEditor.Core.Editing
 
             // Non-twoParts candies are keyed 0-based; the first placed becomes primary "0" and an
             // unnumbered primary is backfilled when a second candy arrives. Called before the new
-            // object is added, so document.Objects holds only the prior candies.
+            // object is added, so document.AllObjects holds only the prior candies.
             if (obj.Type == "candy" && !document.TwoParts)
             {
-                List<LevelObject> candies = [.. document.Objects.Where(o => o.Type == "candy")];
+                List<LevelObject> candies = [.. document.AllObjects.Where(o => o.Type == "candy")];
                 if (candies.Count >= 1 && candies[0].GetAttr("candyNumber") is null)
                 {
                     candies[0].SetAttr("candyNumber", "0");
@@ -46,7 +46,7 @@ namespace CtrDxEditor.Core.Editing
             // bulb alongside them simply takes "0".
             if (obj.Type is "lightBulb" or "lightbulb")
             {
-                IEnumerable<string?> keys = document.Objects
+                IEnumerable<string?> keys = document.AllObjects
                     .Where(o => o.Type is "lightBulb" or "lightbulb")
                     .Select(o => o.GetAttr("bulbNumber"));
                 obj.SetAttr("bulbNumber", KeyNumbering.NextKey(keys));
@@ -56,7 +56,7 @@ namespace CtrDxEditor.Core.Editing
             if (obj.Type == "sock")
             {
                 obj.SetAttr("group", SockGrouping.NextGroup(
-                    document.Objects.Where(o => o.Type == "sock").Select(o => o.GetAttr("group"))));
+                    document.AllObjects.Where(o => o.Type == "sock").Select(o => o.GetAttr("group"))));
             }
 
             // Mice activate in ascending index order; a new mouse takes one past the highest existing
@@ -64,7 +64,7 @@ namespace CtrDxEditor.Core.Editing
             // falls back to mice.Count+1 only when index is absent, so an explicit value never collides.
             if (obj.Type == "gap")
             {
-                int max = document.Objects
+                int max = document.AllObjects
                     .Where(o => o.Type == "gap")
                     .Select(o => int.TryParse(o.GetAttr("index"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int i) ? i : 0)
                     .DefaultIfEmpty(0)
@@ -82,7 +82,7 @@ namespace CtrDxEditor.Core.Editing
         public static bool NormalizeSizedElements(LevelDocument document)
         {
             bool changed = false;
-            foreach (LevelObject obj in document.Objects)
+            foreach (LevelObject obj in document.AllObjects)
             {
                 string before = obj.Type;
                 SpikeObject.NormalizeElementName(obj);
@@ -101,7 +101,7 @@ namespace CtrDxEditor.Core.Editing
         public static bool NormalizeMouseAlias(LevelDocument document)
         {
             bool changed = false;
-            foreach (LevelObject obj in document.Objects)
+            foreach (LevelObject obj in document.AllObjects)
             {
                 if (obj.Type == "mouse")
                 {
@@ -123,7 +123,7 @@ namespace CtrDxEditor.Core.Editing
         public static bool DropCoordinateDecimals(LevelDocument document)
         {
             bool changed = false;
-            foreach (LevelObject obj in document.Objects)
+            foreach (LevelObject obj in document.AllObjects)
             {
                 changed |= TruncateCoordinate(obj, "x");
                 changed |= TruncateCoordinate(obj, "y");
@@ -165,7 +165,7 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         public static void NormalizeBindingKeys(LevelDocument document)
         {
-            IReadOnlyList<LevelObject> objects = document.Objects;
+            IReadOnlyList<LevelObject> objects = document.AllObjects;
             Dictionary<string, string> candyMap = NormalizeObjects(
                 objects.Where(o => o.Type == "candy"),
                 "candyNumber");

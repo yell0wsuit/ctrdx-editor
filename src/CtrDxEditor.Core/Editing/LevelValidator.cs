@@ -17,7 +17,7 @@ namespace CtrDxEditor.Core.Editing
         {
             List<LevelWarning> warnings = [];
 
-            IReadOnlyList<LevelObject> objects = document.Objects;
+            IReadOnlyList<LevelObject> objects = document.AllObjects;
             bool HasType(string type)
             {
                 return objects.Any(o => o.Type == type);
@@ -51,7 +51,7 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add(new LevelWarning("Validation.NightNoBulb"));
             }
 
-            bool capturedLantern = document.Objects.Any(LanternObject.IsCaptured);
+            bool capturedLantern = document.AllObjects.Any(LanternObject.IsCaptured);
             if (!hasCandy && !hasLeft && !hasRight && !capturedLantern)
             {
                 warnings.Add(new LevelWarning("Validation.NoCandy"));

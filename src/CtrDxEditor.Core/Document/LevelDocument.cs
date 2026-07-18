@@ -127,9 +127,6 @@ namespace CtrDxEditor.Core.Document
         public LevelSettings Settings =>
             new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed);
 
-        /// <summary>The Objects layer element, or null when the document has none yet.</summary>
-        public XElement? ObjectsLayer => Layer("Objects");
-
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
         public IReadOnlyList<LevelLayer> Layers =>
             [.. Root.Elements("layer")
@@ -140,7 +137,7 @@ namespace CtrDxEditor.Core.Document
         /// <param name="obj">The object to append.</param>
         public void Add(LevelObject obj)
         {
-            XElement layer = ObjectsLayer ?? CreateObjectsLayer();
+            XElement layer = Layer("Objects") ?? CreateObjectsLayer();
             layer.Add(obj.Element);
         }
 
@@ -182,9 +179,13 @@ namespace CtrDxEditor.Core.Document
             obj.Element.Remove();
         }
 
-        /// <summary>Current editable objects in the Objects layer, in XML order.</summary>
-        public IReadOnlyList<LevelObject> Objects =>
-            ObjectsLayer is null ? [] : [.. ObjectsLayer.Elements().Select(e => new LevelObject(e))];
+        /// <summary>
+        /// All editable objects across every object layer, flattened in document order. Read-only aggregate
+        /// used for level-wide concerns (cardinality, palette gating); it is not a layer and nothing writes
+        /// to it. Writes go through a specific <see cref="LevelLayer"/>.
+        /// </summary>
+        public IReadOnlyList<LevelObject> AllObjects =>
+            [.. Layers.SelectMany(l => l.Objects)];
 
         /// <summary>
         /// Serializes game level XML, preserving the original declaration and unknown data while omitting
@@ -268,7 +269,7 @@ namespace CtrDxEditor.Core.Document
 
         private void ConvertCandyForTwoParts(bool twoParts, int width, int height)
         {
-            XElement objects = ObjectsLayer ?? CreateObjectsLayer();
+            XElement objects = Layer("Objects") ?? CreateObjectsLayer();
             if (twoParts)
             {
                 XElement? candy = objects.Elements("candy").FirstOrDefault();

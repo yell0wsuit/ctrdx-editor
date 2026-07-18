@@ -98,7 +98,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml($"<map><layer name='settings'><map gridSize='32' width='640' height='480' /></layer><layer name='Objects'>{grabXml}</layer></map>");
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
             return vm;
         }
     }

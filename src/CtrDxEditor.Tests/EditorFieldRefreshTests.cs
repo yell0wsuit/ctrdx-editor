@@ -57,7 +57,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject candy = vm.Document!.Objects[0];
+            LevelObject candy = vm.Document!.AllObjects[0];
             vm.SelectedObject = candy;
 
             AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
@@ -93,7 +93,7 @@ namespace CtrDxEditor.Tests
                     </layer>
                 </map>
                 """);
-            LevelObject hand = vm.Document!.Objects[0];
+            LevelObject hand = vm.Document!.AllObjects[0];
             vm.SelectedObject = hand;
 
             _ = HandGeometry.SplitBone(hand, 1, new Vec2(125, 200));

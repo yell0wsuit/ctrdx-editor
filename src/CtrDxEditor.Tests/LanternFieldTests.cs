@@ -53,7 +53,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            vm.SelectedObject = vm.Document!.Objects.Single(o => o.Type == "lantern");
+            vm.SelectedObject = vm.Document!.AllObjects.Single(o => o.Type == "lantern");
 
             Assert.Contains(vm.Fields, f => f.Name == "candyCaptured" && f.IsBool);
         }
@@ -64,7 +64,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            vm.SelectedObject = vm.Document!.Objects.Single(o => o.Type == "lantern");
+            vm.SelectedObject = vm.Document!.AllObjects.Single(o => o.Type == "lantern");
 
             Assert.Contains(vm.Fields, f => f.Name == "movementMode" && f.EnumOptions is not null);
         }

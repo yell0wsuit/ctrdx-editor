@@ -28,9 +28,9 @@ namespace CtrDxEditor.Core.Tests
             bool changed = LevelObjectPolicy.NormalizeMouseAlias(doc);
 
             Assert.True(changed);
-            Assert.Equal("gap", doc.Objects[0].Type);
-            Assert.Equal("50", doc.Objects[0].GetAttr("radius"));
-            Assert.Equal("1", doc.Objects[0].GetAttr("index"));
+            Assert.Equal("gap", doc.AllObjects[0].Type);
+            Assert.Equal("50", doc.AllObjects[0].GetAttr("radius"));
+            Assert.Equal("1", doc.AllObjects[0].GetAttr("index"));
         }
 
         /// <summary>A tag that is already <c>gap</c> reports no change, so opening a normalized level does not mark it dirty.</summary>
@@ -42,7 +42,7 @@ namespace CtrDxEditor.Core.Tests
             bool changed = LevelObjectPolicy.NormalizeMouseAlias(doc);
 
             Assert.False(changed);
-            Assert.Equal("gap", doc.Objects[0].Type);
+            Assert.Equal("gap", doc.AllObjects[0].Type);
         }
     }
 }

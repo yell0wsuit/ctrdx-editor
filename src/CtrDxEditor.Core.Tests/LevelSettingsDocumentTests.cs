@@ -62,8 +62,8 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(480, doc.Height);
             Assert.True(doc.TwoParts);
             Assert.True(doc.NightLevel);
-            Assert.Empty(doc.Objects);
-            Assert.NotNull(doc.ObjectsLayer);
+            Assert.Empty(doc.AllObjects);
+            Assert.Equal("Objects", Assert.Single(doc.Layers).Name);
 
             // Bools are serialized lowercase to match real maps.
             Assert.Contains("twoParts=\"true\"", doc.Save());
@@ -102,7 +102,7 @@ namespace CtrDxEditor.Core.Tests
 
             doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
 
-            Assert.Collection(doc.Objects,
+            Assert.Collection(doc.AllObjects,
                 candy =>
                 {
                     Assert.Equal("candy", candy.Type);
@@ -161,7 +161,7 @@ namespace CtrDxEditor.Core.Tests
 
             doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
 
-            Assert.Collection(doc.Objects,
+            Assert.Collection(doc.AllObjects,
                 candyL =>
                 {
                     Assert.Equal("candyL", candyL.Type);

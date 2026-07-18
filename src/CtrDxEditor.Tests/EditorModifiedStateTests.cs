@@ -32,7 +32,7 @@ namespace CtrDxEditor.Tests
 
             vm.LoadLevelXml(SpikeLevel("spike2", "3"));
 
-            Assert.Equal("spike3", vm.Document!.Objects[0].Type);
+            Assert.Equal("spike3", vm.Document!.AllObjects[0].Type);
             Assert.True(vm.IsModified);
         }
 
@@ -71,7 +71,7 @@ namespace CtrDxEditor.Tests
             vm.LoadLevelXml(CandyLevel("100.9", "-40.5"));
 
             LevelDocument document = Assert.IsType<LevelDocument>(vm.Document);
-            LevelObject candy = document.Objects[0];
+            LevelObject candy = document.AllObjects[0];
             Assert.Equal("100", candy.GetAttr("x"));
             Assert.Equal("-40", candy.GetAttr("y"));
             Assert.True(vm.IsModified);

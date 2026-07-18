@@ -54,7 +54,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
 
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
@@ -70,7 +70,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
 
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
@@ -91,7 +91,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
 
             Assert.False(vm.Fields.Single(f => f.Name == "spin").BoolValue);
@@ -126,7 +126,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
             vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
             AttributeFieldViewModel radius = vm.Fields.Single(f => f.Name == "orbitRadius");
@@ -153,7 +153,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
             vm.Fields.Single(f => f.Name == "movementMode").Value = "orbit";
             AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "orbitSpeed");
@@ -179,7 +179,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
             AttributeFieldViewModel speed = vm.Fields.Single(f => f.Name == "spinSpeed");
@@ -204,7 +204,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
 
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;
@@ -224,7 +224,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
             int version = vm.ObjectListVersion;
 
@@ -241,7 +241,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject star = vm.Document!.Objects[0];
+            LevelObject star = vm.Document!.AllObjects[0];
             vm.SelectedObject = star;
 
             vm.Fields.Single(f => f.Name == "spin").BoolValue = true;

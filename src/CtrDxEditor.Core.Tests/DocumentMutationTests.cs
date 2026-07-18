@@ -27,15 +27,15 @@ namespace CtrDxEditor.Core.Tests
         public void AddThenRemoveReturnsToOriginalCount()
         {
             LevelDocument doc = LevelDocument.Parse(Level);
-            _ = Assert.Single(doc.Objects);
+            _ = Assert.Single(doc.AllObjects);
 
             LevelObject star = Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, 50, 60);
             doc.Add(star);
-            Assert.Equal(2, doc.Objects.Count);
+            Assert.Equal(2, doc.AllObjects.Count);
 
             LevelDocument.Remove(star);
-            _ = Assert.Single(doc.Objects);
-            Assert.Equal("candy", doc.Objects[0].Type);
+            _ = Assert.Single(doc.AllObjects);
+            Assert.Equal("candy", doc.AllObjects[0].Type);
         }
 
         /// <summary>Verifies that added objects are included in saved XML.</summary>

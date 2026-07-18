@@ -60,18 +60,18 @@ namespace CtrDxEditor.Tests
 
             Assert.True(vm.CanUndo);
             Assert.False(vm.CanRedo);
-            Assert.Equal(2, vm.Document!.Objects.Count);
+            Assert.Equal(2, vm.Document!.AllObjects.Count);
 
             vm.Undo();
 
-            _ = Assert.Single(vm.Document.Objects);
+            _ = Assert.Single(vm.Document.AllObjects);
             Assert.False(vm.CanUndo);
             Assert.True(vm.CanRedo);
 
             vm.Redo();
 
-            Assert.Equal(2, vm.Document.Objects.Count);
-            Assert.Equal("star", vm.Document.Objects[1].Type);
+            Assert.Equal(2, vm.Document.AllObjects.Count);
+            Assert.Equal("star", vm.Document.AllObjects[1].Type);
             Assert.True(vm.CanUndo);
             Assert.False(vm.CanRedo);
         }
@@ -88,7 +88,7 @@ namespace CtrDxEditor.Tests
 
             Assert.True(vm.CanUndo);
             Assert.False(vm.CanRedo);
-            Assert.Equal(["candy", "target"], vm.Document!.Objects.Select(o => o.Type));
+            Assert.Equal(["candy", "target"], vm.Document!.AllObjects.Select(o => o.Type));
         }
 
         /// <summary>Verifies that undoing deletion restores the object and selection.</summary>
@@ -96,16 +96,16 @@ namespace CtrDxEditor.Tests
         public void UndoRestoresDeletedSelection()
         {
             EditorViewModel vm = CreateLoadedViewModel();
-            LevelObject candy = vm.Document!.Objects[0];
+            LevelObject candy = vm.Document!.AllObjects[0];
             vm.SelectedObject = candy;
 
             vm.DeleteSelected();
 
-            Assert.Empty(vm.Document.Objects);
+            Assert.Empty(vm.Document.AllObjects);
 
             vm.Undo();
 
-            LevelObject restored = Assert.Single(vm.Document.Objects);
+            LevelObject restored = Assert.Single(vm.Document.AllObjects);
             Assert.Equal("candy", restored.Type);
             Assert.Same(restored.Element, vm.SelectedObject!.Element);
         }
@@ -115,16 +115,16 @@ namespace CtrDxEditor.Tests
         public void UndoRestoresPropertyFieldEdit()
         {
             EditorViewModel vm = CreateLoadedViewModel();
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
             AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
 
             xField.Value = "250";
 
-            Assert.Equal(250, vm.Document.Objects[0].X);
+            Assert.Equal(250, vm.Document.AllObjects[0].X);
 
             vm.Undo();
 
-            Assert.Equal(100, vm.Document.Objects[0].X);
+            Assert.Equal(100, vm.Document.AllObjects[0].X);
             Assert.Equal("100", vm.Fields.Single(f => f.Name == "x").Value);
         }
 
@@ -133,7 +133,7 @@ namespace CtrDxEditor.Tests
         public void UndoTransactionCoalescesDirectMutations()
         {
             EditorViewModel vm = CreateLoadedViewModel();
-            LevelObject candy = vm.Document!.Objects[0];
+            LevelObject candy = vm.Document!.AllObjects[0];
             vm.SelectedObject = candy;
 
             vm.BeginUndoTransaction();
@@ -143,8 +143,8 @@ namespace CtrDxEditor.Tests
 
             vm.Undo();
 
-            Assert.Equal(100, vm.Document.Objects[0].X);
-            Assert.Equal(100, vm.Document.Objects[0].Y);
+            Assert.Equal(100, vm.Document.AllObjects[0].X);
+            Assert.Equal(100, vm.Document.AllObjects[0].Y);
         }
 
         /// <summary>Verifies the undo stack keeps only the most recent snapshots.</summary>
@@ -153,7 +153,7 @@ namespace CtrDxEditor.Tests
         {
             const int historyLimit = 100;
             EditorViewModel vm = CreateLoadedViewModel();
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
             AttributeFieldViewModel xField = vm.Fields.Single(f => f.Name == "x");
 
             for (int i = 0; i < historyLimit + 5; i++)
@@ -180,13 +180,13 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel autoWidth = vm.Fields.Single(f => f.Name == "autoWidth");
 
             autoWidth.Value = "false";
-            Assert.False(TutorialObject.IsAutoWidth(vm.Document!.Objects[1]));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document!.AllObjects[1]));
 
             vm.Undo();
-            Assert.True(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+            Assert.True(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
 
             vm.Redo();
-            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
         }
 
         /// <summary>Groups a canvas tutorial-width drag into one undoable edit.</summary>
@@ -201,16 +201,16 @@ namespace CtrDxEditor.Tests
             TutorialTextResize.ApplyDrag(text, 220);
             vm.CompleteUndoTransaction();
 
-            Assert.Equal("200", vm.Document!.Objects[1].GetAttr("width"));
-            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+            Assert.Equal("200", vm.Document!.AllObjects[1].GetAttr("width"));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
 
             vm.Undo();
-            Assert.Equal(initialWidth, vm.Document.Objects[1].GetAttr("width"));
-            Assert.True(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+            Assert.Equal(initialWidth, vm.Document.AllObjects[1].GetAttr("width"));
+            Assert.True(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
 
             vm.Redo();
-            Assert.Equal("200", vm.Document.Objects[1].GetAttr("width"));
-            Assert.False(TutorialObject.IsAutoWidth(vm.Document.Objects[1]));
+            Assert.Equal("200", vm.Document.AllObjects[1].GetAttr("width"));
+            Assert.False(TutorialObject.IsAutoWidth(vm.Document.AllObjects[1]));
         }
 
         private static EditorViewModel CreateLoadedViewModel()

@@ -43,7 +43,7 @@ namespace CtrDxEditor.ViewModels
             // Attach to stays in place but greys out when the grab has no authored rope - a gun grab, or
             // an auto-catch grab (which binds candy at runtime) - rather than disappearing and shifting
             // every field below it. Mirrors LoadGrabs, which skips the binding block unless radius == -1.
-            IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.Objects, twoParts);
+            IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.AllObjects, twoParts);
             if (options.Count >= 2)
             {
                 AttributeOptionViewModel[] vmOptions =
@@ -51,7 +51,7 @@ namespace CtrDxEditor.ViewModels
                 fields.Add(new AttributeFieldViewModel(
                     "attachTo",
                     vmOptions,
-                    () => GrabBinding.CurrentToken(grab, document.Objects, document.TwoParts),
+                    () => GrabBinding.CurrentToken(grab, document.AllObjects, document.TwoParts),
                     token => GrabBinding.Apply(grab, token ?? "primary"),
                     onChanged,
                     onChanging)

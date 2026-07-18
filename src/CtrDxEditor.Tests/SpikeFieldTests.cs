@@ -54,7 +54,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
 
             Assert.Contains(vm.Fields, f => f.Name == "toggled" && f.IsBool);
             Assert.DoesNotContain(vm.Fields, f => f.Name == "toggleGroup");
@@ -66,7 +66,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject spike = vm.Document!.Objects[0];
+            LevelObject spike = vm.Document!.AllObjects[0];
             vm.SelectedObject = spike;
 
             vm.Fields.Single(f => f.Name == "toggled").BoolValue = true;
@@ -83,7 +83,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(Level);
-            LevelObject spike = vm.Document!.Objects[0];
+            LevelObject spike = vm.Document!.AllObjects[0];
             vm.SelectedObject = spike;
 
             vm.Fields.Single(f => f.Name == "size").SelectedOption =
@@ -110,7 +110,7 @@ namespace CtrDxEditor.Tests
             """;
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(spinningLevel);
-            LevelObject spike = vm.Document!.Objects[0];
+            LevelObject spike = vm.Document!.AllObjects[0];
             vm.SelectedObject = spike;
 
             Assert.True(vm.Fields.Single(f => f.Name == "spin").BoolValue);
@@ -148,7 +148,7 @@ namespace CtrDxEditor.Tests
             """;
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(toggledLevel);
-            vm.SelectedObject = vm.Document!.Objects[0];
+            vm.SelectedObject = vm.Document!.AllObjects[0];
 
             AttributeFieldViewModel spin = vm.Fields.Single(f => f.Name == "spin");
 
@@ -174,7 +174,7 @@ namespace CtrDxEditor.Tests
             """;
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.LoadLevelXml(level);
-            LevelObject spike = vm.Document!.Objects[0];
+            LevelObject spike = vm.Document!.AllObjects[0];
             vm.SelectedObject = spike;
 
             vm.Fields.Single(f => f.Name == "toggled").BoolValue = false;
