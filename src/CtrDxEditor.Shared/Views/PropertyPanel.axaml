@@ -43,7 +43,7 @@
             Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" MinWidth="100" SharedSizeGroup="LabelColumn" />
-          <ColumnDefinition Width="100" />
+          <ColumnDefinition Width="*" MinWidth="100" />
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0" Orientation="Horizontal"
                     VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
@@ -71,12 +71,19 @@
                   IsEnabled="{Binding IsEnabled}"
                   Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                   IsChecked="{Binding BoolValue, Mode=TwoWay}" />
-        <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsNumeric}"
+        <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsPlainNumeric}"
                  IsEnabled="{Binding IsEnabled}"
                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                  Minimum="{Binding NumericMinimum}"
                  AcceptDecimal="{Binding AllowsDecimal}"
                  Text="{Binding Value, Mode=TwoWay}" />
+        <NumericUpDown Grid.Column="1" IsVisible="{Binding IsStepper}"
+                 IsEnabled="{Binding IsEnabled}"
+                 Minimum="{Binding NumericMinimum}"
+                 Increment="1"
+                 FormatString="0"
+                 HorizontalAlignment="Stretch"
+                 Value="{Binding NumericValue, Mode=TwoWay}" />
         <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                  IsEnabled="{Binding IsEnabled}"
                  AcceptsReturn="True"
@@ -92,7 +99,7 @@
   </UserControl.Resources>
   <DockPanel>
     <TextBlock DockPanel.Dock="Top" Text="{loc:Tr Panel.Properties}" FontWeight="Bold" Margin="8,8,8,4" />
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <ItemsControl ItemsSource="{Binding FieldGroups}" Margin="8,0,8,14" Grid.IsSharedSizeScope="True">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:PropertyGroupViewModel">

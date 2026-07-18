@@ -111,6 +111,22 @@ namespace CtrDxEditor.Tests
             Assert.Equal(1, rebuilds);
         }
 
+        /// <summary>The segment count renders as an up/down stepper, and stepping its number grows the arm.</summary>
+        [Fact]
+        public void SegmentCountIsAStepper()
+        {
+            LevelObject hand = Hand("<hand x='0' y='0' segmentsCount='1' segment1Angle='0' segment1Length='10' segment1Rotatable='true' />");
+            ObservableCollection<AttributeFieldViewModel> fields = Build(hand);
+            AttributeFieldViewModel count = fields.Single(f => f.Name == "segmentsCount");
+
+            Assert.True(count.IsStepper);
+            Assert.False(count.IsPlainNumeric);
+            Assert.Equal(1m, count.NumericValue);
+
+            count.NumericValue = 2m;
+            Assert.Equal("2", hand.GetAttr("segmentsCount"));
+        }
+
         /// <summary>Growing past the authored maximum of three is allowed; the game's loop is uncapped.</summary>
         [Fact]
         public void CountIsNotCappedAtThree()

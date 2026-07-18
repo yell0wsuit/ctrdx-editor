@@ -49,7 +49,10 @@ namespace CtrDxEditor.ViewModels
                     onChanged();
                     rebuild();
                 },
-                onChanging);
+                onChanging)
+            {
+                IsStepper = true,
+            };
             fields.Add(count);
 
             int segments = HandObject.SegmentCount(value);

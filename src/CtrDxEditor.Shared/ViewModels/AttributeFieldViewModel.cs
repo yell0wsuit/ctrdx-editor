@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -143,9 +144,34 @@ namespace CtrDxEditor.ViewModels
         {
             "timeout" or "time" => 1,
             "spinSpeed" or "orbitRadius" or "orbitSpeed" or "polylineSpeed" => 1,
-            "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" or "group" => 0,
+            "length" or "radius" or "moveLength" or "moveOffset" or "litRadius" or "group" or "segmentsCount" => 0,
             _ => -9999,
         };
+
+        /// <summary>
+        /// Whether this numeric field renders as an up/down spinner (like the level-settings numbers) instead
+        /// of a plain box. Opt-in per field; used for the hand's segment count so segments can be added and
+        /// removed by stepping.
+        /// </summary>
+        public bool IsStepper { get; init; }
+
+        /// <summary>Whether this field renders as the plain numeric box (numeric, but not a stepper).</summary>
+        public bool IsPlainNumeric => IsNumeric && !IsStepper;
+
+        /// <summary>The current value as a number for a <see cref="IsStepper"/> field, or null when unset.</summary>
+        public decimal? NumericValue
+        {
+            get => decimal.TryParse(Value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal d) ? d : null;
+            set
+            {
+                if (value is { } v)
+                {
+                    Value = AllowsDecimal
+                        ? v.ToString(CultureInfo.InvariantCulture)
+                        : decimal.Truncate(v).ToString("0", CultureInfo.InvariantCulture);
+                }
+            }
+        }
 
         /// <summary>Whether this field renders as a free-form text box.</summary>
         public bool IsText => EnumOptions is null && !IsBool && !IsNumeric;
@@ -183,6 +209,7 @@ namespace CtrDxEditor.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedOption));
                 OnPropertyChanged(nameof(BoolValue));
+                OnPropertyChanged(nameof(NumericValue));
             }
         }
 
@@ -199,6 +226,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(Value));
             OnPropertyChanged(nameof(SelectedOption));
             OnPropertyChanged(nameof(BoolValue));
+            OnPropertyChanged(nameof(NumericValue));
             if (_isEnabledFn is not null)
             {
                 IsEnabled = _isEnabledFn();
