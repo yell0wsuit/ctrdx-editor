@@ -232,7 +232,7 @@ namespace CtrDxEditor.Tests
 
             Assert.True(vm.ObjectListVersion > version);
             Assert.Same(star, vm.SelectedObject);
-            Assert.Contains(star, vm.ObjectList);
+            Assert.Contains(star, vm.Layers.SelectMany(layer => layer.Objects));
         }
 
         /// <summary>Polyline movement is mutually exclusive with orbit but preserves independent spin.</summary>

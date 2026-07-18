@@ -70,7 +70,7 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.Document);
             Assert.Null(vm.SelectedObject);
             Assert.Null(vm.LockedObject);
-            Assert.Empty(vm.ObjectList);
+            Assert.Empty(vm.Layers);
             Assert.Empty(vm.Palette);
             Assert.Empty(vm.Fields);
             Assert.Null(vm.ToXml());

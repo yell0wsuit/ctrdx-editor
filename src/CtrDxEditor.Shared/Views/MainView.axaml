@@ -342,7 +342,7 @@
         <TextBlock Grid.Row="0" Text="{loc:Tr Panel.Objects}" FontWeight="Bold" Margin="8,8,8,4" />
         <ListBox Grid.Row="1" Margin="4,0,4,4" x:Name="ObjectsListBox"
                  Background="Transparent"
-                 ItemsSource="{Binding ObjectList}"
+                 ItemsSource="{Binding Document.AllObjects}"
                  SelectedItem="{Binding SelectedObject, Mode=TwoWay}">
           <ListBox.Styles>
             <!-- While a lock is active, every row except the locked one is disabled (dimmed, unselectable). -->

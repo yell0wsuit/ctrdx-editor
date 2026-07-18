@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -52,8 +53,9 @@ namespace CtrDxEditor.Tests
         public void ToggleAllPreviewPlaysAndStopsAllObjects()
         {
             EditorViewModel vm = Loaded();
-            LevelObject star = vm.ObjectList[0];
-            LevelObject spike = vm.ObjectList[1];
+            LevelObject[] objects = [.. vm.Layers.SelectMany(layer => layer.Objects)];
+            LevelObject star = objects[0];
+            LevelObject spike = objects[1];
 
             vm.ToggleAnimationPreviewAll();
 
@@ -73,8 +75,9 @@ namespace CtrDxEditor.Tests
         public void ToggleObjectPreviewSwitchesObjectAndStopsSameObject()
         {
             EditorViewModel vm = Loaded();
-            LevelObject star = vm.ObjectList[0];
-            LevelObject spike = vm.ObjectList[1];
+            LevelObject[] objects = [.. vm.Layers.SelectMany(layer => layer.Objects)];
+            LevelObject star = objects[0];
+            LevelObject spike = objects[1];
 
             vm.ToggleAnimationPreviewObject(star);
 
@@ -101,7 +104,7 @@ namespace CtrDxEditor.Tests
         public void LoadingOrClosingLevelStopsAnimationPreview()
         {
             EditorViewModel vm = Loaded();
-            vm.ToggleAnimationPreviewObject(vm.ObjectList[0]);
+            vm.ToggleAnimationPreviewObject(vm.Layers[0].Objects[0]);
             vm.AnimationPreviewElapsedSeconds = 1.25;
 
             vm.LoadLevelXml("<map><layer name=\"settings\"><map gridSize=\"32\" width=\"100\" height=\"80\" /></layer></map>");

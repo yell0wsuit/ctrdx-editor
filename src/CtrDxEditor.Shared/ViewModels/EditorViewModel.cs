@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Descriptors;
@@ -56,6 +58,14 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial int ObjectListVersion { get; set; }
         [ObservableProperty] public partial string PaletteSearchText { get; set; } = "";
 
+        /// <summary>The layer that receives newly placed objects, or null when the level has none.</summary>
+        [ObservableProperty] public partial LayerViewModel? ActiveLayer { get; set; }
+
+        // Session-only visibility keyed by XML identity (objects) and layer name (layers).
+        private readonly HashSet<XElement> _hiddenObjectElements = [];
+        private readonly HashSet<string> _hiddenLayerNames = [];
+        private readonly HashSet<LevelObject> _effectivelyHidden = [];
+
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
 
@@ -75,8 +85,11 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public ObservableCollection<PropertyGroupViewModel> FieldGroups { get; } = [];
 
-        /// <summary>Objects in the current level, mirrored for list binding.</summary>
-        public ObservableCollection<LevelObject> ObjectList { get; } = [];
+        /// <summary>Layer rows for the object panel tree.</summary>
+        public ObservableCollection<LayerViewModel> Layers { get; } = [];
+
+        /// <summary>Objects currently hidden by layer or individual visibility settings.</summary>
+        public IReadOnlySet<LevelObject> EffectivelyHiddenObjects => _effectivelyHidden;
 
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
@@ -160,7 +173,11 @@ namespace CtrDxEditor.ViewModels
             ClearHistory();
             Palette.Clear();
             RebuildPaletteView();
-            ObjectList.Clear();
+            Layers.Clear();
+            ActiveLayer = null;
+            _hiddenObjectElements.Clear();
+            _hiddenLayerNames.Clear();
+            _effectivelyHidden.Clear();
             Fields.Clear();
             FieldGroups.Clear();
         }
@@ -325,18 +342,226 @@ namespace CtrDxEditor.ViewModels
                 || (AnimationPreviewMode == AnimationPreviewMode.Focused && Equals(AnimationPreviewObject, obj));
         }
 
-        /// <summary>Refreshes the object list from the current document.</summary>
+        /// <summary>Rebuilds the layer tree from the current document, preserving active-layer and visibility state.</summary>
         public void RefreshObjectList()
         {
-            ObjectList.Clear();
+            XElement? activeElement = ActiveLayer?.Layer.Element;
+            Layers.Clear();
+            if (Document is null)
+            {
+                ActiveLayer = null;
+                return;
+            }
+
+            foreach (LevelLayer layer in Document.Layers)
+            {
+                LayerViewModel row = new(layer)
+                {
+                    IsVisible = !_hiddenLayerNames.Contains(layer.Name),
+                };
+                foreach (LevelObject obj in layer.Objects)
+                {
+                    row.Objects.Add(obj);
+                }
+                Layers.Add(row);
+            }
+
+            ActiveLayer = Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, activeElement))
+                ?? Layers.FirstOrDefault();
+            SyncActiveFlags();
+            RecomputeHiddenObjects();
+        }
+
+        /// <summary>Whether an object is individually hidden.</summary>
+        /// <param name="obj">The object to inspect.</param>
+        /// <returns>True when the object is hidden independently of its layer.</returns>
+        public bool IsObjectHidden(LevelObject obj)
+        {
+            return _hiddenObjectElements.Contains(obj.Element);
+        }
+
+        /// <summary>Shows or hides a single object.</summary>
+        /// <param name="obj">The object to update.</param>
+        /// <param name="hidden">Whether the object should be hidden.</param>
+        public void SetObjectHidden(LevelObject obj, bool hidden)
+        {
+            _ = hidden ? _hiddenObjectElements.Add(obj.Element) : _hiddenObjectElements.Remove(obj.Element);
+            RecomputeHiddenObjects();
+            ObjectMutated?.Invoke();
+        }
+
+        /// <summary>Whether a layer is hidden.</summary>
+        /// <param name="layer">The layer to inspect.</param>
+        /// <returns>True when the layer is hidden.</returns>
+        public bool IsLayerHidden(LevelLayer layer)
+        {
+            return _hiddenLayerNames.Contains(layer.Name);
+        }
+
+        /// <summary>Shows or hides an entire layer.</summary>
+        /// <param name="layer">The layer to update.</param>
+        /// <param name="hidden">Whether the layer should be hidden.</param>
+        public void SetLayerHidden(LevelLayer layer, bool hidden)
+        {
+            _ = hidden ? _hiddenLayerNames.Add(layer.Name) : _hiddenLayerNames.Remove(layer.Name);
+
+            if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } row)
+            {
+                row.IsVisible = !hidden;
+            }
+            RecomputeHiddenObjects();
+            ObjectMutated?.Invoke();
+        }
+
+        private void RecomputeHiddenObjects()
+        {
+            _effectivelyHidden.Clear();
+            if (Document is null)
+            {
+                OnPropertyChanged(nameof(EffectivelyHiddenObjects));
+                return;
+            }
+
+            foreach (LevelLayer layer in Document.Layers)
+            {
+                bool layerHidden = _hiddenLayerNames.Contains(layer.Name);
+                foreach (LevelObject obj in layer.Objects)
+                {
+                    if (layerHidden || _hiddenObjectElements.Contains(obj.Element) || IsLocaleHidden(obj))
+                    {
+                        _ = _effectivelyHidden.Add(obj);
+                    }
+                }
+            }
+            OnPropertyChanged(nameof(EffectivelyHiddenObjects));
+        }
+
+        private bool IsLocaleHidden(LevelObject obj)
+        {
+            return Document is null && obj.GetAttr("locale") is not null;
+        }
+
+        /// <summary>Adds a uniquely named empty layer and makes it active.</summary>
+        [RelayCommand]
+        public void AddLayer()
+        {
             if (Document is null)
             {
                 return;
             }
-            foreach (LevelObject obj in Document.AllObjects)
+
+            CaptureUndoSnapshot();
+            _ = Document.AddLayer(UniqueLayerName("Layer"));
+            RefreshPalette();
+            RefreshObjectList();
+            ActiveLayer = Layers.Count > 0 ? Layers[^1] : null;
+        }
+
+        /// <summary>Deletes the active layer and every object inside it.</summary>
+        [RelayCommand]
+        public void DeleteActiveLayer()
+        {
+            if (Document is null || ActiveLayer is null)
             {
-                ObjectList.Add(obj);
+                return;
             }
+
+            CaptureUndoSnapshot();
+            LevelLayer removed = ActiveLayer.Layer;
+            if (ReferenceEquals(SelectedObject?.Element.Parent, removed.Element))
+            {
+                SelectedObject = null;
+            }
+            if (ReferenceEquals(LockedObject?.Element.Parent, removed.Element))
+            {
+                LockedObject = null;
+            }
+            Document.RemoveLayer(removed);
+            _ = _hiddenLayerNames.Remove(removed.Name);
+            RefreshPalette();
+            RefreshObjectList();
+        }
+
+        /// <summary>Renames a layer when the new name is nonblank and unique.</summary>
+        /// <param name="layer">The layer to rename.</param>
+        /// <param name="name">The candidate name.</param>
+        /// <returns>True when the rename was applied.</returns>
+        public bool RenameLayer(LevelLayer layer, string name)
+        {
+            if (Document is null || !Document.IsLayerNameAvailable(name, layer))
+            {
+                return false;
+            }
+
+            CaptureUndoSnapshot();
+            bool wasHidden = _hiddenLayerNames.Remove(layer.Name);
+            layer.Rename(name);
+            if (wasHidden)
+            {
+                _ = _hiddenLayerNames.Add(name);
+            }
+            RefreshObjectList();
+            return true;
+        }
+
+        /// <summary>Moves the active layer earlier or later in draw order.</summary>
+        /// <param name="delta">Positions to shift; negative moves earlier, positive later.</param>
+        public void MoveActiveLayer(int delta)
+        {
+            if (Document is null || ActiveLayer is null)
+            {
+                return;
+            }
+
+            CaptureUndoSnapshot();
+            Document.MoveLayer(ActiveLayer.Layer, delta);
+            RefreshObjectList();
+            ObjectMutated?.Invoke();
+        }
+
+        /// <summary>Moves an object into another layer.</summary>
+        /// <param name="obj">The object to move.</param>
+        /// <param name="target">The destination layer.</param>
+        public void MoveObjectToLayer(LevelObject obj, LevelLayer target)
+        {
+            if (Document is null)
+            {
+                return;
+            }
+
+            CaptureUndoSnapshot();
+            bool wasSelected = Equals(SelectedObject, obj);
+            Document.MoveObject(obj, target);
+            RefreshPalette();
+            RefreshObjectList();
+            if (wasSelected)
+            {
+                SelectedObject = obj;
+            }
+            ObjectMutated?.Invoke();
+        }
+
+        private void SyncActiveFlags()
+        {
+            foreach (LayerViewModel row in Layers)
+            {
+                row.IsActive = ReferenceEquals(row, ActiveLayer);
+            }
+        }
+
+        private string UniqueLayerName(string baseName)
+        {
+            string name = baseName;
+            for (int i = 1; Document is { } document && !document.IsLayerNameAvailable(name); i++)
+            {
+                name = $"{baseName} {i}";
+            }
+            return name;
+        }
+
+        partial void OnActiveLayerChanged(LayerViewModel? value)
+        {
+            SyncActiveFlags();
         }
 
         /// <summary>Refreshes palette availability from descriptor cardinality and loaded objects.</summary>
@@ -454,8 +679,7 @@ namespace CtrDxEditor.ViewModels
             {
                 TutorialRenderer.ApplyAutoWidth(Sprites, obj);
             }
-            IReadOnlyList<LevelLayer> layers = Document.Layers;
-            LevelLayer target = layers.Count > 0 ? layers[^1] : Document.AddLayer("Objects");
+            LevelLayer target = ActiveLayer?.Layer ?? Document.AddLayer("Objects");
             Document.Add(obj, target);
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
@@ -813,16 +1037,30 @@ namespace CtrDxEditor.ViewModels
                 .Select(Document.RefOf)
                 .Where(reference => reference is not null)
                 .Select(reference => reference!.Value)];
+            ObjectRef[] hiddenRefs = [.. Document.AllObjects
+                .Where(obj => _hiddenObjectElements.Contains(obj.Element))
+                .Select(Document.RefOf)
+                .Where(reference => reference is not null)
+                .Select(reference => reference!.Value)];
             return new HistoryState(
                 Document.Save(),
                 SelectedObject is { } selected ? Document.RefOf(selected) : null,
                 LockedObject is { } locked ? Document.RefOf(locked) : null,
-                autoWidthRefs);
+                autoWidthRefs,
+                hiddenRefs);
         }
 
         private void RestoreHistoryState(HistoryState state)
         {
             Document = LevelDocument.Parse(state.Xml);
+            _hiddenObjectElements.Clear();
+            foreach (ObjectRef reference in state.HiddenRefs)
+            {
+                if (Document.Resolve(reference) is { } hidden)
+                {
+                    _ = _hiddenObjectElements.Add(hidden.Element);
+                }
+            }
             foreach (ObjectRef reference in state.AutoWidthRefs)
             {
                 if (Document.Resolve(reference) is { } obj && TutorialObject.IsText(obj.Type))
@@ -841,7 +1079,9 @@ namespace CtrDxEditor.ViewModels
 
         private static bool HistoryStatesEqual(HistoryState left, HistoryState right)
         {
-            return left.Xml == right.Xml && left.AutoWidthRefs.SequenceEqual(right.AutoWidthRefs);
+            return left.Xml == right.Xml
+                && left.AutoWidthRefs.SequenceEqual(right.AutoWidthRefs)
+                && left.HiddenRefs.SequenceEqual(right.HiddenRefs);
         }
 
         private static HistoryState PopLast(List<HistoryState> states)
@@ -870,6 +1110,7 @@ namespace CtrDxEditor.ViewModels
             string Xml,
             ObjectRef? SelectedRef,
             ObjectRef? LockedRef,
-            ObjectRef[] AutoWidthRefs);
+            ObjectRef[] AutoWidthRefs,
+            ObjectRef[] HiddenRefs);
     }
 }
