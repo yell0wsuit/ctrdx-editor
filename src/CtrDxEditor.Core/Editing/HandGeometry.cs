@@ -296,20 +296,43 @@ namespace CtrDxEditor.Core.Editing
             return Joints(hand)[^1];
         }
 
-        /// <summary>Axis-aligned bounds enclosing the joint chain, padded for the claw and base sprites.</summary>
+        /// <summary>The base segment's absolute world angle, orienting the selection box along the arm.</summary>
         /// <param name="hand">The hand object.</param>
-        /// <returns>The selection bounds in level units.</returns>
+        /// <returns>Segment 1's angle in degrees, or 0 when the hand has no live segments.</returns>
+        public static double BaseAngle(LevelObject hand)
+        {
+            return HandObject.SegmentCount(hand) >= 1 ? HandObject.Angle(hand, 1) : 0;
+        }
+
+        /// <summary>
+        /// Bounds enclosing the joint chain, padded for the claw and base sprites, expressed in the arm's
+        /// local frame (segment 1 laid flat along +X from the base). The selection renderer rotates this box
+        /// back by <see cref="BaseAngle"/> around the base, so a straight arm gets a tight box that follows
+        /// the arm's rotation rather than a large axis-aligned rectangle. A hand whose base angle is 0 yields
+        /// the plain axis-aligned box.
+        /// </summary>
+        /// <param name="hand">The hand object.</param>
+        /// <returns>The selection bounds in the arm's local frame, in level units.</returns>
         public static LevelBounds Bounds(LevelObject hand)
         {
+            Vec2 baseJoint = new(hand.X, hand.Y);
+            double radians = -BaseAngle(hand) * Math.PI / 180;
+            double sin = Math.Sin(radians);
+            double cos = Math.Cos(radians);
+
             Vec2[] points = Joints(hand);
             double minX = double.MaxValue, minY = double.MaxValue;
             double maxX = double.MinValue, maxY = double.MinValue;
             foreach (Vec2 p in points)
             {
-                minX = Math.Min(minX, p.X);
-                minY = Math.Min(minY, p.Y);
-                maxX = Math.Max(maxX, p.X);
-                maxY = Math.Max(maxY, p.Y);
+                double dx = p.X - baseJoint.X;
+                double dy = p.Y - baseJoint.Y;
+                double localX = baseJoint.X + (dx * cos) - (dy * sin);
+                double localY = baseJoint.Y + (dx * sin) + (dy * cos);
+                minX = Math.Min(minX, localX);
+                minY = Math.Min(minY, localY);
+                maxX = Math.Max(maxX, localX);
+                maxY = Math.Max(maxY, localY);
             }
             return new LevelBounds(
                 minX - BoundsPadding,

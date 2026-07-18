@@ -284,6 +284,36 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
+        /// A hand's selection outline follows the arm's angle: a 45-degree single-segment arm gets a thin
+        /// tilted box hugging the bone, not the large axis-aligned square its bounding box would otherwise be.
+        /// </summary>
+        [Fact]
+        public void HandSelectionOutlineRotatesWithArm()
+        {
+            LevelObject hand = new(new XElement(
+                "hand",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("segmentsCount", "1"),
+                new XAttribute("segment1Angle", "45"),
+                new XAttribute("segment1Length", "100"),
+                new XAttribute("segment1Rotatable", "true")));
+            LevelBounds bounds = HandGeometry.Bounds(hand);
+            MethodInfo? method = SceneRenderer.GetMethod(
+                "SelectionOutlinePoints",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            Point[] points = (Point[])method.Invoke(null, [ViewTransform.Identity, hand, bounds])!;
+
+            // Corners of the arm-local box (-17,-17)-(117,17) rotated 45 degrees about the base at (0,0).
+            Assert.Equal(0, points[0].X, 3);
+            Assert.Equal(-24.042, points[0].Y, 3);
+            Assert.Equal(94.752, points[1].X, 3);
+            Assert.Equal(70.711, points[1].Y, 3);
+        }
+
+        /// <summary>
         /// The magic hat's selection marquee sits below the object anchor, matching the game, which draws the
         /// hat sprite offset from its (collision) anchor. A naive center-anchored hat would sit above it.
         /// </summary>
