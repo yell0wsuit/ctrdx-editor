@@ -298,6 +298,7 @@
         <render:LevelCanvas Grid.Row="0" Grid.Column="0" x:Name="Canvas" Focusable="True"
                             ClipToBounds="True"
                             Document="{Binding Document}"
+                            HiddenObjects="{Binding EffectivelyHiddenObjects}"
                             Sprites="{Binding Sprites}"
                             View="{Binding View, Mode=TwoWay}"
                             SnapEnabled="{Binding SnapEnabled}"

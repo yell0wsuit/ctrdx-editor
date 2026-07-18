@@ -11,6 +11,7 @@ using Xunit;
 namespace CtrDxEditor.Tests
 {
     /// <summary>Tests palette placement behavior on the editor canvas.</summary>
+    [Collection(LevelCanvasTestGroup.Name)]
     public class LevelCanvasPlacementTests
     {
         /// <summary>Verifies click placement reports success so the host can return keyboard focus to the canvas.</summary>

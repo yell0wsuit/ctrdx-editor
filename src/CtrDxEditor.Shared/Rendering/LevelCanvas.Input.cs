@@ -596,7 +596,8 @@ namespace CtrDxEditor.Rendering
         {
             // An animating object (moving or spinning) is a moving target whose hit box no longer matches where it's
             // drawn, so it can't be picked until the preview stops. Static objects stay editable.
-            return !IsAnimatingInPreview(obj)
+            return !IsHidden(obj)
+                && !IsAnimatingInPreview(obj)
                 && LevelSceneRenderer.SelectionContains(obj, bounds, point, PreviewSpinDegrees(obj), PreviewAnimationSeconds(obj));
         }
 
@@ -651,7 +652,7 @@ namespace CtrDxEditor.Rendering
             for (int step = 0; step < n; step++)
             {
                 int i = (start - step) % n;
-                if (HitBoundContains(objects[i], bounds[i], point))
+                if (!IsHidden(objects[i]) && HitBoundContains(objects[i], bounds[i], point))
                 {
                     return i;
                 }

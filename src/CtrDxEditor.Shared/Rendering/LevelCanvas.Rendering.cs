@@ -84,7 +84,7 @@ namespace CtrDxEditor.Rendering
             }
             DrawLevelContent(context, v, Bounds.Size, doc, sprites, drawGrid: true, grabRadiusPen: null, useAnimationPreview: true);
 
-            IReadOnlyList<LevelObject> objects = doc.AllObjects;
+            IReadOnlyList<LevelObject> objects = [.. doc.AllObjects.Where(obj => !IsHidden(obj))];
 
             GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius, PreviewAnimationSeconds);
 
@@ -196,7 +196,7 @@ namespace CtrDxEditor.Rendering
 
             // Selection chrome (outline, edit handles, rotation dial) is hidden while the selected object is a
             // moving preview target — it isn't pickable, and drawing chrome at its stale home position would mislead.
-            LevelObject? selected = SelectedObject is { } s && !IsAnimatingInPreview(s) ? s : null;
+            LevelObject? selected = SelectedObject is { } s && !IsHidden(s) && !IsAnimatingInPreview(s) ? s : null;
             if (selected is not null)
             {
                 LevelBounds sb = LevelSceneRenderer.SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
@@ -727,7 +727,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            IReadOnlyList<LevelObject> objects = doc.AllObjects;
+            IReadOnlyList<LevelObject> objects = [.. doc.AllObjects.Where(obj => !IsHidden(obj))];
             Rect opBounds = new(renderSize);
 
             // Light-bulb lit-glow halos: an additive Skia pass under the bottles (game's DrawLight order).

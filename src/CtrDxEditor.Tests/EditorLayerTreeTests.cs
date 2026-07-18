@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -75,6 +76,18 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains(candy, vm.EffectivelyHiddenObjects);
             Assert.DoesNotContain(vm.Layers[1].Objects[0], vm.EffectivelyHiddenObjects);
+        }
+
+        /// <summary>Publishes a new hidden-set instance so the canvas binding invalidates its styled property.</summary>
+        [Fact]
+        public void VisibilityChangePublishesNewHiddenSetInstance()
+        {
+            EditorViewModel vm = Create();
+            IReadOnlySet<LevelObject> before = vm.EffectivelyHiddenObjects;
+
+            vm.SetObjectHidden(vm.Layers[0].Objects[0], true);
+
+            Assert.NotSame(before, vm.EffectivelyHiddenObjects);
         }
 
         /// <summary>Verifies that adding a layer makes the unique new row active.</summary>

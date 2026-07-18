@@ -67,7 +67,6 @@ namespace CtrDxEditor.ViewModels
         // Session-only visibility keyed by XML identity (objects) and layer name (layers).
         private readonly HashSet<XElement> _hiddenObjectElements = [];
         private readonly HashSet<string> _hiddenLayerNames = [];
-        private readonly HashSet<LevelObject> _effectivelyHidden = [];
 
         /// <summary>Sprite cache for the active content.</summary>
         public SpriteCache Sprites { get; } = sprites;
@@ -95,7 +94,7 @@ namespace CtrDxEditor.ViewModels
         public ObservableCollection<string> AvailableLocales { get; } = [];
 
         /// <summary>Objects currently hidden by layer or individual visibility settings.</summary>
-        public IReadOnlySet<LevelObject> EffectivelyHiddenObjects => _effectivelyHidden;
+        public IReadOnlySet<LevelObject> EffectivelyHiddenObjects { get; private set; } = new HashSet<LevelObject>();
 
         /// <summary>Raised when a selected object's editable values change.</summary>
         public event Action? ObjectMutated;
@@ -184,7 +183,7 @@ namespace CtrDxEditor.ViewModels
             ActiveLayer = null;
             _hiddenObjectElements.Clear();
             _hiddenLayerNames.Clear();
-            _effectivelyHidden.Clear();
+            EffectivelyHiddenObjects = new HashSet<LevelObject>();
             AvailableLocales.Clear();
             Fields.Clear();
             FieldGroups.Clear();
@@ -424,9 +423,10 @@ namespace CtrDxEditor.ViewModels
 
         private void RecomputeHiddenObjects()
         {
-            _effectivelyHidden.Clear();
+            HashSet<LevelObject> hiddenObjects = [];
             if (Document is null)
             {
+                EffectivelyHiddenObjects = hiddenObjects;
                 OnPropertyChanged(nameof(EffectivelyHiddenObjects));
                 return;
             }
@@ -438,10 +438,11 @@ namespace CtrDxEditor.ViewModels
                 {
                     if (layerHidden || _hiddenObjectElements.Contains(obj.Element) || IsLocaleHidden(obj))
                     {
-                        _ = _effectivelyHidden.Add(obj);
+                        _ = hiddenObjects.Add(obj);
                     }
                 }
             }
+            EffectivelyHiddenObjects = hiddenObjects;
             OnPropertyChanged(nameof(EffectivelyHiddenObjects));
         }
 
@@ -599,7 +600,7 @@ namespace CtrDxEditor.ViewModels
         partial void OnDisplayLocaleChanged(string value)
         {
             RecomputeHiddenObjects();
-            if (SelectedObject is { } selected && _effectivelyHidden.Contains(selected))
+            if (SelectedObject is { } selected && EffectivelyHiddenObjects.Contains(selected))
             {
                 SelectedObject = null;
             }
