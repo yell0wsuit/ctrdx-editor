@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Media;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
@@ -78,7 +79,19 @@ namespace CtrDxEditor.Rendering
         /// <summary>Returns complete path bounds including ant artwork padding.</summary>
         public static LevelBounds Bounds(LevelObject ants)
         {
-            return AntPath.Bounds(ants);
+            return BuildLayout(ants, elapsedSeconds: null).Bounds;
+        }
+
+        /// <summary>Places a quad using the game's trimmed dimensions and integer center anchor.</summary>
+        public static SpriteLayout ComputeTrimmedPlacement(AtlasFrame frame, Vec2 position, double scale)
+        {
+            double normalizedScale = scale / SpritePlacement.MapScale;
+            LevelBounds dest = new(
+                position.X - (frame.Frame.W / 2 * normalizedScale),
+                position.Y - (frame.Frame.H / 2 * normalizedScale),
+                frame.Frame.W * normalizedScale,
+                frame.Frame.H * normalizedScale);
+            return new SpriteLayout(frame.Frame, dest, dest);
         }
 
         private static void DrawVisual(
@@ -96,7 +109,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            SpriteLayout layout = SpritePlacement.Compute(layer.Frame, position.X, position.Y, scale);
+            SpriteLayout layout = ComputeTrimmedPlacement(layer.Frame, position, scale);
             Rect source = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
             Vec2 topLeft = view.LevelToScreen(new Vec2(layout.Dest.X, layout.Dest.Y));
             Vec2 bottomRight = view.LevelToScreen(new Vec2(

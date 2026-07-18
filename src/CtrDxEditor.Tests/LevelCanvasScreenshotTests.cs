@@ -259,7 +259,7 @@ namespace CtrDxEditor.Tests
 
             LevelBounds actual = (LevelBounds)method.Invoke(null, [sprites, ants, 0, 0, false])!;
 
-            Assert.Equal(new LevelBounds(4, 14, 132, 112), actual);
+            Assert.Equal(new LevelBounds(-16, -6, 172, 152), actual);
         }
 
         /// <summary>Spike selection uses the trimmed visible strip, like other sprite-backed objects.</summary>

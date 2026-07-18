@@ -27,16 +27,15 @@ namespace CtrDxEditor.Tests
             Assert.Equal("100,0", ants.GetAttr("path"));
         }
 
-        /// <summary>Semantic controls lead while raw path text remains available as an escape hatch.</summary>
+        /// <summary>Path geometry stays canvas-only while semantic controls remain in the property panel.</summary>
         [Fact]
-        public void FieldsUseMoveSpeedClosedLoopThenRawPathOrder()
+        public void FieldsExposeSpeedAndClosedLoopOnly()
         {
             (ObservableCollection<AttributeFieldViewModel> fields, _, _, _) = Build("100,0");
 
-            Assert.Equal(["moveSpeed", "closedLoop", "path"], fields.Select(f => f.Name));
+            Assert.Equal(["moveSpeed", "closedLoop"], fields.Select(f => f.Name));
             Assert.True(fields[0].IsNumeric);
             Assert.True(fields[1].IsBool);
-            Assert.True(fields[2].IsText);
         }
 
         /// <summary>Negative speed remains authorable so the preview can run in reverse.</summary>

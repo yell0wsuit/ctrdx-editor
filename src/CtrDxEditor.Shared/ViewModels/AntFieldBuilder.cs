@@ -10,7 +10,7 @@ namespace CtrDxEditor.ViewModels
     /// <summary>Builds ant-conveyor fields, including semantic closure backed by the raw relative path.</summary>
     public static class AntFieldBuilder
     {
-        /// <summary>Adds move speed, semantic closure, and raw path fields in editor-friendly order.</summary>
+        /// <summary>Adds move speed and semantic closure; path geometry remains canvas-only.</summary>
         /// <param name="fields">Property field collection to append to.</param>
         /// <param name="ants">Selected ant-conveyor object.</param>
         /// <param name="onChanged">Invoked after a field commits a change.</param>
@@ -37,14 +37,6 @@ namespace CtrDxEditor.ViewModels
                 onChanged,
                 onChanging,
                 () => AntPath.CanSetClosed(ants)));
-
-            fields.Add(new AttributeFieldViewModel(
-                ants,
-                "path",
-                AttrType.Text,
-                null,
-                onChanged,
-                onChanging));
         }
     }
 }

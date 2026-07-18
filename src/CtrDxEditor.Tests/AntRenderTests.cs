@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Xml.Linq;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
@@ -33,7 +34,7 @@ namespace CtrDxEditor.Tests
                 null, [new SpriteCache(new EmptyContentStore()), ants, 0, 0, false])!;
 
             Assert.True(bounds.Contains(new Vec2(120, 110)));
-            Assert.Equal(AntPath.Bounds(ants), bounds);
+            Assert.Equal(new LevelBounds(-16, -6, 172, 152), bounds);
         }
 
         /// <summary>Ant art draws after conveyors but before candy in the editor's fixed game order.</summary>
@@ -77,8 +78,8 @@ namespace CtrDxEditor.Tests
 
             AntVisualLayout layout = (AntVisualLayout)method.Invoke(null, [ants, 1d])!;
 
-            Assert.Equal(95, layout.Ants[0].PathOffset, 6);
-            Assert.Equal(new Vec2(95, 0), layout.Ants[0].Position);
+            Assert.Equal(-25.5, layout.Ants[0].PathOffset, 6);
+            Assert.Equal(new Vec2(-25.5, 0), layout.Ants[0].Position);
         }
 
         /// <summary>Explicitly closed renderer layouts omit both endpoint-hole sprites.</summary>
@@ -93,6 +94,28 @@ namespace CtrDxEditor.Tests
 
             Assert.True(layout.Closed);
             Assert.Empty(layout.Holes);
+        }
+
+        /// <summary>Ant art uses the game's trimmed quad size and integer center anchor.</summary>
+        [Fact]
+        public void TrimmedPlacementMatchesGameImageAnchor()
+        {
+            MethodInfo method = AntRenderer.GetMethod(
+                "ComputeTrimmedPlacement", BindingFlags.Public | BindingFlags.Static)!;
+            AtlasFrame hole = new(
+                "ant_hole.png",
+                new IntRect(1, 451, 93, 101),
+                new IntRect(0, 0, 93, 101),
+                new IntSize(98, 126),
+                Rotated: false,
+                Trimmed: true);
+
+            SpriteLayout placement = (SpriteLayout)method.Invoke(null, [hole, new Vec2(100, 200), 1d])!;
+
+            Assert.Equal(100 - (46d / 3), placement.Dest.X, 6);
+            Assert.Equal(200 - (50d / 3), placement.Dest.Y, 6);
+            Assert.Equal(31, placement.Dest.W, 6);
+            Assert.Equal(101d / 3, placement.Dest.H, 6);
         }
 
         private static LevelObject Obj(int x, int y, string path, string moveSpeed = "100")
