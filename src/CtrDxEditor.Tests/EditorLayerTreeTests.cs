@@ -129,6 +129,29 @@ namespace CtrDxEditor.Tests
             Assert.Same(vm.ActiveLayer, vm.SelectedTreeItem);
         }
 
+        /// <summary>Moving a specific layer to an index reorders without requiring it to be active.</summary>
+        [Fact]
+        public void MoveLayerToIndexReordersSpecificLayer()
+        {
+            EditorViewModel vm = Create();
+
+            vm.MoveLayerToIndex(vm.Layers[0].Layer, 1);
+
+            Assert.Equal(["b", "a"], vm.Layers.Select(layer => layer.Name));
+        }
+
+        /// <summary>Deleting a specific layer removes it even when another layer is active.</summary>
+        [Fact]
+        public void DeleteLayerRemovesSpecificLayer()
+        {
+            EditorViewModel vm = Create();
+            vm.ActiveLayer = vm.Layers[1];
+
+            vm.DeleteLayer(vm.Layers[0].Layer);
+
+            Assert.Equal(["b"], vm.Layers.Select(layer => layer.Name));
+        }
+
         /// <summary>Verifies that moving an object reparents it and preserves selection.</summary>
         [Fact]
         public void MoveObjectToLayerReparentsSelectedObject()

@@ -520,23 +520,32 @@ namespace CtrDxEditor.ViewModels
         [RelayCommand]
         public void DeleteActiveLayer()
         {
-            if (Document is null || ActiveLayer is null)
+            if (ActiveLayer is not null)
+            {
+                DeleteLayer(ActiveLayer.Layer);
+            }
+        }
+
+        /// <summary>Deletes a specific layer and every object inside it.</summary>
+        /// <param name="layer">The layer to delete.</param>
+        public void DeleteLayer(LevelLayer layer)
+        {
+            if (Document is null)
             {
                 return;
             }
 
             CaptureUndoSnapshot();
-            LevelLayer removed = ActiveLayer.Layer;
-            if (ReferenceEquals(SelectedObject?.Element.Parent, removed.Element))
+            if (ReferenceEquals(SelectedObject?.Element.Parent, layer.Element))
             {
                 SelectedObject = null;
             }
-            if (ReferenceEquals(LockedObject?.Element.Parent, removed.Element))
+            if (ReferenceEquals(LockedObject?.Element.Parent, layer.Element))
             {
                 LockedObject = null;
             }
-            Document.RemoveLayer(removed);
-            _ = _hiddenLayerNames.Remove(removed.Name);
+            Document.RemoveLayer(layer);
+            _ = _hiddenLayerNames.Remove(layer.Name);
             RefreshPalette();
             RefreshObjectList();
         }
@@ -567,15 +576,47 @@ namespace CtrDxEditor.ViewModels
         /// <param name="delta">Positions to shift; negative moves earlier, positive later.</param>
         public void MoveActiveLayer(int delta)
         {
-            if (Document is null || ActiveLayer is null)
+            if (ActiveLayer is not null)
+            {
+                MoveLayer(ActiveLayer.Layer, delta);
+            }
+        }
+
+        /// <summary>Moves a specific layer earlier or later in draw order.</summary>
+        /// <param name="layer">The layer to move.</param>
+        /// <param name="delta">Positions to shift; negative moves earlier, positive later.</param>
+        public void MoveLayer(LevelLayer layer, int delta)
+        {
+            if (Document is null)
             {
                 return;
             }
 
             CaptureUndoSnapshot();
-            Document.MoveLayer(ActiveLayer.Layer, delta);
+            Document.MoveLayer(layer, delta);
             RefreshObjectList();
             ObjectMutated?.Invoke();
+        }
+
+        /// <summary>Moves a specific layer to a target row index in the layer tree.</summary>
+        /// <param name="layer">The layer to move.</param>
+        /// <param name="targetIndex">Destination index among the current layer rows.</param>
+        public void MoveLayerToIndex(LevelLayer layer, int targetIndex)
+        {
+            int from = -1;
+            for (int i = 0; i < Layers.Count; i++)
+            {
+                if (ReferenceEquals(Layers[i].Layer.Element, layer.Element))
+                {
+                    from = i;
+                    break;
+                }
+            }
+
+            if (from >= 0 && targetIndex != from)
+            {
+                MoveLayer(layer, targetIndex - from);
+            }
         }
 
         /// <summary>Moves an object into another layer.</summary>
