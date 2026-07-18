@@ -48,10 +48,13 @@ namespace CtrDxEditor.Rendering
         public Pen ObjectSelected { get; private set; } = OverlayPen(Brushes.DeepSkyBlue, 1.5);
 
         /// <summary>Translucent fill tinting the active hand segment's bone, so the selection reads on the art.</summary>
-        public IBrush HandSegmentTint { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x4D);
+        public IBrush HandSegmentTint { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x70);
 
         /// <summary>Stronger fill marking the active hand segment's joint button, drawn over <see cref="HandSegmentTint"/>.</summary>
-        public IBrush HandSegmentMark { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x99);
+        public IBrush HandSegmentMark { get; private set; } = Translucent(Colors.DeepSkyBlue, 0xBF);
+
+        /// <summary>Fainter fill tinting the hand segment under the cursor, a "click to select" hover cue.</summary>
+        public IBrush HandSegmentHoverTint { get; private set; } = Translucent(Colors.DeepSkyBlue, 0x40);
 
         /// <summary>Solid arrow marking a directional force field's push direction (pump, and later steam).
         /// Solid rather than dashed so it reads as an arrow against the dashed hitbox boxes.</summary>
@@ -90,8 +93,9 @@ namespace CtrDxEditor.Rendering
             ObjectLocked = OverlayPen(ThemeColor(host, "EditorColor.OverlayObjectLocked", Colors.Red), 2);
             Color selectedColor = ThemeColor(host, "EditorColor.OverlayObjectSelected", Colors.DeepSkyBlue);
             ObjectSelected = OverlayPen(selectedColor, 1.5);
-            HandSegmentTint = Translucent(selectedColor, 0x4D);
-            HandSegmentMark = Translucent(selectedColor, 0x99);
+            HandSegmentTint = Translucent(selectedColor, 0x70);
+            HandSegmentMark = Translucent(selectedColor, 0xBF);
+            HandSegmentHoverTint = Translucent(selectedColor, 0x40);
             ForceArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlayForceArrow", Color.FromRgb(0x7F, 0x22, 0xFE))), 2);
             SpinArrow = new Pen(new SolidColorBrush(ThemeColor(host, "EditorColor.OverlaySpinArrow", Color.FromRgb(0x0E, 0x74, 0x9A))), 2);
             Color orbitColor = ThemeColor(host, "EditorColor.OverlayOrbitPath", Color.FromRgb(0x25, 0x63, 0xEB));

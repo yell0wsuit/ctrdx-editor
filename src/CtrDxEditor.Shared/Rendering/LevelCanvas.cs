@@ -315,6 +315,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>The hand joint under the cursor, or 0 when none; drives Delete/Backspace.</summary>
         private int _handHoverJoint;
 
+        /// <summary>The hand segment (bone) under the cursor, or 0 when none; drives the hover tint.</summary>
+        private int _handHoverSegment;
+
         /// <summary>The hand segment whose rotation dial is active, or 0 when no hand segment is active.</summary>
         private int _handActiveSegment;
 
@@ -432,6 +435,7 @@ namespace CtrDxEditor.Rendering
                 _polylinePointDrag = -1;
                 _handActiveSegment = 0;
                 _handHoverJoint = 0;
+                _handHoverSegment = 0;
                 _handSplitPreview = null;
                 ResetPolylineHover();
                 InvalidateVisual();

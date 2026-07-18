@@ -203,12 +203,22 @@ namespace CtrDxEditor.Rendering
                 DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
 
-                // Tint the active hand segment so it is clear which one the dial and fields act on.
-                if (HandObject.IsHand(selected.Type) && _handActiveSegment > 0)
+                // Tint the active hand segment so it is clear which one the dial and fields act on, and give
+                // the segment under the cursor a fainter hover tint as a "click to select" cue.
+                if (HandObject.IsHand(selected.Type))
                 {
-                    HandRenderer.DrawActiveSegment(
-                        context, v, sprites, selected, _handActiveSegment,
-                        _palette.HandSegmentTint, _palette.HandSegmentMark);
+                    if (_handHoverSegment > 0 && _handHoverSegment != _handActiveSegment)
+                    {
+                        HandRenderer.DrawSegmentHighlight(
+                            context, v, sprites, selected, _handHoverSegment,
+                            _palette.HandSegmentHoverTint, null);
+                    }
+                    if (_handActiveSegment > 0)
+                    {
+                        HandRenderer.DrawSegmentHighlight(
+                            context, v, sprites, selected, _handActiveSegment,
+                            _palette.HandSegmentTint, _palette.HandSegmentMark);
+                    }
                 }
 
                 // Ghost segment button showing where an Alt-click would split the hovered bone.

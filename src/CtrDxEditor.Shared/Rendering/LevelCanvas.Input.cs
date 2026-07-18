@@ -318,6 +318,33 @@ namespace CtrDxEditor.Rendering
             }
         }
 
+        /// <summary>
+        /// Recomputes the hovered-segment tint from a hover point. Marks the bone under the cursor for a plain
+        /// hover over the selected hand, and clears it while Alt is held (a split, not a selection) or off any
+        /// bone. Repaints on a change.
+        /// </summary>
+        /// <param name="levelPt">The hover position in level units.</param>
+        /// <param name="altHeld">Whether the split modifier is currently down.</param>
+        private void UpdateHandHoverSegment(Vec2 levelPt, bool altHeld)
+        {
+            int hovered = 0;
+            if (!altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
+            {
+                double tolerance = 9 / View.Zoom;
+                HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
+                if (hit.Kind == HandGeometry.HandleKind.Bone)
+                {
+                    hovered = hit.Index;
+                }
+            }
+
+            if (_handHoverSegment != hovered)
+            {
+                _handHoverSegment = hovered;
+                InvalidateVisual();
+            }
+        }
+
         /// <summary>Updates the hook hover state, repainting only on a change so the highlight art swaps in/out.</summary>
         /// <param name="hovered">True when the pointer is over the selected grab's hook.</param>
         private void SetHookHovered(bool hovered)
@@ -1084,7 +1111,6 @@ namespace CtrDxEditor.Rendering
                 _polylineAtLimitHint = HoveringPolylineLimit(levelPt);
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
                 _handHoverJoint = 0;
-                bool overHandEdit = false;
                 HandGeometry.HandleKind hoverHandKind = HandGeometry.HandleKind.None;
                 if (SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
                 {
@@ -1092,14 +1118,15 @@ namespace CtrDxEditor.Rendering
                     HandGeometry.Handle hoverHit = HandGeometry.HitTest(
                         hoverHand, levelPt, hoverTolerance, hoverTolerance / 2);
                     hoverHandKind = hoverHit.Kind;
-                    overHandEdit = hoverHit.Kind != HandGeometry.HandleKind.None;
                     if (hoverHit.Kind == HandGeometry.HandleKind.Joint)
                     {
                         _handHoverJoint = hoverHit.Index;
                     }
                 }
                 _lastHoverLevel = levelPt;
-                UpdateHandSplitPreview(levelPt, e.KeyModifiers.HasFlag(KeyModifiers.Alt));
+                bool altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+                UpdateHandSplitPreview(levelPt, altHeld);
+                UpdateHandHoverSegment(levelPt, altHeld);
                 HandPointerAffordance handAffordance =
                     RotationDialTargetResolver.ResolveHandAffordance(dial, hoverHandKind);
                 SetDialKnobHovered(
@@ -1119,7 +1146,7 @@ namespace CtrDxEditor.Rendering
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : handAffordance == HandPointerAffordance.JointResize ? CursorForHandJoint(_handHoverJoint)
                     : handAffordance == HandPointerAffordance.Dial ? new Cursor(StandardCursorType.Hand)
-                    : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert || overHandEdit
+                    : _polylineNubHot || _polylineHoverPoint > 0 || overPolylineInsert
                     ? new Cursor(StandardCursorType.Hand)
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
                     : conveyorHover != ConveyorGeometry.Handle.None ? ResizeCursor
@@ -1209,9 +1236,10 @@ namespace CtrDxEditor.Rendering
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
             _handHoverJoint = 0;
-            if (_handSplitPreview is not null)
+            if (_handSplitPreview is not null || _handHoverSegment != 0)
             {
                 _handSplitPreview = null;
+                _handHoverSegment = 0;
                 InvalidateVisual();
             }
             if (_waterHandleHovered)
@@ -1247,10 +1275,11 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            // Holding Alt over a hand bone reveals the split preview without moving the cursor.
+            // Holding Alt over a hand bone swaps the select-hover tint for the split preview without a move.
             if (e.Key is Key.LeftAlt or Key.RightAlt)
             {
                 UpdateHandSplitPreview(_lastHoverLevel, true);
+                UpdateHandHoverSegment(_lastHoverLevel, true);
             }
 
             base.OnKeyDown(e);
@@ -1259,10 +1288,11 @@ namespace CtrDxEditor.Rendering
         /// <inheritdoc />
         protected override void OnKeyUp(KeyEventArgs e)
         {
-            // Releasing Alt hides the split preview even while the cursor stays put over the bone.
+            // Releasing Alt hides the split preview and restores the select-hover tint under the cursor.
             if (e.Key is Key.LeftAlt or Key.RightAlt)
             {
                 UpdateHandSplitPreview(_lastHoverLevel, false);
+                UpdateHandHoverSegment(_lastHoverLevel, false);
             }
 
             base.OnKeyUp(e);
