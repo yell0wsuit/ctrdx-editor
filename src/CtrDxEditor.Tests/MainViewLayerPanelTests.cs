@@ -1,5 +1,11 @@
 using System;
 using System.IO;
+using System.Reflection;
+
+using Avalonia;
+using Avalonia.Controls;
+
+using CtrDxEditor.Views;
 
 using Xunit;
 
@@ -8,6 +14,14 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests layer-panel wiring that is difficult to exercise through headless pointer input.</summary>
     public class MainViewLayerPanelTests
     {
+        private sealed class TemplateButton : Button
+        {
+            public void Attach(Visual child)
+            {
+                VisualChildren.Add(child);
+            }
+        }
+
         /// <summary>Every terminal pointer path clears pending layer-drag gesture state.</summary>
         [Fact]
         public void LayerDragClearsPendingStateWhenPointerGestureEnds()
@@ -25,7 +39,7 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
-        /// <summary>Object rows start drags, clear terminal gesture state, and layers accept their payload.</summary>
+        /// <summary>Object rows start internal drags, clear terminal gesture state, and move onto layers.</summary>
         [Fact]
         public void ObjectRowsDragOntoLayerRows()
         {
@@ -37,37 +51,68 @@ namespace CtrDxEditor.Tests
             Assert.Contains("PointerMoved=\"ObjectRow_PointerMoved\"", view, StringComparison.Ordinal);
             Assert.Contains("PointerReleased=\"ObjectRow_PointerReleased\"", view, StringComparison.Ordinal);
             Assert.Contains("PointerCaptureLost=\"ObjectRow_PointerCaptureLost\"", view, StringComparison.Ordinal);
-            Assert.Contains("DataTransferItem.Create(ObjectDragFormat, obj)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("BeginRowDrag(sender as Visual, e.Pointer);", codeBehind, StringComparison.Ordinal);
             Assert.Contains("ClearPendingObjectDrag();", codeBehind, StringComparison.Ordinal);
-            Assert.Contains("e.DataTransfer.Contains(ObjectDragFormat)", codeBehind, StringComparison.Ordinal);
-            Assert.Contains("e.DataTransfer.TryGetValue(ObjectDragFormat) is LevelObject obj", codeBehind, StringComparison.Ordinal);
-            Assert.Contains("vm.MoveObjectToLayer(obj, target.Layer)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("vm.MoveObjectToLayer(sourceObject, targetLayer.Layer)", codeBehind, StringComparison.Ordinal);
             Assert.Contains(
                 "PointerReleasedEvent, ObjectRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true",
                 viewCodeBehind,
                 StringComparison.Ordinal);
         }
 
-        /// <summary>Every in-process row drag also supplies native pasteboard data required by macOS.</summary>
+        /// <summary>Editor-only row drags avoid the native pasteboard and its fixed generic icon.</summary>
         [Fact]
-        public void RowDragPayloadsIncludeNativePasteboardData()
+        public void RowDragsAvoidNativePasteboard()
         {
             string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
 
-            Assert.Contains("layerItem.SetText(LayerDragIdentifier);", codeBehind, StringComparison.Ordinal);
-            Assert.Contains("objectItem.SetText(ObjectDragIdentifier);", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("DragDrop.DoDragDropAsync", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("DataTransferItem", codeBehind, StringComparison.Ordinal);
         }
 
-        /// <summary>Object drag-over highlights the full destination layer and clears every terminal path.</summary>
+        /// <summary>Both row drag types show the shared faded row-snapshot overlay.</summary>
         [Fact]
-        public void ObjectDragHighlightsDestinationLayerRow()
+        public void RowDragsUseFadedSnapshotOverlay()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("x:Name=\"RowDragPreview\"", view, StringComparison.Ordinal);
+            Assert.Contains("Opacity=\"0.65\"", view, StringComparison.Ordinal);
+            Assert.True(
+                codeBehind.Split("BeginRowDrag(sender as Visual, e.Pointer);", StringSplitOptions.None).Length >= 3,
+                "Expected both layer and object row handlers to start the shared internal drag.");
+        }
+
+        /// <summary>Template controls outside a layer row do not cancel an ordinary row drag gesture.</summary>
+        [Fact]
+        public void LayerActionDetectionStopsAtRowBoundary()
+        {
+            TextBlock label = new();
+            Border row = new() { Child = label };
+            row.Classes.Add("layer-row");
+            TemplateButton templateButton = new();
+            templateButton.Attach(row);
+            MethodInfo? method = typeof(MainView).GetMethod(
+                "IsLayerRowAction",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            bool isAction = (bool)method.Invoke(null, [label])!;
+
+            Assert.False(isAction);
+        }
+
+        /// <summary>Object and layer pointer drags highlight the full destination row.</summary>
+        [Fact]
+        public void RowDragsHighlightDestinationLayerRow()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
 
             Assert.Contains("Selector=\"Border.layer-row.drop-target\"", view, StringComparison.Ordinal);
-            Assert.Contains("DragDrop.DragLeave=\"LayerRow_DragLeave\"", view, StringComparison.Ordinal);
-            Assert.Contains("SetLayerDropTarget(sender as Border);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("UpdateLayerDropTarget(e.GetPosition(layersTree));", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("SetLayerDropTarget(FindLayerDropTarget(hit));", codeBehind, StringComparison.Ordinal);
             Assert.Contains("private void ClearLayerDropTarget()", codeBehind, StringComparison.Ordinal);
             Assert.Contains("_layerDropTarget.Classes.Remove(\"drop-target\")", codeBehind, StringComparison.Ordinal);
         }

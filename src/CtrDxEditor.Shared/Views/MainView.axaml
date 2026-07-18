@@ -12,7 +12,8 @@
         x:Class="CtrDxEditor.Views.MainView"
         x:DataType="vm:EditorViewModel">
   <dialogs:ReactiveDialogHost CloseOnClickAway="False">
-  <DockPanel>
+    <Grid>
+      <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="{loc:Tr Menu.File}">
         <MenuItem Click="New_Click">
@@ -345,7 +346,6 @@
                    VerticalAlignment="Center" Margin="8,8,8,4" />
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
                   Background="Transparent"
-                  DragDrop.AllowDrop="True"
                   KeyDown="LayerTree_KeyDown"
                   ItemsSource="{Binding Layers}"
                   SelectedItem="{Binding SelectedTreeItem, Mode=TwoWay}">
@@ -391,11 +391,7 @@
                       PointerPressed="LayerRow_PointerPressed"
                       PointerMoved="LayerRow_PointerMoved"
                       PointerReleased="LayerRow_PointerReleased"
-                      PointerCaptureLost="LayerRow_PointerCaptureLost"
-                      DragDrop.AllowDrop="True"
-                      DragDrop.DragOver="LayerRow_DragOver"
-                      DragDrop.DragLeave="LayerRow_DragLeave"
-                      DragDrop.Drop="LayerRow_Drop">
+                      PointerCaptureLost="LayerRow_PointerCaptureLost">
                 <Border.ContextMenu>
                   <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
                 </Border.ContextMenu>
@@ -595,6 +591,13 @@
         <views:PropertyPanel Grid.Row="4" />
       </Grid>
     </Grid>
-  </DockPanel>
+      </DockPanel>
+      <Canvas IsHitTestVisible="False">
+        <Image x:Name="RowDragPreview"
+               IsVisible="False"
+               Opacity="0.65"
+               Stretch="Fill" />
+      </Canvas>
+    </Grid>
   </dialogs:ReactiveDialogHost>
 </UserControl>

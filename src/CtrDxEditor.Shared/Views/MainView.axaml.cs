@@ -26,6 +26,7 @@ namespace CtrDxEditor.Views
         private WindowNotificationManager? _notifications;
         private readonly LevelCanvas _canvas;
         private readonly TextBox _textEditor;
+        private readonly Image _rowDragPreview;
         private LevelObject? _editingText;
 
         /// <summary>Creates the main editor view and wires input gestures.</summary>
@@ -35,6 +36,7 @@ namespace CtrDxEditor.Views
             LevelCanvas canvas = this.FindControl<LevelCanvas>("Canvas")!;
             _canvas = canvas;
             _textEditor = this.FindControl<TextBox>("TextEditor")!;
+            _rowDragPreview = this.FindControl<Image>("RowDragPreview")!;
             _invalidateCanvas = canvas.InvalidateVisual;
             DataContextChanged += (_, _) => WireObjectMutated();
             WireObjectMutated();
@@ -62,8 +64,8 @@ namespace CtrDxEditor.Views
                 PointerReleasedEvent, _paletteDrag.OnPointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
                 PointerCaptureLostEvent, _paletteDrag.OnPointerCaptureLost, RoutingStrategies.Bubble, handledEventsToo: true);
-            // A pending layer drag does not capture the pointer because row controls still need normal click/edit
-            // behavior. Observe every release in the view so releasing outside the source row still clears it.
+            // Observe every release in the view so a captured row drag also completes when released outside
+            // its source row. Before the movement threshold, row controls retain normal click/edit behavior.
             AddHandler(PointerReleasedEvent, LayerRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             AddHandler(PointerReleasedEvent, ObjectRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             // Delete and Space are focus-gated on the bubble path; the Cmd/Ctrl menu chords are handled

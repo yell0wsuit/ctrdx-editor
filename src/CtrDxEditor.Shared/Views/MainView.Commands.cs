@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -279,19 +280,13 @@ namespace CtrDxEditor.Views
 
         private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
 
-        private const string LayerDragIdentifier = "ctrdx-layer-row";
-        private const string ObjectDragIdentifier = "ctrdx-object-row";
-        private static readonly DataFormat<LayerViewModel> LayerDragFormat =
-            DataFormat.CreateInProcessFormat<LayerViewModel>(LayerDragIdentifier);
-        private static readonly DataFormat<LevelObject> ObjectDragFormat =
-            DataFormat.CreateInProcessFormat<LevelObject>(ObjectDragIdentifier);
         private LayerViewModel? _dragLayer;
-        private PointerPressedEventArgs? _dragTrigger;
         private Point _dragStart;
         private LevelObject? _dragObject;
-        private PointerPressedEventArgs? _objectDragTrigger;
         private Point _objectDragStart;
         private Border? _layerDropTarget;
+        private IPointer? _rowDragPointer;
+        private bool _rowDragActive;
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -304,8 +299,8 @@ namespace CtrDxEditor.Views
             if (sender is Control { DataContext: LayerViewModel row }
                 && e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
+                CancelRowDrag();
                 _dragLayer = row;
-                _dragTrigger = e;
                 _dragStart = e.GetPosition(null);
             }
         }
@@ -314,6 +309,11 @@ namespace CtrDxEditor.Views
         {
             for (Visual? current = source as Visual; current is not null; current = current.GetVisualParent())
             {
+                if (current is Border border && border.Classes.Contains("layer-row"))
+                {
+                    return false;
+                }
+
                 if (current is Button or ToggleButton or TextBox)
                 {
                     return true;
@@ -323,47 +323,46 @@ namespace CtrDxEditor.Views
             return false;
         }
 
-        private async void LayerRow_PointerMoved(object? sender, PointerEventArgs e)
+        private void LayerRow_PointerMoved(object? sender, PointerEventArgs e)
         {
             if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
-                ClearPendingLayerDrag();
+                CancelRowDrag();
                 return;
             }
 
-            if (_dragLayer is not { } row || _dragTrigger is not { } trigger)
+            if (_dragLayer is null)
             {
                 return;
             }
 
-            Point now = e.GetPosition(null);
-            if (Math.Abs(now.X - _dragStart.X) < 4 && Math.Abs(now.Y - _dragStart.Y) < 4)
+            if (!_rowDragActive)
             {
-                return;
+                Point now = e.GetPosition(null);
+                if (Math.Abs(now.X - _dragStart.X) < 4 && Math.Abs(now.Y - _dragStart.Y) < 4)
+                {
+                    return;
+                }
+
+                BeginRowDrag(sender as Visual, e.Pointer);
             }
 
-            ClearPendingLayerDrag();
-            DataTransfer data = new();
-            DataTransferItem layerItem = DataTransferItem.Create(LayerDragFormat, row);
-            layerItem.SetText(LayerDragIdentifier);
-            data.Add(layerItem);
-            _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
+            UpdateRowDrag(e);
         }
 
         private void LayerRow_PointerReleased(object? sender, PointerReleasedEventArgs e)
         {
-            ClearPendingLayerDrag();
+            CompleteRowDrag();
         }
 
         private void LayerRow_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
         {
-            ClearPendingLayerDrag();
+            CancelRowDrag();
         }
 
         private void ClearPendingLayerDrag()
         {
             _dragLayer = null;
-            _dragTrigger = null;
         }
 
         private void ObjectRow_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -371,111 +370,166 @@ namespace CtrDxEditor.Views
             if (sender is Control { DataContext: LevelObject obj }
                 && e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
+                CancelRowDrag();
                 _dragObject = obj;
-                _objectDragTrigger = e;
                 _objectDragStart = e.GetPosition(null);
             }
         }
 
-        private async void ObjectRow_PointerMoved(object? sender, PointerEventArgs e)
+        private void ObjectRow_PointerMoved(object? sender, PointerEventArgs e)
         {
             if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
-                ClearPendingObjectDrag();
+                CancelRowDrag();
                 return;
             }
 
-            if (_dragObject is not { } obj || _objectDragTrigger is not { } trigger)
+            if (_dragObject is null)
             {
                 return;
             }
 
-            Point now = e.GetPosition(null);
-            if (Math.Abs(now.X - _objectDragStart.X) < 4 && Math.Abs(now.Y - _objectDragStart.Y) < 4)
+            if (!_rowDragActive)
             {
-                return;
+                Point now = e.GetPosition(null);
+                if (Math.Abs(now.X - _objectDragStart.X) < 4 && Math.Abs(now.Y - _objectDragStart.Y) < 4)
+                {
+                    return;
+                }
+
+                BeginRowDrag(sender as Visual, e.Pointer);
             }
 
-            ClearPendingObjectDrag();
-            DataTransfer data = new();
-            DataTransferItem objectItem = DataTransferItem.Create(ObjectDragFormat, obj);
-            objectItem.SetText(ObjectDragIdentifier);
-            data.Add(objectItem);
-            _ = await DragDrop.DoDragDropAsync(trigger, data, DragDropEffects.Move);
-            ClearLayerDropTarget();
+            UpdateRowDrag(e);
         }
 
         private void ObjectRow_PointerReleased(object? sender, PointerReleasedEventArgs e)
         {
-            ClearPendingObjectDrag();
+            CompleteRowDrag();
         }
 
         private void ObjectRow_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
         {
-            ClearPendingObjectDrag();
+            CancelRowDrag();
         }
 
         private void ClearPendingObjectDrag()
         {
             _dragObject = null;
-            _objectDragTrigger = null;
         }
 
-        private void LayerRow_DragOver(object? sender, DragEventArgs e)
+        private void BeginRowDrag(Visual? row, IPointer pointer)
         {
-            bool acceptsObject = e.DataTransfer.Contains(ObjectDragFormat);
-            e.DragEffects = acceptsObject || e.DataTransfer.Contains(LayerDragFormat)
-                ? DragDropEffects.Move
-                : DragDropEffects.None;
-            if (acceptsObject)
+            if (row is null)
             {
-                SetLayerDropTarget(sender as Border);
+                return;
             }
-            else if (ReferenceEquals(sender, _layerDropTarget))
+
+            _rowDragActive = true;
+            _rowDragPointer = pointer;
+            double scale = TopLevel.GetTopLevel(row)?.RenderScaling ?? 1.0;
+            PixelSize pixelSize = PixelSize.FromSize(row.Bounds.Size, scale);
+            if (pixelSize.Width > 0 && pixelSize.Height > 0)
             {
-                ClearLayerDropTarget();
+                RenderTargetBitmap preview = new(
+                    pixelSize,
+                    new Vector(96 * scale, 96 * scale));
+                preview.Render(row);
+                _rowDragPreview.Source = preview;
+                _rowDragPreview.Width = row.Bounds.Width;
+                _rowDragPreview.Height = row.Bounds.Height;
+                _rowDragPreview.IsVisible = true;
+            }
+
+            pointer.Capture(row as IInputElement);
+        }
+
+        private void UpdateRowDrag(PointerEventArgs e)
+        {
+            if (!_rowDragActive || this.FindControl<TreeView>("LayersTree") is not { } layersTree)
+            {
+                return;
+            }
+
+            Point previewPosition = e.GetPosition(this);
+            Avalonia.Controls.Canvas.SetLeft(_rowDragPreview, previewPosition.X + 12);
+            Avalonia.Controls.Canvas.SetTop(_rowDragPreview, previewPosition.Y + 12);
+            UpdateLayerDropTarget(e.GetPosition(layersTree));
+        }
+
+        private void UpdateLayerDropTarget(Point position)
+        {
+            TreeView? layersTree = this.FindControl<TreeView>("LayersTree");
+            Visual? hit = layersTree?.InputHitTest(position) as Visual;
+            SetLayerDropTarget(FindLayerDropTarget(hit));
+        }
+
+        private static Border? FindLayerDropTarget(Visual? hit)
+        {
+            for (Visual? current = hit; current is not null; current = current.GetVisualParent())
+            {
+                if (current is Border border
+                    && border.Classes.Contains("layer-row")
+                    && border.DataContext is LayerViewModel)
+                {
+                    return border;
+                }
+
+                if (current is TreeViewItem { DataContext: LayerViewModel } layerItem)
+                {
+                    return layerItem.GetVisualDescendants()
+                        .OfType<Border>()
+                        .FirstOrDefault(candidate => candidate.Classes.Contains("layer-row"));
+                }
+            }
+
+            return null;
+        }
+
+        private void CompleteRowDrag()
+        {
+            bool shouldMove = _rowDragActive;
+            LayerViewModel? sourceLayer = _dragLayer;
+            LevelObject? sourceObject = _dragObject;
+            LayerViewModel? targetLayer = _layerDropTarget?.DataContext is LayerViewModel target
+                ? target
+                : null;
+            CancelRowDrag();
+
+            if (!shouldMove || targetLayer is null || DataContext is not EditorViewModel vm)
+            {
+                return;
+            }
+
+            if (sourceObject is not null)
+            {
+                _ = vm.MoveObjectToLayer(sourceObject, targetLayer.Layer);
+                return;
+            }
+
+            if (sourceLayer is not null && !ReferenceEquals(sourceLayer, targetLayer))
+            {
+                int targetIndex = vm.Layers.IndexOf(targetLayer);
+                if (targetIndex >= 0)
+                {
+                    vm.MoveLayerToIndex(sourceLayer.Layer, targetIndex);
+                }
             }
         }
 
-        private void LayerRow_DragLeave(object? sender, DragEventArgs e)
+        private void CancelRowDrag()
         {
-            if (ReferenceEquals(sender, _layerDropTarget))
-            {
-                ClearLayerDropTarget();
-            }
-        }
-
-        private void LayerRow_Drop(object? sender, DragEventArgs e)
-        {
+            IPointer? pointer = _rowDragPointer;
+            _rowDragActive = false;
+            _rowDragPointer = null;
+            ClearPendingLayerDrag();
+            ClearPendingObjectDrag();
             ClearLayerDropTarget();
-            if (DataContext is not EditorViewModel vm
-                || sender is not Control { DataContext: LayerViewModel target })
-            {
-                return;
-            }
-
-            if (e.DataTransfer.TryGetValue(ObjectDragFormat) is LevelObject obj)
-            {
-                e.DragEffects = vm.MoveObjectToLayer(obj, target.Layer)
-                    ? DragDropEffects.Move
-                    : DragDropEffects.None;
-                e.Handled = true;
-                return;
-            }
-
-            if (e.DataTransfer.TryGetValue(LayerDragFormat) is not LayerViewModel source
-                || ReferenceEquals(source, target))
-            {
-                return;
-            }
-
-            int targetIndex = vm.Layers.IndexOf(target);
-            if (targetIndex >= 0)
-            {
-                vm.MoveLayerToIndex(source.Layer, targetIndex);
-            }
-            e.DragEffects = DragDropEffects.Move;
-            e.Handled = true;
+            _rowDragPreview.IsVisible = false;
+            IDisposable? preview = _rowDragPreview.Source as IDisposable;
+            _rowDragPreview.Source = null;
+            preview?.Dispose();
+            pointer?.Capture(null);
         }
 
         private void SetLayerDropTarget(Border? target)
