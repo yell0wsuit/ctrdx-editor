@@ -75,5 +75,19 @@ namespace CtrDxEditor.Tests
             vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
             Assert.Equal(new[] { "a", "c" }, vm.EffectiveLayerTargets.Select(l => l.Name));
         }
+
+        [Fact]
+        public void DeleteSelectedLayers_removes_all_in_one_undo_step()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]); // a and c
+
+            vm.DeleteSelectedLayers();
+
+            Assert.Equal(new[] { "b" }, vm.Layers.Select(l => l.Name));
+
+            vm.Undo();
+            Assert.Equal(new[] { "a", "b", "c" }, vm.Layers.Select(l => l.Name));
+        }
     }
 }

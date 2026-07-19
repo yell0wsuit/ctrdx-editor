@@ -994,6 +994,18 @@ namespace CtrDxEditor.ViewModels
             }
 
             CaptureUndoSnapshot();
+            DeleteLayerCore(layer);
+            RefreshPalette();
+            RefreshObjectList();
+        }
+
+        // Removes one layer without capturing undo or refreshing views, so a batch can snapshot/refresh once.
+        private void DeleteLayerCore(LevelLayer layer)
+        {
+            if (Document is null)
+            {
+                return;
+            }
             if (ReferenceEquals(SelectedObject?.Element.Parent, layer.Element))
             {
                 SelectedObject = null;
@@ -1005,6 +1017,31 @@ namespace CtrDxEditor.ViewModels
             Document.RemoveLayer(layer);
             _ = _hiddenLayerNames.Remove(layer.Name);
             _ = _lockedLayerNames.Remove(layer.Name);
+        }
+
+        /// <summary>Deletes every effective-target layer (skipping locked ones) and their objects in one undo step.</summary>
+        public void DeleteSelectedLayers()
+        {
+            if (Document is null)
+            {
+                return;
+            }
+
+            List<LevelLayer> doomed = [.. EffectiveLayerTargets
+                .Select(row => row.Layer)
+                .Where(layer => !IsLayerLocked(layer))];
+            if (doomed.Count == 0)
+            {
+                return;
+            }
+
+            CaptureUndoSnapshot();
+            foreach (LevelLayer layer in doomed)
+            {
+                DeleteLayerCore(layer);
+            }
+            _selectedLayers.Clear();
+            NotifyLayerSelectionChanged();
             RefreshPalette();
             RefreshObjectList();
         }
