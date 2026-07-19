@@ -6,6 +6,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -71,7 +72,10 @@ namespace CtrDxEditor.Views
                         }
                         break;
                     case LevelCanvas.SelectionRequestKind.Clear:
-                        vm.Selection.Clear();
+                        if (!vm.CollapseLayerSelectionToActive())
+                        {
+                            vm.Selection.Clear();
+                        }
                         break;
                     default:
                         break;
@@ -219,6 +223,24 @@ namespace CtrDxEditor.Views
             finally
             {
                 _syncingTreeSelection = false;
+            }
+        }
+
+        // Blank tree space collapses a multi-layer selection without disturbing row or scrollbar input.
+        private void LayersTree_PointerPressed(object? _, PointerPressedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm
+                || e.GetCurrentPoint(null).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed
+                || e.Source is not Visual source
+                || source.GetVisualAncestors().Prepend(source)
+                    .Any(visual => visual is TreeViewItem or ScrollBar))
+            {
+                return;
+            }
+
+            if (vm.CollapseLayerSelectionToActive())
+            {
+                e.Handled = true;
             }
         }
 

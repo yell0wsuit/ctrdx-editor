@@ -395,6 +395,7 @@
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
                   Background="Transparent"
                   KeyDown="LayerTree_KeyDown"
+                  PointerPressed="LayersTree_PointerPressed"
                   SelectionChanged="LayersTree_SelectionChanged"
                   ItemsSource="{Binding Layers}"
                   SelectionMode="Multiple">

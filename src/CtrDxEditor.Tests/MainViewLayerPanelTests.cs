@@ -431,6 +431,33 @@ namespace CtrDxEditor.Tests
             Assert.Contains("tree.SelectedItem = null;", viewCodeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>Blank tree and canvas clicks collapse a multi-layer selection to its active layer.</summary>
+        [Fact]
+        public void BlankClickCollapsesMultiLayerSelection()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("PointerPressed=\"LayersTree_PointerPressed\"", view, StringComparison.Ordinal);
+            Assert.Contains(
+                "Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed",
+                codeBehind,
+                StringComparison.Ordinal);
+            Assert.Contains("source.GetVisualAncestors().Prepend(source)", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("visual is TreeViewItem or ScrollBar", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("if (vm.CollapseLayerSelectionToActive())", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("e.Handled = true;", codeBehind, StringComparison.Ordinal);
+
+            int clearCase = codeBehind.IndexOf("case LevelCanvas.SelectionRequestKind.Clear:", StringComparison.Ordinal);
+            int clearBreak = codeBehind.IndexOf("break;", clearCase, StringComparison.Ordinal);
+            Assert.True(clearCase >= 0 && clearBreak > clearCase);
+            string clearBranch = codeBehind[clearCase..clearBreak];
+            int collapse = clearBranch.IndexOf("vm.CollapseLayerSelectionToActive()", StringComparison.Ordinal);
+            int clear = clearBranch.IndexOf("vm.Selection.Clear();", StringComparison.Ordinal);
+            Assert.True(collapse >= 0 && clear > collapse);
+            Assert.Contains("if (!vm.CollapseLayerSelectionToActive())", clearBranch, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;
