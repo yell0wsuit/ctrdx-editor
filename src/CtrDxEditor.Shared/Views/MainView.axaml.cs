@@ -65,6 +65,8 @@ namespace CtrDxEditor.Views
                     case LevelCanvas.SelectionRequestKind.Clear:
                         vm.Selection.Clear();
                         break;
+                    default:
+                        break;
                 }
                 vm.RaiseSelectedObjectChanged();
             };
@@ -112,11 +114,8 @@ namespace CtrDxEditor.Views
             _mutatedSubscription?.ObjectMutated -= _invalidateCanvas;
             _mutatedSubscription?.LevelLoaded -= FocusCanvasAfterLevelLoaded;
             _mutatedSubscription?.PropertyChanged -= ViewModel_PropertyChanged;
-            if (_selectionSubscription is not null)
-            {
-                _selectionSubscription.Changed -= SyncCanvasSelection;
-                _selectionSubscription = null;
-            }
+            _selectionSubscription?.Changed -= SyncCanvasSelection;
+            _selectionSubscription = null;
 
             _mutatedSubscription = DataContext as EditorViewModel;
             if (_mutatedSubscription is not null)
@@ -161,10 +160,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (_selectionSubscription is not null)
-            {
-                _selectionSubscription.Changed -= SyncCanvasSelection;
-            }
+            _selectionSubscription?.Changed -= SyncCanvasSelection;
             _selectionSubscription = selection;
             _selectionSubscription.Changed += SyncCanvasSelection;
             SyncCanvasSelection();

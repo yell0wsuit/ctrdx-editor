@@ -29,6 +29,7 @@ namespace CtrDxEditor.ViewModels
         private readonly DescriptorTable _descriptors = DescriptorTable.CtrObjects;
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
+        private readonly List<XElement> _clipboard = [];
         private HistoryState? _pendingUndoTransaction;
         private bool _syncingSelectedTreeItem;
 
@@ -323,13 +324,33 @@ namespace CtrDxEditor.ViewModels
             ObjectMutated?.Invoke();
         }
 
-        /// <summary>Deletes the currently selected object, if one exists.</summary>
+        /// <summary>Deletes every selected object in a single undo step.</summary>
         public void DeleteSelected()
         {
-            if (SelectedObject is { } selected)
+            if (Document is null || Selection.Count == 0)
             {
-                Delete(selected);
+                return;
             }
+
+            List<LevelObject> doomed = [.. Selection.Items];
+            CaptureUndoSnapshot();
+            foreach (LevelObject removed in doomed)
+            {
+                if (IsAnimationPreviewing(removed))
+                {
+                    StopAnimationPreview();
+                }
+                LevelDocument.Remove(removed);
+                if (Equals(LockedObject, removed))
+                {
+                    LockedObject = null;
+                }
+            }
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
+            Selection.Clear();
+            RaiseSelectedObjectChanged();
+            RefreshPalette();
+            RefreshObjectList();
         }
 
         /// <summary>Selects every object in the active layer (Ctrl+A). No-op when no active layer exists.</summary>
@@ -369,6 +390,59 @@ namespace CtrDxEditor.ViewModels
             {
                 clone.X += dx;
                 clone.Y += dy;
+            }
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
+            RefreshPalette();
+            RefreshObjectList();
+            if (clones.Count > 0)
+            {
+                Selection.SetRange(clones, clones[^1]);
+                RaiseSelectedObjectChanged();
+            }
+        }
+
+        /// <summary>True when the same-window object clipboard contains at least one object.</summary>
+        public bool HasClipboard => _clipboard.Count > 0;
+
+        /// <summary>Copies detached XML snapshots of the current selection into the object clipboard.</summary>
+        public void CopySelection()
+        {
+            _clipboard.Clear();
+            foreach (LevelObject selected in Selection.Items)
+            {
+                _clipboard.Add(new XElement(selected.Element));
+            }
+            OnPropertyChanged(nameof(HasClipboard));
+        }
+
+        /// <summary>Copies the current selection, then deletes the originals.</summary>
+        public void CutSelection()
+        {
+            CopySelection();
+            DeleteSelected();
+        }
+
+        /// <summary>
+        /// Pastes clipboard objects into the active layer with their centroid at the target point, preserving
+        /// relative layout, then selects the surviving clones.
+        /// </summary>
+        public void PasteAt(int levelX, int levelY)
+        {
+            if (Document is null || ActiveLayer?.Layer is not { } target || _clipboard.Count == 0)
+            {
+                return;
+            }
+
+            List<LevelObject> buffered = [.. _clipboard.Select(element => new LevelObject(new XElement(element)))];
+            int centerX = (int)buffered.Average(obj => obj.X);
+            int centerY = (int)buffered.Average(obj => obj.Y);
+
+            CaptureUndoSnapshot();
+            IReadOnlyList<LevelObject> clones = ObjectCloneService.Clone(buffered, target, Document);
+            foreach (LevelObject clone in clones)
+            {
+                clone.X += levelX - centerX;
+                clone.Y += levelY - centerY;
             }
             LevelObjectPolicy.NormalizeBindingKeys(Document);
             RefreshPalette();
@@ -1564,9 +1638,15 @@ namespace CtrDxEditor.ViewModels
                 .Select(Document.RefOf)
                 .Where(reference => reference is not null)
                 .Select(reference => reference!.Value)];
+            ObjectRef[] selectedRefs = [.. Selection.Items
+                .Select(Document.RefOf)
+                .Where(reference => reference is not null)
+                .Select(reference => reference!.Value)];
+            ObjectRef? primaryRef = Selection.Primary is { } primary ? Document.RefOf(primary) : null;
             return new HistoryState(
                 Document.Save(),
-                SelectedObject is { } selected ? Document.RefOf(selected) : null,
+                selectedRefs,
+                primaryRef,
                 LockedObject is { } locked ? Document.RefOf(locked) : null,
                 autoWidthRefs,
                 hiddenRefs);
@@ -1593,7 +1673,21 @@ namespace CtrDxEditor.ViewModels
             RefreshPalette();
             RefreshObjectList();
             RefreshLocales();
-            SelectedObject = state.SelectedRef is { } selectedRef ? Document.Resolve(selectedRef) : null;
+            List<LevelObject> restoredSelection = [.. state.SelectedRefs
+                .Select(Document.Resolve)
+                .Where(obj => obj is not null)
+                .Select(obj => obj!)];
+            if (restoredSelection.Count > 0)
+            {
+                LevelObject primary = (state.PrimaryRef is { } primaryRef ? Document.Resolve(primaryRef) : null)
+                    ?? restoredSelection[^1];
+                Selection.SetRange(restoredSelection, primary);
+            }
+            else
+            {
+                Selection.Clear();
+            }
+            RaiseSelectedObjectChanged();
             LockedObject = state.LockedRef is { } lockedRef ? Document.Resolve(lockedRef) : null;
             // A restore repaints in place; it must not refit/refocus the canvas the way opening a
             // level does (LevelLoaded), or every undo/redo would throw away the user's zoom and pan.
@@ -1631,7 +1725,8 @@ namespace CtrDxEditor.ViewModels
 
         private sealed record HistoryState(
             string Xml,
-            ObjectRef? SelectedRef,
+            ObjectRef[] SelectedRefs,
+            ObjectRef? PrimaryRef,
             ObjectRef? LockedRef,
             ObjectRef[] AutoWidthRefs,
             ObjectRef[] HiddenRefs);

@@ -125,6 +125,22 @@ namespace CtrDxEditor.Tests
             Assert.Same(restored.Element, vm.SelectedObject!.Element);
         }
 
+        /// <summary>Undo restores every selected object and the primary identity.</summary>
+        [Fact]
+        public void UndoRestoresAMultiObjectSelection()
+        {
+            EditorViewModel vm = CreateLoadedViewModel(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/></layer></map>");
+            vm.Selection.SetRange(vm.Document!.AllObjects, vm.Document.AllObjects[0]);
+
+            vm.DuplicateSelection(8, 8);
+            vm.Undo();
+
+            Assert.Equal(2, vm.Selection.Count);
+            Assert.Equal("bubble", vm.Selection.Primary!.Type);
+        }
+
         /// <summary>Verifies that property-panel edits are undoable.</summary>
         [Fact]
         public void UndoRestoresPropertyFieldEdit()

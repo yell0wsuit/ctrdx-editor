@@ -272,6 +272,15 @@ namespace CtrDxEditor.Rendering
             return new Rect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
         }
 
+        /// <summary>Returns the last hovered level point, or the viewport centre when no hover is available.</summary>
+        public (int X, int Y) PasteTargetLevelPoint()
+        {
+            Vec2 point = _lastHoverLevel != default
+                ? _lastHoverLevel
+                : View.ScreenToLevel(new Vec2(Bounds.Width / 2, Bounds.Height / 2));
+            return ((int)Math.Round(point.X), (int)Math.Round(point.Y));
+        }
+
         /// <summary>Callback raised before a direct canvas edit begins, so the view model can capture undo state.</summary>
         public Action? BeginDocumentEdit { get; set; }
 

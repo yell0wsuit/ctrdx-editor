@@ -1,3 +1,5 @@
+using System.Linq;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
@@ -33,6 +35,62 @@ namespace CtrDxEditor.Tests
             Assert.NotSame(original.Element, clone.Element);
             Assert.Equal("26", clone.GetAttr("x"));
             Assert.Equal("36", clone.GetAttr("y"));
+        }
+
+        [Fact]
+        public void Copy_then_Paste_adds_clones_at_target()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+
+            vm.CopySelection();
+            vm.PasteAt(100, 200);
+
+            Assert.Equal(2, vm.Document.AllObjects.Count);
+            Assert.Equal(1, vm.Selection.Count);
+            Assert.Equal("100", vm.Selection.Primary!.GetAttr("x"));
+            Assert.Equal("200", vm.Selection.Primary.GetAttr("y"));
+        }
+
+        [Fact]
+        public void Paste_preserves_relative_layout_around_target_centroid()
+        {
+            EditorViewModel vm = Load("<bubble x=\"0\" y=\"0\"/><star x=\"20\" y=\"0\"/>");
+            vm.Selection.SetRange(vm.Document!.AllObjects, vm.Document.AllObjects[1]);
+
+            vm.CopySelection();
+            vm.PasteAt(100, 100);
+
+            LevelObject[] pasted = [.. vm.Selection.Items.OrderBy(o => o.X)];
+            Assert.Equal(90, pasted[0].X);
+            Assert.Equal(100, pasted[0].Y);
+            Assert.Equal(110, pasted[1].X);
+            Assert.Equal(100, pasted[1].Y);
+        }
+
+        [Fact]
+        public void Cut_removes_originals_and_keeps_them_for_paste()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+
+            vm.CutSelection();
+            Assert.Empty(vm.Document.AllObjects);
+
+            vm.PasteAt(5, 5);
+            Assert.Single(vm.Document.AllObjects);
+        }
+
+        [Fact]
+        public void DeleteSelected_removes_every_selected_object()
+        {
+            EditorViewModel vm = Load("<bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/>");
+            vm.Selection.SetRange(vm.Document!.AllObjects, vm.Document.AllObjects[0]);
+
+            vm.DeleteSelected();
+
+            Assert.Empty(vm.Document.AllObjects);
+            Assert.Equal(0, vm.Selection.Count);
         }
     }
 }
