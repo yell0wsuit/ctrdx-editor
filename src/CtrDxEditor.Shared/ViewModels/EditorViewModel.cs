@@ -514,7 +514,22 @@ namespace CtrDxEditor.ViewModels
         /// <param name="hidden">Whether the layer should be hidden.</param>
         public void SetLayerHidden(LevelLayer layer, bool hidden)
         {
-            _ = hidden ? _hiddenLayerNames.Add(layer.Name) : _hiddenLayerNames.Remove(layer.Name);
+            if (hidden)
+            {
+                _ = _hiddenLayerNames.Add(layer.Name);
+            }
+            else
+            {
+                _ = _hiddenLayerNames.Remove(layer.Name);
+
+                // Showing a layer force-reveals its objects: clear per-object hidden flags so the layer
+                // eye is a master toggle (hide = everything off, show = everything on). Locale filtering
+                // still applies, so text for other languages stays hidden.
+                foreach (LevelObject obj in layer.Objects)
+                {
+                    _ = _hiddenObjectElements.Remove(obj.Element);
+                }
+            }
 
             if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } row)
             {
@@ -589,12 +604,29 @@ namespace CtrDxEditor.ViewModels
             foreach (LevelLayer layer in Document.Layers)
             {
                 bool layerHidden = _hiddenLayerNames.Contains(layer.Name);
+                bool hasObjects = false;
+                bool anyVisible = false;
                 foreach (LevelObject obj in layer.Objects)
                 {
+                    hasObjects = true;
                     if (layerHidden || _hiddenObjectElements.Contains(obj.Element) || IsLocaleHidden(obj))
                     {
                         _ = hiddenObjects.Add(obj);
                     }
+                    else
+                    {
+                        anyVisible = true;
+                    }
+                }
+
+                // The layer eye reflects whether anything in the layer is actually shown: a layer whose
+                // objects are all hidden (individually or via its own flag) displays as hidden even when
+                // its own hidden flag is not set. Empty layers fall back to their own flag.
+                bool layerVisible = hasObjects ? anyVisible : !layerHidden;
+                if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } layerRow
+                    && layerRow.IsVisible != layerVisible)
+                {
+                    layerRow.IsVisible = layerVisible;
                 }
             }
             EffectivelyHiddenObjects = hiddenObjects;

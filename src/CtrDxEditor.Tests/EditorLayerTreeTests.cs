@@ -141,9 +141,9 @@ namespace CtrDxEditor.Tests
             Assert.Contains(sibling, vm.EffectivelyHiddenObjects);
         }
 
-        /// <summary>Showing a parent layer preserves hidden state assigned directly to a child.</summary>
+        /// <summary>Showing a layer force-reveals every object, including individually hidden children.</summary>
         [Fact]
-        public void LayerVisibilityCyclePreservesIndividuallyHiddenObject()
+        public void ShowingLayerRevealsIndividuallyHiddenObjects()
         {
             EditorViewModel vm = Create(LayerWithTwoObjects);
             LevelLayer layer = vm.Layers[0].Layer;
@@ -153,8 +153,9 @@ namespace CtrDxEditor.Tests
             vm.SetLayerHidden(layer, true);
             vm.SetLayerHidden(layer, false);
 
-            Assert.Contains(hiddenChild, vm.EffectivelyHiddenObjects);
+            Assert.DoesNotContain(hiddenChild, vm.EffectivelyHiddenObjects);
             Assert.DoesNotContain(vm.Layers[0].Objects[0], vm.EffectivelyHiddenObjects);
+            Assert.True(vm.Layers[0].IsVisible);
         }
 
         /// <summary>Publishes a new hidden-set instance so the canvas binding invalidates its styled property.</summary>
