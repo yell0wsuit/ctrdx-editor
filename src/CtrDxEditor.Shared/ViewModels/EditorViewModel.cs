@@ -416,16 +416,18 @@ namespace CtrDxEditor.ViewModels
             _selectedLayers.Count > 0 ? _selectedLayers : ActiveLayer is { } a ? [a] : [];
 
         /// <summary>
-        /// Selects a set of layers (object panel), making <paramref name="primary"/> the active layer and
-        /// clearing any object selection — layer and object selection are mutually exclusive.
+        /// Selects a set of layers (object panel), preserving the current active layer when it remains selected,
+        /// or using <paramref name="primary"/> otherwise. Clears any object selection — layer and object selection
+        /// are mutually exclusive.
         /// </summary>
         public void SetLayerSelection(IReadOnlyList<LayerViewModel> layers, LayerViewModel primary)
         {
+            LayerViewModel active = ActiveLayer is { } current && layers.Contains(current) ? current : primary;
             Selection.Clear();
             RaiseSelectedObjectChanged();
             _selectedLayers.Clear();
             _selectedLayers.AddRange(layers);
-            ActiveLayer = primary;
+            ActiveLayer = active;
             NotifyLayerSelectionChanged();
         }
 

@@ -36,24 +36,39 @@ namespace CtrDxEditor.Tests
         public void SetLayerSelectionSelectsLayersAndSetsPrimaryActive()
         {
             EditorViewModel vm = Create();
+            vm.ActiveLayer = vm.Layers[1];
             vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
 
             Assert.Equal(["a", "c"], vm.SelectedLayers.Select(l => l.Name));
-            Assert.Equal("c", vm.ActiveLayer!.Name);
+            Assert.Equal("c", vm.ActiveLayer.Name);
         }
 
-        /// <summary>A multi-layer selection collapses to its active primary layer.</summary>
+        /// <summary>Adding selected rows preserves the current layer while it remains selected.</summary>
         [Fact]
-        public void CollapseLayerSelectionToActiveRetainsPrimaryLayer()
+        public void SetLayerSelectionPreservesCurrentLayerWhenStillSelected()
         {
             EditorViewModel vm = Create();
+            vm.ActiveLayer = vm.Layers[0];
+
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
+
+            Assert.Equal(["a", "c"], vm.SelectedLayers.Select(layer => layer.Name));
+            Assert.Same(vm.Layers[0], vm.ActiveLayer);
+        }
+
+        /// <summary>A multi-layer selection collapses to its preserved current layer.</summary>
+        [Fact]
+        public void CollapseLayerSelectionToActiveRetainsCurrentLayer()
+        {
+            EditorViewModel vm = Create();
+            vm.ActiveLayer = vm.Layers[0];
             vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
 
             bool handled = vm.CollapseLayerSelectionToActive();
 
             Assert.True(handled);
-            Assert.Equal(["c"], vm.SelectedLayers.Select(layer => layer.Name));
-            Assert.Same(vm.Layers[2], vm.ActiveLayer);
+            Assert.Equal(["a"], vm.SelectedLayers.Select(layer => layer.Name));
+            Assert.Same(vm.Layers[0], vm.ActiveLayer);
         }
 
         /// <summary>A single selected layer is already collapsed and remains unchanged.</summary>
