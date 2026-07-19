@@ -24,6 +24,14 @@ namespace CtrDxEditor.Controls
         public static readonly StyledProperty<bool> ForceActiveProperty =
             AvaloniaProperty.Register<MarqueeTextBlock, bool>(nameof(ForceActive));
 
+        /// <summary>Identifies the <see cref="Foreground"/> styled property.</summary>
+        public static readonly StyledProperty<IBrush?> ForegroundProperty =
+            TextElement.ForegroundProperty.AddOwner<MarqueeTextBlock>();
+
+        /// <summary>Identifies the <see cref="FontWeight"/> styled property.</summary>
+        public static readonly StyledProperty<FontWeight> FontWeightProperty =
+            TextElement.FontWeightProperty.AddOwner<MarqueeTextBlock>();
+
         private readonly TextBlock _label;
         private readonly TranslateTransform _translate = new();
         private readonly DispatcherTimer _animationTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
@@ -41,7 +49,8 @@ namespace CtrDxEditor.Controls
                 RenderTransform = _translate,
             };
             _label[!TextBlock.TextProperty] = this[!TextProperty];
-            _label[!TextBlock.ForegroundProperty] = this[!TextElement.ForegroundProperty];
+            _label[!TextBlock.ForegroundProperty] = this[!ForegroundProperty];
+            _label[!TextBlock.FontWeightProperty] = this[!FontWeightProperty];
             VisualChildren.Add(_label);
             LogicalChildren.Add(_label);
             _animationTimer.Tick += OnAnimationTick;
@@ -59,6 +68,20 @@ namespace CtrDxEditor.Controls
         {
             get => GetValue(ForceActiveProperty);
             set => SetValue(ForceActiveProperty, value);
+        }
+
+        /// <summary>Gets or sets the text foreground brush.</summary>
+        public IBrush? Foreground
+        {
+            get => GetValue(ForegroundProperty);
+            set => SetValue(ForegroundProperty, value);
+        }
+
+        /// <summary>Gets or sets the text font weight.</summary>
+        public FontWeight FontWeight
+        {
+            get => GetValue(FontWeightProperty);
+            set => SetValue(FontWeightProperty, value);
         }
 
         /// <inheritdoc/>

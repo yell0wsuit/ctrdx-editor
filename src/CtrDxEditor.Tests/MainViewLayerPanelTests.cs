@@ -158,6 +158,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains("IsRenaming", layerViewModel, StringComparison.Ordinal);
         }
 
+        /// <summary>Overflowing read-only layer names use the shared pointer-hover marquee.</summary>
+        [Fact]
+        public void LayerNamesUseHoverMarquee()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("<ctl:MarqueeTextBlock Text=\"{Binding Name}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.layer-name-display=\"True\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding !IsRenaming}\"", view, StringComparison.Ordinal);
+            Assert.Contains("DoubleTapped=\"LayerName_DoubleTapped\"", view, StringComparison.Ordinal);
+            Assert.Contains("Selector=\"ctl|MarqueeTextBlock.layer-name-display.active\"", view, StringComparison.Ordinal);
+            Assert.Contains("Selector=\"ctl|MarqueeTextBlock.layer-name-display.locked\"", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("<TextBlock Text=\"{Binding Name}\"", view, StringComparison.Ordinal);
+        }
+
         /// <summary>Active-layer and selected-object rows share one borderless, bold selection treatment.</summary>
         [Fact]
         public void SelectionBlueIsUniformAndDoesNotBleedIntoObjectChildren()

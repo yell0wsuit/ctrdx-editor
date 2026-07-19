@@ -375,10 +375,10 @@
             <Style Selector="Border.layer-row.drop-target">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
             </Style>
-            <Style Selector="TextBlock.layer-name-display.active">
+            <Style Selector="ctl|MarqueeTextBlock.layer-name-display.active">
               <Setter Property="FontWeight" Value="Bold" />
             </Style>
-            <Style Selector="TextBlock.layer-name-display.locked">
+            <Style Selector="ctl|MarqueeTextBlock.layer-name-display.locked">
               <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Warning}" />
             </Style>
             <Style Selector="Border.object-row">
@@ -410,14 +410,13 @@
                     </Grid>
                   </ToggleButton>
                   <Grid Grid.Column="1" Margin="7,0,4,0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}"
-                               Classes.layer-name-display="True"
-                               Classes.active="{Binding IsActive}"
-                               Classes.locked="{Binding IsLocked}"
-                               IsVisible="{Binding !IsRenaming}"
-                               DoubleTapped="LayerName_DoubleTapped"
-                               Tag="{Binding .}"
-                               TextTrimming="CharacterEllipsis" />
+                    <ctl:MarqueeTextBlock Text="{Binding Name}"
+                                          Classes.layer-name-display="True"
+                                          Classes.active="{Binding IsActive}"
+                                          Classes.locked="{Binding IsLocked}"
+                                          IsVisible="{Binding !IsRenaming}"
+                                          DoubleTapped="LayerName_DoubleTapped"
+                                          Tag="{Binding .}" />
                     <TextBox Text="{Binding Name, Mode=TwoWay}"
                              Classes.layer-name-editor="True"
                              IsVisible="{Binding IsRenaming}"
