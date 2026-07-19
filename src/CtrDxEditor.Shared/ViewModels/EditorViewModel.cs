@@ -459,6 +459,29 @@ namespace CtrDxEditor.ViewModels
             return _hiddenObjectElements.Contains(obj.Element);
         }
 
+        /// <summary>
+        /// Handles the object-row eye toggle: reveals an individually hidden object or hides a visible one.
+        /// Objects hidden only because they belong to another locale are controlled by the language picker,
+        /// not the eye, so their toggle is a no-op (the UI also disables the eye for them).
+        /// </summary>
+        /// <param name="obj">The object whose eye was clicked.</param>
+        public void ToggleObjectVisibility(LevelObject obj)
+        {
+            if (IsLocaleHidden(obj))
+            {
+                return;
+            }
+
+            if (EffectivelyHiddenObjects.Contains(obj))
+            {
+                RevealObject(obj);
+            }
+            else
+            {
+                SetObjectHidden(obj, true);
+            }
+        }
+
         /// <summary>Shows or hides a single object.</summary>
         /// <param name="obj">The object to update.</param>
         /// <param name="hidden">Whether the object should be hidden.</param>

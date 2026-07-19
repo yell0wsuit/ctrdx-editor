@@ -132,6 +132,34 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(es, vm.EffectivelyHiddenObjects);
         }
 
+        /// <summary>The eye toggle is inert for an off-locale object; the language picker governs it instead.</summary>
+        [Fact]
+        public void TogglingOffLocaleObjectVisibilityIsNoOp()
+        {
+            EditorViewModel vm = Create();
+            ObservableCollection<LevelObject> text = vm.Layers.First(layer => layer.Name == "text").Objects;
+            LevelObject es = text.First(obj => obj.GetAttr("locale") == "es");
+
+            vm.ToggleObjectVisibility(es);
+
+            Assert.Equal("en", vm.DisplayLocale);
+            Assert.Contains(es, vm.EffectivelyHiddenObjects);
+        }
+
+        /// <summary>Toggling a current-locale object hides it individually without changing the language.</summary>
+        [Fact]
+        public void TogglingCurrentLocaleObjectHidesItWithoutSwitchingLocale()
+        {
+            EditorViewModel vm = Create();
+            ObservableCollection<LevelObject> text = vm.Layers.First(layer => layer.Name == "text").Objects;
+            LevelObject en = text.First(obj => obj.GetAttr("locale") == "en");
+
+            vm.ToggleObjectVisibility(en);
+
+            Assert.Equal("en", vm.DisplayLocale);
+            Assert.Contains(en, vm.EffectivelyHiddenObjects);
+        }
+
         /// <summary>Opening another document resets locale and visibility choices from the previous document.</summary>
         [Fact]
         public void LoadingAnotherLevelResetsDocumentVisibilityState()

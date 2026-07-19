@@ -470,6 +470,12 @@
                               Background="Transparent" BorderBrush="Transparent"
                               Tag="{Binding .}" Click="ObjectVisibility_Click"
                               ToolTip.Tip="{loc:Tr Tooltip.ObjectVisibility}">
+                  <ToggleButton.IsEnabled>
+                    <MultiBinding Converter="{x:Static conv:ObjectEyeEnabledConverter.Instance}">
+                      <Binding Path="." />
+                      <Binding Path="$parent[TreeView].((vm:EditorViewModel)DataContext).DisplayLocale" />
+                    </MultiBinding>
+                  </ToggleButton.IsEnabled>
                   <ToggleButton.IsChecked>
                     <MultiBinding Converter="{x:Static conv:ObjectVisibilityConverter.Instance}">
                       <Binding Path="." />
@@ -497,7 +503,7 @@
                 </ToggleButton>
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
                            Classes.object-name="True" Margin="6,0,0,0"
-                           Text="{Binding Type, Converter={x:Static loc:ObjectNameConverter.Instance}}">
+                           Text="{Binding ., Converter={x:Static conv:ObjectRowLabelConverter.Instance}}">
                   <Classes.selected>
                     <MultiBinding Converter="{x:Static conv:ObjectEqualsConverter.Instance}">
                       <Binding Path="." />

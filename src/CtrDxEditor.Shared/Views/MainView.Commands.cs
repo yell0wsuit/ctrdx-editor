@@ -132,14 +132,7 @@ namespace CtrDxEditor.Views
             if (DataContext is EditorViewModel vm
                 && sender is ToggleButton { Tag: LevelObject obj })
             {
-                if (vm.EffectivelyHiddenObjects.Contains(obj))
-                {
-                    vm.RevealObject(obj);
-                }
-                else
-                {
-                    vm.SetObjectHidden(obj, true);
-                }
+                vm.ToggleObjectVisibility(obj);
                 e.Handled = true;
             }
         }
