@@ -288,6 +288,8 @@ namespace CtrDxEditor.Views
         private IPointer? _rowDragPointer;
         private Point _rowDragGrabOffset;
         private bool _rowDragActive;
+        private Point _rowDragTreePosition;
+        private DispatcherTimer? _rowDragScrollTimer;
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -429,13 +431,14 @@ namespace CtrDxEditor.Views
             _rowDragActive = true;
             _rowDragPointer = e.Pointer;
             _rowDragGrabOffset = e.GetPosition(row);
-            double scale = TopLevel.GetTopLevel(row)?.RenderScaling ?? 1.0;
-            PixelSize pixelSize = PixelSize.FromSize(row.Bounds.Size, scale);
+            // RenderTargetBitmap.Render draws the visual at 1 DIP = 1 pixel (it ignores the bitmap
+            // DPI), so the pixel buffer must match the row's DIP size. Oversizing it by the render
+            // scale left the row rendered into a corner, and Stretch=Fill then magnified that
+            // fragment ("enlarged / half cut off").
+            PixelSize pixelSize = PixelSize.FromSize(row.Bounds.Size, 1.0);
             if (pixelSize.Width > 0 && pixelSize.Height > 0)
             {
-                RenderTargetBitmap preview = new(
-                    pixelSize,
-                    new Vector(96 * scale, 96 * scale));
+                RenderTargetBitmap preview = new(pixelSize, new Vector(96, 96));
                 preview.Render(row);
                 _rowDragPreview.Source = preview;
                 _rowDragPreview.Width = row.Bounds.Width;
@@ -457,7 +460,60 @@ namespace CtrDxEditor.Views
             Point alignedPosition = GetRowDragPreviewPosition(previewPosition, _rowDragGrabOffset);
             Avalonia.Controls.Canvas.SetLeft(_rowDragPreview, alignedPosition.X);
             Avalonia.Controls.Canvas.SetTop(_rowDragPreview, alignedPosition.Y);
-            UpdateLayerDropTarget(e.GetPosition(layersTree));
+
+            _rowDragTreePosition = e.GetPosition(layersTree);
+            EnsureRowDragScrollTimer();
+            UpdateLayerDropTarget(_rowDragTreePosition);
+        }
+
+        // Auto-scroll the layer tree while a row drag hovers near its top/bottom edge, so a drop
+        // target that is off-screen can still be reached. A timer drives it (rather than only the
+        // pointer-moved events) so scrolling continues while the cursor is held still at the edge.
+        private void EnsureRowDragScrollTimer()
+        {
+            _rowDragScrollTimer ??= new DispatcherTimer(
+                TimeSpan.FromMilliseconds(16),
+                DispatcherPriority.Background,
+                RowDragScrollTick);
+            _rowDragScrollTimer.Start();
+        }
+
+        private void RowDragScrollTick(object? sender, EventArgs e)
+        {
+            if (!_rowDragActive
+                || this.FindControl<TreeView>("LayersTree") is not { } layersTree
+                || layersTree.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault() is not { } scrollViewer)
+            {
+                return;
+            }
+
+            const double edgeBand = 28;   // activation zone at each edge
+            const double maxStep = 14;     // px scrolled per tick at the very edge
+            double height = layersTree.Bounds.Height;
+            double y = _rowDragTreePosition.Y;
+
+            double delta = 0;
+            if (y < edgeBand)
+            {
+                delta = -maxStep * Math.Min(1.0, (edgeBand - y) / edgeBand);
+            }
+            else if (y > height - edgeBand)
+            {
+                delta = maxStep * Math.Min(1.0, (y - (height - edgeBand)) / edgeBand);
+            }
+
+            if (delta == 0)
+            {
+                return;
+            }
+
+            double maxOffset = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+            double newY = Math.Clamp(scrollViewer.Offset.Y + delta, 0, maxOffset);
+            if (Math.Abs(newY - scrollViewer.Offset.Y) > double.Epsilon)
+            {
+                scrollViewer.Offset = scrollViewer.Offset.WithY(newY);
+                UpdateLayerDropTarget(_rowDragTreePosition);
+            }
         }
 
         private static Point GetRowDragPreviewPosition(Point pointerPosition, Point grabOffset)
@@ -533,6 +589,8 @@ namespace CtrDxEditor.Views
             _rowDragActive = false;
             _rowDragPointer = null;
             _rowDragGrabOffset = default;
+            _rowDragScrollTimer?.Stop();
+            _rowDragTreePosition = default;
             ClearPendingLayerDrag();
             ClearPendingObjectDrag();
             ClearLayerDropTarget();
