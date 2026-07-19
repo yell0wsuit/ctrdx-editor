@@ -7,9 +7,10 @@ using CtrDxEditor.Core.Document;
 namespace CtrDxEditor.ViewModels
 {
     /// <summary>
-    /// The editor's object selection: an ordered set of objects that always live in one layer, plus the
-    /// last-affected "primary" that drives specialized handles and the property panel. Objects only — layers
-    /// are never part of the selection.
+    /// The editor's object selection: an ordered set of objects, which may span layers, plus the
+    /// last-affected "primary" that drives specialized handles and the property panel. Objects only — layer
+    /// selection is tracked separately by <see cref="EditorViewModel.SelectedLayers"/>, and the two are
+    /// mutually exclusive.
     /// </summary>
     public sealed class EditorSelection(LevelDocument document)
     {
@@ -66,7 +67,10 @@ namespace CtrDxEditor.ViewModels
             Changed?.Invoke();
         }
 
-        /// <summary>Replaces the selection with an explicit set and primary (used by Ctrl+A).</summary>
+        /// <summary>
+        /// Replaces the selection with an explicit set and primary. Used by Ctrl+A, paste, Ctrl+drag
+        /// duplicate, and undo/redo when restoring a prior selection.
+        /// </summary>
         public void SetRange(IEnumerable<LevelObject> objs, LevelObject primary)
         {
             _items.Clear();
