@@ -211,6 +211,57 @@ namespace CtrDxEditor.Tests
             Assert.Contains("DispatcherPriority.Normal", codeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>The inline close button cancels layer rename just like Escape.</summary>
+        [Fact]
+        public void LayerRenameEditorHasCloseButtonThatCancelsRename()
+        {
+            XDocument view = XDocument.Load(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            XElement editor = view.Descendants()
+                .Single(element => element.Name.LocalName == "TextBox"
+                    && (string?)element.Attribute("Classes.layer-name-editor") == "True");
+            XElement closeButton = editor.Descendants()
+                .Single(element => element.Name.LocalName == "Button");
+            XElement closeIcon = closeButton.Descendants()
+                .Single(element => element.Name.LocalName == "MaterialIcon");
+
+            Assert.Equal("LayerRenameCancel_Click", (string?)closeButton.Attribute("Click"));
+            Assert.Equal("False", (string?)closeButton.Attribute("Focusable"));
+            Assert.Equal("{loc:Tr Dialog.Common.Cancel}", (string?)closeButton.Attribute("ToolTip.Tip"));
+            Assert.Equal("Close", (string?)closeIcon.Attribute("Kind"));
+            Assert.Contains("private void CancelLayerRename(LayerViewModel row)", codeBehind, StringComparison.Ordinal);
+            Assert.True(
+                codeBehind.Split("CancelLayerRename(row);", StringSplitOptions.None).Length >= 3,
+                "Expected both Escape and the close button to use the shared cancellation path.");
+        }
+
+        /// <summary>Rejected inline layer names explain the failure and reopen the editor for correction.</summary>
+        [Fact]
+        public void InvalidLayerRenameShowsWarningAndResumesEditing()
+        {
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("private async void CommitLayerRename", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("_layerRenameCommitInProgress", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("MessageDialog warning = new()", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("warning.ShowAsync();", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("BeginLayerRename(row, attemptedName);", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>Message dialogs use normal headers unless the caller explicitly marks an error.</summary>
+        [Fact]
+        public void MessageDialogDangerHeaderIsOptIn()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MessageDialog.axaml"));
+            string dialogCode = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MessageDialog.axaml.cs"));
+            string contentSetup = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "ContentSetupDialog.axaml.cs"));
+
+            Assert.Contains("Classes.danger=\"{Binding IsDanger}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Selector=\"TextBlock.dialog-header.danger\"", view, StringComparison.Ordinal);
+            Assert.Contains("public bool IsDanger", dialogCode, StringComparison.Ordinal);
+            Assert.Contains("IsDanger = true", contentSetup, StringComparison.Ordinal);
+        }
+
         /// <summary>Object labels keep a readable gap after their visibility control.</summary>
         [Fact]
         public void ObjectVisibilityIconHasNameSpacing()

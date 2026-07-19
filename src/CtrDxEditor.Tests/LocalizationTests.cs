@@ -24,6 +24,21 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("Dialog.Close.Header", strings.Keys);
         }
 
+        /// <summary>Every rejected layer-name reason has user-facing dialog text.</summary>
+        [Fact]
+        public void LayerRenameFailuresAreLocalized()
+        {
+            string path = FindRepositoryFile("src/CtrDxEditor.Shared/Localization/en.json");
+            Dictionary<string, string> strings = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(path))!;
+
+            Assert.Equal("Cannot rename layer", strings["Dialog.RenameLayer.Header"]);
+            Assert.Contains("already exists", strings["Dialog.RenameLayer.Duplicate"], StringComparison.Ordinal);
+            Assert.Contains("cannot be empty", strings["Dialog.RenameLayer.Empty"], StringComparison.Ordinal);
+            Assert.Contains("reserved", strings["Dialog.RenameLayer.Reserved"], StringComparison.Ordinal);
+            Assert.Contains("XML", strings["Dialog.RenameLayer.InvalidXml"], StringComparison.Ordinal);
+        }
+
         /// <summary>Verifies the magic hat and its pairing field have user-facing English text.</summary>
         [Fact]
         public void MagicHatObjectAndGroupAreLocalized()

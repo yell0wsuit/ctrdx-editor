@@ -5,8 +5,14 @@
              x:Class="CtrDxEditor.Views.MessageDialog"
              x:CompileBindings="True"
              x:DataType="views:MessageDialog">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.dialog-header.danger">
+      <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Margin="24" Spacing="16" Width="460">
-    <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource EditorBrush.DangerText}" Text="{Binding Header}" />
+    <TextBlock Classes="dialog-header" Classes.danger="{Binding IsDanger}"
+               FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
     <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />
     <Button Content="{loc:Tr Dialog.Common.Ok}" Click="Ok_Click" HorizontalAlignment="Right" />
   </StackPanel>

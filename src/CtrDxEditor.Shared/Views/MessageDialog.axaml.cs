@@ -17,6 +17,10 @@ namespace CtrDxEditor.Views
         public static readonly StyledProperty<string> MessageProperty =
             AvaloniaProperty.Register<MessageDialog, string>(nameof(Message));
 
+        /// <summary>The <see cref="IsDanger"/> property.</summary>
+        public static readonly StyledProperty<bool> IsDangerProperty =
+            AvaloniaProperty.Register<MessageDialog, bool>(nameof(IsDanger));
+
         /// <summary>The dialog's title line.</summary>
         public string Header
         {
@@ -29,6 +33,13 @@ namespace CtrDxEditor.Views
         {
             get => GetValue(MessageProperty);
             set => SetValue(MessageProperty, value);
+        }
+
+        /// <summary>Whether the header uses the danger color reserved for actual errors.</summary>
+        public bool IsDanger
+        {
+            get => GetValue(IsDangerProperty);
+            set => SetValue(IsDangerProperty, value);
         }
 
         /// <summary>Creates the message dialog.</summary>

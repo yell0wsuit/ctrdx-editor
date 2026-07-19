@@ -423,7 +423,17 @@
                              IsVisible="{Binding IsRenaming}"
                              BorderThickness="0" Background="Transparent" Padding="0"
                              KeyDown="LayerName_KeyDown" LostFocus="LayerName_Commit" Tag="{Binding .}"
-                             ToolTip.Tip="{loc:Tr Layer.Rename}" />
+                             ToolTip.Tip="{loc:Tr Layer.Rename}">
+                      <TextBox.InnerRightContent>
+                        <Button Width="18" Height="18" Padding="0" Margin="2,0,0,0"
+                                Background="Transparent" BorderBrush="Transparent"
+                                Focusable="False" Tag="{Binding .}"
+                                Click="LayerRenameCancel_Click"
+                                ToolTip.Tip="{loc:Tr Dialog.Common.Cancel}">
+                          <icons:MaterialIcon Kind="Close" Width="12" Height="12" />
+                        </Button>
+                      </TextBox.InnerRightContent>
+                    </TextBox>
                   </Grid>
                   <Border Grid.Column="2" CornerRadius="8" Padding="5,1" Margin="3,0"
                           VerticalAlignment="Center"

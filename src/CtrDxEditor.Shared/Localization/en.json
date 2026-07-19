@@ -141,6 +141,12 @@
     "Dialog.DeleteLayer.Body": "Delete the layer “{0}” and every object inside it?\nYou can undo this later.",
     "Dialog.DeleteLayer.Confirm": "Delete",
 
+    "Dialog.RenameLayer.Header": "Cannot rename layer",
+    "Dialog.RenameLayer.Duplicate": "A layer named “{0}” already exists.",
+    "Dialog.RenameLayer.Empty": "Layer name cannot be empty.",
+    "Dialog.RenameLayer.Reserved": "The name “settings” is reserved for level settings.",
+    "Dialog.RenameLayer.InvalidXml": "Layer name contains characters that XML cannot store.",
+
     "Dialog.Unsaved.Header": "Unsaved changes",
     "Dialog.Unsaved.Body": "You have unsaved changes that will be lost.",
     "Dialog.Unsaved.Close": "Discard and close",

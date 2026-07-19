@@ -232,16 +232,29 @@ namespace CtrDxEditor.Core.Document
         /// <returns>True when the normalized name is XML-safe, non-empty, and unique.</returns>
         public bool TryNormalizeLayerName(string? name, out string normalized, LevelLayer? excluding = null)
         {
+            return ValidateLayerName(name, out normalized, excluding) == LayerNameValidationError.None;
+        }
+
+        /// <summary>Trims a candidate layer name and reports why it cannot be used.</summary>
+        /// <param name="name">The candidate name.</param>
+        /// <param name="normalized">The trimmed name when validation succeeds; otherwise an empty string.</param>
+        /// <param name="excluding">A layer to ignore in the uniqueness check (the one being renamed).</param>
+        /// <returns>The validation result.</returns>
+        public LayerNameValidationError ValidateLayerName(
+            string? name,
+            out string normalized,
+            LevelLayer? excluding = null)
+        {
             string candidate = name?.Trim() ?? "";
             normalized = "";
             if (candidate.Length == 0)
             {
-                return false;
+                return LayerNameValidationError.Empty;
             }
 
             if (IsSettingsLayerName(candidate))
             {
-                return false;
+                return LayerNameValidationError.Reserved;
             }
 
             try
@@ -250,17 +263,17 @@ namespace CtrDxEditor.Core.Document
             }
             catch (XmlException)
             {
-                return false;
+                return LayerNameValidationError.InvalidXml;
             }
 
             if (Layers.Any(layer =>
                 !ReferenceEquals(layer.Element, excluding?.Element) && layer.Name == candidate))
             {
-                return false;
+                return LayerNameValidationError.Duplicate;
             }
 
             normalized = candidate;
-            return true;
+            return LayerNameValidationError.None;
         }
 
         /// <summary>True when a normalized layer name is valid and not already used by another object layer.</summary>

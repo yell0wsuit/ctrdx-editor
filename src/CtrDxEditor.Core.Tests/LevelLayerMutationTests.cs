@@ -139,6 +139,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(doc.IsLayerNameAvailable("rock & <roll> \"mix\""));
         }
 
+        /// <summary>Layer-name validation reports why a rename was rejected.</summary>
+        [Fact]
+        public void ValidateLayerNameReportsSpecificFailure()
+        {
+            LevelDocument doc = TwoLayers();
+
+            Assert.Equal(LayerNameValidationError.Empty,
+                doc.ValidateLayerName("  ", out _));
+            Assert.Equal(LayerNameValidationError.Reserved,
+                doc.ValidateLayerName("SETTINGS", out _));
+            Assert.Equal(LayerNameValidationError.InvalidXml,
+                doc.ValidateLayerName("bad\u0001name", out _));
+            Assert.Equal(LayerNameValidationError.Duplicate,
+                doc.ValidateLayerName(" a ", out _));
+            Assert.Equal(LayerNameValidationError.None,
+                doc.ValidateLayerName(" c ", out string normalized));
+            Assert.Equal("c", normalized);
+        }
+
         /// <summary>Duplicate ordinary names gain stable suffixes without displacing an existing suffixed name.</summary>
         [Fact]
         public void NormalizeDuplicateLayerNamesUsesTreeOrderAndSkipsReservedSuffixes()

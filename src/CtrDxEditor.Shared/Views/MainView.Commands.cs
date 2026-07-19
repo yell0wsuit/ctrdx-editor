@@ -144,9 +144,7 @@ namespace CtrDxEditor.Views
 
             if (e.Key == Key.Escape)
             {
-                row.Name = row.Layer.Name;
-                row.IsRenaming = false;
-                _ = _canvas.Focus();
+                CancelLayerRename(row);
                 e.Handled = true;
             }
             else if (e.Key == Key.Enter)
@@ -157,6 +155,22 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void LayerRenameCancel_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Control { Tag: LayerViewModel row })
+            {
+                CancelLayerRename(row);
+                e.Handled = true;
+            }
+        }
+
+        private void CancelLayerRename(LayerViewModel row)
+        {
+            row.Name = row.Layer.Name;
+            row.IsRenaming = false;
+            _ = _canvas.Focus();
+        }
+
         private void LayerName_Commit(object? sender, RoutedEventArgs e)
         {
             if (sender is TextBox { Tag: LayerViewModel row, Text: { } name })
@@ -165,19 +179,67 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void CommitLayerRename(LayerViewModel row, string name)
+        private bool _layerRenameCommitInProgress;
+
+        private async void CommitLayerRename(LayerViewModel row, string name)
         {
-            if (DataContext is EditorViewModel vm
-                && name != row.Layer.Name
-                && !vm.RenameLayer(row.Layer, name))
+            if (_layerRenameCommitInProgress)
             {
-                row.Name = row.Layer.Name;
-            }
-            else if (DataContext is not EditorViewModel)
-            {
-                row.Name = row.Layer.Name;
+                return;
             }
 
+            if (DataContext is not EditorViewModel vm)
+            {
+                row.Name = row.Layer.Name;
+                row.IsRenaming = false;
+                return;
+            }
+
+            if (name == row.Layer.Name)
+            {
+                row.IsRenaming = false;
+                return;
+            }
+
+            LayerNameValidationError error = vm.Document?.ValidateLayerName(name, out _, row.Layer)
+                ?? LayerNameValidationError.InvalidXml;
+            if (error != LayerNameValidationError.None)
+            {
+                string attemptedName = name;
+                _layerRenameCommitInProgress = true;
+                row.Name = row.Layer.Name;
+                row.IsRenaming = false;
+                try
+                {
+                    string key = error switch
+                    {
+                        LayerNameValidationError.Empty => "Dialog.RenameLayer.Empty",
+                        LayerNameValidationError.Reserved => "Dialog.RenameLayer.Reserved",
+                        LayerNameValidationError.InvalidXml => "Dialog.RenameLayer.InvalidXml",
+                        LayerNameValidationError.Duplicate => "Dialog.RenameLayer.Duplicate",
+                        LayerNameValidationError.None => "Dialog.RenameLayer.InvalidXml",
+                        _ => "Dialog.RenameLayer.InvalidXml",
+                    };
+                    MessageDialog warning = new()
+                    {
+                        Header = Localizer.Get("Dialog.RenameLayer.Header"),
+                        Message = Localizer.Get(key).Replace("{0}", name.Trim(), StringComparison.Ordinal),
+                    };
+                    _ = await warning.ShowAsync();
+                }
+                finally
+                {
+                    _layerRenameCommitInProgress = false;
+                }
+
+                BeginLayerRename(row, attemptedName);
+                return;
+            }
+
+            if (!vm.RenameLayer(row.Layer, name))
+            {
+                row.Name = row.Layer.Name;
+            }
             row.IsRenaming = false;
         }
 
@@ -200,14 +262,14 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void BeginLayerRename(LayerViewModel row)
+        private void BeginLayerRename(LayerViewModel row, string? initialName = null)
         {
             if (row.IsLocked)
             {
                 return;
             }
 
-            row.Name = row.Layer.Name;
+            row.Name = initialName ?? row.Layer.Name;
             row.IsRenaming = true;
             Dispatcher.UIThread.Post(() =>
             {

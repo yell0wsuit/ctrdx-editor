@@ -54,6 +54,7 @@ namespace CtrDxEditor.Views
                 {
                     Header = Localizer.Get("Dialog.Common.Error"),
                     Message = message,
+                    IsDanger = true,
                 };
                 _ = await error.ShowAsync();
             }
