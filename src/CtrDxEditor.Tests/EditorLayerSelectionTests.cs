@@ -115,5 +115,44 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.IsLayerLocked(vm.Layers[1].Layer));
             Assert.False(vm.IsLayerLocked(vm.Layers[2].Layer));
         }
+
+        [Fact]
+        public void MoveSelectedLayers_down_shifts_noncontiguous_selection_each_by_one()
+        {
+            EditorViewModel vm = Create(); // a, b, c at 0,1,2
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]); // a and c
+
+            vm.MoveSelectedLayers(1); // down
+
+            // a: 0->1, c: 2 was last so stays; b moves up past a
+            Assert.Equal(new[] { "b", "a", "c" }, vm.Layers.Select(l => l.Name));
+        }
+
+        [Fact]
+        public void MoveSelectedLayers_down_is_blocked_when_a_target_is_at_the_bottom()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[2]], vm.Layers[2]); // c, already bottom
+
+            Assert.False(vm.CanMoveSelectedLayersDown);
+        }
+
+        [Fact]
+        public void CanMoveSelectedLayersUp_true_when_topmost_target_not_at_top()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[1], vm.Layers[2]], vm.Layers[2]);
+
+            Assert.True(vm.CanMoveSelectedLayersUp);
+        }
+
+        [Fact]
+        public void CanDeleteSelectedLayers_true_when_any_unlocked_target()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0]], vm.Layers[0]);
+
+            Assert.True(vm.CanDeleteSelectedLayers);
+        }
     }
 }

@@ -173,14 +173,20 @@ namespace CtrDxEditor.ViewModels
             && Layers.IndexOf(active) is >= 0 and int index
             && index < Layers.Count - 1;
 
-        /// <summary>Whether any effective-target layers can be deleted.</summary>
-        public bool CanDeleteSelectedLayers => false;
+        /// <summary>True when at least one effective-target layer is unlocked and can be deleted.</summary>
+        public bool CanDeleteSelectedLayers =>
+            EffectiveLayerTargets.Any(row => !row.IsLocked);
 
-        /// <summary>Whether the effective-target layers can move up.</summary>
-        public bool CanMoveSelectedLayersUp => false;
+        /// <summary>True when at least one unlocked effective-target layer can move up.</summary>
+        public bool CanMoveSelectedLayersUp =>
+            EffectiveLayerTargets.Any(row => !row.IsLocked && Layers.IndexOf(row) > 0);
 
-        /// <summary>Whether the effective-target layers can move down.</summary>
-        public bool CanMoveSelectedLayersDown => false;
+        /// <summary>True when at least one unlocked effective-target layer can move down.</summary>
+        public bool CanMoveSelectedLayersDown =>
+            EffectiveLayerTargets.Any(row =>
+                !row.IsLocked
+                && Layers.IndexOf(row) is >= 0 and int index
+                && index < Layers.Count - 1);
 
         /// <summary>True when every layer row is expanded; drives the expand/collapse-all toggle.</summary>
         public bool AllLayersExpanded => Layers.Count > 0 && Layers.All(row => row.IsExpanded);
@@ -1118,6 +1124,56 @@ namespace CtrDxEditor.ViewModels
             Document.MoveLayer(layer, delta);
             RefreshObjectList();
             ObjectMutated?.Invoke();
+        }
+
+        /// <summary>
+        /// Moves every movable effective-target layer one step in draw order, non-contiguously.
+        /// Targets already at the requested edge stay put. Captures one undo step and restores the
+        /// selection against the rebuilt rows.
+        /// </summary>
+        /// <param name="delta">Direction to move; negative moves earlier and positive moves later.</param>
+        public void MoveSelectedLayers(int delta)
+        {
+            if (Document is null || delta == 0)
+            {
+                return;
+            }
+            if (delta < 0 ? !CanMoveSelectedLayersUp : !CanMoveSelectedLayersDown)
+            {
+                return;
+            }
+
+            XElement[] movedElements = [.. EffectiveLayerTargets.Select(row => row.Layer.Element)];
+            List<LayerViewModel> ordered = [.. EffectiveLayerTargets
+                .OrderBy(row => Layers.IndexOf(row) * (delta < 0 ? 1 : -1))];
+
+            CaptureUndoSnapshot();
+            foreach (LayerViewModel row in ordered)
+            {
+                if (!IsLayerLocked(row.Layer))
+                {
+                    Document.MoveLayer(row.Layer, delta);
+                }
+            }
+            RefreshObjectList();
+            RestoreLayerSelection(movedElements);
+            ObjectMutated?.Invoke();
+        }
+
+        // Re-resolves the layer selection against the current rebuilt rows by element identity.
+        private void RestoreLayerSelection(IReadOnlyList<XElement> elements)
+        {
+            List<LayerViewModel> rows = [.. elements
+                .Select(el => Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, el)))
+                .Where(row => row is not null)
+                .Select(row => row!)];
+            _selectedLayers.Clear();
+            _selectedLayers.AddRange(rows);
+            if (rows.Count > 0)
+            {
+                ActiveLayer = rows[^1];
+            }
+            NotifyLayerSelectionChanged();
         }
 
         /// <summary>Moves a specific layer to a target row index in the layer tree.</summary>
