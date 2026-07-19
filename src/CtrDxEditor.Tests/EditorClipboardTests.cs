@@ -8,6 +8,7 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests editor duplication and clipboard operations.</summary>
     public class EditorClipboardTests
     {
         private static EditorViewModel Load(string layerBody)
@@ -20,8 +21,9 @@ namespace CtrDxEditor.Tests
             return vm;
         }
 
+        /// <summary>Verifies duplication offsets clones and selects them.</summary>
         [Fact]
-        public void DuplicateSelection_clones_selected_with_offset_and_selects_clones()
+        public void DuplicateSelectionClonesSelectedWithOffsetAndSelectsClones()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
             LevelObject original = vm.Document!.AllObjects[0];
@@ -37,8 +39,9 @@ namespace CtrDxEditor.Tests
             Assert.Equal("36", clone.GetAttr("y"));
         }
 
+        /// <summary>Verifies copied objects can be pasted at a target position.</summary>
         [Fact]
-        public void Copy_then_Paste_adds_clones_at_target()
+        public void CopyThenPasteAddsClonesAtTarget()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
             vm.Selection.Replace(vm.Document!.AllObjects[0]);
@@ -52,8 +55,9 @@ namespace CtrDxEditor.Tests
             Assert.Equal("200", vm.Selection.Primary.GetAttr("y"));
         }
 
+        /// <summary>Verifies paste preserves the copied objects' relative layout.</summary>
         [Fact]
-        public void Paste_preserves_relative_layout_around_target_centroid()
+        public void PastePreservesRelativeLayoutAroundTargetCentroid()
         {
             EditorViewModel vm = Load("<bubble x=\"0\" y=\"0\"/><star x=\"20\" y=\"0\"/>");
             vm.Selection.SetRange(vm.Document!.AllObjects, vm.Document.AllObjects[1]);
@@ -68,8 +72,9 @@ namespace CtrDxEditor.Tests
             Assert.Equal(100, pasted[1].Y);
         }
 
+        /// <summary>Verifies cut removes originals while retaining clipboard data.</summary>
         [Fact]
-        public void Cut_removes_originals_and_keeps_them_for_paste()
+        public void CutRemovesOriginalsAndKeepsThemForPaste()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
             vm.Selection.Replace(vm.Document!.AllObjects[0]);
@@ -78,11 +83,12 @@ namespace CtrDxEditor.Tests
             Assert.Empty(vm.Document.AllObjects);
 
             vm.PasteAt(5, 5);
-            Assert.Single(vm.Document.AllObjects);
+            _ = Assert.Single(vm.Document.AllObjects);
         }
 
+        /// <summary>Verifies deleting a selection removes every selected object.</summary>
         [Fact]
-        public void DeleteSelected_removes_every_selected_object()
+        public void DeleteSelectedRemovesEverySelectedObject()
         {
             EditorViewModel vm = Load("<bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/>");
             vm.Selection.SetRange(vm.Document!.AllObjects, vm.Document.AllObjects[0]);

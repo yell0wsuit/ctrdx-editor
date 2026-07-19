@@ -56,11 +56,17 @@ namespace CtrDxEditor.Views
 
                 switch (request.Kind)
                 {
-                    case LevelCanvas.SelectionRequestKind.Replace when request.Target is { } target:
-                        vm.Selection.Replace(target);
+                    case LevelCanvas.SelectionRequestKind.Replace:
+                        if (request.Target is { } replaceTarget)
+                        {
+                            vm.Selection.Replace(replaceTarget);
+                        }
                         break;
-                    case LevelCanvas.SelectionRequestKind.Toggle when request.Target is { } target:
-                        vm.Selection.Toggle(target);
+                    case LevelCanvas.SelectionRequestKind.Toggle:
+                        if (request.Target is { } toggleTarget)
+                        {
+                            vm.Selection.Toggle(toggleTarget);
+                        }
                         break;
                     case LevelCanvas.SelectionRequestKind.Clear:
                         vm.Selection.Clear();

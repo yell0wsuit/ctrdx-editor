@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Collections.Generic;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -8,6 +8,7 @@ using Xunit;
 
 namespace CtrDxEditor.Tests
 {
+    /// <summary>Tests multi-object editor selection behavior.</summary>
     public class EditorSelectionTests
     {
         // Two layers: layer 0 has objects a,b; layer 1 has object c.
@@ -17,99 +18,108 @@ namespace CtrDxEditor.Tests
                 "<map><layer name=\"settings\"><map/></layer>" +
                 "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/></layer>" +
                 "<layer name=\"L1\"><star x=\"3\" y=\"3\"/></layer></map>");
-            var objs = doc.AllObjects;
+            IReadOnlyList<LevelObject> objs = doc.AllObjects;
             return (doc, objs[0], objs[1], objs[2]);
         }
 
+        /// <summary>Verifies replacement selects one object and makes it primary.</summary>
         [Fact]
-        public void Replace_selects_single_object_as_primary()
+        public void ReplaceSelectsSingleObjectAsPrimary()
         {
-            var (doc, a, _, _) = Build();
-            var sel = new EditorSelection(doc);
-            sel.Replace(a);
-            Assert.Equal(new[] { a }, sel.Items);
-            Assert.Equal(a, sel.Primary);
-            Assert.Equal(1, sel.Count);
+            (LevelDocument doc, LevelObject a, _, _) = Build();
+            EditorSelection selection = new(doc);
+            selection.Replace(a);
+            Assert.Collection(selection.Items, item => Assert.Same(a, item));
+            Assert.Equal(a, selection.Primary);
+            Assert.Equal(1, selection.Count);
         }
 
+        /// <summary>Verifies toggling adds and removes objects in the same layer.</summary>
         [Fact]
-        public void Toggle_same_layer_adds_and_removes()
+        public void ToggleSameLayerAddsAndRemoves()
         {
-            var (doc, a, b, _) = Build();
-            var sel = new EditorSelection(doc);
-            sel.Replace(a);
-            sel.Toggle(b);
-            Assert.Equal(new[] { a, b }, sel.Items);
-            Assert.Equal(b, sel.Primary);
-            sel.Toggle(b);
-            Assert.Equal(new[] { a }, sel.Items);
-            Assert.Equal(a, sel.Primary);
+            (LevelDocument doc, LevelObject a, LevelObject b, _) = Build();
+            EditorSelection selection = new(doc);
+            selection.Replace(a);
+            selection.Toggle(b);
+            Assert.Collection(selection.Items, item => Assert.Same(a, item), item => Assert.Same(b, item));
+            Assert.Equal(b, selection.Primary);
+            selection.Toggle(b);
+            Assert.Collection(selection.Items, item => Assert.Same(a, item));
+            Assert.Equal(a, selection.Primary);
         }
 
+        /// <summary>Verifies toggling an object in another layer replaces the selection.</summary>
         [Fact]
-        public void Toggle_into_other_layer_replaces()
+        public void ToggleIntoOtherLayerReplaces()
         {
-            var (doc, a, b, c) = Build();
-            var sel = new EditorSelection(doc);
-            sel.Replace(a);
-            sel.Toggle(b);
-            sel.Toggle(c);
-            Assert.Equal(new[] { c }, sel.Items);
-            Assert.Equal(c, sel.Primary);
+            (LevelDocument doc, LevelObject a, LevelObject b, LevelObject c) = Build();
+            EditorSelection selection = new(doc);
+            selection.Replace(a);
+            selection.Toggle(b);
+            selection.Toggle(c);
+            Assert.Collection(selection.Items, item => Assert.Same(c, item));
+            Assert.Equal(c, selection.Primary);
         }
 
+        /// <summary>Verifies removing the primary object promotes the last remaining object.</summary>
         [Fact]
-        public void Removing_primary_promotes_last_remaining()
+        public void RemovingPrimaryPromotesLastRemaining()
         {
-            var (doc, a, b, _) = Build();
-            var sel = new EditorSelection(doc);
-            sel.Replace(a);
-            sel.Toggle(b);
-            sel.Toggle(b);
-            Assert.Equal(a, sel.Primary);
+            (LevelDocument doc, LevelObject a, LevelObject b, _) = Build();
+            EditorSelection selection = new(doc);
+            selection.Replace(a);
+            selection.Toggle(b);
+            selection.Toggle(b);
+            Assert.Equal(a, selection.Primary);
         }
 
+        /// <summary>Verifies clearing removes every selected object and layer reference.</summary>
         [Fact]
-        public void Clear_empties_selection()
+        public void ClearEmptiesSelection()
         {
-            var (doc, a, _, _) = Build();
-            var sel = new EditorSelection(doc);
-            sel.Replace(a);
-            sel.Clear();
-            Assert.Empty(sel.Items);
-            Assert.Null(sel.Primary);
-            Assert.Null(sel.Layer);
+            (LevelDocument doc, LevelObject a, _, _) = Build();
+            EditorSelection selection = new(doc);
+            selection.Replace(a);
+            selection.Clear();
+            Assert.Empty(selection.Items);
+            Assert.Null(selection.Primary);
+            Assert.Null(selection.Layer);
         }
 
+        /// <summary>Verifies range selection uses the supplied primary object.</summary>
         [Fact]
-        public void SetRange_selects_all_with_given_primary()
+        public void SetRangeSelectsAllWithGivenPrimary()
         {
-            var (doc, a, b, _) = Build();
-            var sel = new EditorSelection(doc);
-            sel.SetRange(new[] { a, b }, b);
-            Assert.Equal(new[] { a, b }, sel.Items);
-            Assert.Equal(b, sel.Primary);
+            (LevelDocument doc, LevelObject a, LevelObject b, _) = Build();
+            EditorSelection selection = new(doc);
+            selection.SetRange([a, b], b);
+            Assert.Collection(selection.Items, item => Assert.Same(a, item), item => Assert.Same(b, item));
+            Assert.Equal(b, selection.Primary);
         }
 
+        /// <summary>Verifies selection mutations raise the changed event.</summary>
         [Fact]
-        public void Changed_fires_on_mutation()
+        public void ChangedFiresOnMutation()
         {
-            var (doc, a, _, _) = Build();
-            var sel = new EditorSelection(doc);
+            (LevelDocument doc, LevelObject a, _, _) = Build();
+            EditorSelection selection = new(doc);
             int fired = 0;
-            sel.Changed += () => fired++;
-            sel.Replace(a);
-            sel.Clear();
+            selection.Changed += () => fired++;
+            selection.Replace(a);
+            selection.Clear();
             Assert.Equal(2, fired);
         }
     }
 
+    /// <summary>Tests the view model compatibility surface backed by editor selection.</summary>
     public class EditorViewModelSelectionShimTests
     {
+        /// <summary>Verifies the selected-object setter updates the selection primary.</summary>
         [Fact]
-        public void SelectedObject_setter_updates_Selection_primary()
+        public void SelectedObjectSetterUpdatesSelectionPrimary()
         {
-            var vm = new EditorViewModel(new SpriteCache(new EmptyContentStore()));
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
             vm.LoadLevelXml(
                 "<map><layer name=\"settings\"><map/></layer>" +
                 "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/></layer></map>");
@@ -124,10 +134,11 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.Selection.Primary);
         }
 
+        /// <summary>Verifies select-all selects every object in the active layer.</summary>
         [Fact]
-        public void SelectAllInActiveLayer_selects_every_object_in_active_layer()
+        public void SelectAllInActiveLayerSelectsEveryObjectInActiveLayer()
         {
-            var vm = new EditorViewModel(new SpriteCache(new EmptyContentStore()));
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
             vm.LoadLevelXml(
                 "<map><layer name=\"settings\"><map/></layer>" +
                 "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/></layer>" +
@@ -137,7 +148,7 @@ namespace CtrDxEditor.Tests
             vm.SelectAllInActiveLayer();
 
             Assert.Equal(2, vm.Selection.Count);
-            Assert.All(vm.Selection.Items, o => Assert.Same(vm.ActiveLayer!.Layer.Element, o.Element.Parent));
+            Assert.All(vm.Selection.Items, o => Assert.Same(vm.ActiveLayer.Layer.Element, o.Element.Parent));
         }
     }
 }
