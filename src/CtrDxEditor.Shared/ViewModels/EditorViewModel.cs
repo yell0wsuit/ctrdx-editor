@@ -1110,6 +1110,9 @@ namespace CtrDxEditor.ViewModels
                 && Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, value.Element.Parent)) is { } parent)
             {
                 parent.IsExpanded = true;
+                // Keep the containing layer active so its row stays highlighted while an
+                // object inside it is selected.
+                ActiveLayer = parent;
             }
 
             SelectedTreeItem = value;

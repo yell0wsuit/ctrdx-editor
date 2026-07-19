@@ -353,6 +353,14 @@
             <Style Selector="TreeViewItem">
               <Setter Property="IsExpanded"
                       Value="{Binding ((vm:LayerViewModel)DataContext).IsExpanded, RelativeSource={RelativeSource Self}, Mode=TwoWay}" />
+              <!-- Highlight the whole active-layer row (chevron included) from the container, so an
+                   active-but-unselected layer looks the same as a selected one. -->
+              <Setter Property="Background">
+                <MultiBinding Converter="{x:Static conv:ActiveLayerBrushConverter.Instance}">
+                  <Binding Path="((vm:LayerViewModel)DataContext).IsActive" RelativeSource="{RelativeSource Self}" />
+                  <Binding Path="ActualThemeVariant" RelativeSource="{RelativeSource Self}" />
+                </MultiBinding>
+              </Setter>
             </Style>
             <Style Selector="TreeViewItem:selected">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
@@ -363,9 +371,6 @@
               <Setter Property="Margin" Value="0,1,2,1" />
               <Setter Property="BorderThickness" Value="0" />
               <Setter Property="BorderBrush" Value="Transparent" />
-            </Style>
-            <Style Selector="Border.layer-row.active">
-              <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentLowBrush}" />
             </Style>
             <Style Selector="Border.layer-row.drop-target">
               <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListAccentMediumBrush}" />
@@ -387,7 +392,7 @@
           </TreeView.Styles>
           <TreeView.DataTemplates>
             <TreeDataTemplate x:DataType="vm:LayerViewModel" ItemsSource="{Binding Objects}">
-              <Border Classes.layer-row="True" Classes.active="{Binding IsActive}"
+              <Border Classes.layer-row="True"
                       PointerPressed="LayerRow_PointerPressed"
                       PointerMoved="LayerRow_PointerMoved"
                       PointerReleased="LayerRow_PointerReleased"
@@ -395,7 +400,7 @@
                 <Border.ContextMenu>
                   <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
                 </Border.ContextMenu>
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,10,0">
                   <ToggleButton Grid.Column="0" IsChecked="{Binding IsVisible, Mode=TwoWay}"
                                 Click="LayerVisibility_Click" Tag="{Binding .}"
                                 Width="20" Height="20" Padding="0"
@@ -446,7 +451,7 @@
             </TreeDataTemplate>
             <DataTemplate x:DataType="core:LevelObject">
               <Border Classes.object-row="True">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,5,0"
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,10,0"
                     PointerPressed="ObjectRow_PointerPressed"
                     PointerMoved="ObjectRow_PointerMoved"
                     PointerReleased="ObjectRow_PointerReleased"
