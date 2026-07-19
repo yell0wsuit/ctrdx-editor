@@ -108,6 +108,54 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
+        <Separator />
+        <MenuItem Click="Cut_Click"
+                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="ContentCut" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Cut}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Cut}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Click="Copy_Click"
+                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="ContentCopy" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Copy}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Copy}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Click="Paste_Click" IsEnabled="{Binding HasClipboard}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="ContentPaste" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.Paste}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Paste}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Click="SelectAll_Click" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="SelectAll" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.Edit.SelectAll}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.SelectAll}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator />
         <MenuItem Click="Delete_Click"
                   IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
           <MenuItem.Icon>
@@ -349,7 +397,7 @@
                   KeyDown="LayerTree_KeyDown"
                   SelectionChanged="LayersTree_SelectionChanged"
                   ItemsSource="{Binding Layers}"
-                  SelectedItem="{Binding SelectedTreeItem, Mode=TwoWay}">
+                  SelectionMode="Multiple">
           <TreeView.Styles>
             <Style Selector="TreeViewItem">
               <Setter Property="IsExpanded"

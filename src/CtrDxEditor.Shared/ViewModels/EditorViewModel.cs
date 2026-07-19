@@ -73,7 +73,11 @@ namespace CtrDxEditor.ViewModels
             get => Selection.Primary;
             set
             {
-                if (Equals(Selection.Primary, value) && Selection.Count <= 1)
+                // Setting SelectedObject to the object that is already primary is a no-op - it must never
+                // discard a multi-selection. The canvas binds SelectedObject TwoWay, so syncing the canvas
+                // after Ctrl+A writes the primary back here; collapsing on that writeback is what forced a
+                // second Ctrl+A. Only a genuinely different value replaces (or clears) the selection.
+                if (Equals(Selection.Primary, value))
                 {
                     return;
                 }
@@ -371,6 +375,32 @@ namespace CtrDxEditor.ViewModels
 
             Selection.SetRange(objects, objects[0]);
             RaiseSelectedObjectChanged();
+        }
+
+        /// <summary>
+        /// Replaces the object selection with the given objects (the object panel's multi-selection, translated
+        /// from the tree's selected rows). Locked objects are filtered out. The last object becomes primary.
+        /// A locked-only or empty set leaves the current selection untouched so a transient tree update can't
+        /// wipe it.
+        /// </summary>
+        public void SetObjectSelection(IReadOnlyList<LevelObject> objects)
+        {
+            List<LevelObject> selectable = [.. objects.Where(o => !EffectivelyLockedObjects.Contains(o))];
+            if (selectable.Count == 0)
+            {
+                return;
+            }
+
+            Selection.SetRange(selectable, selectable[^1]);
+            RaiseSelectedObjectChanged();
+        }
+
+        /// <summary>Activates a layer row selected in the object panel, clearing any object selection.</summary>
+        public void ActivateLayerRow(LayerViewModel layer)
+        {
+            LockedObject = null;
+            SelectedObject = null;
+            ActiveLayer = layer;
         }
 
         /// <summary>

@@ -49,16 +49,20 @@ namespace CtrDxEditor.Tests
             Assert.Equal(a, selection.Primary);
         }
 
-        /// <summary>Verifies toggling an object in another layer replaces the selection.</summary>
+        /// <summary>Verifies toggling an object in another layer adds it (a selection may span layers).</summary>
         [Fact]
-        public void ToggleIntoOtherLayerReplaces()
+        public void ToggleIntoOtherLayerAdds()
         {
             (LevelDocument doc, LevelObject a, LevelObject b, LevelObject c) = Build();
             EditorSelection selection = new(doc);
             selection.Replace(a);
             selection.Toggle(b);
             selection.Toggle(c);
-            Assert.Collection(selection.Items, item => Assert.Same(c, item));
+            Assert.Collection(
+                selection.Items,
+                item => Assert.Same(a, item),
+                item => Assert.Same(b, item),
+                item => Assert.Same(c, item));
             Assert.Equal(c, selection.Primary);
         }
 

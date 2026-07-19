@@ -25,7 +25,7 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Number of selected objects.</summary>
         public int Count => _items.Count;
 
-        /// <summary>The single layer every selected object belongs to, or null when the selection is empty.</summary>
+        /// <summary>The primary object's layer, or null when the selection is empty. A selection may span layers.</summary>
         public LevelLayer? Layer =>
             Primary is { } p
                 ? _document.Layers.FirstOrDefault(l => ReferenceEquals(l.Element, p.Element.Parent))
@@ -44,8 +44,8 @@ namespace CtrDxEditor.ViewModels
         }
 
         /// <summary>
-        /// Adds or removes an object. Toggling an object from a different layer than the current selection
-        /// replaces the whole selection (selection never spans layers).
+        /// Adds an object to the selection, or removes it when already selected. The added object becomes the
+        /// primary. A selection may span layers (Ctrl/Cmd+click on the canvas or object panel).
         /// </summary>
         public void Toggle(LevelObject obj)
         {
@@ -58,12 +58,6 @@ namespace CtrDxEditor.ViewModels
                     Primary = _items.Count > 0 ? _items[^1] : null;
                 }
                 Changed?.Invoke();
-                return;
-            }
-
-            if (_items.Count > 0 && !ReferenceEquals(obj.Element.Parent, _items[0].Element.Parent))
-            {
-                Replace(obj);
                 return;
             }
 

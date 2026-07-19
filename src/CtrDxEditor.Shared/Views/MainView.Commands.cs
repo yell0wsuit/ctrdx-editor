@@ -47,6 +47,39 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void Cut_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.CutSelection();
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+            }
+        }
+
+        private void Copy_Click(object? sender, RoutedEventArgs e)
+        {
+            (DataContext as EditorViewModel)?.CopySelection();
+        }
+
+        private void Paste_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                (int pasteX, int pasteY) = _canvas.PasteTargetLevelPoint();
+                vm.PasteAt(pasteX, pasteY);
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+            }
+        }
+
+        private void SelectAll_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.SelectAllInActiveLayer();
+                this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+            }
+        }
+
         private void SnapToggle_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)
@@ -302,16 +335,6 @@ namespace CtrDxEditor.Views
         private bool _rowDragActive;
         private Point _rowDragTreePosition;
         private DispatcherTimer? _rowDragScrollTimer;
-
-        // Blocks the platform command modifier (Cmd on macOS, Ctrl elsewhere) from reaching the tree's
-        // single-selection logic, which would otherwise toggle the clicked row off.
-        private void LayersTree_PointerPressed(object? sender, PointerPressedEventArgs e)
-        {
-            if (e.KeyModifiers.HasFlag(CmdModifier))
-            {
-                e.Handled = true;
-            }
-        }
 
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {

@@ -43,6 +43,18 @@ namespace CtrDxEditor.Views
         /// <summary>Localized platform shortcut text for redo.</summary>
         public static string Redo { get; } = OperatingSystem.IsMacOS() ? $"{Mod} Shift Z" : $"{Mod} Y";
 
+        /// <summary>Localized platform shortcut text for selecting every object in the active layer.</summary>
+        public static string SelectAll { get; } = $"{Mod} A";
+
+        /// <summary>Localized platform shortcut text for cutting the selection.</summary>
+        public static string Cut { get; } = $"{Mod} X";
+
+        /// <summary>Localized platform shortcut text for copying the selection.</summary>
+        public static string Copy { get; } = $"{Mod} C";
+
+        /// <summary>Localized platform shortcut text for pasting.</summary>
+        public static string Paste { get; } = $"{Mod} V";
+
         /// <summary>Localized platform shortcut text for deleting the selected object.</summary>
         public static string Delete { get; } = "Delete";
 

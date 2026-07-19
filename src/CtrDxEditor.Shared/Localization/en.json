@@ -12,6 +12,10 @@
     "Menu.Edit": "_Edit",
     "Menu.Edit.Undo": "_Undo",
     "Menu.Edit.Redo": "_Redo",
+    "Menu.Edit.Cut": "Cu_t",
+    "Menu.Edit.Copy": "_Copy",
+    "Menu.Edit.Paste": "_Paste",
+    "Menu.Edit.SelectAll": "Select _All",
     "Menu.Edit.Delete": "_Delete",
     "Menu.Edit.LevelSettings": "Level _Settings...",
 
