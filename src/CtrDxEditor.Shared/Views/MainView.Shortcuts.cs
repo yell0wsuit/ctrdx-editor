@@ -123,7 +123,7 @@ namespace CtrDxEditor.Views
                         return false;
                     }
                     return true;
-                case EditorShortcut.ToggleAnimationPreview when DataContext is EditorViewModel { HasDocument: true } previewVm:
+                case EditorShortcut.ToggleAnimationPreview when DataContext is EditorViewModel { CanToggleAnimationPreview: true } previewVm:
                     previewVm.ToggleAnimationPreviewAll();
                     return true;
                 case EditorShortcut.None:

@@ -177,6 +177,10 @@ namespace CtrDxEditor.ViewModels
         public bool CanSelectAllObjects =>
             Document?.AllObjects.Any(obj => !EffectivelyLockedObjects.Contains(obj)) == true;
 
+        /// <summary>True when preview can start, or when active playback can be stopped.</summary>
+        public bool CanToggleAnimationPreview => IsAnimationPreviewActive
+            || (Document is { } document && AnimationPreviewPolicy.CanPreview(document));
+
         /// <summary>True when the active layer can be deleted.</summary>
         public bool CanDeleteActiveLayer => ActiveLayer is { IsLocked: false };
 
@@ -613,6 +617,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanPaste));
             OnPropertyChanged(nameof(CanDeleteSelection));
             OnPropertyChanged(nameof(CanSelectAllObjects));
+            OnPropertyChanged(nameof(CanToggleAnimationPreview));
         }
 
         /// <summary>Removes <paramref name="removed"/> from the document, capturing undo and refreshing views.</summary>
@@ -755,6 +760,7 @@ namespace CtrDxEditor.ViewModels
             {
                 RestoreLayerSelection(selectedLayerElements);
             }
+            OnPropertyChanged(nameof(CanToggleAnimationPreview));
             OnPropertyChanged(nameof(AllLayersExpanded));
         }
 
@@ -1769,6 +1775,12 @@ namespace CtrDxEditor.ViewModels
         {
             OnPropertyChanged(nameof(IsAnimationPreviewActive));
             OnPropertyChanged(nameof(AnimationPreviewMenuText));
+            OnPropertyChanged(nameof(CanToggleAnimationPreview));
+        }
+
+        partial void OnObjectListVersionChanged(int value)
+        {
+            OnPropertyChanged(nameof(CanToggleAnimationPreview));
         }
 
         partial void OnLockedObjectChanged(LevelObject? value)

@@ -26,7 +26,9 @@ namespace CtrDxEditor.Converters
         {
             public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
             {
-                return value is LevelObject obj && SpinTable.IsSpinnable(obj.Type) && HasPreviewAnimation(obj);
+                return value is LevelObject obj
+                    && SpinTable.IsSpinnable(obj.Type)
+                    && AnimationPreviewPolicy.CanPreview(obj);
             }
 
             public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -42,13 +44,8 @@ namespace CtrDxEditor.Converters
                 return values.Count >= 1
                     && values[0] is LevelObject obj
                     && SpinTable.IsSpinnable(obj.Type)
-                    && HasPreviewAnimation(obj);
+                    && AnimationPreviewPolicy.CanPreview(obj);
             }
-        }
-
-        private static bool HasPreviewAnimation(LevelObject obj)
-        {
-            return ElectroAnimation.IsElectro(obj.Type) || ObjectSpin.IsRotatingInPlace(obj) || MoverPath.HasActiveMovement(obj);
         }
 
         private sealed class ObjectAnimationPreviewingConverter : IMultiValueConverter

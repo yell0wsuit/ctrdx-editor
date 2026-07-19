@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -117,6 +118,62 @@ namespace CtrDxEditor.Tests
             vm.CloseLevel();
 
             Assert.Equal(AnimationPreviewMode.Off, vm.AnimationPreviewMode);
+        }
+
+        /// <summary>Global playback is available only for previewable data, while Stop remains reachable.</summary>
+        [Fact]
+        public void AnimationPreviewAvailabilityTracksPreviewableData()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"Objects\"><star x=\"20\" y=\"30\" /></layer></map>");
+            LevelObject star = vm.Layers[0].Objects[0];
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            Assert.False(vm.CanToggleAnimationPreview);
+
+            star.SetAttr("rotateSpeed", "70");
+            vm.ObjectListVersion++;
+
+            Assert.True(vm.CanToggleAnimationPreview);
+            Assert.Contains(nameof(EditorViewModel.CanToggleAnimationPreview), changed);
+
+            vm.ToggleAnimationPreviewAll();
+            star.SetAttr("rotateSpeed", "");
+            vm.ObjectListVersion++;
+
+            Assert.True(vm.CanToggleAnimationPreview);
+
+            vm.ToggleAnimationPreviewAll();
+
+            Assert.False(vm.CanToggleAnimationPreview);
+        }
+
+        /// <summary>Level-wide water drain data enables global preview even without animated objects.</summary>
+        [Fact]
+        public void WaterDrainHasGlobalAnimationPreviewAvailable()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/>" +
+                "<gameDesign water=\"120\" waterSpeed=\"12\" /></layer></map>");
+
+            Assert.True(vm.CanToggleAnimationPreview);
+        }
+
+        /// <summary>Movement data enables global preview even for types without spin controls.</summary>
+        [Fact]
+        public void MovingGrabHasGlobalAnimationPreviewAvailable()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"Objects\"><grab x=\"20\" y=\"30\" " +
+                "path=\"100,0,100,50\" moveSpeed=\"70\" /></layer></map>");
+
+            Assert.True(vm.CanToggleAnimationPreview);
         }
 
         /// <summary>Orbit-only objects expose the same row preview affordance as rotateSpeed objects.</summary>

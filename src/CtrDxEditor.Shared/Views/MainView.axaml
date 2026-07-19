@@ -210,7 +210,7 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Click="AnimationPreviewToggle_Click" IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="AnimationPreviewToggle_Click" IsEnabled="{Binding CanToggleAnimationPreview}">
           <MenuItem.Icon>
             <Grid>
               <icons:MaterialIcon Kind="PlayArrow">
