@@ -1,5 +1,6 @@
 using System.Linq;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
@@ -100,6 +101,27 @@ namespace CtrDxEditor.Tests
             sel.Replace(a);
             sel.Clear();
             Assert.Equal(2, fired);
+        }
+    }
+
+    public class EditorViewModelSelectionShimTests
+    {
+        [Fact]
+        public void SelectedObject_setter_updates_Selection_primary()
+        {
+            var vm = new EditorViewModel(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/></layer></map>");
+            LevelObject obj = vm.Document!.AllObjects[0];
+
+            vm.SelectedObject = obj;
+
+            Assert.Equal(obj, vm.Selection.Primary);
+            Assert.Equal(obj, vm.SelectedObject);
+
+            vm.SelectedObject = null;
+            Assert.Null(vm.Selection.Primary);
         }
     }
 }

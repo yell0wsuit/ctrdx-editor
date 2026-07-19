@@ -25,6 +25,7 @@ namespace CtrDxEditor.ViewModels
     public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
     {
         private const int UndoHistoryLimit = 100;
+        private static readonly LevelDocument EmptyDocument = LevelDocument.Parse("<map/>");
         private readonly DescriptorTable _descriptors = DescriptorTable.CtrObjects;
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
@@ -43,7 +44,6 @@ namespace CtrDxEditor.ViewModels
 
         [ObservableProperty] public partial LevelDocument? Document { get; set; }
         [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
-        [ObservableProperty] public partial LevelObject? SelectedObject { get; set; }
         [ObservableProperty] public partial LevelObject? LockedObject { get; set; }
         [ObservableProperty] public partial bool SnapEnabled { get; set; }
         [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
@@ -58,6 +58,37 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial double AnimationPreviewElapsedSeconds { get; set; }
         [ObservableProperty] public partial int ObjectListVersion { get; set; }
         [ObservableProperty] public partial string PaletteSearchText { get; set; } = "";
+
+        /// <summary>The object selection; source of truth for what is selected.</summary>
+        public EditorSelection Selection { get; private set; } = new(EmptyDocument);
+
+        /// <summary>
+        /// The primary selected object. Compatibility shim over <see cref="Selection"/>: setting it replaces
+        /// the selection with a single object (or clears it). Existing single-selection code paths use this.
+        /// </summary>
+        public LevelObject? SelectedObject
+        {
+            get => Selection.Primary;
+            set
+            {
+                if (Equals(Selection.Primary, value) && Selection.Count <= 1)
+                {
+                    return;
+                }
+
+                if (value is null)
+                {
+                    Selection.Clear();
+                }
+                else
+                {
+                    Selection.Replace(value);
+                }
+
+                OnPropertyChanged(nameof(SelectedObject));
+                OnSelectedObjectChanged(value);
+            }
+        }
 
         /// <summary>The layer that receives newly placed objects, or null when the level has none.</summary>
         [ObservableProperty] public partial LayerViewModel? ActiveLayer { get; set; }
@@ -1221,7 +1252,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        partial void OnSelectedObjectChanged(LevelObject? value)
+        private void OnSelectedObjectChanged(LevelObject? value)
         {
             if (value is not null && EffectivelyLockedObjects.Contains(value))
             {
@@ -1274,6 +1305,7 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnDocumentChanged(LevelDocument? value)
         {
+            Selection = new EditorSelection(value ?? EmptyDocument);
             OnPropertyChanged(nameof(HasDocument));
         }
 
