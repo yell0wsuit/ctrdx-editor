@@ -149,7 +149,7 @@
     "Layer.MoveUp": "Move active layer up",
     "Layer.MoveDown": "Move active layer down",
     "Layer.Rename": "Rename layer",
-    "Layer.ObjectCount": "Objects in this layer",
+    "Layer.ObjectCount": "No. of objects in this layer",
     "Layer.MenuRename": "Rename",
     "Layer.MenuMoveUp": "Move up",
     "Layer.MenuMoveDown": "Move down",
