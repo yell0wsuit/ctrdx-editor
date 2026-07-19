@@ -344,7 +344,7 @@ namespace CtrDxEditor.Tests
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
 
-            Assert.Contains("IsEnabled=\"{Binding CanDeleteActiveLayer}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelectedLayers}\"", view, StringComparison.Ordinal);
             Assert.Contains("Click=\"LayerRename_Click\" ToolTip.Tip=\"{loc:Tr Layer.Rename}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding !IsLocked}\"", view, StringComparison.Ordinal);
             Assert.Contains("if (row.IsLocked)", codeBehind, StringComparison.Ordinal);
@@ -360,9 +360,9 @@ namespace CtrDxEditor.Tests
             Assert.True(
                 view.Split("IsVisible=\"{Binding HasDocument, FallbackValue=False}\"", StringSplitOptions.None).Length >= 3,
                 "Expected both palette search and layer actions to stay hidden before a document loads.");
-            Assert.Contains("IsEnabled=\"{Binding CanDeleteActiveLayer}\"", view, StringComparison.Ordinal);
-            Assert.Contains("IsEnabled=\"{Binding CanMoveActiveLayerUp}\"", view, StringComparison.Ordinal);
-            Assert.Contains("IsEnabled=\"{Binding CanMoveActiveLayerDown}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelectedLayers}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanMoveSelectedLayersUp}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanMoveSelectedLayersDown}\"", view, StringComparison.Ordinal);
             Assert.Contains("SelectedIndex=\"{Binding DisplayLocaleIndex, Mode=TwoWay}\"", view, StringComparison.Ordinal);
             Assert.DoesNotContain("SelectedItem=\"{Binding DisplayLocale, Mode=TwoWay}\"", view, StringComparison.Ordinal);
         }
