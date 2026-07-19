@@ -152,6 +152,7 @@
     "Layer.Delete": "Delete active layer",
     "Layer.MoveUp": "Move active layer up",
     "Layer.MoveDown": "Move active layer down",
+    "Layer.ToggleExpand": "Expand or collapse all layers",
     "Layer.Rename": "Rename layer",
     "Layer.ObjectCount": "No. of objects in this layer",
     "Layer.MenuRename": "Rename",

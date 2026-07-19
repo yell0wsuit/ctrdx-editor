@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -128,6 +129,22 @@ namespace CtrDxEditor.ViewModels
         public bool CanMoveActiveLayerDown =>
             ActiveLayer is not null && Layers.IndexOf(ActiveLayer) is >= 0 and int index && index < Layers.Count - 1;
 
+        /// <summary>True when every layer row is expanded; drives the expand/collapse-all toggle.</summary>
+        public bool AllLayersExpanded => Layers.Count > 0 && Layers.All(row => row.IsExpanded);
+
+        /// <summary>Expands every layer row, or collapses them all when they are already expanded.</summary>
+        [RelayCommand]
+        public void ToggleLayersExpanded()
+        {
+            bool expand = !AllLayersExpanded;
+            foreach (LayerViewModel row in Layers)
+            {
+                row.IsExpanded = expand;
+            }
+
+            OnPropertyChanged(nameof(AllLayersExpanded));
+        }
+
         /// <summary>
         /// True when the open level has edits that differ from the last load, new, or save. Undoing all the
         /// way back to the saved state clears it; decoration, zoom, and selection changes never set it.
@@ -201,7 +218,7 @@ namespace CtrDxEditor.ViewModels
             ClearHistory();
             Palette.Clear();
             RebuildPaletteView();
-            Layers.Clear();
+            ClearLayerRows();
             ActiveLayer = null;
             ResetDocumentSessionState();
             AvailableLocales.Clear();
@@ -380,7 +397,7 @@ namespace CtrDxEditor.ViewModels
             Dictionary<XElement, bool> expansionByElement = Layers.ToDictionary(
                 row => row.Layer.Element,
                 row => row.IsExpanded);
-            Layers.Clear();
+            ClearLayerRows();
             if (Document is null)
             {
                 ActiveLayer = null;
@@ -400,6 +417,7 @@ namespace CtrDxEditor.ViewModels
                 {
                     row.Objects.Add(obj);
                 }
+                row.PropertyChanged += OnLayerRowPropertyChanged;
                 Layers.Add(row);
             }
 
@@ -410,6 +428,27 @@ namespace CtrDxEditor.ViewModels
             RecomputeLockedObjects();
             SelectedTreeItem = SelectedObject
                 ?? (object?)Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, selectedLayerElement));
+            OnPropertyChanged(nameof(AllLayersExpanded));
+        }
+
+        // Unsubscribes from and drops all layer rows. Rows are watched for IsExpanded changes so the
+        // expand/collapse-all toggle reflects manual per-layer expansion.
+        private void ClearLayerRows()
+        {
+            foreach (LayerViewModel row in Layers)
+            {
+                row.PropertyChanged -= OnLayerRowPropertyChanged;
+            }
+
+            Layers.Clear();
+        }
+
+        private void OnLayerRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(LayerViewModel.IsExpanded))
+            {
+                OnPropertyChanged(nameof(AllLayersExpanded));
+            }
         }
 
         /// <summary>Whether an object is individually hidden.</summary>
