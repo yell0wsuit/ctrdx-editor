@@ -256,6 +256,12 @@ namespace CtrDxEditor.Views
                 {
                     vm.SetLayerSelection(layers, layers[^1]);
                 }
+                else
+                {
+                    vm.ClearLayerSelection();
+                    vm.Selection.Clear();
+                    vm.RaiseSelectedObjectChanged();
+                }
             }
             finally
             {

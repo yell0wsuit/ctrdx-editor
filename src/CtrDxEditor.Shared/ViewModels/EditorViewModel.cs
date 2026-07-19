@@ -88,6 +88,7 @@ namespace CtrDxEditor.ViewModels
                 }
                 else
                 {
+                    ClearLayerSelection();
                     Selection.Replace(value);
                 }
 
@@ -417,6 +418,18 @@ namespace CtrDxEditor.ViewModels
             NotifyLayerSelectionChanged();
         }
 
+        /// <summary>Clears the object-panel layer selection, leaving the active layer unchanged.</summary>
+        public void ClearLayerSelection()
+        {
+            if (_selectedLayers.Count == 0)
+            {
+                return;
+            }
+
+            _selectedLayers.Clear();
+            NotifyLayerSelectionChanged();
+        }
+
         private void NotifyLayerSelectionChanged()
         {
             OnPropertyChanged(nameof(SelectedLayers));
@@ -434,11 +447,7 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public void SetObjectSelection(IReadOnlyList<LevelObject> objects)
         {
-            if (_selectedLayers.Count > 0)
-            {
-                _selectedLayers.Clear();
-                NotifyLayerSelectionChanged();
-            }
+            ClearLayerSelection();
 
             List<LevelObject> selectable = [.. objects.Where(o => !EffectivelyLockedObjects.Contains(o))];
             if (selectable.Count == 0)
@@ -542,6 +551,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Refreshes bindings and property-panel state after a direct selection mutation.</summary>
         public void RaiseSelectedObjectChanged()
         {
+            if (Selection.Count > 0)
+            {
+                ClearLayerSelection();
+            }
+
             OnPropertyChanged(nameof(SelectedObject));
             OnSelectedObjectChanged(SelectedObject);
         }
@@ -646,6 +660,7 @@ namespace CtrDxEditor.ViewModels
         {
             XElement? activeElement = ActiveLayer?.Layer.Element;
             XElement? selectedLayerElement = (SelectedTreeItem as LayerViewModel)?.Layer.Element;
+            XElement[] selectedLayerElements = [.. _selectedLayers.Select(row => row.Layer.Element)];
             Dictionary<XElement, bool> expansionByElement = Layers.ToDictionary(
                 row => row.Layer.Element,
                 row => row.IsExpanded);
@@ -654,6 +669,7 @@ namespace CtrDxEditor.ViewModels
             {
                 ActiveLayer = null;
                 SelectedTreeItem = null;
+                ClearLayerSelection();
                 return;
             }
 
@@ -680,6 +696,10 @@ namespace CtrDxEditor.ViewModels
             RecomputeLockedObjects();
             SelectedTreeItem = SelectedObject
                 ?? (object?)Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, selectedLayerElement));
+            if (selectedLayerElements.Length > 0)
+            {
+                RestoreLayerSelection(selectedLayerElements);
+            }
             OnPropertyChanged(nameof(AllLayersExpanded));
         }
 
@@ -946,6 +966,7 @@ namespace CtrDxEditor.ViewModels
             _hiddenObjectElements.Clear();
             _hiddenLayerNames.Clear();
             _lockedLayerNames.Clear();
+            ClearLayerSelection();
             EffectivelyHiddenObjects = new HashSet<LevelObject>();
             OnPropertyChanged(nameof(EffectivelyHiddenObjects));
             EffectivelyLockedObjects = new HashSet<LevelObject>();
@@ -1266,6 +1287,10 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanDeleteActiveLayer));
             OnPropertyChanged(nameof(CanMoveActiveLayerUp));
             OnPropertyChanged(nameof(CanMoveActiveLayerDown));
+            OnPropertyChanged(nameof(EffectiveLayerTargets));
+            OnPropertyChanged(nameof(CanDeleteSelectedLayers));
+            OnPropertyChanged(nameof(CanMoveSelectedLayersUp));
+            OnPropertyChanged(nameof(CanMoveSelectedLayersDown));
         }
 
         partial void OnDisplayLocaleChanged(string value)

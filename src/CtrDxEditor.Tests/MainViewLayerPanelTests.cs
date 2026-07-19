@@ -378,6 +378,17 @@ namespace CtrDxEditor.Tests
             Assert.Contains("container.BringIntoView();", viewCodeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>Removing the final selected tree row also clears the corresponding model selection.</summary>
+        [Fact]
+        public void EmptyTreeSelectionClearsModelSelections()
+        {
+            string viewCodeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string normalized = string.Join('\n', viewCodeBehind.Split('\n').Select(line => line.Trim()));
+
+            const string clearBranch = "else\n{\nvm.ClearLayerSelection();\nvm.Selection.Clear();\nvm.RaiseSelectedObjectChanged();\n}";
+            Assert.Contains(clearBranch, normalized, StringComparison.Ordinal);
+        }
+
         /// <summary>Locked-layer objects cannot retain or acquire the TreeView selection highlight.</summary>
         [Fact]
         public void LockedLayerObjectsCannotKeepTreeSelectionHighlight()
