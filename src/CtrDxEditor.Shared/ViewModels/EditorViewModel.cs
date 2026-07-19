@@ -161,6 +161,18 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
+        /// <summary>True when the selected objects can be cut from an open level.</summary>
+        public bool CanCutSelection => HasDocument && SelectedObject is not null;
+
+        /// <summary>True when the selected objects can be copied from an open level.</summary>
+        public bool CanCopySelection => HasDocument && SelectedObject is not null;
+
+        /// <summary>True when clipboard objects can be pasted into an open level.</summary>
+        public bool CanPaste => HasDocument && HasClipboard;
+
+        /// <summary>True when the selected objects can be deleted from an open level.</summary>
+        public bool CanDeleteSelection => HasDocument && SelectedObject is not null;
+
         /// <summary>True when the active layer can be deleted.</summary>
         public bool CanDeleteActiveLayer => ActiveLayer is { IsLocked: false };
 
@@ -536,6 +548,7 @@ namespace CtrDxEditor.ViewModels
                 _clipboard.Add(new XElement(selected.Element));
             }
             OnPropertyChanged(nameof(HasClipboard));
+            NotifyEditCommandCapabilities();
         }
 
         /// <summary>Copies the current selection, then deletes the originals.</summary>
@@ -587,6 +600,14 @@ namespace CtrDxEditor.ViewModels
 
             OnPropertyChanged(nameof(SelectedObject));
             OnSelectedObjectChanged(SelectedObject);
+        }
+
+        private void NotifyEditCommandCapabilities()
+        {
+            OnPropertyChanged(nameof(CanCutSelection));
+            OnPropertyChanged(nameof(CanCopySelection));
+            OnPropertyChanged(nameof(CanPaste));
+            OnPropertyChanged(nameof(CanDeleteSelection));
         }
 
         /// <summary>Removes <paramref name="removed"/> from the document, capturing undo and refreshing views.</summary>
@@ -1696,6 +1717,7 @@ namespace CtrDxEditor.ViewModels
                 _syncingSelectedTreeItem = false;
             }
             OnPropertyChanged(nameof(CanEditPolyline));
+            NotifyEditCommandCapabilities();
             PopulateFields(value);
             RebuildFieldGroups();
         }
@@ -1732,7 +1754,9 @@ namespace CtrDxEditor.ViewModels
         {
             Selection = new EditorSelection(value ?? EmptyDocument);
             OnPropertyChanged(nameof(Selection));
+            OnPropertyChanged(nameof(SelectedObject));
             OnPropertyChanged(nameof(HasDocument));
+            NotifyEditCommandCapabilities();
         }
 
         partial void OnAnimationPreviewModeChanged(AnimationPreviewMode value)

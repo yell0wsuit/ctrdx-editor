@@ -89,13 +89,13 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.SelectAll when DataContext is EditorViewModel { HasDocument: true } selectVm:
                     selectVm.SelectAllObjects();
                     return true;
-                case EditorShortcut.Copy when DataContext is EditorViewModel copyVm:
+                case EditorShortcut.Copy when DataContext is EditorViewModel { CanCopySelection: true } copyVm:
                     copyVm.CopySelection();
                     return true;
-                case EditorShortcut.Cut when DataContext is EditorViewModel cutVm:
+                case EditorShortcut.Cut when DataContext is EditorViewModel { CanCutSelection: true } cutVm:
                     cutVm.CutSelection();
                     return true;
-                case EditorShortcut.Paste when DataContext is EditorViewModel pasteVm:
+                case EditorShortcut.Paste when DataContext is EditorViewModel { CanPaste: true } pasteVm:
                     (int pasteX, int pasteY) = _canvas.PasteTargetLevelPoint();
                     pasteVm.PasteAt(pasteX, pasteY);
                     return true;
@@ -108,15 +108,19 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.ZoomFit when DataContext is EditorViewModel { HasDocument: true }:
                     this.FindControl<LevelCanvas>("Canvas")!.FitToView();
                     return true;
-                case EditorShortcut.Delete when DataContext is EditorViewModel deleteVm:
+                case EditorShortcut.Delete when DataContext is EditorViewModel { HasDocument: true } deleteVm:
                     if (deleteVm.SelectedLayers.Count > 0)
                     {
                         LayerDeleteActive_Click(this, new RoutedEventArgs());
                     }
-                    else
+                    else if (deleteVm.CanDeleteSelection)
                     {
                         deleteVm.DeleteSelected();
                         this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+                    }
+                    else
+                    {
+                        return false;
                     }
                     return true;
                 case EditorShortcut.ToggleAnimationPreview when DataContext is EditorViewModel { HasDocument: true } previewVm:

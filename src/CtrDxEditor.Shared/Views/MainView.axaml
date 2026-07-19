@@ -109,8 +109,7 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Click="Cut_Click"
-                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <MenuItem Click="Cut_Click" IsEnabled="{Binding CanCutSelection}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentCut" />
           </MenuItem.Icon>
@@ -121,8 +120,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="Copy_Click"
-                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <MenuItem Click="Copy_Click" IsEnabled="{Binding CanCopySelection}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentCopy" />
           </MenuItem.Icon>
@@ -133,7 +131,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="Paste_Click" IsEnabled="{Binding HasClipboard}">
+        <MenuItem Click="Paste_Click" IsEnabled="{Binding CanPaste}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentPaste" />
           </MenuItem.Icon>
@@ -156,8 +154,7 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Click="Delete_Click"
-                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <MenuItem Click="Delete_Click" IsEnabled="{Binding CanDeleteSelection}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="DeleteOutline" />
           </MenuItem.Icon>

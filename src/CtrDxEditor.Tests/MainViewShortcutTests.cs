@@ -34,6 +34,24 @@ namespace CtrDxEditor.Tests
             Assert.Contains("EditorShortcuts.ResolveCommand(", source, StringComparison.Ordinal);
         }
 
+        /// <summary>Edit menus and shortcuts share document-aware command availability.</summary>
+        [Fact]
+        public void EditCommandsUseDocumentAwareAvailability()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
+
+            Assert.Contains("IsEnabled=\"{Binding CanCutSelection}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanCopySelection}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanPaste}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", view, StringComparison.Ordinal);
+            Assert.Contains("{ CanCopySelection: true } copyVm", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("{ CanCutSelection: true } cutVm", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("{ CanPaste: true } pasteVm", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("{ HasDocument: true } deleteVm", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("else if (deleteVm.CanDeleteSelection)", shortcuts, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

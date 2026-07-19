@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
@@ -97,6 +98,35 @@ namespace CtrDxEditor.Tests
 
             Assert.Empty(vm.Document.AllObjects);
             Assert.Equal(0, vm.Selection.Count);
+        }
+
+        /// <summary>Closing a level disables document edit commands without discarding copied objects.</summary>
+        [Fact]
+        public void CloseLevelDisablesEditCommandsWhileRetainingClipboard()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.SetObjectSelection([vm.Document!.AllObjects[0]]);
+            vm.CopySelection();
+
+            Assert.True(vm.CanCutSelection);
+            Assert.True(vm.CanCopySelection);
+            Assert.True(vm.CanPaste);
+            Assert.True(vm.CanDeleteSelection);
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            vm.CloseLevel();
+
+            Assert.False(vm.CanCutSelection);
+            Assert.False(vm.CanCopySelection);
+            Assert.False(vm.CanPaste);
+            Assert.False(vm.CanDeleteSelection);
+            Assert.True(vm.HasClipboard);
+            Assert.Contains(nameof(EditorViewModel.SelectedObject), changed);
+            Assert.Contains(nameof(EditorViewModel.CanCutSelection), changed);
+            Assert.Contains(nameof(EditorViewModel.CanCopySelection), changed);
+            Assert.Contains(nameof(EditorViewModel.CanPaste), changed);
+            Assert.Contains(nameof(EditorViewModel.CanDeleteSelection), changed);
         }
     }
 }
