@@ -574,7 +574,7 @@
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Plus" Width="16" Height="16" />
           </Button>
-          <Button Grid.Column="1" Command="{Binding DeleteActiveLayerCommand}" ToolTip.Tip="{loc:Tr Layer.Delete}"
+          <Button Grid.Column="1" Click="LayerDeleteActive_Click" ToolTip.Tip="{loc:Tr Layer.Delete}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Minus" Width="16" Height="16" />
           </Button>

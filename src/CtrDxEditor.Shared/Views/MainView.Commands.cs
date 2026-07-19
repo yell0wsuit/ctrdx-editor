@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -719,12 +720,36 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void LayerDelete_Click(object? sender, RoutedEventArgs e)
+        private async void LayerDeleteActive_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            if (DataContext is EditorViewModel { ActiveLayer: { } active } vm
+                && await ConfirmDeleteLayerAsync(active.Layer.Name))
+            {
+                vm.DeleteActiveLayer();
+            }
+        }
+
+        private async void LayerDelete_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm
+                && sender is MenuItem { Tag: LayerViewModel row }
+                && await ConfirmDeleteLayerAsync(row.Layer.Name))
             {
                 vm.DeleteLayer(row.Layer);
             }
+        }
+
+        // Confirms destructive layer removal (the layer plus every object in it) before it happens.
+        private static async Task<bool> ConfirmDeleteLayerAsync(string layerName)
+        {
+            ConfirmDialog dialog = new()
+            {
+                Header = Localizer.Get("Dialog.DeleteLayer.Header"),
+                Message = Localizer.Get("Dialog.DeleteLayer.Body").Replace("{0}", layerName, StringComparison.Ordinal),
+                PositiveText = Localizer.Get("Dialog.DeleteLayer.Confirm"),
+                NegativeText = Localizer.Get("Dialog.Common.Cancel"),
+            };
+            return (await dialog.ShowAsync()).GetValueOrDefault();
         }
 
         private void ZoomIn_Click(object? sender, RoutedEventArgs e)

@@ -137,6 +137,10 @@
     "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
     "Dialog.Validation.EditProceed": "Edit anyway",
 
+    "Dialog.DeleteLayer.Header": "Delete layer?",
+    "Dialog.DeleteLayer.Body": "Delete the layer “{0}” and every object inside it?\nYou can undo this later.",
+    "Dialog.DeleteLayer.Confirm": "Delete",
+
     "Dialog.Unsaved.Header": "Unsaved changes",
     "Dialog.Unsaved.Body": "You have unsaved changes that will be lost.",
     "Dialog.Unsaved.Close": "Discard and close",
