@@ -287,7 +287,7 @@ namespace CtrDxEditor.Views
                 // rejects - it supports only async writes - so encode into memory first, then copy to the
                 // destination with async writes. The await resumes on the UI thread for the toast below.
                 using MemoryStream buffer = new();
-                await Task.Run(() => bitmap.Save(buffer));
+                await Task.Run(() => bitmap.Save(buffer, PngBitmapEncoderOptions.Default));
                 buffer.Position = 0;
                 await using Stream stream = await file.OpenWriteAsync();
                 await buffer.CopyToAsync(stream);
