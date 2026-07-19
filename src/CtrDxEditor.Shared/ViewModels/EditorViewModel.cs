@@ -429,6 +429,21 @@ namespace CtrDxEditor.ViewModels
             NotifyLayerSelectionChanged();
         }
 
+        /// <summary>Collapses a multi-layer selection to its active primary layer.</summary>
+        /// <returns><see langword="true"/> when the selection was collapsed; otherwise, <see langword="false"/>.</returns>
+        public bool CollapseLayerSelectionToActive()
+        {
+            if (SelectedLayers.Count < 2
+                || ActiveLayer is not { } active
+                || !SelectedLayers.Contains(active))
+            {
+                return false;
+            }
+
+            SetLayerSelection([active], active);
+            return true;
+        }
+
         /// <summary>Clears the object-panel layer selection, leaving the active layer unchanged.</summary>
         public void ClearLayerSelection()
         {

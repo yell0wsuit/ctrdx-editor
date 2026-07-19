@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -39,6 +40,49 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(["a", "c"], vm.SelectedLayers.Select(l => l.Name));
             Assert.Equal("c", vm.ActiveLayer!.Name);
+        }
+
+        /// <summary>A multi-layer selection collapses to its active primary layer.</summary>
+        [Fact]
+        public void CollapseLayerSelectionToActiveRetainsPrimaryLayer()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
+
+            bool handled = vm.CollapseLayerSelectionToActive();
+
+            Assert.True(handled);
+            Assert.Equal(["c"], vm.SelectedLayers.Select(layer => layer.Name));
+            Assert.Same(vm.Layers[2], vm.ActiveLayer);
+        }
+
+        /// <summary>A single selected layer is already collapsed and remains unchanged.</summary>
+        [Fact]
+        public void CollapseLayerSelectionToActiveLeavesSingleLayerSelectionUnchanged()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[1]], vm.Layers[1]);
+
+            bool handled = vm.CollapseLayerSelectionToActive();
+
+            Assert.False(handled);
+            Assert.Equal(["b"], vm.SelectedLayers.Select(layer => layer.Name));
+            Assert.Same(vm.Layers[1], vm.ActiveLayer);
+        }
+
+        /// <summary>Object-selection mode is not a layer selection and remains unchanged.</summary>
+        [Fact]
+        public void CollapseLayerSelectionToActiveLeavesObjectSelectionUnchanged()
+        {
+            EditorViewModel vm = Create();
+            LevelObject selected = vm.Layers[2].Objects[0];
+            vm.SetObjectSelection([selected]);
+
+            bool handled = vm.CollapseLayerSelectionToActive();
+
+            Assert.False(handled);
+            Assert.Empty(vm.SelectedLayers);
+            Assert.Same(selected, Assert.Single(vm.Selection.Items));
         }
 
         /// <summary>Selecting one or more layer rows clears the current object selection.</summary>
