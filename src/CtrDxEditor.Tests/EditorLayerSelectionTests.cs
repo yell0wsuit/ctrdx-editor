@@ -246,12 +246,14 @@ namespace CtrDxEditor.Tests
         public void MoveSelectedLayersDownShiftsNoncontiguousSelectionEachByOne()
         {
             EditorViewModel vm = Create(); // a, b, c at 0,1,2
+            vm.ActiveLayer = vm.Layers[0];
             vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]); // a and c
 
             vm.MoveSelectedLayers(1); // down
 
             // a: 0->1, c: 2 was last so stays; b moves up past a
             Assert.Equal(["b", "a", "c"], vm.Layers.Select(l => l.Name));
+            Assert.Same(vm.Layers[1], vm.ActiveLayer);
         }
 
         /// <summary>A selection containing only the bottom layer cannot move farther down.</summary>
@@ -318,6 +320,7 @@ namespace CtrDxEditor.Tests
             EditorViewModel vm = Create();
             LayerViewModel oldA = vm.Layers[0];
             LayerViewModel oldC = vm.Layers[2];
+            vm.ActiveLayer = oldA;
             vm.SetLayerSelection([oldA, oldC], oldC);
 
             vm.RefreshObjectList();
@@ -325,6 +328,7 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["a", "c"], vm.SelectedLayers.Select(layer => layer.Name));
             Assert.Same(vm.Layers[0], vm.SelectedLayers[0]);
             Assert.Same(vm.Layers[2], vm.SelectedLayers[1]);
+            Assert.Same(vm.Layers[0], vm.ActiveLayer);
             Assert.DoesNotContain(oldA, vm.SelectedLayers);
             Assert.DoesNotContain(oldC, vm.SelectedLayers);
         }

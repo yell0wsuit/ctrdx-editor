@@ -1255,7 +1255,7 @@ namespace CtrDxEditor.ViewModels
                 .Select(row => row!)];
             _selectedLayers.Clear();
             _selectedLayers.AddRange(rows);
-            if (rows.Count > 0)
+            if (rows.Count > 0 && (ActiveLayer is null || !rows.Contains(ActiveLayer)))
             {
                 ActiveLayer = rows[^1];
             }
