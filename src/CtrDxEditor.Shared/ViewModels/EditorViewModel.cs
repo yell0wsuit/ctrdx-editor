@@ -178,6 +178,12 @@ namespace CtrDxEditor.ViewModels
         public bool CanDeleteSelectedLayers =>
             EffectiveLayerTargets.Any(row => !row.IsLocked);
 
+        /// <summary>
+        /// True when at least two explicitly selected layer rows are unlocked and can be merged together.
+        /// </summary>
+        public bool CanMergeSelectedLayers =>
+            SelectedLayers.Count >= 2 && SelectedLayers.All(row => !row.IsLocked);
+
         /// <summary>True when at least one unlocked effective-target layer can move up.</summary>
         public bool CanMoveSelectedLayersUp =>
             EffectiveLayerTargets.Any(row => !row.IsLocked && Layers.IndexOf(row) > 0);
@@ -440,6 +446,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(SelectedLayers));
             OnPropertyChanged(nameof(EffectiveLayerTargets));
             OnPropertyChanged(nameof(CanDeleteSelectedLayers));
+            OnPropertyChanged(nameof(CanMergeSelectedLayers));
             OnPropertyChanged(nameof(CanMoveSelectedLayersUp));
             OnPropertyChanged(nameof(CanMoveSelectedLayersDown));
         }
@@ -873,6 +880,7 @@ namespace CtrDxEditor.ViewModels
                     OnPropertyChanged(nameof(CanMoveActiveLayerDown));
                 }
             }
+            OnPropertyChanged(nameof(CanMergeSelectedLayers));
             RecomputeLockedObjects();
             ObjectMutated?.Invoke();
         }
@@ -1097,6 +1105,41 @@ namespace CtrDxEditor.ViewModels
             RefreshObjectList();
         }
 
+        /// <summary>
+        /// Merges the explicitly selected unlocked layers into the first selected layer in tree order.
+        /// Source objects retain their order and append in source-layer order; the surviving row remains
+        /// selected and active, and the entire mutation can be undone in one step.
+        /// </summary>
+        public void MergeSelectedLayers()
+        {
+            if (Document is null || !CanMergeSelectedLayers)
+            {
+                return;
+            }
+
+            List<LayerViewModel> orderedRows = [.. SelectedLayers.OrderBy(Layers.IndexOf)];
+            LevelLayer survivor = orderedRows[0].Layer;
+            XElement survivorElement = survivor.Element;
+
+            CaptureUndoSnapshot();
+            foreach (LayerViewModel sourceRow in orderedRows.Skip(1))
+            {
+                LevelLayer source = sourceRow.Layer;
+                foreach (LevelObject obj in source.Objects.ToList())
+                {
+                    Document.MoveObject(obj, survivor);
+                }
+                DeleteLayerCore(source);
+            }
+
+            _selectedLayers.Clear();
+            NotifyLayerSelectionChanged();
+            RefreshPalette();
+            RefreshObjectList();
+            RestoreLayerSelection([survivorElement]);
+            ObjectMutated?.Invoke();
+        }
+
         /// <summary>Renames a layer when the trimmed name is XML-safe, nonblank, and unique.</summary>
         /// <param name="layer">The layer to rename.</param>
         /// <param name="name">The candidate name.</param>
@@ -1294,6 +1337,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanMoveActiveLayerDown));
             OnPropertyChanged(nameof(EffectiveLayerTargets));
             OnPropertyChanged(nameof(CanDeleteSelectedLayers));
+            OnPropertyChanged(nameof(CanMergeSelectedLayers));
             OnPropertyChanged(nameof(CanMoveSelectedLayersUp));
             OnPropertyChanged(nameof(CanMoveSelectedLayersDown));
         }

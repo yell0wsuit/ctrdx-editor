@@ -97,6 +97,63 @@ namespace CtrDxEditor.Tests
             Assert.Equal(["a", "b", "c"], vm.Layers.Select(l => l.Name));
         }
 
+        /// <summary>
+        /// Merging noncontiguous rows appends source objects to the first row in tree order and leaves only
+        /// that surviving row selected and active.
+        /// </summary>
+        [Fact]
+        public void MergeSelectedLayersCombinesObjectsIntoFirstSelectedLayer()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
+
+            vm.MergeSelectedLayers();
+
+            Assert.Equal(["a", "b"], vm.Layers.Select(layer => layer.Name));
+            Assert.Equal(["candy", "star"], vm.Layers[0].Objects.Select(obj => obj.Type));
+            Assert.Equal(["a"], vm.SelectedLayers.Select(layer => layer.Name));
+            Assert.Same(vm.Layers[0], vm.ActiveLayer);
+        }
+
+        /// <summary>A merged layer batch is restored with its original object ownership by one undo operation.</summary>
+        [Fact]
+        public void MergeSelectedLayersIsOneUndoStep()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
+
+            vm.MergeSelectedLayers();
+            vm.Undo();
+
+            Assert.Equal(["a", "b", "c"], vm.Layers.Select(layer => layer.Name));
+            Assert.Equal(["candy"], vm.Layers[0].Objects.Select(obj => obj.Type));
+            Assert.Equal(["star"], vm.Layers[1].Objects.Select(obj => obj.Type));
+            Assert.Equal(["star"], vm.Layers[2].Objects.Select(obj => obj.Type));
+        }
+
+        /// <summary>
+        /// Merging requires at least two explicitly selected unlocked rows, and a locked target makes the
+        /// command a no-op without changing the document XML.
+        /// </summary>
+        [Fact]
+        public void CanMergeSelectedLayersRequiresTwoUnlockedRows()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0]], vm.Layers[0]);
+            Assert.False(vm.CanMergeSelectedLayers);
+
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[2]], vm.Layers[2]);
+            Assert.True(vm.CanMergeSelectedLayers);
+
+            vm.SetLayerLocked(vm.Layers[2].Layer, true);
+            string beforeMerge = Assert.IsType<string>(vm.ToXml());
+            Assert.False(vm.CanMergeSelectedLayers);
+
+            vm.MergeSelectedLayers();
+
+            Assert.Equal(beforeMerge, vm.ToXml());
+        }
+
         /// <summary>Batch visibility changes apply to every selected layer and no unselected layer.</summary>
         [Fact]
         public void SetSelectedLayersHiddenAppliesToAllTargets()
