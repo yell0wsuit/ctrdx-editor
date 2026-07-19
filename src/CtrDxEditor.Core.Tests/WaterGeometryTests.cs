@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using CtrDxEditor.Core.Editing;
@@ -46,7 +47,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void BandAtScreenColumnWidthDoesNotOverhang()
         {
-            int width = (int)System.Math.Ceiling(BackgroundPlacement.LevelScreenWidth);
+            int width = (int)Math.Ceiling(BackgroundPlacement.LevelScreenWidth);
             LevelBounds band = WaterGeometry.Band(width, 480, 120)
                 ?? throw new Xunit.Sdk.XunitException("Expected a water band.");
 
