@@ -374,15 +374,19 @@ namespace CtrDxEditor.ViewModels
             RefreshObjectList();
         }
 
-        /// <summary>Selects every object in the active layer (Ctrl+A). No-op when no active layer exists.</summary>
-        public void SelectAllInActiveLayer()
+        /// <summary>
+        /// Selects every object across all unlocked layers without changing the active layer used for placement.
+        /// Hidden objects remain selectable, matching the editor's existing select-all behavior.
+        /// </summary>
+        public void SelectAllObjects()
         {
-            if (ActiveLayer?.Layer is not { } layer)
+            if (Document is null)
             {
                 return;
             }
 
-            IReadOnlyList<LevelObject> objects = layer.Objects;
+            List<LevelObject> objects = [.. Document.AllObjects
+                .Where(obj => !EffectivelyLockedObjects.Contains(obj))];
             if (objects.Count == 0)
             {
                 Selection.Clear();
@@ -390,8 +394,9 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
-            Selection.SetRange(objects, objects[0]);
-            RaiseSelectedObjectChanged();
+            LayerViewModel? activeLayer = ActiveLayer;
+            SetObjectSelection(objects);
+            ActiveLayer = activeLayer;
         }
 
         /// <summary>The layers selected in the object panel, in tree order. Empty in object-selection mode.</summary>

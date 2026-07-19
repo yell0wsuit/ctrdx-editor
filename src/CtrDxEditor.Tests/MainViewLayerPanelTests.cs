@@ -389,6 +389,19 @@ namespace CtrDxEditor.Tests
             Assert.Contains(clearBranch, normalized, StringComparison.Ordinal);
         }
 
+        /// <summary>Edit-menu and keyboard select-all routes use the document-wide view-model command.</summary>
+        [Fact]
+        public void SelectAllEntryPointsUseDocumentWideSelection()
+        {
+            string commands = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
+
+            Assert.Contains("vm.SelectAllObjects();", commands, StringComparison.Ordinal);
+            Assert.Contains("selectVm.SelectAllObjects();", shortcuts, StringComparison.Ordinal);
+            Assert.DoesNotContain("SelectAllInActiveLayer", commands, StringComparison.Ordinal);
+            Assert.DoesNotContain("SelectAllInActiveLayer", shortcuts, StringComparison.Ordinal);
+        }
+
         /// <summary>Locked-layer objects cannot retain or acquire the TreeView selection highlight.</summary>
         [Fact]
         public void LockedLayerObjectsCannotKeepTreeSelectionHighlight()

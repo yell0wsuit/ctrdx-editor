@@ -138,21 +138,47 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.Selection.Primary);
         }
 
-        /// <summary>Verifies select-all selects every object in the active layer.</summary>
+        /// <summary>Verifies select-all spans every unlocked layer in document order.</summary>
         [Fact]
-        public void SelectAllInActiveLayerSelectsEveryObjectInActiveLayer()
+        public void SelectAllObjectsSelectsObjectsAcrossUnlockedLayers()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
             vm.LoadLevelXml(
                 "<map><layer name=\"settings\"><map/></layer>" +
                 "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/></layer>" +
-                "<layer name=\"L1\"><star x=\"3\" y=\"3\"/></layer></map>");
+                "<layer name=\"L1\"><star x=\"3\" y=\"3\"/></layer>" +
+                "<layer name=\"L2\"><bubble x=\"4\" y=\"4\"/></layer></map>");
             vm.ActiveLayer = vm.Layers[0];
+            vm.SetLayerLocked(vm.Layers[1].Layer, true);
+            vm.SetObjectHidden(vm.Layers[2].Objects[0], true);
 
-            vm.SelectAllInActiveLayer();
+            vm.SelectAllObjects();
 
-            Assert.Equal(2, vm.Selection.Count);
-            Assert.All(vm.Selection.Items, o => Assert.Same(vm.ActiveLayer.Layer.Element, o.Element.Parent));
+            Assert.Collection(
+                vm.Selection.Items,
+                selected => Assert.Same(vm.Layers[0].Objects[0].Element, selected.Element),
+                selected => Assert.Same(vm.Layers[0].Objects[1].Element, selected.Element),
+                selected => Assert.Same(vm.Layers[2].Objects[0].Element, selected.Element));
+            Assert.DoesNotContain(
+                vm.Selection.Items,
+                selected => ReferenceEquals(vm.Layers[1].Objects[0].Element, selected.Element));
+        }
+
+        /// <summary>Verifies document-wide select-all preserves the layer used for placement and paste.</summary>
+        [Fact]
+        public void SelectAllObjectsKeepsActiveLayer()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/></layer>" +
+                "<layer name=\"L1\"><star x=\"2\" y=\"2\"/></layer></map>");
+            LayerViewModel active = vm.Layers[0];
+            vm.ActiveLayer = active;
+
+            vm.SelectAllObjects();
+
+            Assert.Same(active, vm.ActiveLayer);
         }
     }
 }

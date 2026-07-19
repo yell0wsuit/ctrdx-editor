@@ -76,7 +76,7 @@ namespace CtrDxEditor.Views
         {
             if (DataContext is EditorViewModel vm)
             {
-                vm.SelectAllInActiveLayer();
+                vm.SelectAllObjects();
                 this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
             }
         }

@@ -42,7 +42,7 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Create();
 
-            vm.SelectAllInActiveLayer();
+            vm.SelectAllObjects();
             Assert.Equal(2, vm.Selection.Count);
 
             // Simulate the canvas TwoWay SelectedObject binding writing the primary back.
