@@ -201,6 +201,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Classes.object-name=\"True\" Margin=\"6,0,0,0\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>Layer locking stays available inline without retaining object or layer context menus.</summary>
+        [Fact]
+        public void LayerLockUsesInlineButtonWithoutRowContextMenus()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("Click=\"LayerLockToggle_Click\"", view, StringComparison.Ordinal);
+            Assert.Contains("ToolTip.Tip=\"{loc:Tr Tooltip.LayerLock}\"", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("<ContextMenu", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("ObjectContextMenu_Opening", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("LayerContextMenu_Opening", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("MoveObjectToLayer_Click", codeBehind, StringComparison.Ordinal);
+        }
+
         /// <summary>Startup bindings hide the locale picker and disable layer actions until a document exists.</summary>
         [Fact]
         public void StartupLayerControlsUseSafeDocumentFallbacks()

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -227,53 +225,6 @@ namespace CtrDxEditor.Views
                     && ReferenceEquals(candidate.Tag, row));
         }
 
-        private void ObjectContextMenu_Opening(object? sender, CancelEventArgs e)
-        {
-            if (DataContext is not EditorViewModel vm
-                || sender is not ContextMenu { Tag: LevelObject obj } menu)
-            {
-                e.Cancel = true;
-                return;
-            }
-
-            List<MenuItem> targets = [];
-            foreach (LayerViewModel row in vm.Layers)
-            {
-                if (ReferenceEquals(obj.Element.Parent, row.Layer.Element))
-                {
-                    continue;
-                }
-
-                MenuItem target = new()
-                {
-                    Header = row.Name,
-                    Tag = new MoveTarget(obj, row.Layer),
-                };
-                target.Click += MoveObjectToLayer_Click;
-                targets.Add(target);
-            }
-
-            menu.ItemsSource = new[]
-            {
-                new MenuItem
-                {
-                    Header = Localizer.Get("Object.MoveToLayer"),
-                    ItemsSource = targets,
-                    IsEnabled = targets.Count > 0,
-                },
-            };
-        }
-
-        private void MoveObjectToLayer_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: MoveTarget target })
-            {
-                _ = vm.MoveObjectToLayer(target.Object, target.Layer);
-            }
-        }
-
-        private sealed record MoveTarget(LevelObject Object, LevelLayer Layer);
-
         private LayerViewModel? _dragLayer;
         private Point _dragStart;
         private LevelObject? _dragObject;
@@ -286,8 +237,7 @@ namespace CtrDxEditor.Views
         private DispatcherTimer? _rowDragScrollTimer;
 
         // Blocks the platform command modifier (Cmd on macOS, Ctrl elsewhere) from reaching the tree's
-        // single-selection logic, which would otherwise toggle the clicked row off. Ctrl on macOS is left
-        // alone so it keeps working as the secondary-click/context-menu gesture.
+        // single-selection logic, which would otherwise toggle the clicked row off.
         private void LayersTree_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (e.KeyModifiers.HasFlag(CmdModifier))
@@ -627,54 +577,6 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void LayerContextMenu_Opening(object? sender, CancelEventArgs e)
-        {
-            if (sender is not ContextMenu { Tag: LayerViewModel row } menu)
-            {
-                e.Cancel = true;
-                return;
-            }
-
-            MenuItem rename = new() { Header = Localizer.Get("Layer.MenuRename"), Tag = row };
-            rename.Click += LayerRename_Click;
-
-            MenuItem moveUp = new() { Header = Localizer.Get("Layer.MenuMoveUp"), Tag = row };
-            moveUp.Click += LayerMenuMoveUp_Click;
-
-            MenuItem moveDown = new() { Header = Localizer.Get("Layer.MenuMoveDown"), Tag = row };
-            moveDown.Click += LayerMenuMoveDown_Click;
-
-            MenuItem lockItem = new()
-            {
-                Header = Localizer.Get(row.IsLocked ? "Layer.Unlock" : "Layer.Lock"),
-                Tag = row,
-            };
-            lockItem.Click += LayerLockToggle_Click;
-
-            MenuItem hideItem = new()
-            {
-                Header = Localizer.Get(row.IsVisible ? "Layer.Hide" : "Layer.Show"),
-                Tag = row,
-            };
-            hideItem.Click += LayerHideToggle_Click;
-
-            MenuItem delete = new() { Header = Localizer.Get("Layer.MenuDelete"), Tag = row };
-            delete.Click += LayerDelete_Click;
-
-            menu.ItemsSource = new Control[]
-            {
-                rename,
-                new Separator(),
-                moveUp,
-                moveDown,
-                new Separator(),
-                lockItem,
-                hideItem,
-                new Separator(),
-                delete,
-            };
-        }
-
         private void LayerRename_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is Control { Tag: LayerViewModel row })
@@ -692,35 +594,11 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private void LayerMenuMoveUp_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
-            {
-                vm.MoveLayer(row.Layer, -1);
-            }
-        }
-
-        private void LayerMenuMoveDown_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
-            {
-                vm.MoveLayer(row.Layer, 1);
-            }
-        }
-
         private void LayerLockToggle_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
+            if (DataContext is EditorViewModel vm && sender is Control { Tag: LayerViewModel row })
             {
                 vm.SetLayerLocked(row.Layer, !vm.IsLayerLocked(row.Layer));
-            }
-        }
-
-        private void LayerHideToggle_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm && sender is MenuItem { Tag: LayerViewModel row })
-            {
-                vm.SetLayerHidden(row.Layer, row.IsVisible);
             }
         }
 
@@ -730,16 +608,6 @@ namespace CtrDxEditor.Views
                 && await ConfirmDeleteLayerAsync(active.Layer.Name))
             {
                 vm.DeleteActiveLayer();
-            }
-        }
-
-        private async void LayerDelete_Click(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is EditorViewModel vm
-                && sender is MenuItem { Tag: LayerViewModel row }
-                && await ConfirmDeleteLayerAsync(row.Layer.Name))
-            {
-                vm.DeleteLayer(row.Layer);
             }
         }
 

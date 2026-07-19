@@ -397,9 +397,6 @@
                       PointerMoved="LayerRow_PointerMoved"
                       PointerReleased="LayerRow_PointerReleased"
                       PointerCaptureLost="LayerRow_PointerCaptureLost">
-                <Border.ContextMenu>
-                  <ContextMenu Opening="LayerContextMenu_Opening" Tag="{Binding .}" />
-                </Border.ContextMenu>
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,10,0">
                   <ToggleButton Grid.Column="0" IsChecked="{Binding IsVisible, Mode=TwoWay}"
                                 Click="LayerVisibility_Click" Tag="{Binding .}"
@@ -442,10 +439,18 @@
                           Click="LayerRename_Click" ToolTip.Tip="{loc:Tr Layer.Rename}">
                     <icons:MaterialIcon Kind="Pencil" Width="13" Height="13" />
                   </Button>
-                  <icons:MaterialIcon Grid.Column="4" Kind="Lock" Width="14" Height="14"
-                                      VerticalAlignment="Center" Margin="4,0,0,0"
-                                      Foreground="{DynamicResource EditorBrush.Warning}"
-                                      IsVisible="{Binding IsLocked}" />
+                  <Button Grid.Column="4" Width="20" Height="20" Padding="0" Margin="2,0"
+                          Background="Transparent" BorderBrush="Transparent"
+                          Focusable="False" Tag="{Binding .}"
+                          Click="LayerLockToggle_Click" ToolTip.Tip="{loc:Tr Tooltip.LayerLock}">
+                    <Grid>
+                      <icons:MaterialIcon Kind="LockOpen" Width="14" Height="14"
+                                          IsVisible="{Binding !IsLocked}" />
+                      <icons:MaterialIcon Kind="Lock" Width="14" Height="14"
+                                          Foreground="{DynamicResource EditorBrush.Warning}"
+                                          IsVisible="{Binding IsLocked}" />
+                    </Grid>
+                  </Button>
                 </Grid>
               </Border>
             </TreeDataTemplate>
@@ -463,9 +468,6 @@
                     <Binding Path="$parent[TreeView].((vm:EditorViewModel)DataContext).EffectivelyLockedObjects" />
                   </MultiBinding>
                 </Grid.IsEnabled>
-                <Grid.ContextMenu>
-                  <ContextMenu Opening="ObjectContextMenu_Opening" Tag="{Binding .}" />
-                </Grid.ContextMenu>
                 <ToggleButton Grid.Column="0" Width="20" Height="20" Padding="0"
                               Background="Transparent" BorderBrush="Transparent"
                               Tag="{Binding .}" Click="ObjectVisibility_Click"
