@@ -18,8 +18,21 @@ namespace CtrDxEditor.Core.Editing
         public static bool CanPreview(LevelObject obj)
         {
             return ElectroAnimation.IsElectro(obj.Type)
-                || ObjectSpin.IsRotatingInPlace(obj)
-                || MoverPath.HasActiveMovement(obj);
+                || (SpinTable.IsSpinnable(obj.Type) && ObjectSpin.IsRotatingInPlace(obj))
+                || HasVisibleMovement(obj);
+        }
+
+        private static bool HasVisibleMovement(LevelObject obj)
+        {
+            if (!MoverPath.HasActiveMovement(obj))
+            {
+                return false;
+            }
+
+            string? path = obj.GetAttr("path");
+            return MoverPath.IsCircularPath(path)
+                ? MoverPath.CircularRadius(path, 0) > 0
+                : MoverPath.IsPolylineMovement(path);
         }
     }
 }

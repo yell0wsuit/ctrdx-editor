@@ -176,6 +176,32 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.CanToggleAnimationPreview);
         }
 
+        /// <summary>Stray spin attributes on unsupported object types do not enable global preview.</summary>
+        [Fact]
+        public void UnsupportedSpinDataDoesNotEnableGlobalAnimationPreview()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"Objects\"><candy x=\"20\" y=\"30\" " +
+                "path=\"0,0\" rotateSpeed=\"70\" /></layer></map>");
+
+            Assert.False(vm.CanToggleAnimationPreview);
+        }
+
+        /// <summary>A positive speed on a zero-displacement carrier path does not enable global preview.</summary>
+        [Fact]
+        public void CoincidentPathDoesNotEnableGlobalAnimationPreview()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"Objects\"><star x=\"20\" y=\"30\" " +
+                "path=\"0,0\" moveSpeed=\"70\" /></layer></map>");
+
+            Assert.False(vm.CanToggleAnimationPreview);
+        }
+
         /// <summary>Orbit-only objects expose the same row preview affordance as rotateSpeed objects.</summary>
         [Fact]
         public void OrbitOnlyObjectHasAnimationPreviewAvailable()
