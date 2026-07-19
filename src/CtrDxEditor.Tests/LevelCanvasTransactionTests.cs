@@ -32,7 +32,8 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("HandGeometry.HasDragged(_handDragStartPointer, levelPt, View.Zoom)", source, StringComparison.Ordinal);
             Assert.Contains("if (!BeginHandDrag(levelPt))", source, StringComparison.Ordinal);
-            Assert.Contains("_handObjectDrag = HandObject.IsHand(obj.Type);", source, StringComparison.Ordinal);
+            Assert.Contains("bool draggingSingleHand = IsSingleSelection && HandObject.IsHand(obj.Type);", source, StringComparison.Ordinal);
+            Assert.Contains("_handObjectDrag = draggingSingleHand;", source, StringComparison.Ordinal);
             Assert.Contains("(_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved", source, StringComparison.Ordinal);
         }
 

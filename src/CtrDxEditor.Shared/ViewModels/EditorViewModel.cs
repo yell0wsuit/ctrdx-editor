@@ -352,6 +352,34 @@ namespace CtrDxEditor.ViewModels
             RaiseSelectedObjectChanged();
         }
 
+        /// <summary>
+        /// Duplicates the current selection into the active layer, offsets the clones, and selects them.
+        /// The operation captures one undo snapshot.
+        /// </summary>
+        public void DuplicateSelection(int dx, int dy)
+        {
+            if (Document is null || ActiveLayer?.Layer is not { } target || Selection.Count == 0)
+            {
+                return;
+            }
+
+            CaptureUndoSnapshot();
+            IReadOnlyList<LevelObject> clones = ObjectCloneService.Clone(Selection.Items, target, Document);
+            foreach (LevelObject clone in clones)
+            {
+                clone.X += dx;
+                clone.Y += dy;
+            }
+            LevelObjectPolicy.NormalizeBindingKeys(Document);
+            RefreshPalette();
+            RefreshObjectList();
+            if (clones.Count > 0)
+            {
+                Selection.SetRange(clones, clones[^1]);
+                RaiseSelectedObjectChanged();
+            }
+        }
+
         /// <summary>Refreshes bindings and property-panel state after a direct selection mutation.</summary>
         public void RaiseSelectedObjectChanged()
         {

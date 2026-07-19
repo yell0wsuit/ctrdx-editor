@@ -69,6 +69,7 @@ namespace CtrDxEditor.Views
                 vm.RaiseSelectedObjectChanged();
             };
             canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
+            canvas.DuplicateRequested = () => (DataContext as EditorViewModel)?.DuplicateSelection(0, 0);
             canvas.HandSegmentActivated = index => (DataContext as EditorViewModel)?.ExpandFieldGroup(index);
             canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();
             canvas.CompleteDocumentEdit = () => (DataContext as EditorViewModel)?.CompleteUndoTransaction();

@@ -169,6 +169,24 @@ namespace CtrDxEditor.Rendering
             return _handDragStartTarget + (levelPt - _handDragStartPointer);
         }
 
+        /// <summary>Captures stable object and primary origins for a group move.</summary>
+        private void CaptureGroupDragOrigins()
+        {
+            _groupDragOrigins.Clear();
+            IEnumerable<LevelObject> group = SelectedObjects.Count > 0
+                ? SelectedObjects
+                : PrimaryObject is { } fallback ? [fallback] : [];
+            foreach (LevelObject selected in group)
+            {
+                _groupDragOrigins.Add((selected, selected.X, selected.Y));
+            }
+            if (PrimaryObject is { } primary)
+            {
+                _primaryOriginX = primary.X;
+                _primaryOriginY = primary.Y;
+            }
+        }
+
         /// <summary>Which vinyl handle a level point is over, or <see cref="VinylGeometry.Handle.None"/>.</summary>
         private VinylGeometry.Handle HitVinylHandle(Vec2 levelPt)
         {
@@ -1008,13 +1026,14 @@ namespace CtrDxEditor.Rendering
             LevelObject obj = doc.AllObjects[hit];
             bool commandDown = e.KeyModifiers.HasFlag(KeyModifiers.Control)
                 || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
-            if (commandDown)
+            bool alreadySelected = SelectedObjects.Contains(obj);
+            if (commandDown && !alreadySelected)
             {
                 SelectionRequested?.Invoke(new SelectionRequest(SelectionRequestKind.Toggle, obj));
                 e.Handled = true;
                 return;
             }
-            if (!SelectedObjects.Contains(obj))
+            if (!alreadySelected)
             {
                 if (SelectionRequested is { } replaceSelection)
                 {
@@ -1025,16 +1044,25 @@ namespace CtrDxEditor.Rendering
                     SelectedObject = obj;
                 }
             }
-            _dragOffset = levelPt - new Vec2(obj.X, obj.Y);
-            _dragging = true;
-            _handObjectDrag = HandObject.IsHand(obj.Type);
-            if (_handObjectDrag)
+
+            CaptureGroupDragOrigins();
+            bool draggingSingleHand = IsSingleSelection && HandObject.IsHand(obj.Type);
+            if (commandDown)
             {
-                PrepareHandDrag(levelPt, new Vec2(obj.X, obj.Y));
+                _pendingDupDrag = true;
+                _dupDragArmed = false;
+                _dupDragStart = levelPt;
             }
-            else
+            else if (!draggingSingleHand)
             {
                 BeginDocumentEdit?.Invoke();
+            }
+            _dragOffset = levelPt - new Vec2(PrimaryObject!.X, PrimaryObject.Y);
+            _dragging = true;
+            _handObjectDrag = draggingSingleHand;
+            if (_handObjectDrag)
+            {
+                PrepareHandDrag(levelPt, new Vec2(PrimaryObject.X, PrimaryObject.Y));
             }
             e.Pointer.Capture(this);
         }
@@ -1249,9 +1277,26 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_pendingDupDrag && !_dupDragArmed)
+            {
+                if (!HandGeometry.HasDragged(_dupDragStart, levelPt, View.Zoom))
+                {
+                    return;
+                }
+
+                _dupDragArmed = true;
+                DuplicateRequested?.Invoke();
+                CaptureGroupDragOrigins();
+            }
+
             (int gx, int gy) = Snap(levelPt - _dragOffset);
-            selected.X = gx;
-            selected.Y = gy;
+            int deltaX = gx - _primaryOriginX;
+            int deltaY = gy - _primaryOriginY;
+            foreach ((LevelObject obj, int originX, int originY) in _groupDragOrigins)
+            {
+                obj.X = originX + deltaX;
+                obj.Y = originY + deltaY;
+            }
             SelectedObjectMoved?.Invoke();
             InvalidateVisual();
         }
@@ -1289,6 +1334,11 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_pendingDupDrag && !_dupDragArmed && PrimaryObject is { } tapTarget)
+            {
+                SelectionRequested?.Invoke(new SelectionRequest(SelectionRequestKind.Toggle, tapTarget));
+            }
+
             bool handHandleEdited = (_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved;
             bool editedDocument = (_dragging && (!_handObjectDrag || _handDragHasMoved))
                 || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
@@ -1297,6 +1347,12 @@ namespace CtrDxEditor.Rendering
                 || _conveyorDrag != ConveyorGeometry.Handle.None
                 || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag;
             _dragging = false;
+            _pendingDupDrag = false;
+            _dupDragArmed = false;
+            _dupDragStart = default;
+            _groupDragOrigins.Clear();
+            _primaryOriginX = 0;
+            _primaryOriginY = 0;
             _waterDrag = false;
             _panning = false;
             _resizingRadius = false;
