@@ -285,6 +285,17 @@ namespace CtrDxEditor.Views
         private Point _rowDragTreePosition;
         private DispatcherTimer? _rowDragScrollTimer;
 
+        // Blocks the platform command modifier (Cmd on macOS, Ctrl elsewhere) from reaching the tree's
+        // single-selection logic, which would otherwise toggle the clicked row off. Ctrl on macOS is left
+        // alone so it keeps working as the secondary-click/context-menu gesture.
+        private void LayersTree_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.KeyModifiers.HasFlag(CmdModifier))
+            {
+                e.Handled = true;
+            }
+        }
+
         private void LayerRow_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (IsLayerRowAction(e.Source))

@@ -64,6 +64,10 @@ namespace CtrDxEditor.Views
                 PointerReleasedEvent, _paletteDrag.OnPointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
                 PointerCaptureLostEvent, _paletteDrag.OnPointerCaptureLost, RoutingStrategies.Bubble, handledEventsToo: true);
+            // Swallow command-modified presses on the layer tree (tunnel, before the built-in selection
+            // logic) so Cmd/Ctrl+click cannot toggle the single selection off and deselect the row.
+            this.FindControl<TreeView>("LayersTree")!.AddHandler(
+                PointerPressedEvent, LayersTree_PointerPressed, RoutingStrategies.Tunnel);
             // Observe every release in the view so a captured row drag also completes when released outside
             // its source row. Before the movement threshold, row controls retain normal click/edit behavior.
             AddHandler(PointerReleasedEvent, LayerRow_PointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
