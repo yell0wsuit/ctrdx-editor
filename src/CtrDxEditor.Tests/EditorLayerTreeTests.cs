@@ -354,16 +354,20 @@ namespace CtrDxEditor.Tests
             Assert.Equal(before, vm.ToXml());
         }
 
-        /// <summary>Selecting a layer row makes it active without selecting an object.</summary>
+        /// <summary>Selecting a layer row clears the selected object's pin and makes the layer active.</summary>
         [Fact]
-        public void SelectingLayerTreeItemChangesActiveLayer()
+        public void SelectingLayerTreeItemClearsObjectSelectionAndLock()
         {
             EditorViewModel vm = Create();
+            LevelObject candy = vm.Layers[0].Objects[0];
+            vm.ToggleLock(candy);
 
             vm.SelectedTreeItem = vm.Layers[1];
 
             Assert.Same(vm.Layers[1], vm.ActiveLayer);
+            Assert.Same(vm.Layers[1], vm.SelectedTreeItem);
             Assert.Null(vm.SelectedObject);
+            Assert.Null(vm.LockedObject);
         }
 
         /// <summary>Selecting an object row updates the editor's object selection.</summary>

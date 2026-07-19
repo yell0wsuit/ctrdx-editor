@@ -947,7 +947,12 @@ namespace CtrDxEditor.ViewModels
             switch (value)
             {
                 case LayerViewModel layer:
+                    LockedObject = null;
+                    SelectedObject = null;
                     ActiveLayer = layer;
+                    // Clearing SelectedObject also clears the synchronized tree selection, so
+                    // restore the layer row that initiated this change.
+                    SelectedTreeItem = layer;
                     break;
                 case LevelObject obj:
                     SelectedObject = obj;
