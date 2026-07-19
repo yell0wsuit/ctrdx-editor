@@ -347,6 +347,7 @@
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
                   Background="Transparent"
                   KeyDown="LayerTree_KeyDown"
+                  SelectionChanged="LayersTree_SelectionChanged"
                   ItemsSource="{Binding Layers}"
                   SelectedItem="{Binding SelectedTreeItem, Mode=TwoWay}">
           <TreeView.Styles>

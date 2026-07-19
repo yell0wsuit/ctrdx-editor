@@ -59,6 +59,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Null(vm.LockedObject);
             Assert.Null(vm.SelectedObject);
+            Assert.Null(vm.SelectedTreeItem);
         }
 
         /// <summary>A locked layer's object cannot be selected through the layer tree.</summary>

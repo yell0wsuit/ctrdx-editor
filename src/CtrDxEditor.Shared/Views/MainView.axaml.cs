@@ -111,6 +111,30 @@ namespace CtrDxEditor.Views
             {
                 Dispatcher.UIThread.Post(BringSelectedTreeItemIntoView, DispatcherPriority.Loaded);
             }
+
+            if (e.PropertyName == nameof(EditorViewModel.EffectivelyLockedObjects))
+            {
+                ClearLockedTreeSelection();
+            }
+        }
+
+        private void LayersTree_SelectionChanged(object? _, SelectionChangedEventArgs __)
+        {
+            ClearLockedTreeSelection();
+        }
+
+        private void ClearLockedTreeSelection()
+        {
+            if (DataContext is not EditorViewModel vm
+                || this.FindControl<TreeView>("LayersTree") is not { } tree
+                || tree.SelectedItem is not LevelObject selected
+                || !vm.EffectivelyLockedObjects.Contains(selected))
+            {
+                return;
+            }
+
+            tree.SelectedItem = null;
+            vm.SelectedTreeItem = null;
         }
 
         private void BringSelectedTreeItemIntoView()

@@ -327,6 +327,19 @@ namespace CtrDxEditor.Tests
             Assert.Contains("container.BringIntoView();", viewCodeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>Locked-layer objects cannot retain or acquire the TreeView selection highlight.</summary>
+        [Fact]
+        public void LockedLayerObjectsCannotKeepTreeSelectionHighlight()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string viewCodeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("SelectionChanged=\"LayersTree_SelectionChanged\"", view, StringComparison.Ordinal);
+            Assert.Contains("nameof(EditorViewModel.EffectivelyLockedObjects)", viewCodeBehind, StringComparison.Ordinal);
+            Assert.Contains("ClearLockedTreeSelection();", viewCodeBehind, StringComparison.Ordinal);
+            Assert.Contains("tree.SelectedItem = null;", viewCodeBehind, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;
