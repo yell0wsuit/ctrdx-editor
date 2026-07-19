@@ -123,5 +123,21 @@ namespace CtrDxEditor.Tests
             vm.SelectedObject = null;
             Assert.Null(vm.Selection.Primary);
         }
+
+        [Fact]
+        public void SelectAllInActiveLayer_selects_every_object_in_active_layer()
+        {
+            var vm = new EditorViewModel(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/><star x=\"2\" y=\"2\"/></layer>" +
+                "<layer name=\"L1\"><star x=\"3\" y=\"3\"/></layer></map>");
+            vm.ActiveLayer = vm.Layers[0];
+
+            vm.SelectAllInActiveLayer();
+
+            Assert.Equal(2, vm.Selection.Count);
+            Assert.All(vm.Selection.Items, o => Assert.Same(vm.ActiveLayer!.Layer.Element, o.Element.Parent));
+        }
     }
 }

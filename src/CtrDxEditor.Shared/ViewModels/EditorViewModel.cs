@@ -30,6 +30,7 @@ namespace CtrDxEditor.ViewModels
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
         private HistoryState? _pendingUndoTransaction;
+        private bool _syncingSelectedTreeItem;
 
         // Serialized level XML as of the last load/new/save. Null when no level is open. Compared against
         // the live document to detect unsaved changes (see IsModified); reusing ToXml keeps the comparison
@@ -329,6 +330,33 @@ namespace CtrDxEditor.ViewModels
             {
                 Delete(selected);
             }
+        }
+
+        /// <summary>Selects every object in the active layer (Ctrl+A). No-op when no active layer exists.</summary>
+        public void SelectAllInActiveLayer()
+        {
+            if (ActiveLayer?.Layer is not { } layer)
+            {
+                return;
+            }
+
+            IReadOnlyList<LevelObject> objects = layer.Objects;
+            if (objects.Count == 0)
+            {
+                Selection.Clear();
+                RaiseSelectedObjectChanged();
+                return;
+            }
+
+            Selection.SetRange(objects, objects[0]);
+            RaiseSelectedObjectChanged();
+        }
+
+        /// <summary>Refreshes bindings and property-panel state after a direct selection mutation.</summary>
+        public void RaiseSelectedObjectChanged()
+        {
+            OnPropertyChanged(nameof(SelectedObject));
+            OnSelectedObjectChanged(SelectedObject);
         }
 
         /// <summary>Removes <paramref name="removed"/> from the document, capturing undo and refreshing views.</summary>
@@ -975,6 +1003,11 @@ namespace CtrDxEditor.ViewModels
 
         partial void OnSelectedTreeItemChanged(object? value)
         {
+            if (_syncingSelectedTreeItem)
+            {
+                return;
+            }
+
             switch (value)
             {
                 case LayerViewModel layer:
@@ -1269,7 +1302,15 @@ namespace CtrDxEditor.ViewModels
                 ActiveLayer = parent;
             }
 
-            SelectedTreeItem = value;
+            _syncingSelectedTreeItem = true;
+            try
+            {
+                SelectedTreeItem = value;
+            }
+            finally
+            {
+                _syncingSelectedTreeItem = false;
+            }
             OnPropertyChanged(nameof(CanEditPolyline));
             PopulateFields(value);
             RebuildFieldGroups();

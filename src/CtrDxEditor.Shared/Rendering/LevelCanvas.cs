@@ -222,6 +222,25 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback used to toggle the locked object from canvas gestures.</summary>
         public Action<LevelObject?>? ToggleLock { get; set; }
 
+        /// <summary>How the canvas asks the view model to change selection.</summary>
+        public enum SelectionRequestKind
+        {
+            /// <summary>Replace the current selection.</summary>
+            Replace,
+
+            /// <summary>Toggle one object in the current selection.</summary>
+            Toggle,
+
+            /// <summary>Clear the current selection.</summary>
+            Clear,
+        }
+
+        /// <summary>A selection change the canvas requests; the view model applies it to <see cref="EditorSelection"/>.</summary>
+        public readonly record struct SelectionRequest(SelectionRequestKind Kind, LevelObject? Target);
+
+        /// <summary>Raised when the canvas wants the view model to change selection.</summary>
+        public Action<SelectionRequest>? SelectionRequested { get; set; }
+
         /// <summary>Callback raised when a canvas drag moves the selected object, so bound views can refresh.</summary>
         public Action? SelectedObjectMoved { get; set; }
 

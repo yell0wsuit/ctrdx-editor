@@ -991,7 +991,14 @@ namespace CtrDxEditor.Rendering
                     return;
                 }
 
-                SelectedObject = null;
+                if (SelectionRequested is { } clearSelection)
+                {
+                    clearSelection(new SelectionRequest(SelectionRequestKind.Clear, null));
+                }
+                else
+                {
+                    SelectedObject = null;
+                }
                 _panning = true;
                 _panLast = p;
                 e.Pointer.Capture(this);
@@ -999,7 +1006,25 @@ namespace CtrDxEditor.Rendering
             }
 
             LevelObject obj = doc.AllObjects[hit];
-            SelectedObject = obj;
+            bool commandDown = e.KeyModifiers.HasFlag(KeyModifiers.Control)
+                || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
+            if (commandDown)
+            {
+                SelectionRequested?.Invoke(new SelectionRequest(SelectionRequestKind.Toggle, obj));
+                e.Handled = true;
+                return;
+            }
+            if (!SelectedObjects.Contains(obj))
+            {
+                if (SelectionRequested is { } replaceSelection)
+                {
+                    replaceSelection(new SelectionRequest(SelectionRequestKind.Replace, obj));
+                }
+                else
+                {
+                    SelectedObject = obj;
+                }
+            }
             _dragOffset = levelPt - new Vec2(obj.X, obj.Y);
             _dragging = true;
             _handObjectDrag = HandObject.IsHand(obj.Type);

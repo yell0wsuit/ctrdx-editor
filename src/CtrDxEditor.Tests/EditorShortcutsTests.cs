@@ -19,6 +19,7 @@ namespace CtrDxEditor.Tests
         [InlineData(Key.W, KeyModifiers.Control, EditorShortcut.Close)]
         [InlineData(Key.Z, KeyModifiers.Control, EditorShortcut.Undo)]
         [InlineData(Key.Z, KeyModifiers.Control | KeyModifiers.Shift, EditorShortcut.Redo)]
+        [InlineData(Key.A, KeyModifiers.Control, EditorShortcut.SelectAll)]
         [InlineData(Key.OemPlus, KeyModifiers.Control, EditorShortcut.ZoomIn)]
         [InlineData(Key.Add, KeyModifiers.Control, EditorShortcut.ZoomIn)]
         [InlineData(Key.OemMinus, KeyModifiers.Control, EditorShortcut.ZoomOut)]

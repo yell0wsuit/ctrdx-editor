@@ -47,6 +47,27 @@ namespace CtrDxEditor.Views
             canvas.PlaceAt = (element, x, y) =>
                 DataContext is EditorViewModel vm ? vm.PlaceObject(element, x, y) : null;
             canvas.ToggleLock = obj => (DataContext as EditorViewModel)?.ToggleLock(obj);
+            canvas.SelectionRequested = request =>
+            {
+                if (DataContext is not EditorViewModel vm)
+                {
+                    return;
+                }
+
+                switch (request.Kind)
+                {
+                    case LevelCanvas.SelectionRequestKind.Replace when request.Target is { } target:
+                        vm.Selection.Replace(target);
+                        break;
+                    case LevelCanvas.SelectionRequestKind.Toggle when request.Target is { } target:
+                        vm.Selection.Toggle(target);
+                        break;
+                    case LevelCanvas.SelectionRequestKind.Clear:
+                        vm.Selection.Clear();
+                        break;
+                }
+                vm.RaiseSelectedObjectChanged();
+            };
             canvas.SelectedObjectMoved = () => (DataContext as EditorViewModel)?.RefreshFieldValues();
             canvas.HandSegmentActivated = index => (DataContext as EditorViewModel)?.ExpandFieldGroup(index);
             canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();

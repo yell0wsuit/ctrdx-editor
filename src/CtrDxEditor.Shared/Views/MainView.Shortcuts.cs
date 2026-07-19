@@ -86,6 +86,9 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Redo when DataContext is EditorViewModel { CanRedo: true } redoVm:
                     redoVm.Redo();
                     return true;
+                case EditorShortcut.SelectAll when DataContext is EditorViewModel { HasDocument: true } selectVm:
+                    selectVm.SelectAllInActiveLayer();
+                    return true;
                 case EditorShortcut.ZoomIn when DataContext is EditorViewModel { HasDocument: true }:
                     this.FindControl<LevelCanvas>("Canvas")!.ZoomBy(1.2);
                     return true;
@@ -109,6 +112,7 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Close:
                 case EditorShortcut.Undo:
                 case EditorShortcut.Redo:
+                case EditorShortcut.SelectAll:
                 case EditorShortcut.ZoomIn:
                 case EditorShortcut.ZoomOut:
                 case EditorShortcut.ZoomFit:
