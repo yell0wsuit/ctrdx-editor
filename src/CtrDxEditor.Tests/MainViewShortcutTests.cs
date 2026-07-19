@@ -44,10 +44,12 @@ namespace CtrDxEditor.Tests
             Assert.Contains("IsEnabled=\"{Binding CanCutSelection}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanCopySelection}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanPaste}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanSelectAllObjects}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", view, StringComparison.Ordinal);
             Assert.Contains("{ CanCopySelection: true } copyVm", shortcuts, StringComparison.Ordinal);
             Assert.Contains("{ CanCutSelection: true } cutVm", shortcuts, StringComparison.Ordinal);
             Assert.Contains("{ CanPaste: true } pasteVm", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("{ CanSelectAllObjects: true } selectVm", shortcuts, StringComparison.Ordinal);
             Assert.Contains("{ HasDocument: true } deleteVm", shortcuts, StringComparison.Ordinal);
             Assert.Contains("else if (deleteVm.CanDeleteSelection)", shortcuts, StringComparison.Ordinal);
         }

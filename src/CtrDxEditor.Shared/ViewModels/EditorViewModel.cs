@@ -173,6 +173,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when the selected objects can be deleted from an open level.</summary>
         public bool CanDeleteSelection => HasDocument && SelectedObject is not null;
 
+        /// <summary>True when the open level contains at least one object outside locked layers.</summary>
+        public bool CanSelectAllObjects =>
+            Document?.AllObjects.Any(obj => !EffectivelyLockedObjects.Contains(obj)) == true;
+
         /// <summary>True when the active layer can be deleted.</summary>
         public bool CanDeleteActiveLayer => ActiveLayer is { IsLocked: false };
 
@@ -608,6 +612,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanCopySelection));
             OnPropertyChanged(nameof(CanPaste));
             OnPropertyChanged(nameof(CanDeleteSelection));
+            OnPropertyChanged(nameof(CanSelectAllObjects));
         }
 
         /// <summary>Removes <paramref name="removed"/> from the document, capturing undo and refreshing views.</summary>
@@ -952,6 +957,7 @@ namespace CtrDxEditor.ViewModels
             }
             EffectivelyLockedObjects = lockedObjects;
             OnPropertyChanged(nameof(EffectivelyLockedObjects));
+            OnPropertyChanged(nameof(CanSelectAllObjects));
             if (LockedObject is { } pinned && lockedObjects.Contains(pinned))
             {
                 LockedObject = null;

@@ -86,7 +86,7 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Redo when DataContext is EditorViewModel { CanRedo: true } redoVm:
                     redoVm.Redo();
                     return true;
-                case EditorShortcut.SelectAll when DataContext is EditorViewModel { HasDocument: true } selectVm:
+                case EditorShortcut.SelectAll when DataContext is EditorViewModel { CanSelectAllObjects: true } selectVm:
                     selectVm.SelectAllObjects();
                     return true;
                 case EditorShortcut.Copy when DataContext is EditorViewModel { CanCopySelection: true } copyVm:

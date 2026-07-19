@@ -180,5 +180,36 @@ namespace CtrDxEditor.Tests
 
             Assert.Same(active, vm.ActiveLayer);
         }
+
+        /// <summary>Select All is available only while the open document contains an unlocked object.</summary>
+        [Fact]
+        public void SelectAllAvailabilityTracksSelectableObjects()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+            vm.LoadLevelXml(
+                "<map><layer name=\"settings\"><map/></layer>" +
+                "<layer name=\"L0\"><bubble x=\"1\" y=\"1\"/></layer></map>");
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            Assert.True(vm.CanSelectAllObjects);
+
+            vm.SetLayerLocked(vm.Layers[0].Layer, true);
+
+            Assert.False(vm.CanSelectAllObjects);
+            Assert.Contains(nameof(EditorViewModel.CanSelectAllObjects), changed);
+
+            changed.Clear();
+            vm.SetLayerLocked(vm.Layers[0].Layer, false);
+
+            Assert.True(vm.CanSelectAllObjects);
+            Assert.Contains(nameof(EditorViewModel.CanSelectAllObjects), changed);
+
+            changed.Clear();
+            vm.Delete(vm.Document!.AllObjects[0]);
+
+            Assert.False(vm.CanSelectAllObjects);
+            Assert.Contains(nameof(EditorViewModel.CanSelectAllObjects), changed);
+        }
     }
 }

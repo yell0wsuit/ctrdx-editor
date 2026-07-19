@@ -142,7 +142,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="SelectAll_Click" IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="SelectAll_Click" IsEnabled="{Binding CanSelectAllObjects}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="SelectAll" />
           </MenuItem.Icon>
