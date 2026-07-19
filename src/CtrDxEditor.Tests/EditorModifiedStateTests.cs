@@ -1,3 +1,5 @@
+using System.Linq;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.ViewModels;
@@ -87,6 +89,28 @@ namespace CtrDxEditor.Tests
 
             Assert.False(vm.IsModified);
         }
+
+        /// <summary>Duplicate ordinary layers load with stable names and remain pending save.</summary>
+        [Fact]
+        public void LoadingDuplicateLayerNamesNormalizesLiveAndMarksModified()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            vm.LoadLevelXml("""
+                <map>
+                    <layer name="settings"><map width="640" height="480" /></layer>
+                    <layer name="Objects" />
+                    <layer name="Objects" />
+                    <layer name="Objects-2" />
+                </map>
+                """);
+
+            LevelDocument document = Assert.IsType<LevelDocument>(vm.Document);
+            Assert.Equal(["Objects", "Objects-3", "Objects-2"],
+                document.Layers.Select(layer => layer.Name));
+            Assert.True(vm.IsModified);
+        }
+
         private const string Level = """
         <?xml version='1.0' encoding='utf-8'?>
         <map>

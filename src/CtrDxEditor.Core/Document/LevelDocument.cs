@@ -72,15 +72,27 @@ namespace CtrDxEditor.Core.Document
         private XElement Root => _doc.Root
             ?? throw new InvalidDataException("Level XML has no root <map> element.");
 
-        private XElement? Layer(string name)
+        /// <summary>Whether a layer name identifies the special settings layer.</summary>
+        /// <param name="name">The layer name to classify.</param>
+        /// <returns>True for <c>settings</c> in any casing.</returns>
+        public static bool IsSettingsLayerName(string? name)
         {
-            return Root.Elements("layer")
-            .FirstOrDefault(l => (string?)l.Attribute("name") == name);
+            return string.Equals(name, "settings", StringComparison.OrdinalIgnoreCase);
         }
 
-        private XElement? SettingsMap => Layer("settings")?.Element("map");
+        private static bool IsSettingsLayer(XElement layer)
+        {
+            return IsSettingsLayerName((string?)layer.Attribute("name"));
+        }
 
-        private XElement? GameDesign => Layer("settings")?.Element("gameDesign");
+        private XElement? SettingsLayer => Root.Elements("layer").FirstOrDefault(IsSettingsLayer);
+
+        /// <summary>The number of settings layers, matched without regard to casing.</summary>
+        public int SettingsLayerCount => Root.Elements("layer").Count(IsSettingsLayer);
+
+        private XElement? SettingsMap => SettingsLayer?.Element("map");
+
+        private XElement? GameDesign => SettingsLayer?.Element("gameDesign");
 
         /// <summary>The gameDesign settings element, or null when the document has none.</summary>
         public XElement? GameDesignElement => GameDesign;
@@ -131,7 +143,7 @@ namespace CtrDxEditor.Core.Document
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
         public IReadOnlyList<LevelLayer> Layers =>
             [.. Root.Elements("layer")
-                .Where(l => (string?)l.Attribute("name") != "settings")
+                .Where(l => !IsSettingsLayer(l))
                 .Select(l => new LevelLayer(l))];
 
         /// <summary>Appends a new empty object layer with the given name.</summary>
@@ -162,7 +174,7 @@ namespace CtrDxEditor.Core.Document
         public void MoveLayer(LevelLayer layer, int delta)
         {
             List<XElement> objectLayers = [.. Root.Elements("layer")
-                .Where(l => (string?)l.Attribute("name") != "settings")];
+                .Where(l => !IsSettingsLayer(l))];
             int from = objectLayers.IndexOf(layer.Element);
             if (from < 0)
             {
@@ -227,6 +239,11 @@ namespace CtrDxEditor.Core.Document
                 return false;
             }
 
+            if (IsSettingsLayerName(candidate))
+            {
+                return false;
+            }
+
             try
             {
                 _ = XmlConvert.VerifyXmlChars(candidate);
@@ -255,12 +272,49 @@ namespace CtrDxEditor.Core.Document
             return TryNormalizeLayerName(name, out _, excluding);
         }
 
+        /// <summary>Renames duplicate ordinary layers deterministically in document order.</summary>
+        /// <returns>True when at least one layer was renamed.</returns>
+        public bool NormalizeDuplicateLayerNames()
+        {
+            XElement[] ordinaryLayers = [.. Root.Elements("layer").Where(layer => !IsSettingsLayer(layer))];
+            HashSet<string> reservedNames = ordinaryLayers
+                .Select(layer => (string?)layer.Attribute("name") ?? string.Empty)
+                .ToHashSet(StringComparer.Ordinal);
+            HashSet<string> seenNames = Enumerable.Empty<string>().ToHashSet(StringComparer.Ordinal);
+            bool changed = false;
+
+            foreach (XElement layer in ordinaryLayers)
+            {
+                string originalName = (string?)layer.Attribute("name") ?? string.Empty;
+                if (seenNames.Add(originalName))
+                {
+                    continue;
+                }
+
+                int suffix = 2;
+                string candidate;
+                do
+                {
+                    candidate = $"{originalName}-{suffix}";
+                    suffix++;
+                }
+                while (reservedNames.Contains(candidate));
+
+                layer.SetAttributeValue("name", candidate);
+                _ = reservedNames.Add(candidate);
+                _ = seenNames.Add(candidate);
+                changed = true;
+            }
+
+            return changed;
+        }
+
         /// <summary>Writes level-wide settings back into the settings layer and adjusts candy objects when split mode changes.</summary>
         /// <param name="settings">The new level-wide settings. Toggling <c>TwoParts</c> converts candy objects in place: on splits <c>candy</c> into <c>candyL</c> plus a centered <c>candyR</c>, off merges them back.</param>
         public void UpdateSettings(LevelSettings settings)
         {
             bool wasTwoParts = TwoParts;
-            XElement settingsLayer = Layer("settings") ?? CreateSettingsLayer();
+            XElement settingsLayer = SettingsLayer ?? CreateSettingsLayer();
             XElement map = settingsLayer.Element("map") ?? AddChild(settingsLayer, "map");
             XElement gameDesign = settingsLayer.Element("gameDesign") ?? AddChild(settingsLayer, "gameDesign");
 

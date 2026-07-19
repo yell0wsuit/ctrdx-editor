@@ -51,6 +51,46 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(doc.NightLevel);
         }
 
+        /// <summary>Settings-layer recognition matches the game's case-insensitive lookup.</summary>
+        [Fact]
+        public void MixedCaseSettingsLayerSuppliesMetadataAndIsNotAnObjectLayer()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="SeTTings">
+                        <map gridSize="16" width="640" height="960" />
+                        <gameDesign ropePhysicsSpeed="2" special="4" />
+                    </layer>
+                    <layer name="Objects"><candy x="1" y="2" /></layer>
+                </map>
+                """);
+
+            Assert.Equal(16, doc.GridSize);
+            Assert.Equal(640, doc.Width);
+            Assert.Equal(960, doc.Height);
+            Assert.Equal(2f, doc.RopePhysicsSpeed);
+            Assert.Equal(4, doc.Special);
+            Assert.Equal("Objects", Assert.Single(doc.Layers).Name);
+            _ = Assert.Single(doc.AllObjects);
+        }
+
+        /// <summary>When malformed XML contains several settings layers, only the first supplies metadata.</summary>
+        [Fact]
+        public void FirstSettingsLayerIsAuthoritativeRegardlessOfCase()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="Settings"><map width="320" height="480" /></layer>
+                    <layer name="SETTINGS"><map width="999" height="999" /></layer>
+                    <layer name="Objects" />
+                </map>
+                """);
+
+            Assert.Equal(320, doc.Width);
+            Assert.Equal(480, doc.Height);
+            Assert.Equal("Objects", Assert.Single(doc.Layers).Name);
+        }
+
         /// <summary>A new level starts with an empty Objects layer and serializes its bools lowercase, the way real maps store them.</summary>
         [Fact]
         public void CreateNewProducesSettingsAndEmptyObjectsLayer()

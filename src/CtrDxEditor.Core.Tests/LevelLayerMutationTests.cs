@@ -101,6 +101,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(doc.IsLayerNameAvailable("c"));
         }
 
+        /// <summary>Every casing of the special settings name is reserved from ordinary layers.</summary>
+        [Fact]
+        public void IsLayerNameAvailableRejectsSettingsCaseInsensitively()
+        {
+            LevelDocument doc = TwoLayers();
+
+            Assert.False(doc.IsLayerNameAvailable("settings"));
+            Assert.False(doc.IsLayerNameAvailable("SETTINGS"));
+            Assert.False(doc.IsLayerNameAvailable(" SeTtInGs "));
+        }
+
         /// <summary>Whitespace around a candidate cannot disguise an existing layer name.</summary>
         [Fact]
         public void IsLayerNameAvailableChecksTrimmedDuplicate()
@@ -126,6 +137,41 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = TwoLayers();
 
             Assert.True(doc.IsLayerNameAvailable("rock & <roll> \"mix\""));
+        }
+
+        /// <summary>Duplicate ordinary names gain stable suffixes without displacing an existing suffixed name.</summary>
+        [Fact]
+        public void NormalizeDuplicateLayerNamesUsesTreeOrderAndSkipsReservedSuffixes()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="Settings" />
+                    <layer name="Objects" />
+                    <layer name="Objects" />
+                    <layer name="Objects-2" />
+                    <layer name="objects" />
+                    <layer name="SETTINGS" />
+                </map>
+                """);
+
+            bool changed = doc.NormalizeDuplicateLayerNames();
+
+            Assert.True(changed);
+            Assert.Equal(["Objects", "Objects-3", "Objects-2", "objects"],
+                doc.Layers.Select(layer => layer.Name));
+        }
+
+        /// <summary>A document with unique ordinary names is left byte-for-byte unchanged.</summary>
+        [Fact]
+        public void NormalizeDuplicateLayerNamesLeavesUniqueNamesUnchanged()
+        {
+            LevelDocument doc = TwoLayers();
+            string before = doc.Save();
+
+            bool changed = doc.NormalizeDuplicateLayerNames();
+
+            Assert.False(changed);
+            Assert.Equal(before, doc.Save());
         }
     }
 }

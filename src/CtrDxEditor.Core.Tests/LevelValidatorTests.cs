@@ -131,6 +131,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.ResolutionTooSmall");
         }
 
+        /// <summary>Several case variants of settings warn because only the first layer is authoritative.</summary>
+        [Fact]
+        public void DuplicateSettingsLayersWarnCaseInsensitively()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="Settings">
+                        <map width="320" height="480" />
+                        <gameDesign twoParts="false" />
+                    </layer>
+                    <layer name="SETTINGS"><map width="999" height="999" /></layer>
+                    <layer name="Objects"><candy x="1" y="1" /><target x="2" y="2" /></layer>
+                </map>
+                """);
+
+            Assert.Contains(LevelValidator.Validate(doc),
+                warning => warning.Key == "Validation.DuplicateSettingsLayer");
+        }
+
         /// <summary>Duplicate candyNumber values produce a validation warning.</summary>
         [Fact]
         public void WarnsOnDuplicateCandyNumbers()

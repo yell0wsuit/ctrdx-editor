@@ -284,6 +284,7 @@
     "Validation.NoCandy": "Level has no candy.",
     "Validation.NoTarget": "Level has no Om Nom.",
     "Validation.ResolutionTooSmall": "Level resolution is smaller than 320x480.",
+    "Validation.DuplicateSettingsLayer": "Multiple settings layers found; only the first one is used.",
     "Validation.DuplicateCandyNumber": "Duplicate candyNumber values found; grabs cannot tell those candies apart.",
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",

@@ -17,6 +17,11 @@ namespace CtrDxEditor.Core.Editing
         {
             List<LevelWarning> warnings = [];
 
+            if (document.SettingsLayerCount > 1)
+            {
+                warnings.Add(new LevelWarning("Validation.DuplicateSettingsLayer"));
+            }
+
             IReadOnlyList<LevelObject> objects = document.AllObjects;
             bool HasType(string type)
             {

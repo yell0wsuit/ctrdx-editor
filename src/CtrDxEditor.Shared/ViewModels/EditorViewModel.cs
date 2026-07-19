@@ -195,11 +195,11 @@ namespace CtrDxEditor.ViewModels
             RefreshPalette();
             RefreshObjectList();
             RefreshLocales();
-            // Baseline captured before size normalization so a level whose spike/bouncer tags
-            // disagree with their size attribute loads as a pending (savable) change, while a
-            // consistent level stays clean. See LevelObjectPolicy.NormalizeSizedElements.
+            // Baseline captured before load-time repairs so a level that needs normalization
+            // loads as a pending (savable) change, while a consistent level stays clean.
             _savedBaselineXml = ToXml();
-            bool normalized = LevelObjectPolicy.NormalizeSizedElements(Document);
+            bool normalized = Document.NormalizeDuplicateLayerNames();
+            normalized |= LevelObjectPolicy.NormalizeSizedElements(Document);
             // The legacy `mouse` tag is an alias for `gap` (same game loader), so it loads renamed
             // to `gap` and pending save, matching what the game would load.
             normalized |= LevelObjectPolicy.NormalizeMouseAlias(Document);
