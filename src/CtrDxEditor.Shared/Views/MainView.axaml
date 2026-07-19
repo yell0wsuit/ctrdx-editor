@@ -635,7 +635,7 @@
             </DataTemplate>
           </TreeView.DataTemplates>
         </TreeView>
-        <Grid Grid.Row="2" Margin="4,4,4,6" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
+        <Grid Grid.Row="2" Margin="4,4,4,6" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto"
               IsVisible="{Binding HasDocument, FallbackValue=False}">
           <Button Grid.Column="0" Command="{Binding AddLayerCommand}" ToolTip.Tip="{loc:Tr Layer.Add}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
@@ -656,7 +656,12 @@
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
           </Button>
-          <Button Grid.Column="4" Command="{Binding ToggleLayersExpandedCommand}"
+          <Button Grid.Column="4" Click="LayerMergeSelected_Click" ToolTip.Tip="{loc:Tr Layer.Merge}"
+                  IsEnabled="{Binding CanMergeSelectedLayers}"
+                  Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
+            <icons:MaterialIcon Kind="CallMerge" Width="16" Height="16" />
+          </Button>
+          <Button Grid.Column="5" Command="{Binding ToggleLayersExpandedCommand}"
                   ToolTip.Tip="{loc:Tr Layer.ToggleExpand}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <Grid>
@@ -666,7 +671,7 @@
                                   IsVisible="{Binding !AllLayersExpanded}" />
             </Grid>
           </Button>
-          <ComboBox Grid.Column="6" ItemsSource="{Binding AvailableLocales}"
+          <ComboBox Grid.Column="7" ItemsSource="{Binding AvailableLocales}"
                     SelectedIndex="{Binding DisplayLocaleIndex, Mode=TwoWay}"
                     IsVisible="{Binding HasLocalizedText, FallbackValue=False}"
                     MinWidth="96" Height="24" Padding="6,0"

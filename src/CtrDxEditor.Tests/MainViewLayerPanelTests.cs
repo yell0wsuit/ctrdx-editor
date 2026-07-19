@@ -350,6 +350,22 @@ namespace CtrDxEditor.Tests
             Assert.Contains("if (row.IsLocked)", codeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// The layer toolbar exposes a localized merge action whose enabled state follows selection
+        /// eligibility and whose click route delegates the document mutation to the editor view model.
+        /// </summary>
+        [Fact]
+        public void MergeSelectedLayersButtonUsesCapabilityAndViewModelCommand()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("IsEnabled=\"{Binding CanMergeSelectedLayers}\"", view, StringComparison.Ordinal);
+            Assert.Contains("ToolTip.Tip=\"{loc:Tr Layer.Merge}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Click=\"LayerMergeSelected_Click\"", view, StringComparison.Ordinal);
+            Assert.Contains("vm.MergeSelectedLayers();", codeBehind, StringComparison.Ordinal);
+        }
+
         /// <summary>Startup bindings hide document-only controls and capability-gate layer actions.</summary>
         [Fact]
         public void StartupLayerControlsUseSafeDocumentFallbacks()

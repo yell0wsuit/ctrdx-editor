@@ -149,6 +149,14 @@ namespace CtrDxEditor.Views
             (DataContext as EditorViewModel)?.MoveSelectedLayers(1);
         }
 
+        private void LayerMergeSelected_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.MergeSelectedLayers();
+            }
+        }
+
         private void LayerVisibility_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm
