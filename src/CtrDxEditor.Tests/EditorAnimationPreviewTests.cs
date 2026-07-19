@@ -259,5 +259,27 @@ namespace CtrDxEditor.Tests
 
             Assert.True(available is true);
         }
+
+        /// <summary>An electro without a positive on duration does not enable animation preview.</summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData("0")]
+        [InlineData("invalid")]
+        public void InactiveElectroTimingDoesNotEnableAnimationPreview(string? onTime)
+        {
+            XElement element = new("electro", new XAttribute("x", "20"), new XAttribute("y", "30"));
+            if (onTime is not null)
+            {
+                element.SetAttributeValue("onTime", onTime);
+            }
+
+            object? available = SpinPreviewConverters.Available.Convert(
+                new LevelObject(element),
+                typeof(bool),
+                parameter: null,
+                CultureInfo.InvariantCulture);
+
+            Assert.False(available is true);
+        }
     }
 }

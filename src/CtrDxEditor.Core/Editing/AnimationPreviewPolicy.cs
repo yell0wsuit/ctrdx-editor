@@ -17,7 +17,7 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Returns whether the object can visibly animate during live preview.</summary>
         public static bool CanPreview(LevelObject obj)
         {
-            return ElectroAnimation.IsElectro(obj.Type)
+            return ElectroAnimation.HasActiveTiming(obj)
                 || (SpinTable.IsSpinnable(obj.Type) && ObjectSpin.IsRotatingInPlace(obj))
                 || HasVisibleMovement(obj);
         }

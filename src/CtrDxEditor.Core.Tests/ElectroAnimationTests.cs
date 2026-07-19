@@ -50,6 +50,24 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(ElectroAnimation.IsOn(electro, 0.80));
         }
 
+        /// <summary>Only a positive on duration supplies active electro preview timing.</summary>
+        [Theory]
+        [InlineData("1", true)]
+        [InlineData("0", false)]
+        [InlineData("-1", false)]
+        [InlineData("invalid", false)]
+        [InlineData(null, false)]
+        public void ActiveTimingRequiresPositiveOnTime(string? onTime, bool expected)
+        {
+            XElement element = new("electro");
+            if (onTime is not null)
+            {
+                element.SetAttributeValue("onTime", onTime);
+            }
+
+            Assert.Equal(expected, ElectroAnimation.HasActiveTiming(new LevelObject(element)));
+        }
+
         /// <summary>Without preview playback, electro renders the lit editor preview frame.</summary>
         [Fact]
         public void NullElapsedUsesEditorPreviewSpriteKey()

@@ -18,6 +18,12 @@ namespace CtrDxEditor.Core.Editing
             return element == "electro";
         }
 
+        /// <summary>Whether the object has a positive electro on duration that can be previewed.</summary>
+        public static bool HasActiveTiming(LevelObject obj)
+        {
+            return IsElectro(obj.Type) && ReadSeconds(obj, "onTime") > 0;
+        }
+
         /// <summary>Whether the electro spark is active at <paramref name="elapsedSeconds"/>.</summary>
         public static bool IsOn(LevelObject obj, double elapsedSeconds)
         {
@@ -53,7 +59,7 @@ namespace CtrDxEditor.Core.Editing
             double offTime = ReadSeconds(obj, "offTime");
             double onTime = ReadSeconds(obj, "onTime");
             double initialDelay = ReadSeconds(obj, "initialDelay");
-            if (onTime <= 0)
+            if (!HasActiveTiming(obj))
             {
                 return null;
             }
