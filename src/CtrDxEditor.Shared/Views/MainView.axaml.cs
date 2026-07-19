@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
@@ -21,6 +22,7 @@ namespace CtrDxEditor.Views
     public partial class MainView : UserControl
     {
         private EditorViewModel? _mutatedSubscription;
+        private EditorSelection? _selectionSubscription;
         private readonly Action _invalidateCanvas;
         private readonly PaletteDragController _paletteDrag;
         private WindowNotificationManager? _notifications;
@@ -88,6 +90,11 @@ namespace CtrDxEditor.Views
             _mutatedSubscription?.ObjectMutated -= _invalidateCanvas;
             _mutatedSubscription?.LevelLoaded -= FocusCanvasAfterLevelLoaded;
             _mutatedSubscription?.PropertyChanged -= ViewModel_PropertyChanged;
+            if (_selectionSubscription is not null)
+            {
+                _selectionSubscription.Changed -= SyncCanvasSelection;
+                _selectionSubscription = null;
+            }
 
             _mutatedSubscription = DataContext as EditorViewModel;
             if (_mutatedSubscription is not null)
@@ -95,6 +102,7 @@ namespace CtrDxEditor.Views
                 _mutatedSubscription.ObjectMutated += _invalidateCanvas;
                 _mutatedSubscription.LevelLoaded += FocusCanvasAfterLevelLoaded;
                 _mutatedSubscription.PropertyChanged += ViewModel_PropertyChanged;
+                SubscribeToSelection(_mutatedSubscription.Selection);
             }
 
             SyncAnimationPreviewTimer();
@@ -116,6 +124,40 @@ namespace CtrDxEditor.Views
             {
                 ClearLockedTreeSelection();
             }
+
+            if (e.PropertyName == nameof(EditorViewModel.Selection)
+                && sender is EditorViewModel vm)
+            {
+                SubscribeToSelection(vm.Selection);
+            }
+        }
+
+        private void SubscribeToSelection(EditorSelection selection)
+        {
+            if (ReferenceEquals(_selectionSubscription, selection))
+            {
+                return;
+            }
+
+            if (_selectionSubscription is not null)
+            {
+                _selectionSubscription.Changed -= SyncCanvasSelection;
+            }
+            _selectionSubscription = selection;
+            _selectionSubscription.Changed += SyncCanvasSelection;
+            SyncCanvasSelection();
+        }
+
+        private void SyncCanvasSelection()
+        {
+            if (_selectionSubscription is null)
+            {
+                return;
+            }
+
+            _canvas.SelectedObjects = new HashSet<LevelObject>(_selectionSubscription.Items);
+            _canvas.PrimaryObject = _selectionSubscription.Primary;
+            _canvas.InvalidateVisual();
         }
 
         private void LayersTree_SelectionChanged(object? _, SelectionChangedEventArgs __)

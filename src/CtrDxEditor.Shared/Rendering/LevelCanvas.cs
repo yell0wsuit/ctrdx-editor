@@ -152,6 +152,19 @@ namespace CtrDxEditor.Rendering
         /// <summary>The currently selected object, if any.</summary>
         public LevelObject? SelectedObject { get => GetValue(SelectedObjectProperty); set => SetValue(SelectedObjectProperty, value); }
 
+        /// <summary>Every selected object. Drives multi-object outlines and group move.</summary>
+        public IReadOnlySet<LevelObject> SelectedObjects { get; set; } = new HashSet<LevelObject>();
+
+        /// <summary>The primary selected object; drives specialized handles and the property panel.</summary>
+        public LevelObject? PrimaryObject
+        {
+            get => SelectedObject;
+            set => SelectedObject = value;
+        }
+
+        /// <summary>True when exactly one object is selected; specialized handles require this.</summary>
+        private bool IsSingleSelection => SelectedObjects.Count == 1;
+
         /// <summary>The object locked for exclusive interaction, if any.</summary>
         public LevelObject? LockedObject { get => GetValue(LockedObjectProperty); set => SetValue(LockedObjectProperty, value); }
 

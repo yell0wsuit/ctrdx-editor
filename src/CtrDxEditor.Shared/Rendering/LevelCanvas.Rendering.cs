@@ -194,19 +194,45 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            // Selection chrome (outline, edit handles, rotation dial) is hidden while the selected object is a
-            // moving preview target — it isn't pickable, and drawing chrome at its stale home position would mislead.
-            LevelObject? selected = SelectedObject is { } s && !IsHidden(s) && !IsAnimatingInPreview(s) ? s : null;
+            // Every selected object gets an outline, with the primary drawn last. The fallback preserves the
+            // SelectedObject compatibility surface for isolated canvas tests and callers that have not supplied
+            // the full set yet.
+            IEnumerable<LevelObject> outlined = SelectedObjects.Count > 0
+                ? SelectedObjects
+                : PrimaryObject is { } fallback ? [fallback] : [];
+            foreach (LevelObject outlinedObject in outlined
+                .Where(o => !IsHidden(o) && !IsAnimatingInPreview(o))
+                .OrderBy(o => Equals(o, PrimaryObject) ? 1 : 0))
+            {
+                LevelBounds outlineBounds = LevelSceneRenderer.SelectionBounds(
+                    sprites, outlinedObject, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
+                Pen outlinePen = Equals(LockedObject, outlinedObject)
+                    ? _palette.ObjectLocked
+                    : _palette.ObjectSelected;
+                Point[] outlinePoints = LevelSceneRenderer.SelectionOutlinePointsWithPreview(
+                    v,
+                    outlinedObject,
+                    outlineBounds,
+                    PreviewSpinDegrees(outlinedObject),
+                    PreviewAnimationSeconds(outlinedObject));
+                for (int i = 0; i < outlinePoints.Length; i++)
+                {
+                    context.DrawLine(outlinePen, outlinePoints[i], outlinePoints[(i + 1) % outlinePoints.Length]);
+                }
+            }
+
+            // Specialized edit chrome is only available for one selected object and is hidden while that object
+            // is a moving preview target — it isn't pickable, and stale handles would be misleading.
+            LevelObject? selected = IsSingleSelection
+                && PrimaryObject is { } s
+                && !IsHidden(s)
+                && !IsAnimatingInPreview(s)
+                    ? s
+                    : null;
             if (selected is not null)
             {
                 LevelBounds sb = LevelSceneRenderer.SelectionBounds(sprites, selected, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
-                // Both boxes are dashed; a locked object is red, an unlocked one blue.
-                Pen pen = Equals(LockedObject, selected) ? _palette.ObjectLocked : _palette.ObjectSelected;
                 Point[] points = LevelSceneRenderer.SelectionOutlinePointsWithPreview(v, selected, sb, PreviewSpinDegrees(selected), PreviewAnimationSeconds(selected));
-                for (int i = 0; i < points.Length; i++)
-                {
-                    context.DrawLine(pen, points[i], points[(i + 1) % points.Length]);
-                }
                 DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
 

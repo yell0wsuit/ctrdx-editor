@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.Rendering;
 
@@ -75,6 +76,28 @@ namespace CtrDxEditor.Tests
 
             Assert.Null(canvas.SelectedObject);
             Assert.Null(canvas.LockedObject);
+        }
+
+        /// <summary>Specialized rail handles are disabled while more than one object is selected.</summary>
+        [Fact]
+        public void RailHandlesAreSuppressedWhenMultipleObjectsSelected()
+        {
+            LevelObject grab = new(XElement.Parse(
+                "<grab x=\"100\" y=\"100\" moveLength=\"100\" moveOffset=\"0\" />"));
+            LevelObject other = new(XElement.Parse("<star x=\"200\" y=\"200\" />"));
+            LevelCanvas canvas = new()
+            {
+                SelectedObject = grab,
+                SelectedObjects = new HashSet<LevelObject> { grab, other },
+            };
+            MethodInfo? method = typeof(LevelCanvas).GetMethod(
+                "HitRail",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            GrabRail.Handle hit = (GrabRail.Handle)method.Invoke(canvas, [new Vec2(100, 100)])!;
+
+            Assert.Equal(GrabRail.Handle.None, hit);
         }
     }
 }

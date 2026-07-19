@@ -1306,6 +1306,7 @@ namespace CtrDxEditor.ViewModels
         partial void OnDocumentChanged(LevelDocument? value)
         {
             Selection = new EditorSelection(value ?? EmptyDocument);
+            OnPropertyChanged(nameof(Selection));
             OnPropertyChanged(nameof(HasDocument));
         }
 

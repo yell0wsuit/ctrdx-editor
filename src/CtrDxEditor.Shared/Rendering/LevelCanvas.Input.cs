@@ -45,7 +45,7 @@ namespace CtrDxEditor.Rendering
             // A grab animating in preview draws its ring at the moving position, but the edge hit-test and drag
             // math below use the authored center — so editing is disabled until the preview stops, matching how
             // an animating object is unpickable.
-            if (SelectedObject is not { } selected || IsAnimatingInPreview(selected) || View.Zoom <= 0)
+            if (!IsSingleSelection || SelectedObject is not { } selected || IsAnimatingInPreview(selected) || View.Zoom <= 0)
             {
                 return false;
             }
@@ -60,7 +60,8 @@ namespace CtrDxEditor.Rendering
         /// <summary>Whether a point is over the selected tutorial text's right-edge width handle.</summary>
         private bool HitTutorialTextResize(Vec2 levelPt)
         {
-            return SelectedObject is { } selected
+            return IsSingleSelection
+                && SelectedObject is { } selected
                 && TutorialObject.IsText(selected.Type)
                 && !IsAnimatingInPreview(selected)
                 && Sprites is { } sprites
@@ -80,7 +81,8 @@ namespace CtrDxEditor.Rendering
         /// <returns>The rail handle under the point, or <see cref="GrabRail.Handle.None"/>.</returns>
         private GrabRail.Handle HitRail(Vec2 levelPt)
         {
-            return SelectedObject is { Type: "grab" } sel
+            return IsSingleSelection
+                && SelectedObject is { Type: "grab" } sel
                 && View.Zoom > 0
                 && GrabRenderer.DrawsMovableRail(sel)
                 && GrabRail.Of(sel) is { } g
@@ -93,7 +95,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The strip resize handle under the point, or <see cref="SpikeResize.Handle.None"/>.</returns>
         private SpikeResize.Handle HitStripResize(Vec2 levelPt)
         {
-            if (SelectedObject is not { } sel || View.Zoom <= 0)
+            if (!IsSingleSelection || SelectedObject is not { } sel || View.Zoom <= 0)
             {
                 return SpikeResize.Handle.None;
             }
@@ -112,7 +114,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The conveyor handle under the point, or <see cref="ConveyorGeometry.Handle.None"/>.</returns>
         private ConveyorGeometry.Handle HitConveyor(Vec2 levelPt)
         {
-            return SelectedObject is { } sel && View.Zoom > 0 && ConveyorGeometry.Of(sel) is { } s
+            return IsSingleSelection && SelectedObject is { } sel && View.Zoom > 0 && ConveyorGeometry.Of(sel) is { } s
                 ? ConveyorGeometry.HitTest(s, levelPt, endTolerance: 9 / View.Zoom, widthTolerance: 9 / View.Zoom)
                 : ConveyorGeometry.Handle.None;
         }
@@ -170,7 +172,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Which vinyl handle a level point is over, or <see cref="VinylGeometry.Handle.None"/>.</summary>
         private VinylGeometry.Handle HitVinylHandle(Vec2 levelPt)
         {
-            return SelectedObject is { Type: "rotatedCircle" } vinyl && View.Zoom > 0
+            return IsSingleSelection && SelectedObject is { Type: "rotatedCircle" } vinyl && View.Zoom > 0
                 ? VinylGeometry.HitTest(vinyl, levelPt, 18 / View.Zoom)
                 : VinylGeometry.Handle.None;
         }
@@ -197,7 +199,7 @@ namespace CtrDxEditor.Rendering
         /// <returns>The dial handle under the point, or <see cref="ObjectRotation.Handle.None"/>.</returns>
         private ObjectRotation.Handle HitRotationDial(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0 || EditableRotationTarget(obj) is not { } target)
+            if (!IsSingleSelection || SelectedObject is not { } obj || View.Zoom <= 0 || EditableRotationTarget(obj) is not { } target)
             {
                 return ObjectRotation.Handle.None;
             }
@@ -331,7 +333,7 @@ namespace CtrDxEditor.Rendering
         private void UpdateHandSplitPreview(Vec2 levelPt, bool altHeld)
         {
             (Vec2 Position, bool Rotatable)? preview = null;
-            if (altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
+            if (IsSingleSelection && altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
             {
                 double tolerance = 9 / View.Zoom;
                 HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
@@ -359,7 +361,7 @@ namespace CtrDxEditor.Rendering
         private void UpdateHandHoverSegment(Vec2 levelPt, bool altHeld)
         {
             int hovered = 0;
-            if (!altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
+            if (IsSingleSelection && !altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
             {
                 double tolerance = 9 / View.Zoom;
                 HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
@@ -417,7 +419,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Returns the selected canonical waypoint under a level point, or -1.</summary>
         private int HitPolylinePoint(Vec2 levelPt)
         {
-            return SelectedObject is { } obj && View.Zoom > 0 && IsEditablePolyline(obj)
+            return IsSingleSelection && SelectedObject is { } obj && View.Zoom > 0 && IsEditablePolyline(obj)
                 && EditablePath.For(obj) is { } path
                 ? path.HitPoint(levelPt, tolerance: 9 / View.Zoom)
                 : -1;
@@ -426,7 +428,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>Returns the segment whose midpoint insert handle is under a level point, or -1.</summary>
         private int HitPolylineSegment(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0
+            if (!IsSingleSelection || SelectedObject is not { } obj || View.Zoom <= 0
                 || EditablePath.For(obj) is not { CanAdd: true } path)
             {
                 return -1;
@@ -476,7 +478,7 @@ namespace CtrDxEditor.Rendering
         /// <summary>True when the pointer is over the append nub for the selected editable polyline.</summary>
         private bool HitPolylineNub(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0
+            if (!IsSingleSelection || SelectedObject is not { } obj || View.Zoom <= 0
                 || EditablePath.For(obj) is not { CanAdd: true })
             {
                 return false;
@@ -495,7 +497,7 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private bool HoveringPolylineLimit(Vec2 levelPt)
         {
-            if (SelectedObject is not { } obj || View.Zoom <= 0
+            if (!IsSingleSelection || SelectedObject is not { } obj || View.Zoom <= 0
                 || EditablePath.For(obj) is not { } path
                 || IsAnimatingInPreview(obj)
                 || path.CanAdd)
@@ -684,7 +686,7 @@ namespace CtrDxEditor.Rendering
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
             if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
             {
-                if (SelectedObject is { } rightHand && HandObject.IsHand(rightHand.Type))
+                if (IsSingleSelection && SelectedObject is { } rightHand && HandObject.IsHand(rightHand.Type))
                 {
                     double rightTolerance = 9 / View.Zoom;
                     HandGeometry.Handle rightHandHit = HandGeometry.HitTest(
@@ -710,7 +712,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (SelectedObject is { Type: "ghost" } selectedGhost)
+            if (IsSingleSelection && SelectedObject is { Type: "ghost" } selectedGhost)
             {
                 foreach ((Rect iconRect, GhostMorph morph) in _ghostIconHits)
                 {
@@ -812,7 +814,7 @@ namespace CtrDxEditor.Rendering
             }
 
             HandGeometry.Handle pressedHandHit = new(HandGeometry.HandleKind.None, 0);
-            if (SelectedObject is { } pressedHand && HandObject.IsHand(pressedHand.Type))
+            if (IsSingleSelection && SelectedObject is { } pressedHand && HandObject.IsHand(pressedHand.Type))
             {
                 double handTolerance = 9 / View.Zoom;
                 pressedHandHit = HandGeometry.HitTest(
@@ -880,7 +882,7 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            if (SelectedObject is { } handObj && HandObject.IsHand(handObj.Type))
+            if (IsSingleSelection && SelectedObject is { } handObj && HandObject.IsHand(handObj.Type))
             {
                 switch (pressedHandHit.Kind)
                 {
@@ -1172,7 +1174,7 @@ namespace CtrDxEditor.Rendering
                 bool overPolylineInsert = HitPolylineSegment(levelPt) >= 0;
                 _handHoverJoint = 0;
                 HandGeometry.HandleKind hoverHandKind = HandGeometry.HandleKind.None;
-                if (SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
+                if (IsSingleSelection && SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
                 {
                     double hoverTolerance = 9 / View.Zoom;
                     HandGeometry.Handle hoverHit = HandGeometry.HitTest(
