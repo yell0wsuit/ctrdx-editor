@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -216,6 +218,57 @@ namespace CtrDxEditor.Tests
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
             Assert.Contains("Classes.object-name=\"True\" Margin=\"6,0,0,0\"", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>Layer and object actions occupy matching lock and secondary-action slots.</summary>
+        [Fact]
+        public void LayerAndObjectActionButtonsUseAlignedSlots()
+        {
+            XDocument view = XDocument.Load(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            XElement Button(string handler)
+            {
+                return view.Descendants()
+                    .Single(element => element.Name.LocalName == "Button"
+                        && (string?)element.Attribute("Click") == handler);
+            }
+
+            XElement layerLock = Button("LayerLockToggle_Click");
+            XElement layerRename = Button("LayerRename_Click");
+            XElement objectLock = Button("ObjectLock_Click");
+            XElement objectAnimation = Button("ObjectAnimationPreview_Click");
+            XElement layerStyle = view.Descendants()
+                .Single(element => element.Name.LocalName == "Style"
+                    && (string?)element.Attribute("Selector") == "Border.layer-row");
+            XElement objectStyle = view.Descendants()
+                .Single(element => element.Name.LocalName == "Style"
+                    && (string?)element.Attribute("Selector") == "Border.object-row");
+            static string? Padding(XElement style)
+            {
+                return (string?)style.Elements()
+                    .Single(element => (string?)element.Attribute("Property") == "Padding")
+                    .Attribute("Value");
+            }
+
+            Assert.Equal("4", (string?)layerLock.Attribute("Grid.Column"));
+            Assert.Equal("3", (string?)layerRename.Attribute("Grid.Column"));
+            Assert.Equal("3", (string?)objectLock.Attribute("Grid.Column"));
+            Assert.Equal("2", (string?)objectAnimation.Attribute("Grid.Column"));
+            Assert.Equal("Auto,*,Auto,Auto,Auto", (string?)layerLock.Parent!.Attribute("ColumnDefinitions"));
+            Assert.Equal("Auto,*,Auto,Auto", (string?)objectLock.Parent!.Attribute("ColumnDefinitions"));
+            Assert.Equal("6,2,2,2", Padding(layerStyle));
+            Assert.Equal("2,1", Padding(objectStyle));
+            Assert.All([layerLock, layerRename, objectLock, objectAnimation], button =>
+            {
+                Assert.Equal("20", (string?)button.Attribute("Width"));
+                Assert.Equal("20", (string?)button.Attribute("Height"));
+                Assert.Equal("2,0", (string?)button.Attribute("Margin"));
+            });
+            Assert.All(layerRename.Descendants().Concat(objectAnimation.Descendants())
+                .Where(element => element.Name.LocalName == "MaterialIcon"), icon =>
+            {
+                Assert.Equal("14", (string?)icon.Attribute("Width"));
+                Assert.Equal("14", (string?)icon.Attribute("Height"));
+            });
         }
 
         /// <summary>Layer locking stays available inline without retaining object or layer context menus.</summary>
