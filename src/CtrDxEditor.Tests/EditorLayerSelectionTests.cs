@@ -89,5 +89,31 @@ namespace CtrDxEditor.Tests
             vm.Undo();
             Assert.Equal(new[] { "a", "b", "c" }, vm.Layers.Select(l => l.Name));
         }
+
+        [Fact]
+        public void SetSelectedLayersHidden_applies_to_all_targets()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[1]], vm.Layers[1]);
+
+            vm.SetSelectedLayersHidden(true);
+
+            Assert.True(vm.IsLayerHidden(vm.Layers[0].Layer));
+            Assert.True(vm.IsLayerHidden(vm.Layers[1].Layer));
+            Assert.False(vm.IsLayerHidden(vm.Layers[2].Layer));
+        }
+
+        [Fact]
+        public void SetSelectedLayersLocked_applies_to_all_targets()
+        {
+            EditorViewModel vm = Create();
+            vm.SetLayerSelection([vm.Layers[0], vm.Layers[1]], vm.Layers[1]);
+
+            vm.SetSelectedLayersLocked(true);
+
+            Assert.True(vm.IsLayerLocked(vm.Layers[0].Layer));
+            Assert.True(vm.IsLayerLocked(vm.Layers[1].Layer));
+            Assert.False(vm.IsLayerLocked(vm.Layers[2].Layer));
+        }
     }
 }

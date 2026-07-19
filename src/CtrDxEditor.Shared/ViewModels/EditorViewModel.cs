@@ -808,6 +808,15 @@ namespace CtrDxEditor.ViewModels
             ObjectMutated?.Invoke();
         }
 
+        /// <summary>Shows or hides every effective-target layer (batch of the single-layer eye toggle).</summary>
+        public void SetSelectedLayersHidden(bool hidden)
+        {
+            foreach (LayerViewModel row in EffectiveLayerTargets.ToList())
+            {
+                SetLayerHidden(row.Layer, hidden);
+            }
+        }
+
         /// <summary>Whether a layer is locked against editing.</summary>
         /// <param name="layer">The layer to inspect.</param>
         /// <returns>True when the layer is locked.</returns>
@@ -835,6 +844,16 @@ namespace CtrDxEditor.ViewModels
             }
             RecomputeLockedObjects();
             ObjectMutated?.Invoke();
+        }
+
+        /// <summary>Locks or unlocks every effective-target layer (batch of the single-layer lock toggle).</summary>
+        public void SetSelectedLayersLocked(bool locked)
+        {
+            foreach (LayerViewModel row in EffectiveLayerTargets.ToList())
+            {
+                SetLayerLocked(row.Layer, locked);
+            }
+            NotifyLayerSelectionChanged();
         }
 
         private void RecomputeLockedObjects()
