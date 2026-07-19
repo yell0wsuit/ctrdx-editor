@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -140,12 +141,12 @@ namespace CtrDxEditor.Views
 
         private void LayerMoveUp_Click(object? sender, RoutedEventArgs e)
         {
-            (DataContext as EditorViewModel)?.MoveActiveLayer(-1);
+            (DataContext as EditorViewModel)?.MoveSelectedLayers(-1);
         }
 
         private void LayerMoveDown_Click(object? sender, RoutedEventArgs e)
         {
-            (DataContext as EditorViewModel)?.MoveActiveLayer(1);
+            (DataContext as EditorViewModel)?.MoveSelectedLayers(1);
         }
 
         private void LayerVisibility_Click(object? sender, RoutedEventArgs e)
@@ -153,7 +154,15 @@ namespace CtrDxEditor.Views
             if (DataContext is EditorViewModel vm
                 && sender is ToggleButton { Tag: LayerViewModel row } toggle)
             {
-                vm.SetLayerHidden(row.Layer, toggle.IsChecked != true);
+                bool hidden = toggle.IsChecked != true;
+                if (vm.SelectedLayers.Any(layer => ReferenceEquals(layer, row)) && vm.SelectedLayers.Count > 1)
+                {
+                    vm.SetSelectedLayersHidden(hidden);
+                }
+                else
+                {
+                    vm.SetLayerHidden(row.Layer, hidden);
+                }
                 e.Handled = true;
             }
         }
@@ -688,16 +697,32 @@ namespace CtrDxEditor.Views
         {
             if (DataContext is EditorViewModel vm && sender is Control { Tag: LayerViewModel row })
             {
-                vm.SetLayerLocked(row.Layer, !vm.IsLayerLocked(row.Layer));
+                bool next = !vm.IsLayerLocked(row.Layer);
+                if (vm.SelectedLayers.Any(layer => ReferenceEquals(layer, row)) && vm.SelectedLayers.Count > 1)
+                {
+                    vm.SetSelectedLayersLocked(next);
+                }
+                else
+                {
+                    vm.SetLayerLocked(row.Layer, next);
+                }
             }
         }
 
         private async void LayerDeleteActive_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is EditorViewModel { ActiveLayer: { } active } vm
-                && await ConfirmDeleteLayerAsync(active.Layer.Name))
+            if (DataContext is not EditorViewModel vm || vm.EffectiveLayerTargets.Count == 0)
             {
-                vm.DeleteActiveLayer();
+                return;
+            }
+
+            IReadOnlyList<LayerViewModel> targets = vm.EffectiveLayerTargets;
+            string prompt = targets.Count == 1
+                ? targets[0].Layer.Name
+                : $"{targets.Count} layers";
+            if (await ConfirmDeleteLayerAsync(prompt))
+            {
+                vm.DeleteSelectedLayers();
             }
         }
 

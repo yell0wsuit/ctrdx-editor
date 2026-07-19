@@ -642,17 +642,17 @@
             <icons:MaterialIcon Kind="Plus" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="1" Click="LayerDeleteActive_Click" ToolTip.Tip="{loc:Tr Layer.Delete}"
-                  IsEnabled="{Binding CanDeleteActiveLayer}"
+                  IsEnabled="{Binding CanDeleteSelectedLayers}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Minus" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="2" Click="LayerMoveUp_Click" ToolTip.Tip="{loc:Tr Layer.MoveUp}"
-                  IsEnabled="{Binding CanMoveActiveLayerUp}"
+                  IsEnabled="{Binding CanMoveSelectedLayersUp}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="ArrowUp" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="3" Click="LayerMoveDown_Click" ToolTip.Tip="{loc:Tr Layer.MoveDown}"
-                  IsEnabled="{Binding CanMoveActiveLayerDown}"
+                  IsEnabled="{Binding CanMoveSelectedLayersDown}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
           </Button>

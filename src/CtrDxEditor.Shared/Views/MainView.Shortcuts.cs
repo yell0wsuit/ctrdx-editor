@@ -109,8 +109,15 @@ namespace CtrDxEditor.Views
                     this.FindControl<LevelCanvas>("Canvas")!.FitToView();
                     return true;
                 case EditorShortcut.Delete when DataContext is EditorViewModel deleteVm:
-                    deleteVm.DeleteSelected();
-                    this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+                    if (deleteVm.SelectedLayers.Count > 0)
+                    {
+                        LayerDeleteActive_Click(this, new RoutedEventArgs());
+                    }
+                    else
+                    {
+                        deleteVm.DeleteSelected();
+                        this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
+                    }
                     return true;
                 case EditorShortcut.ToggleAnimationPreview when DataContext is EditorViewModel { HasDocument: true } previewVm:
                     previewVm.ToggleAnimationPreviewAll();
