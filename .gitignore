@@ -62,3 +62,6 @@ nunit-*.xml
 
 # Binary content assets — fetched from ctrdx-assets at build time, not stored in Git
 /content/
+
+# BenchmarkDotNet run output (reports, logs, generated build projects).
+BenchmarkDotNet.Artifacts/
