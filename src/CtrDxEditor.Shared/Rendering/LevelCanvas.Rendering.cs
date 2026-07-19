@@ -88,11 +88,12 @@ namespace CtrDxEditor.Rendering
 
             GrabRenderer.DrawRadiusRings(context, v, objects, _palette.GrabRadius, _palette.BulbRadius, PreviewAnimationSeconds);
 
+            IntSize viewport = new((int)Math.Ceiling(Bounds.Width), (int)Math.Ceiling(Bounds.Height));
             foreach (LevelObject obj in objects)
             {
                 if (ShowMovementPaths)
                 {
-                    LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow);
+                    LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
                 }
                 if (!IsAnimationPreviewing(obj))
                 {

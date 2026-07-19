@@ -1762,11 +1762,23 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>Draws the movement path used by active DX mover data.</summary>
-        public static void DrawMovementPath(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pathPen, Pen arrowPen)
+        /// <param name="ctx">The drawing context to render into.</param>
+        /// <param name="v">The view transform mapping level coordinates to screen pixels.</param>
+        /// <param name="obj">The mover whose path is drawn.</param>
+        /// <param name="pathPen">The pen for the path line.</param>
+        /// <param name="arrowPen">The pen for the direction chevrons.</param>
+        /// <param name="viewport">The canvas size in pixels, used to clip path segments to what is visible.</param>
+        public static void DrawMovementPath(
+            DrawingContext ctx,
+            ViewTransform v,
+            LevelObject obj,
+            Pen pathPen,
+            Pen arrowPen,
+            IntSize viewport)
         {
             if (AntPath.IsAnts(obj.Type))
             {
-                DrawAntMovementPath(ctx, v, obj, pathPen, arrowPen);
+                DrawAntMovementPath(ctx, v, obj, pathPen, arrowPen, viewport);
                 return;
             }
 
@@ -1784,7 +1796,7 @@ namespace CtrDxEditor.Rendering
 
             for (int i = 0; i < points.Length; i++)
             {
-                ctx.DrawLine(pathPen, points[i], points[(i + 1) % points.Length]);
+                DrawClippedPathLine(ctx, pathPen, points[i], points[(i + 1) % points.Length], viewport);
             }
 
             // A loop reads one way all the way round, so arrow every segment. A back-and-forth (retrace) path is
@@ -1805,6 +1817,25 @@ namespace CtrDxEditor.Rendering
                     DrawSegmentArrow(ctx, arrowPen, points[i], points[(i + 1) % points.Length]);
                 }
             }
+        }
+
+        /// <summary>
+        /// Draws one path segment, trimmed to the visible canvas. Movement paths use sentinel offsets that run
+        /// far off the map, and the dotted path pen tessellates a segment's whole screen length into dashes
+        /// before rasterization can discard the off-screen ones — so a level full of long paths pays for
+        /// hundreds of thousands of invisible dashes on every frame. Clipping first keeps that cost
+        /// proportional to what is actually on screen.
+        /// </summary>
+        private static void DrawClippedPathLine(DrawingContext ctx, Pen pathPen, Point a, Point b, IntSize viewport)
+        {
+            Vec2 start = new(a.X, a.Y);
+            Vec2 end = new(b.X, b.Y);
+            if (!SegmentClip.ToViewport(ref start, ref end, viewport))
+            {
+                return;
+            }
+
+            ctx.DrawLine(pathPen, new Point(start.X, start.Y), new Point(end.X, end.Y));
         }
 
         /// <summary>Draws a small chevron at the midpoint of <paramref name="a"/>→<paramref name="b"/> pointing toward b.</summary>
@@ -1874,7 +1905,8 @@ namespace CtrDxEditor.Rendering
             ViewTransform view,
             LevelObject ants,
             Pen pathPen,
-            Pen arrowPen)
+            Pen arrowPen,
+            IntSize viewport)
         {
             if (EditablePath.For(ants) is not { } path || path.Points is not { Length: >= 2 } points)
             {
@@ -1887,7 +1919,7 @@ namespace CtrDxEditor.Rendering
                 Vec2 b = view.LevelToScreen(points[(i + 1) % points.Length]);
                 Point start = new(a.X, a.Y);
                 Point end = new(b.X, b.Y);
-                ctx.DrawLine(pathPen, start, end);
+                DrawClippedPathLine(ctx, pathPen, start, end, viewport);
                 DrawSegmentArrow(ctx, arrowPen, start, end);
             }
         }
