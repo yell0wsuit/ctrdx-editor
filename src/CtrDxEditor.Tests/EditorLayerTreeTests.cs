@@ -195,6 +195,48 @@ namespace CtrDxEditor.Tests
             Assert.Equal("renamed", vm.ActiveLayer.Name);
         }
 
+        /// <summary>Accepted layer names are stored without surrounding whitespace.</summary>
+        [Fact]
+        public void RenameLayerStoresTrimmedName()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+
+            bool renamed = vm.RenameLayer(layer, "  renamed  ");
+
+            Assert.True(renamed);
+            Assert.Equal("renamed", layer.Name);
+        }
+
+        /// <summary>A trimmed rename preserves editor-only hidden state under the stored name.</summary>
+        [Fact]
+        public void RenameLayerWithWhitespacePreservesHiddenState()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            LevelObject candy = layer.Objects[0];
+            vm.SetLayerHidden(layer, true);
+
+            _ = vm.RenameLayer(layer, "  renamed  ");
+
+            Assert.Contains(candy, vm.EffectivelyHiddenObjects);
+        }
+
+        /// <summary>XML-invalid layer names leave both the document and undo history unchanged.</summary>
+        [Fact]
+        public void RenameLayerRejectsInvalidXmlCharactersWithoutUndoEntry()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            string? before = vm.ToXml();
+
+            bool renamed = vm.RenameLayer(layer, "bad\u0001name");
+
+            Assert.False(renamed);
+            Assert.Equal(before, vm.ToXml());
+            Assert.False(vm.CanUndo);
+        }
+
         /// <summary>Verifies that moving the active layer preserves its active identity.</summary>
         [Fact]
         public void MoveActiveLayerReordersRowsAndPreservesActiveLayer()

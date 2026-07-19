@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace CtrDxEditor.Core.Document
@@ -212,15 +213,46 @@ namespace CtrDxEditor.Core.Document
             target.Element.Add(obj.Element);
         }
 
-        /// <summary>True when a layer name is non-empty and not already used by another object layer.</summary>
+        /// <summary>Trims and validates a candidate layer name.</summary>
+        /// <param name="name">The candidate name.</param>
+        /// <param name="normalized">The trimmed name when validation succeeds; otherwise an empty string.</param>
+        /// <param name="excluding">A layer to ignore in the uniqueness check (the one being renamed).</param>
+        /// <returns>True when the normalized name is XML-safe, non-empty, and unique.</returns>
+        public bool TryNormalizeLayerName(string? name, out string normalized, LevelLayer? excluding = null)
+        {
+            string candidate = name?.Trim() ?? "";
+            normalized = "";
+            if (candidate.Length == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                _ = XmlConvert.VerifyXmlChars(candidate);
+            }
+            catch (XmlException)
+            {
+                return false;
+            }
+
+            if (Layers.Any(layer =>
+                !ReferenceEquals(layer.Element, excluding?.Element) && layer.Name == candidate))
+            {
+                return false;
+            }
+
+            normalized = candidate;
+            return true;
+        }
+
+        /// <summary>True when a normalized layer name is valid and not already used by another object layer.</summary>
         /// <param name="name">The candidate name.</param>
         /// <param name="excluding">A layer to ignore in the uniqueness check (the one being renamed).</param>
         /// <returns>Whether the name may be applied.</returns>
         public bool IsLayerNameAvailable(string name, LevelLayer? excluding = null)
         {
-            return !string.IsNullOrWhiteSpace(name)
-                && !Layers.Any(l =>
-                    !ReferenceEquals(l.Element, excluding?.Element) && l.Name == name);
+            return TryNormalizeLayerName(name, out _, excluding);
         }
 
         /// <summary>Writes level-wide settings back into the settings layer and adjusts candy objects when split mode changes.</summary>

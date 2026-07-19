@@ -769,13 +769,15 @@ namespace CtrDxEditor.ViewModels
             RefreshObjectList();
         }
 
-        /// <summary>Renames a layer when the new name is nonblank and unique.</summary>
+        /// <summary>Renames a layer when the trimmed name is XML-safe, nonblank, and unique.</summary>
         /// <param name="layer">The layer to rename.</param>
         /// <param name="name">The candidate name.</param>
         /// <returns>True when the rename was applied.</returns>
         public bool RenameLayer(LevelLayer layer, string name)
         {
-            if (Document is null || IsLayerLocked(layer) || !Document.IsLayerNameAvailable(name, layer))
+            if (Document is null
+                || IsLayerLocked(layer)
+                || !Document.TryNormalizeLayerName(name, out string normalized, layer))
             {
                 return false;
             }
@@ -783,14 +785,14 @@ namespace CtrDxEditor.ViewModels
             CaptureUndoSnapshot();
             bool wasHidden = _hiddenLayerNames.Remove(layer.Name);
             bool wasLocked = _lockedLayerNames.Remove(layer.Name);
-            layer.Rename(name);
+            layer.Rename(normalized);
             if (wasHidden)
             {
-                _ = _hiddenLayerNames.Add(name);
+                _ = _hiddenLayerNames.Add(normalized);
             }
             if (wasLocked)
             {
-                _ = _lockedLayerNames.Add(name);
+                _ = _lockedLayerNames.Add(normalized);
             }
             RefreshObjectList();
             return true;

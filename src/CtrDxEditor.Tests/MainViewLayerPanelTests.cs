@@ -127,7 +127,8 @@ namespace CtrDxEditor.Tests
             string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
 
             Assert.Contains("Selector=\"Border.layer-row.drop-target\"", view, StringComparison.Ordinal);
-            Assert.Contains("UpdateLayerDropTarget(e.GetPosition(layersTree));", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("_rowDragTreePosition = e.GetPosition(layersTree);", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("UpdateLayerDropTarget(_rowDragTreePosition);", codeBehind, StringComparison.Ordinal);
             Assert.Contains("SetLayerDropTarget(FindLayerDropTarget(hit));", codeBehind, StringComparison.Ordinal);
             Assert.Contains("private void ClearLayerDropTarget()", codeBehind, StringComparison.Ordinal);
             Assert.Contains("_layerDropTarget.Classes.Remove(\"drop-target\")", codeBehind, StringComparison.Ordinal);
@@ -178,8 +179,12 @@ namespace CtrDxEditor.Tests
         public void SelectionBlueIsUniformAndDoesNotBleedIntoObjectChildren()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string converter = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Converters", "ActiveLayerBrushConverter.cs"));
 
             Assert.Contains("Selector=\"TreeViewItem:selected\"", view, StringComparison.Ordinal);
+            Assert.Contains("ActiveLayerBrushConverter.Instance", view, StringComparison.Ordinal);
+            Assert.Contains("SystemControlHighlightListAccentLowBrush", converter, StringComparison.Ordinal);
             Assert.Contains("Selector=\"TextBlock.object-name.selected\"", view, StringComparison.Ordinal);
             Assert.Contains("Classes.object-name=\"True\"", view, StringComparison.Ordinal);
             Assert.Contains("<Classes.selected>", view, StringComparison.Ordinal);
@@ -187,9 +192,6 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("TreeViewItem:selected Border.object-row", view, StringComparison.Ordinal);
             Assert.DoesNotContain("Selector=\"TreeViewItem:selected\">\n              <Setter Property=\"Background\" Value=\"{DynamicResource SystemControlHighlightListAccentLowBrush}\" />\n              <Setter Property=\"FontWeight\"", view, StringComparison.Ordinal);
             Assert.DoesNotContain("Value=\"3,0,0,0\"", view, StringComparison.Ordinal);
-            Assert.True(
-                view.Split("SystemControlHighlightListAccentLowBrush", StringSplitOptions.None).Length >= 3,
-                "Expected the active layer and selected item to use the same low-accent brush.");
         }
 
         /// <summary>The pencil toggles rename without stealing focus before it can commit.</summary>
@@ -244,14 +246,19 @@ namespace CtrDxEditor.Tests
             Assert.Contains("if (row.IsLocked)", codeBehind, StringComparison.Ordinal);
         }
 
-        /// <summary>Startup bindings hide the locale picker and disable layer actions until a document exists.</summary>
+        /// <summary>Startup bindings hide document-only controls and capability-gate layer actions.</summary>
         [Fact]
         public void StartupLayerControlsUseSafeDocumentFallbacks()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
             Assert.Contains("IsVisible=\"{Binding HasLocalizedText, FallbackValue=False}\"", view, StringComparison.Ordinal);
-            Assert.Contains("IsEnabled=\"{Binding HasDocument, FallbackValue=False}\"", view, StringComparison.Ordinal);
+            Assert.True(
+                view.Split("IsVisible=\"{Binding HasDocument, FallbackValue=False}\"", StringSplitOptions.None).Length >= 3,
+                "Expected both palette search and layer actions to stay hidden before a document loads.");
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteActiveLayer}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanMoveActiveLayerUp}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanMoveActiveLayerDown}\"", view, StringComparison.Ordinal);
             Assert.Contains("SelectedIndex=\"{Binding DisplayLocaleIndex, Mode=TwoWay}\"", view, StringComparison.Ordinal);
             Assert.DoesNotContain("SelectedItem=\"{Binding DisplayLocale, Mode=TwoWay}\"", view, StringComparison.Ordinal);
         }

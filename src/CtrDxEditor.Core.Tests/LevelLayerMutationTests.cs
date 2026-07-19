@@ -100,5 +100,32 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(doc.IsLayerNameAvailable("a", excluding: doc.Layers[0]));
             Assert.True(doc.IsLayerNameAvailable("c"));
         }
+
+        /// <summary>Whitespace around a candidate cannot disguise an existing layer name.</summary>
+        [Fact]
+        public void IsLayerNameAvailableChecksTrimmedDuplicate()
+        {
+            LevelDocument doc = TwoLayers();
+
+            Assert.False(doc.IsLayerNameAvailable("  a  "));
+        }
+
+        /// <summary>Characters forbidden by XML 1.0 are rejected before serialization.</summary>
+        [Fact]
+        public void IsLayerNameAvailableRejectsInvalidXmlCharacters()
+        {
+            LevelDocument doc = TwoLayers();
+
+            Assert.False(doc.IsLayerNameAvailable("bad\u0001name"));
+        }
+
+        /// <summary>XML metacharacters remain valid because LINQ to XML escapes attribute values.</summary>
+        [Fact]
+        public void IsLayerNameAvailableAllowsXmlMetacharacters()
+        {
+            LevelDocument doc = TwoLayers();
+
+            Assert.True(doc.IsLayerNameAvailable("rock & <roll> \"mix\""));
+        }
     }
 }
