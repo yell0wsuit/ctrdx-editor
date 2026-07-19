@@ -111,6 +111,7 @@ namespace CtrDxEditor.ViewModels
         // Session-only visibility keyed by XML identity (objects) and layer name (layers).
         private readonly HashSet<XElement> _hiddenObjectElements = [];
         private readonly HashSet<string> _hiddenLayerNames = [];
+        private readonly List<LayerViewModel> _selectedLayers = [];
         private readonly HashSet<string> _lockedLayerNames = [];
 
         /// <summary>Sprite cache for the active content.</summary>
@@ -171,6 +172,15 @@ namespace CtrDxEditor.ViewModels
             ActiveLayer is { IsLocked: false } active
             && Layers.IndexOf(active) is >= 0 and int index
             && index < Layers.Count - 1;
+
+        /// <summary>Whether any effective-target layers can be deleted.</summary>
+        public bool CanDeleteSelectedLayers => false;
+
+        /// <summary>Whether the effective-target layers can move up.</summary>
+        public bool CanMoveSelectedLayersUp => false;
+
+        /// <summary>Whether the effective-target layers can move down.</summary>
+        public bool CanMoveSelectedLayersDown => false;
 
         /// <summary>True when every layer row is expanded; drives the expand/collapse-all toggle.</summary>
         public bool AllLayersExpanded => Layers.Count > 0 && Layers.All(row => row.IsExpanded);
@@ -377,6 +387,39 @@ namespace CtrDxEditor.ViewModels
             RaiseSelectedObjectChanged();
         }
 
+        /// <summary>The layers selected in the object panel, in tree order. Empty in object-selection mode.</summary>
+        public IReadOnlyList<LayerViewModel> SelectedLayers => _selectedLayers;
+
+        /// <summary>
+        /// The layers batch layer commands act on: the multi-selected layers, or the single active layer when
+        /// nothing is multi-selected (so the toolbar keeps working while an object is selected).
+        /// </summary>
+        public IReadOnlyList<LayerViewModel> EffectiveLayerTargets =>
+            _selectedLayers.Count > 0 ? _selectedLayers : ActiveLayer is { } a ? [a] : [];
+
+        /// <summary>
+        /// Selects a set of layers (object panel), making <paramref name="primary"/> the active layer and
+        /// clearing any object selection — layer and object selection are mutually exclusive.
+        /// </summary>
+        public void SetLayerSelection(IReadOnlyList<LayerViewModel> layers, LayerViewModel primary)
+        {
+            Selection.Clear();
+            RaiseSelectedObjectChanged();
+            _selectedLayers.Clear();
+            _selectedLayers.AddRange(layers);
+            ActiveLayer = primary;
+            NotifyLayerSelectionChanged();
+        }
+
+        private void NotifyLayerSelectionChanged()
+        {
+            OnPropertyChanged(nameof(SelectedLayers));
+            OnPropertyChanged(nameof(EffectiveLayerTargets));
+            OnPropertyChanged(nameof(CanDeleteSelectedLayers));
+            OnPropertyChanged(nameof(CanMoveSelectedLayersUp));
+            OnPropertyChanged(nameof(CanMoveSelectedLayersDown));
+        }
+
         /// <summary>
         /// Replaces the object selection with the given objects (the object panel's multi-selection, translated
         /// from the tree's selected rows). Locked objects are filtered out. The last object becomes primary.
@@ -385,6 +428,12 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public void SetObjectSelection(IReadOnlyList<LevelObject> objects)
         {
+            if (_selectedLayers.Count > 0)
+            {
+                _selectedLayers.Clear();
+                NotifyLayerSelectionChanged();
+            }
+
             List<LevelObject> selectable = [.. objects.Where(o => !EffectivelyLockedObjects.Contains(o))];
             if (selectable.Count == 0)
             {
