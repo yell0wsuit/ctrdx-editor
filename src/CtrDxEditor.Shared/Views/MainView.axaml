@@ -569,7 +569,7 @@
           </TreeView.DataTemplates>
         </TreeView>
         <Grid Grid.Row="2" Margin="4,4,4,6" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto"
-              IsEnabled="{Binding HasDocument, FallbackValue=False}">
+              IsVisible="{Binding HasDocument, FallbackValue=False}">
           <Button Grid.Column="0" Command="{Binding AddLayerCommand}" ToolTip.Tip="{loc:Tr Layer.Add}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Plus" Width="16" Height="16" />
@@ -579,10 +579,12 @@
             <icons:MaterialIcon Kind="Minus" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="2" Click="LayerMoveUp_Click" ToolTip.Tip="{loc:Tr Layer.MoveUp}"
+                  IsEnabled="{Binding CanMoveActiveLayerUp}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="ArrowUp" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="3" Click="LayerMoveDown_Click" ToolTip.Tip="{loc:Tr Layer.MoveDown}"
+                  IsEnabled="{Binding CanMoveActiveLayerDown}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
           </Button>

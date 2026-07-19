@@ -121,6 +121,13 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
+        /// <summary>True when the active layer can move up (it is not already the top row).</summary>
+        public bool CanMoveActiveLayerUp => ActiveLayer is not null && Layers.IndexOf(ActiveLayer) > 0;
+
+        /// <summary>True when the active layer can move down (it is not already the bottom row).</summary>
+        public bool CanMoveActiveLayerDown =>
+            ActiveLayer is not null && Layers.IndexOf(ActiveLayer) is >= 0 and int index && index < Layers.Count - 1;
+
         /// <summary>
         /// True when the open level has edits that differ from the last load, new, or save. Undoing all the
         /// way back to the saved state clears it; decoration, zoom, and selection changes never set it.
@@ -796,6 +803,8 @@ namespace CtrDxEditor.ViewModels
         partial void OnActiveLayerChanged(LayerViewModel? value)
         {
             SyncActiveFlags();
+            OnPropertyChanged(nameof(CanMoveActiveLayerUp));
+            OnPropertyChanged(nameof(CanMoveActiveLayerDown));
         }
 
         partial void OnDisplayLocaleChanged(string value)
