@@ -436,6 +436,7 @@
                           Background="Transparent" BorderBrush="Transparent"
                           Focusable="False"
                           IsVisible="{Binding IsActive}" Tag="{Binding .}"
+                          IsEnabled="{Binding !IsLocked}"
                           Click="LayerRename_Click" ToolTip.Tip="{loc:Tr Layer.Rename}">
                     <icons:MaterialIcon Kind="Pencil" Width="13" Height="13" />
                   </Button>
@@ -583,6 +584,7 @@
             <icons:MaterialIcon Kind="Plus" Width="16" Height="16" />
           </Button>
           <Button Grid.Column="1" Click="LayerDeleteActive_Click" ToolTip.Tip="{loc:Tr Layer.Delete}"
+                  IsEnabled="{Binding CanDeleteActiveLayer}"
                   Width="24" Height="24" Padding="0" Background="Transparent" BorderBrush="Transparent">
             <icons:MaterialIcon Kind="Minus" Width="16" Height="16" />
           </Button>

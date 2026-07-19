@@ -61,19 +61,6 @@ namespace CtrDxEditor.Tests
             Assert.Null(vm.SelectedObject);
         }
 
-        /// <summary>Renaming a locked layer keeps it locked under the new name.</summary>
-        [Fact]
-        public void RenamePreservesLock()
-        {
-            EditorViewModel vm = Create();
-            vm.SetLayerLocked(vm.Layers[0].Layer, true);
-
-            _ = vm.RenameLayer(vm.Layers[0].Layer, "renamed");
-
-            Assert.True(vm.IsLayerLocked(vm.Layers[0].Layer));
-            Assert.True(vm.Layers[0].IsLocked);
-        }
-
         /// <summary>A locked layer's object cannot be selected through the layer tree.</summary>
         [Fact]
         public void LockedLayerObjectCannotBeSelectedFromTree()
@@ -122,6 +109,79 @@ namespace CtrDxEditor.Tests
                 CultureInfo.InvariantCulture);
 
             Assert.False(Assert.IsType<bool>(enabled));
+        }
+
+        /// <summary>A locked layer cannot be deleted or add an undo entry.</summary>
+        [Fact]
+        public void LockedLayerCannotBeDeleted()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            string? before = vm.ToXml();
+            vm.SetLayerLocked(layer, true);
+
+            vm.DeleteLayer(layer);
+
+            Assert.Equal(before, vm.ToXml());
+            Assert.Equal(2, vm.Layers.Count);
+            Assert.False(vm.CanUndo);
+        }
+
+        /// <summary>A locked layer cannot be renamed or add an undo entry.</summary>
+        [Fact]
+        public void LockedLayerCannotBeRenamed()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            vm.SetLayerLocked(layer, true);
+
+            bool renamed = vm.RenameLayer(layer, "renamed");
+
+            Assert.False(renamed);
+            Assert.Equal("a", layer.Name);
+            Assert.False(vm.CanUndo);
+        }
+
+        /// <summary>A locked layer cannot be shifted or add an undo entry.</summary>
+        [Fact]
+        public void LockedLayerCannotBeMoved()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            vm.SetLayerLocked(layer, true);
+
+            vm.MoveLayer(layer, 1);
+
+            Assert.Same(layer, vm.Layers[0].Layer);
+            Assert.False(vm.CanUndo);
+        }
+
+        /// <summary>A locked layer cannot be drag-reordered to another row.</summary>
+        [Fact]
+        public void LockedLayerCannotBeMovedToIndex()
+        {
+            EditorViewModel vm = Create();
+            LevelLayer layer = vm.Layers[0].Layer;
+            vm.SetLayerLocked(layer, true);
+
+            vm.MoveLayerToIndex(layer, 1);
+
+            Assert.Same(layer, vm.Layers[0].Layer);
+            Assert.False(vm.CanUndo);
+        }
+
+        /// <summary>Locking the active layer immediately disables both reorder directions.</summary>
+        [Fact]
+        public void LockingActiveLayerDisablesMoveCapabilities()
+        {
+            EditorViewModel vm = Create();
+            vm.ActiveLayer = vm.Layers[0];
+            Assert.True(vm.CanMoveActiveLayerDown);
+
+            vm.SetLayerLocked(vm.ActiveLayer.Layer, true);
+
+            Assert.False(vm.CanMoveActiveLayerUp);
+            Assert.False(vm.CanMoveActiveLayerDown);
         }
 
         private static EditorViewModel Create()

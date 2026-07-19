@@ -216,6 +216,19 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("MoveObjectToLayer_Click", codeBehind, StringComparison.Ordinal);
         }
 
+        /// <summary>Locked layers expose no enabled structural mutation controls or rename entry path.</summary>
+        [Fact]
+        public void LockedLayersDisableStructuralMutationControls()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string codeBehind = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteActiveLayer}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Click=\"LayerRename_Click\" ToolTip.Tip=\"{loc:Tr Layer.Rename}\"", view, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding !IsLocked}\"", view, StringComparison.Ordinal);
+            Assert.Contains("if (row.IsLocked)", codeBehind, StringComparison.Ordinal);
+        }
+
         /// <summary>Startup bindings hide the locale picker and disable layer actions until a document exists.</summary>
         [Fact]
         public void StartupLayerControlsUseSafeDocumentFallbacks()

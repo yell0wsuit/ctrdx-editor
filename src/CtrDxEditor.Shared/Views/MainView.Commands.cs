@@ -202,6 +202,11 @@ namespace CtrDxEditor.Views
 
         private void BeginLayerRename(LayerViewModel row)
         {
+            if (row.IsLocked)
+            {
+                return;
+            }
+
             row.Name = row.Layer.Name;
             row.IsRenaming = true;
             Dispatcher.UIThread.Post(() =>

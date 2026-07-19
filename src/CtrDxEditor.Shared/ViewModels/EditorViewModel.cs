@@ -122,12 +122,18 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when a level is open and editor-only commands can run.</summary>
         public bool HasDocument => Document is not null;
 
-        /// <summary>True when the active layer can move up (it is not already the top row).</summary>
-        public bool CanMoveActiveLayerUp => ActiveLayer is not null && Layers.IndexOf(ActiveLayer) > 0;
+        /// <summary>True when the active layer can be deleted.</summary>
+        public bool CanDeleteActiveLayer => ActiveLayer is { IsLocked: false };
 
-        /// <summary>True when the active layer can move down (it is not already the bottom row).</summary>
+        /// <summary>True when the active layer can move up (it is unlocked and not already the top row).</summary>
+        public bool CanMoveActiveLayerUp =>
+            ActiveLayer is { IsLocked: false } active && Layers.IndexOf(active) > 0;
+
+        /// <summary>True when the active layer can move down (it is unlocked and not already the bottom row).</summary>
         public bool CanMoveActiveLayerDown =>
-            ActiveLayer is not null && Layers.IndexOf(ActiveLayer) is >= 0 and int index && index < Layers.Count - 1;
+            ActiveLayer is { IsLocked: false } active
+            && Layers.IndexOf(active) is >= 0 and int index
+            && index < Layers.Count - 1;
 
         /// <summary>True when every layer row is expanded; drives the expand/collapse-all toggle.</summary>
         public bool AllLayersExpanded => Layers.Count > 0 && Layers.All(row => row.IsExpanded);
@@ -580,6 +586,12 @@ namespace CtrDxEditor.ViewModels
             if (Layers.FirstOrDefault(row => ReferenceEquals(row.Layer.Element, layer.Element)) is { } row)
             {
                 row.IsLocked = locked;
+                if (ReferenceEquals(row, ActiveLayer))
+                {
+                    OnPropertyChanged(nameof(CanDeleteActiveLayer));
+                    OnPropertyChanged(nameof(CanMoveActiveLayerUp));
+                    OnPropertyChanged(nameof(CanMoveActiveLayerDown));
+                }
             }
             RecomputeLockedObjects();
             ObjectMutated?.Invoke();
@@ -736,7 +748,7 @@ namespace CtrDxEditor.ViewModels
         /// <param name="layer">The layer to delete.</param>
         public void DeleteLayer(LevelLayer layer)
         {
-            if (Document is null)
+            if (Document is null || IsLayerLocked(layer))
             {
                 return;
             }
@@ -763,7 +775,7 @@ namespace CtrDxEditor.ViewModels
         /// <returns>True when the rename was applied.</returns>
         public bool RenameLayer(LevelLayer layer, string name)
         {
-            if (Document is null || !Document.IsLayerNameAvailable(name, layer))
+            if (Document is null || IsLayerLocked(layer) || !Document.IsLayerNameAvailable(name, layer))
             {
                 return false;
             }
@@ -799,7 +811,7 @@ namespace CtrDxEditor.ViewModels
         /// <param name="delta">Positions to shift; negative moves earlier, positive later.</param>
         public void MoveLayer(LevelLayer layer, int delta)
         {
-            if (Document is null)
+            if (Document is null || IsLayerLocked(layer))
             {
                 return;
             }
@@ -897,6 +909,7 @@ namespace CtrDxEditor.ViewModels
         partial void OnActiveLayerChanged(LayerViewModel? value)
         {
             SyncActiveFlags();
+            OnPropertyChanged(nameof(CanDeleteActiveLayer));
             OnPropertyChanged(nameof(CanMoveActiveLayerUp));
             OnPropertyChanged(nameof(CanMoveActiveLayerDown));
         }
