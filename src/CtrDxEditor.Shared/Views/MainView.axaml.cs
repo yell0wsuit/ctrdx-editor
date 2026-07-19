@@ -155,6 +155,11 @@ namespace CtrDxEditor.Views
             {
                 SubscribeToSelection(vm.Selection);
             }
+
+            if (e.PropertyName == nameof(EditorViewModel.SelectedLayers))
+            {
+                SyncTreeFromModel();
+            }
         }
 
         private void SubscribeToSelection(EditorSelection selection)
@@ -183,20 +188,20 @@ namespace CtrDxEditor.Views
             SyncTreeFromModel();
         }
 
-        // Mirrors the model's object selection into the tree's SelectedItems so every selected object row is
-        // highlighted (native multiple-selection). Guarded so the resulting SelectionChanged does not translate
-        // straight back into the model.
+        // Mirrors the active model selection mode into the tree's SelectedItems. Guarded so the resulting
+        // SelectionChanged does not translate straight back into the model.
         private void SyncTreeFromModel()
         {
-            if (_selectionSubscription is null
+            if (_mutatedSubscription is not { } vm
                 || this.FindControl<TreeView>("LayersTree") is not { } tree)
             {
                 return;
             }
 
-            LevelObject[] target = [.. _selectionSubscription.Items];
-            LevelObject[] current = [.. tree.SelectedItems.OfType<LevelObject>()];
-            // Avoid churn (and re-entrant SelectionChanged) when the tree already matches the model.
+            object[] target = vm.SelectedLayers.Count > 0
+                ? [.. vm.SelectedLayers.Cast<object>()]
+                : [.. (_selectionSubscription?.Items ?? []).Cast<object>()];
+            object[] current = [.. tree.SelectedItems.Cast<object>()];
             if (target.Length == current.Length && !target.Except(current).Any())
             {
                 return;
@@ -206,9 +211,9 @@ namespace CtrDxEditor.Views
             try
             {
                 tree.SelectedItems.Clear();
-                foreach (LevelObject obj in target)
+                foreach (object item in target)
                 {
-                    _ = tree.SelectedItems.Add(obj);
+                    _ = tree.SelectedItems.Add(item);
                 }
             }
             finally
@@ -217,9 +222,8 @@ namespace CtrDxEditor.Views
             }
         }
 
-        // Translates the object panel's selected rows into the model. Object rows drive the multi-selection; a
-        // lone layer row activates that layer. Guarded against the model-to-tree sync so the two don't loop.
-        private void LayersTree_SelectionChanged(object? _, SelectionChangedEventArgs __)
+        // Translates the object panel's selected rows into the mutually exclusive model selection modes.
+        private void LayersTree_SelectionChanged(object? _, SelectionChangedEventArgs e)
         {
             ClearLockedTreeSelection();
 
@@ -231,21 +235,39 @@ namespace CtrDxEditor.Views
             }
 
             List<LevelObject> objects = [.. tree.SelectedItems.OfType<LevelObject>()];
+            List<LayerViewModel> layers = [.. tree.SelectedItems.OfType<LayerViewModel>()];
+            // The just-touched kind wins so the two stay mutually exclusive.
+            bool addedLayer = e.AddedItems.OfType<LayerViewModel>().Any();
+
             _syncingTreeSelection = true;
             try
             {
-                if (objects.Count > 0)
+                if (addedLayer && layers.Count > 0)
+                {
+                    vm.SetLayerSelection(layers, layers[^1]);
+                    RemoveFromTreeSelection(tree, tree.SelectedItems.OfType<LevelObject>().Cast<object>());
+                }
+                else if (objects.Count > 0)
                 {
                     vm.SetObjectSelection(objects);
+                    RemoveFromTreeSelection(tree, tree.SelectedItems.OfType<LayerViewModel>().Cast<object>());
                 }
-                else if (tree.SelectedItems.OfType<LayerViewModel>().LastOrDefault() is { } layer)
+                else if (layers.Count > 0)
                 {
-                    vm.ActivateLayerRow(layer);
+                    vm.SetLayerSelection(layers, layers[^1]);
                 }
             }
             finally
             {
                 _syncingTreeSelection = false;
+            }
+        }
+
+        private static void RemoveFromTreeSelection(TreeView tree, IEnumerable<object> items)
+        {
+            foreach (object item in items.ToList())
+            {
+                tree.SelectedItems.Remove(item);
             }
         }
 
