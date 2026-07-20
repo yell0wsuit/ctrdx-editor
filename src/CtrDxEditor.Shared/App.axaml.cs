@@ -37,6 +37,9 @@ namespace CtrDxEditor
             {
                 MainWindow window = new();
                 desktop.MainWindow = window;
+                // Ends any running playtest and clears its temp directory on quit. Best-effort
+                // inside the launcher, so a failed kill or delete can never block shutdown.
+                desktop.ShutdownRequested += (_, _) => _startup.Playtest?.Dispose();
                 window.Opened += async (_, _) => await StartAsync(window, allowQuit: true, desktop);
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
@@ -102,7 +105,7 @@ namespace CtrDxEditor
                 SpriteCache sprites = new(store, _startup.SpriteImageExtension);
                 await Task.Run(sprites.PreloadAsync);
                 EditorSettings initial = await _startup.Settings.LoadAsync();
-                EditorViewModel editor = new(sprites, _startup.Settings, initial);
+                EditorViewModel editor = new(sprites, _startup.Settings, initial, _startup.Playtest);
                 editor.InitializeDecorationFromSettings();
                 root.DataContext = editor;
                 return true;

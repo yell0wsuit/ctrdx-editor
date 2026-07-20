@@ -14,6 +14,7 @@ using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 using CtrDxEditor.Localization;
+using CtrDxEditor.Playtest;
 using CtrDxEditor.Rendering;
 
 namespace CtrDxEditor.ViewModels
@@ -22,7 +23,12 @@ namespace CtrDxEditor.ViewModels
     /// <param name="sprites">Already-preloaded sprite cache for the active content.</param>
     /// <param name="settings">Persisted editor settings store, or null in tests that don't exercise persistence.</param>
     /// <param name="initial">The editor settings snapshot loaded at startup (decoration defaults, content path).</param>
-    public sealed partial class EditorViewModel(SpriteCache sprites, ISettingsStore? settings = null, EditorSettings? initial = null) : ViewModelBase
+    /// <param name="playtest">Plays levels in Cut the Rope: DX, or null where playtesting is unavailable.</param>
+    public sealed partial class EditorViewModel(
+        SpriteCache sprites,
+        ISettingsStore? settings = null,
+        EditorSettings? initial = null,
+        IPlaytestLauncher? playtest = null) : ViewModelBase
     {
         private const int UndoHistoryLimit = 100;
         private static readonly LevelDocument EmptyDocument = LevelDocument.Parse("<map/>");
@@ -43,6 +49,12 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>The last-loaded editor settings snapshot (decoration defaults, content path).</summary>
         public EditorSettings CurrentSettingsSnapshot { get; set; } = initial ?? new EditorSettings();
+
+        /// <summary>Plays levels in Cut the Rope: DX; null on platforms without playtest support.</summary>
+        public IPlaytestLauncher? Playtest { get; } = playtest;
+
+        /// <summary>Whether this platform can play levels at all; hides the commands when false.</summary>
+        public bool CanPlaytest => Playtest is not null;
 
         [ObservableProperty] public partial LevelDocument? Document { get; set; }
         [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
