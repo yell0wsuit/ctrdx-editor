@@ -110,5 +110,73 @@ namespace CtrDxEditor.Tests
             }
             finally { Directory.Delete(root, recursive: true); }
         }
+
+        /// <summary>Verifies that search roots are tried in order, first valid winning.</summary>
+        [Fact]
+        public void ResolveTriesSearchRootsInOrder()
+        {
+            string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
+            try
+            {
+                string first = Path.Combine(root, "first");
+                string second = Path.Combine(root, "second");
+                _ = Directory.CreateDirectory(first);
+                string secondContent = MakeValidContent(second, "content");
+
+                string? resolved = ContentLocation.Resolve([first, second], configuredPath: null);
+
+                Assert.Equal(secondContent, resolved);
+            }
+            finally { Directory.Delete(root, recursive: true); }
+        }
+
+        /// <summary>Verifies an earlier search root wins over a later one.</summary>
+        [Fact]
+        public void ResolvePrefersEarlierSearchRoot()
+        {
+            string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
+            try
+            {
+                string first = Path.Combine(root, "first");
+                string second = Path.Combine(root, "second");
+                string firstContent = MakeValidContent(first, "content");
+                _ = MakeValidContent(second, "content");
+
+                string? resolved = ContentLocation.Resolve([first, second], configuredPath: null);
+
+                Assert.Equal(firstContent, resolved);
+            }
+            finally { Directory.Delete(root, recursive: true); }
+        }
+
+        /// <summary>Verifies a valid configured path still outranks every search root.</summary>
+        [Fact]
+        public void ResolvePrefersConfiguredPathOverSearchRoots()
+        {
+            string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
+            try
+            {
+                string configured = MakeValidContent(root, "configured");
+                string other = Path.Combine(root, "other");
+                _ = MakeValidContent(other, "content");
+
+                string? resolved = ContentLocation.Resolve([other], configured);
+
+                Assert.Equal(configured, resolved);
+            }
+            finally { Directory.Delete(root, recursive: true); }
+        }
+
+        /// <summary>Verifies null is returned when no search root holds valid content.</summary>
+        [Fact]
+        public void ResolveReturnsNullWhenNoSearchRootValid()
+        {
+            string root = Directory.CreateTempSubdirectory("ctrdx-loc-").FullName;
+            try
+            {
+                Assert.Null(ContentLocation.Resolve([root], configuredPath: null));
+            }
+            finally { Directory.Delete(root, recursive: true); }
+        }
     }
 }

@@ -78,17 +78,33 @@ namespace CtrDxEditor.Content
         /// <returns>The resolved directory, or null when no candidate is valid.</returns>
         public static string? Resolve(string baseDir, string? configuredPath)
         {
+            return Resolve([baseDir], configuredPath);
+        }
+
+        /// <summary>
+        /// Resolves the content directory across several roots, first valid wins: the configured
+        /// path, then a "content" folder next to each root in <paramref name="searchRoots"/> order,
+        /// then in any ancestor of that root. Returns null when none are valid.
+        /// </summary>
+        /// <param name="searchRoots">Directories to search, in priority order, along with their ancestors.</param>
+        /// <param name="configuredPath">An explicitly configured content path, tried first. May be null.</param>
+        /// <returns>The resolved directory, or null when no candidate is valid.</returns>
+        public static string? Resolve(IReadOnlyList<string> searchRoots, string? configuredPath)
+        {
             if (IsValid(configuredPath))
             {
                 return configuredPath;
             }
 
-            for (DirectoryInfo? dir = new(baseDir); dir is not null; dir = dir.Parent)
+            foreach (string root in searchRoots)
             {
-                string candidate = Path.Combine(dir.FullName, "content");
-                if (IsValid(candidate))
+                for (DirectoryInfo? dir = new(root); dir is not null; dir = dir.Parent)
                 {
-                    return candidate;
+                    string candidate = Path.Combine(dir.FullName, "content");
+                    if (IsValid(candidate))
+                    {
+                        return candidate;
+                    }
                 }
             }
             return null;

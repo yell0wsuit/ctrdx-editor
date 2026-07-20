@@ -17,10 +17,8 @@ namespace CtrDxEditor.Content
         /// <summary>Folder created under Documents and LocalApplicationData, but never next to the executable.</summary>
         private const string FolderName = "CtrDxEditorData";
 
-        private static string? _current;
-
         /// <summary>The resolved writable directory, determined once on first use.</summary>
-        public static string Current => _current ??= Resolve(
+        public static string Current { get; } = Resolve(
             AppContext.BaseDirectory,
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -54,12 +52,7 @@ namespace CtrDxEditor.Content
             }
 
             string localAppData = Path.Combine(localAppDataDirectory, FolderName);
-            if (isWritable(localAppData))
-            {
-                return localAppData;
-            }
-
-            return ".";
+            return isWritable(localAppData) ? localAppData : ".";
         }
 
         /// <summary>
