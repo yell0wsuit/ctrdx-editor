@@ -7,6 +7,8 @@
     "Menu.File.Save": "_Save",
     "Menu.File.SaveAs": "Save _As...",
     "Menu.File.Screenshot": "Screenshot...",
+    "Menu.File.Playtest": "_Play This Level",
+    "Menu.File.SetDxLocation": "Set DX Location...",
     "Menu.File.Close": "_Close",
 
     "Menu.Edit": "_Edit",
@@ -44,9 +46,15 @@
     "Dialog.FileType.LevelXml": "Level XML",
     "Dialog.Screenshot.Title": "Save level screenshot",
     "Dialog.FileType.Png": "PNG image",
+    "Dialog.FileType.Executable": "Application",
     "Notification.Screenshot.Saving": "Saving screenshot…",
     "Notification.Screenshot.Title": "Screenshot saved",
     "Notification.Screenshot.Failed": "Screenshot failed to save",
+    "Dialog.Playtest.Locate.Header": "Locate Cut the Rope: DX",
+    "Dialog.Playtest.Locate.Body": "To play test levels, choose the Cut the Rope: DX application.\n\nOn macOS this is CutTheRopeDX.app, or the CutTheRopeDX binary.",
+    "Dialog.Playtest.Locate.Browse": "Browse...",
+    "Dialog.Playtest.Picker.Title": "Select the Cut the Rope: DX executable",
+    "Notification.Playtest.Failed": "Could not play this level",
 
     "Dialog.Common.Cancel": "Cancel",
     "Dialog.Common.Ok": "OK",
@@ -140,6 +148,8 @@
     "Dialog.Validation.SaveProceed": "Save anyway",
     "Dialog.Validation.EditPrompt": "Would you like to edit it anyway?",
     "Dialog.Validation.EditProceed": "Edit anyway",
+    "Dialog.Validation.PlayPrompt": "Play this level anyway?",
+    "Dialog.Validation.PlayProceed": "Play Anyway",
 
     "Dialog.DeleteLayer.Header": "Delete layer?",
     "Dialog.DeleteLayer.Body": "Delete the layer “{0}” and every object inside it?\nYou can undo this later.",
