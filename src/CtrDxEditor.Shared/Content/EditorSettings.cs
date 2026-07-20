@@ -9,6 +9,11 @@ namespace CtrDxEditor.Content
         [JsonPropertyName("contentPath")]
         public string? ContentPath { get; set; }
 
+        /// <summary>Path to the Cut the Rope: DX executable used for playtesting, as picked by the user
+        /// (on macOS this is the .app bundle itself, resolved to its inner binary at launch time).</summary>
+        [JsonPropertyName("dxExecutablePath")]
+        public string? DxExecutablePath { get; set; }
+
         /// <summary>Whether the New Level dialog persists its decoration picks as defaults.</summary>
         [JsonPropertyName("rememberDecoration")]
         public bool RememberDecoration { get; set; }

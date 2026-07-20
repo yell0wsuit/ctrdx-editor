@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -43,6 +44,21 @@ namespace CtrDxEditor.Tests
             Assert.True(back.RememberDecoration);
             Assert.Equal(2, back.RopeSkin);
             Assert.Equal(5, back.Background);
+        }
+
+        /// <summary>Verifies the DX executable path survives a source-generated JSON round trip.</summary>
+        [Fact]
+        public void DxExecutablePathRoundTripsThroughJsonContext()
+        {
+            string json = JsonSerializer.Serialize(
+                new EditorSettings { DxExecutablePath = "/Applications/CutTheRopeDX.app" },
+                AppJsonContext.Default.EditorSettings);
+
+            Assert.Contains("dxExecutablePath", json, StringComparison.Ordinal);
+
+            EditorSettings? loaded = JsonSerializer.Deserialize(json, AppJsonContext.Default.EditorSettings);
+
+            Assert.Equal("/Applications/CutTheRopeDX.app", loaded?.DxExecutablePath);
         }
     }
 }
