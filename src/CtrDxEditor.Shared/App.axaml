@@ -3,6 +3,7 @@
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:dialogHostAvalonia="using:DialogHostAvalonia"
              x:Class="CtrDxEditor.App"
+             Name="Level Editor"
              RequestedThemeVariant="Dark">
   <Application.Resources>
     <ResourceDictionary>
