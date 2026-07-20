@@ -6,9 +6,9 @@ namespace CtrDxEditor.Content
     /// <summary>Resolves the content directory in the running app's environment (settings + data location).</summary>
     public static class ContentRoot
     {
-        /// <summary>Path to the persisted settings file: EditorConfig/settings.json in the user data directory.</summary>
+        /// <summary>Path to the persisted settings file in the user data directory.</summary>
         public static string SettingsPath =>
-            Path.Combine(UserDataDirectory.Current, "EditorConfig", "settings.json");
+            Path.Combine(UserDataDirectory.Current, "settings.json");
 
         /// <summary>Default download destination: content/ in the user data directory.</summary>
         public static string DefaultContentDir =>

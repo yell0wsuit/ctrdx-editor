@@ -14,7 +14,7 @@ namespace CtrDxEditor.Tests
         public void SettingsPathIsUnderUserDataDirectory()
         {
             Assert.Equal(
-                Path.Combine(UserDataDirectory.Current, "EditorConfig", "settings.json"),
+                Path.Combine(UserDataDirectory.Current, "settings.json"),
                 ContentRoot.SettingsPath);
         }
 
