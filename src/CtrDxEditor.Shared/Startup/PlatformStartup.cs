@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Playtest;
 
 namespace CtrDxEditor.Startup
 {
@@ -31,5 +32,8 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Whether the in-app direct download is offered; false where a cross-origin fetch is blocked (the browser), leaving only manual download + zip upload.</summary>
         public bool AllowDirectDownload { get; init; } = true;
+
+        /// <summary>Plays levels in Cut the Rope: DX for playtesting; null where processes cannot be spawned (the browser).</summary>
+        public IPlaytestLauncher? Playtest { get; init; }
     }
 }

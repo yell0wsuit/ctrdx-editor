@@ -3,6 +3,8 @@ using System;
 using Avalonia;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Desktop.Playtest;
+using CtrDxEditor.Playtest;
 using CtrDxEditor.Startup;
 
 namespace CtrDxEditor.Desktop
@@ -20,6 +22,12 @@ namespace CtrDxEditor.Desktop
         public static AppBuilder BuildAvaloniaApp()
         {
             const string spriteExt = ".png";
+
+            // Clear playtest temp directories left behind by editor sessions that never shut down
+            // cleanly, or that quit while a game was still playing. Directories owned by a live
+            // process (a second editor instance) are spared.
+            PlaytestTempStore.SweepStale();
+
             FileSettingsStore settings = new(ContentRoot.SettingsPath);
             PlatformStartup startup = new()
             {
@@ -29,6 +37,7 @@ namespace CtrDxEditor.Desktop
                 SpriteImageExtension = spriteExt,
                 DownloadSizeLabel = "340 MB",
                 ManualDownloadUrl = ContentDownloader.AssetsUrl,
+                Playtest = new ProcessPlaytestLauncher(),
                 ResolveInstalled = async () =>
                 {
                     string? resolved = ContentLocation.Resolve(
