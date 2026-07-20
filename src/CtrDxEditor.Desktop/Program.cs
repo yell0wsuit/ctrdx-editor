@@ -41,7 +41,8 @@ namespace CtrDxEditor.Desktop
                 ResolveInstalled = async () =>
                 {
                     string? resolved = ContentLocation.Resolve(
-                        AppContext.BaseDirectory, (await settings.LoadAsync()).ContentPath);
+                        [UserDataDirectory.Current, AppContext.BaseDirectory],
+                        (await settings.LoadAsync()).ContentPath);
                     return resolved is null ? null : new FolderContentStore(resolved);
                 },
             };
