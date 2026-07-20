@@ -84,7 +84,7 @@ namespace CtrDxEditor.Tests
                 _ = store.Write($"<map id='{i}'/>");
             }
 
-            Assert.Single(Directory.GetFiles(store.SessionDirectory));
+            _ = Assert.Single(Directory.GetFiles(store.SessionDirectory));
         }
 
         /// <summary>Verifies disposal removes the whole session directory.</summary>
