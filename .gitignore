@@ -65,3 +65,7 @@ nunit-*.xml
 
 # BenchmarkDotNet run output (reports, logs, generated build projects).
 BenchmarkDotNet.Artifacts/
+
+# Distribution
+distribution/tools/
+/publish/
