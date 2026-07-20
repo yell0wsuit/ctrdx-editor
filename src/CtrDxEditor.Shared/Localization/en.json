@@ -54,6 +54,7 @@
     "Dialog.Playtest.Locate.Body": "To play test levels, choose the Cut the Rope: DX application.\n\nOn macOS this is CutTheRopeDX.app, or the CutTheRopeDX binary.",
     "Dialog.Playtest.Locate.Browse": "Browse...",
     "Dialog.Playtest.Picker.Title": "Select the Cut the Rope: DX executable",
+    "Notification.Playtest.Launching": "Launching Cut the Rope: DX…",
     "Notification.Playtest.Failed": "Could not play this level",
 
     "Dialog.Common.Cancel": "Cancel",

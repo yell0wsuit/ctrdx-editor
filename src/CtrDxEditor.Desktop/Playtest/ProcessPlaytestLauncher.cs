@@ -25,7 +25,7 @@ namespace CtrDxEditor.Desktop.Playtest
         public event EventHandler<PlaytestExitedEventArgs>? Exited;
 
         /// <inheritdoc />
-        public void Play(string executablePath, string levelXml)
+        public bool Play(string executablePath, string levelXml)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -43,11 +43,12 @@ namespace CtrDxEditor.Desktop.Playtest
             {
                 if (_current is not null)
                 {
-                    return; // Already playing; the write above is all the running game needs.
+                    return false; // Already playing; the write above is all the running game needs.
                 }
             }
 
             StartProcess(binary, levelPath);
+            return true;
         }
 
         private void StartProcess(string binary, string levelPath)

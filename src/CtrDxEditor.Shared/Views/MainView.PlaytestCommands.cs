@@ -63,7 +63,16 @@ namespace CtrDxEditor.Views
 
             try
             {
-                launcher.Play(executable, xml);
+                // Only a cold launch is announced. A reload returns false: the game flashes its own
+                // restart dim, and a toast in a window the user has just switched away from would
+                // report something they cannot see.
+                if (launcher.Play(executable, xml))
+                {
+                    Notifications()?.Show(new Notification(
+                        Localizer.Get("Notification.Playtest.Launching"),
+                        string.Empty,
+                        NotificationType.Information));
+                }
             }
             catch (Exception ex) when (ex is InvalidOperationException or IOException
                 or UnauthorizedAccessException or System.ComponentModel.Win32Exception)

@@ -23,11 +23,16 @@ namespace CtrDxEditor.Playtest
         /// <summary>Writes <paramref name="levelXml"/> to the session level file, starting the game if it is not already running.</summary>
         /// <param name="executablePath">The user-picked executable or macOS .app bundle path.</param>
         /// <param name="levelXml">Serialized level XML to play.</param>
+        /// <returns>
+        /// True when a new game process was started; false when a already-running game was handed the
+        /// level instead. Callers use this to distinguish a cold launch, which is worth announcing,
+        /// from a reload, which the game reports itself.
+        /// </returns>
         /// <remarks>
         /// When a playtest is already running this only writes the file: the game watches it and
         /// reloads itself, so a second process would be wrong rather than merely wasteful.
         /// </remarks>
         /// <exception cref="InvalidOperationException">The executable could not be resolved.</exception>
-        void Play(string executablePath, string levelXml);
+        bool Play(string executablePath, string levelXml);
     }
 }
