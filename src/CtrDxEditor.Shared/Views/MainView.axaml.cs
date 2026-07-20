@@ -395,12 +395,14 @@ namespace CtrDxEditor.Views
             // (it is not yet in the visual tree), which is why the initial "Saving…" toast went missing.
             _ = Notifications();
             RegisterGlobalShortcuts();
+            RegisterLevelDrop();
         }
 
         /// <inheritdoc />
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             UnregisterGlobalShortcuts();
+            UnregisterLevelDrop();
             _paletteDrag.Cancel();
             _animationPreviewTimer.Stop();
             if (_mutatedSubscription is not null)

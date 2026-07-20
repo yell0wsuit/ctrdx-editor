@@ -49,6 +49,8 @@
     "Notification.Screenshot.Saving": "Saving screenshot…",
     "Notification.Screenshot.Title": "Screenshot saved",
     "Notification.Screenshot.Failed": "Screenshot failed to save",
+    "Notification.Open.Failed": "Level could not be opened",
+    "Drop.Level.Hint": "Drop level XML here to open",
 
     "Dialog.Playtest.Locate.Header": "Locate Cut the Rope: DX",
     "Dialog.Playtest.Locate.Body": "To play test levels, point the editor at Cut the Rope: DX.\n\nDrag the program file onto the area below, or use Browse to select it.",

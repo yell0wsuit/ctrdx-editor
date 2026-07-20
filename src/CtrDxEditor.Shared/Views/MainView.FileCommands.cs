@@ -166,23 +166,48 @@ namespace CtrDxEditor.Views
 
             if (files.Count == 1)
             {
-                await using Stream stream = await files[0].OpenReadAsync();
-                using StreamReader reader = new(stream);
-                string xml = await reader.ReadToEndAsync();
-
-                IReadOnlyList<LevelWarning> warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
-                if (warnings.Count > 0
-                    && !await ConfirmValidationAsync(warnings, "Dialog.Validation.EditPrompt", "Dialog.Validation.EditProceed"))
-                {
-                    return;
-                }
-                if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.Open"))
-                {
-                    return;
-                }
-                vm.LoadLevelXml(xml);
-                _currentLevelFile = files[0];
+                await OpenLevelFileAsync(vm, files[0]);
             }
+        }
+
+        // The shared load path behind both the Open dialog and a window drop: read, parse, warn, confirm,
+        // then hand the XML to the view model. Reading through the stream rather than a local path keeps
+        // this working in the browser build, where IStorageFile exposes no filesystem path.
+        private async Task OpenLevelFileAsync(EditorViewModel vm, IStorageFile file)
+        {
+            string xml;
+            IReadOnlyList<LevelWarning> warnings;
+            try
+            {
+                await using Stream stream = await file.OpenReadAsync();
+                using StreamReader reader = new(stream);
+                xml = await reader.ReadToEndAsync();
+
+                warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
+            }
+            catch (Exception ex)
+            {
+                // A file that is unreadable or is not a level (anything droppable now reaches this, and the
+                // dialog never guaranteed well-formed XML either) would otherwise fault this async void
+                // caller with no observer. Report it and leave the open document untouched.
+                Notifications()?.Show(new Notification(
+                    Localizer.Get("Notification.Open.Failed"),
+                    ex.Message,
+                    NotificationType.Error));
+                return;
+            }
+
+            if (warnings.Count > 0
+                && !await ConfirmValidationAsync(warnings, "Dialog.Validation.EditPrompt", "Dialog.Validation.EditProceed"))
+            {
+                return;
+            }
+            if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.Open"))
+            {
+                return;
+            }
+            vm.LoadLevelXml(xml);
+            _currentLevelFile = file;
         }
 
         private async void Close_Click(object? sender, RoutedEventArgs e)

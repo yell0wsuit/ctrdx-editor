@@ -699,6 +699,24 @@
                Opacity="0.65"
                Stretch="Fill" />
       </Canvas>
+      <!-- Drop hint for dragging a level XML onto the editor. Last child so it scrims the menus too, and
+           never hit-testable so it cannot swallow the drag events the TopLevel handlers rely on. -->
+      <Border x:Name="DropOverlay"
+              IsVisible="False"
+              IsHitTestVisible="False"
+              Background="#B0000000">
+        <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource EditorBrush.Surface.Panel}"
+                BorderBrush="{DynamicResource EditorBrush.Primary}"
+                BorderThickness="2" CornerRadius="8" Padding="32,24">
+          <StackPanel Orientation="Vertical" Spacing="12" HorizontalAlignment="Center">
+            <icons:MaterialIcon Kind="TrayArrowDown" Width="48" Height="48"
+                                HorizontalAlignment="Center"
+                                Foreground="{DynamicResource EditorBrush.Primary}" />
+            <TextBlock Text="{loc:Tr Drop.Level.Hint}" FontSize="16" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Border>
+      </Border>
     </Grid>
   </dialogs:ReactiveDialogHost>
 </UserControl>
