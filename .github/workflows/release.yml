@@ -1,0 +1,104 @@
+name: Release
+
+on:
+    push:
+        tags: ["v*"]
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version to build, e.g. 1.2.0"
+                required: true
+                type: string
+
+permissions:
+    contents: write
+
+jobs:
+    version:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.resolve.outputs.version }}
+        steps:
+            # Tag pushes carry a leading "v" the scripts must not receive; dispatch runs
+            # supply the bare version already.
+            - id: resolve
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+                  fi
+
+    macos:
+        needs: version
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-dotnet@v6
+              with:
+                  dotnet-version: "10.x"
+            - uses: actions/cache@v6
+              with:
+                  path: ~/.nuget/packages
+                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
+                  restore-keys: nuget-${{ runner.os }}-
+            - run: ./distribution/bundle_macos.sh "${{ needs.version.outputs.version }}"
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: macos
+                  path: publish/release_github/*.dmg
+
+    linux:
+        needs: version
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-dotnet@v6
+              with:
+                  dotnet-version: "10.x"
+            # NativeAOT links with clang and needs zlib headers; neither ships on the runner.
+            - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+            - uses: actions/cache@v6
+              with:
+                  path: ~/.nuget/packages
+                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
+                  restore-keys: nuget-${{ runner.os }}-
+            - run: ./distribution/build_appimage.sh "${{ needs.version.outputs.version }}"
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: linux
+                  path: publish/release_github/*.AppImage
+
+    windows:
+        needs: version
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-dotnet@v6
+              with:
+                  dotnet-version: "10.x"
+            - uses: actions/cache@v6
+              with:
+                  path: ~/.nuget/packages
+                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
+                  restore-keys: nuget-${{ runner.os }}-
+            - run: python distribution/release_windows.py "${{ needs.version.outputs.version }}"
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: windows
+                  path: publish/release_github/*.zip
+
+    release:
+        needs: [version, macos, linux, windows]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  path: artifacts
+                  merge-multiple: true
+            - uses: softprops/action-gh-release@v3
+              with:
+                  tag_name: v${{ needs.version.outputs.version }}
+                  name: v${{ needs.version.outputs.version }}
+                  files: artifacts/*
+                  generate_release_notes: true
