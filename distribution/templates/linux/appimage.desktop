@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name={{DISPLAY_NAME}}
+Comment={{DESCRIPTION}}
+Exec={{APP_NAME}}
+Icon={{APP_NAME}}
+Categories=Development;Graphics;
+Terminal=false
+StartupNotify=true
