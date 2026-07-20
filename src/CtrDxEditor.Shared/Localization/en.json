@@ -66,6 +66,7 @@
     "Dialog.FileType.Executable": "Application",
     "Notification.Playtest.Launching": "Launching Cut the Rope: DX…",
     "Notification.Playtest.Failed": "Could not play this level",
+    "Notification.Playtest.LocationSet": "The location of Cut the Rope: DX has been set",
 
     "Dialog.Common.Cancel": "Cancel",
     "Dialog.Common.Ok": "OK",

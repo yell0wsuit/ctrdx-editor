@@ -85,11 +85,18 @@ namespace CtrDxEditor.Views
             }
         }
 
+        // Confirms the pick with a toast showing the path, the way saving a screenshot does: closing the
+        // dialog is otherwise the command's only visible effect, and the path is what tells the user they
+        // picked the bundle they meant. The toast lives here rather than in PickDxExecutableAsync so the
+        // first-run pick inside Play stays silent - it already reports itself by launching the game.
         private async void SetDxLocation_Click(object? sender, RoutedEventArgs e)
         {
-            if (DataContext is EditorViewModel vm)
+            if (DataContext is EditorViewModel vm && await PickDxExecutableAsync(vm) is { } path)
             {
-                _ = await PickDxExecutableAsync(vm);
+                Notifications()?.Show(new Notification(
+                    Localizer.Get("Notification.Playtest.LocationSet"),
+                    path,
+                    NotificationType.Success));
             }
         }
 
