@@ -11,6 +11,19 @@
     <IsTestProjectName>$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests'))</IsTestProjectName>
     <IsAotCompatible Condition="'$(IsTestProjectName)' != 'True'">true</IsAotCompatible>
   </PropertyGroup>
+  <!-- Assembly identity and version. Release builds pass -p:VersionPrefix=x.y.z -p:VersionSuffix=
+       so the "dirty" marker and the commit hash are dropped from published binaries. -->
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>dirty</VersionSuffix>
+    <Company>yell0wsuit</Company>
+    <Product>Cut the Rope DX: Level Editor</Product>
+    <Description>A standalone level editor for Cut the Rope: DX.</Description>
+    <Copyright>Copyright © 2026 yell0wsuit</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <IncludeSourceRevisionInInformationalVersion Condition="'$(VersionSuffix)' != ''">true</IncludeSourceRevisionInInformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion Condition="'$(VersionSuffix)' == ''">false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(DesktopPublish)' == 'true'">
     <SelfContained Condition="'$(PublishAot)' == 'true' and '$(Configuration)' == 'Release'">true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>

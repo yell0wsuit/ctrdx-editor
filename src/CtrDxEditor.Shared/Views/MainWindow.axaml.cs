@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
+using CtrDxEditor.Localization;
 using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Views
@@ -17,6 +19,9 @@ namespace CtrDxEditor.Views
         public MainWindow()
         {
             AvaloniaXamlLoader.Load(this);
+            // Overrides the plain title from XAML; the version is only known at runtime.
+            Title = string.Create(
+                CultureInfo.InvariantCulture, $"{Localizer.Get("Window.Title")} v{AppVersion.Display}");
         }
 
         /// <inheritdoc />
