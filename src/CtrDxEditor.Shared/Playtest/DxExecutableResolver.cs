@@ -29,15 +29,7 @@ namespace CtrDxEditor.Playtest
                 return false;
             }
 
-            // A directory dragged from Finder arrives with a trailing separator, which would defeat
-            // the .app suffix test below and send a bundle down the plain-folder path. Trimmed here,
-            // once, so every check afterwards sees the same shape of path. A path that is nothing but
-            // separators is left alone rather than trimmed away to nothing.
-            string trimmed = pickedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (trimmed.Length > 0)
-            {
-                pickedPath = trimmed;
-            }
+            pickedPath = TrimTrailingSeparators(pickedPath);
 
             if (!pickedPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
             {
@@ -101,6 +93,51 @@ namespace CtrDxEditor.Playtest
                 ? $"The selected app bundle contains no executable:\n{pickedPath}"
                 : $"Could not determine which executable to run in:\n{pickedPath}";
             return false;
+        }
+
+        /// <summary>Whether a path is a macOS app bundle, or a folder holding at least one.</summary>
+        /// <remarks>
+        /// Only the macOS drop route uses this. Dropping is where a stray document is easiest to send in
+        /// by accident, and the drop hint there asks for a bundle by name, so the drop is held to it.
+        /// Resolution itself stays permissive - a typed dev-build binary has no .app around it and must
+        /// keep working - which is why this is a separate check rather than a rule inside
+        /// <see cref="TryResolve"/>.
+        /// </remarks>
+        /// <param name="path">The dropped path.</param>
+        /// <returns>True when the path is or contains an app bundle.</returns>
+        public static bool IsBundleOrBundleContainer(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            path = TrimTrailingSeparators(path);
+            if (path.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            try
+            {
+                return Directory.Exists(path) && Directory.GetDirectories(path, "*.app").Length > 0;
+            }
+            // An unreadable folder cannot be shown to hold a bundle, and the drop is refused with the
+            // same wording as any other non-bundle rather than failing the dialog outright.
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return false;
+            }
+        }
+
+        // A directory dragged from Finder arrives with a trailing separator, which would defeat the .app
+        // suffix tests and send a bundle down the plain-folder path. Trimmed once, up front, so every
+        // check afterwards sees the same shape of path. A path that is nothing but separators is left
+        // alone rather than trimmed away to nothing.
+        private static string TrimTrailingSeparators(string path)
+        {
+            string trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return trimmed.Length > 0 ? trimmed : path;
         }
 
         // Resolves through a bundle sitting directly inside a dropped folder. Only an unambiguous

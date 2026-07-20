@@ -71,6 +71,45 @@ namespace CtrDxEditor.Tests
             Assert.Contains("IsHitTestVisible=\"False\"", view[overlay..], StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// A dialog's own drop must reach it. Both sets of handlers live on the same TopLevel and this
+        /// view's run first, so handling the event unconditionally would stop the playtest locate dialog
+        /// from ever seeing a dropped game bundle.
+        /// </summary>
+        [Fact]
+        public void LevelDropStandsDownWhileADialogIsOpen()
+        {
+            string drop = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.DropCommands.cs"));
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("x:Name=\"DialogHost\"", view, StringComparison.Ordinal);
+            Assert.Contains("FindControl<ReactiveDialogHost>(\"DialogHost\")?.IsOpen", drop, StringComparison.Ordinal);
+
+            foreach (string handler in new[] { "Host_DragOver", "Host_Drop" })
+            {
+                int body = drop.IndexOf("void " + handler + "(", StringComparison.Ordinal);
+                Assert.True(body >= 0, handler + " should exist in MainView.DropCommands.cs.");
+
+                int guard = drop.IndexOf("if (DialogOwnsDrop)", body, StringComparison.Ordinal);
+                int handled = drop.IndexOf("e.Handled = true;", body, StringComparison.Ordinal);
+                Assert.True(guard >= 0 && guard < handled, handler + " should bail out before handling the event.");
+            }
+        }
+
+        /// <summary>
+        /// The locate dialog shares the window's drop with the editor, so its teardown restores what it
+        /// found instead of switching drop off for whatever else is still listening.
+        /// </summary>
+        [Fact]
+        public void LocateDialogRestoresTheHostsDropSetting()
+        {
+            string dialog = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PlaytestLocateDialog.axaml.cs"));
+
+            Assert.Contains("GetAllowDrop(top)", dialog, StringComparison.Ordinal);
+            Assert.Contains("SetAllowDrop(top, _hostAllowedDrop)", dialog, StringComparison.Ordinal);
+            Assert.DoesNotContain("SetAllowDrop(top, false)", dialog, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

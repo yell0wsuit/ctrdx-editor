@@ -11,7 +11,7 @@
         xmlns:dialogs="using:AvaloniaDialogs.Views"
         x:Class="CtrDxEditor.Views.MainView"
         x:DataType="vm:EditorViewModel">
-  <dialogs:ReactiveDialogHost CloseOnClickAway="False">
+  <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
     <Grid>
       <DockPanel>
     <Menu DockPanel.Dock="Top">

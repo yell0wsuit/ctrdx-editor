@@ -61,6 +61,7 @@
     "Dialog.Playtest.Locate.ManualLabel": "Or type the full path to CutTheRope-DX.app:",
     "Dialog.Playtest.Locate.ManualSet": "Set",
     "Dialog.Playtest.Locate.ManualEmpty": "Enter the path to CutTheRope-DX.app.",
+    "Dialog.Playtest.Locate.DropNotBundle": "That is not an application. Drag CutTheRope-DX.app itself, or the folder it sits in.\n\nTo use a development build instead, type its full path above.",
     "Dialog.Playtest.Picker.Title": "Select the Cut the Rope: DX executable",
     "Dialog.FileType.Executable": "Application",
     "Notification.Playtest.Launching": "Launching Cut the Rope: DX…",

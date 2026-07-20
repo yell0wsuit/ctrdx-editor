@@ -6,6 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 
+using AvaloniaDialogs.Views;
+
 using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Views
@@ -65,6 +67,12 @@ namespace CtrDxEditor.Views
             SetDropOverlayVisible(false);
         }
 
+        // While a dialog is up it owns the drop, not the editor beneath it: the playtest locate dialog
+        // takes a dropped game bundle. Its handlers sit on the same TopLevel as these ones and Avalonia
+        // runs same-element handlers in registration order, this view's first, skipping the rest once the
+        // event is handled. So these must stand down entirely rather than mark the event handled.
+        private bool DialogOwnsDrop => this.FindControl<ReactiveDialogHost>("DialogHost")?.IsOpen == true;
+
         private void SetDropOverlayVisible(bool visible)
         {
             if (this.FindControl<Control>("DropOverlay") is { } overlay)
@@ -75,6 +83,12 @@ namespace CtrDxEditor.Views
 
         private void Host_DragOver(object? sender, DragEventArgs e)
         {
+            if (DialogOwnsDrop)
+            {
+                SetDropOverlayVisible(false);
+                return;
+            }
+
             bool accepted = DroppedLevelFile(e) is not null;
             e.DragEffects = accepted ? DragDropEffects.Copy : DragDropEffects.None;
             e.Handled = true;
@@ -90,6 +104,11 @@ namespace CtrDxEditor.Views
         // taken here and the load is continued afterwards.
         private async void Host_Drop(object? sender, DragEventArgs e)
         {
+            if (DialogOwnsDrop)
+            {
+                return;
+            }
+
             e.Handled = true;
             SetDropOverlayVisible(false);
 

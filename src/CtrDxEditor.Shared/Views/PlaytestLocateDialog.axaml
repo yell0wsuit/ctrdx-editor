@@ -46,9 +46,11 @@
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center" />
       </Grid>
-      <TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding ManualError}"
-                 IsVisible="{Binding ManualError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
     </StackPanel>
+
+    <!-- Outside the macOS-only block: a refused drop reports here too, and dropping works everywhere. -->
+    <TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding ErrorMessage}"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
 
     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
       <Button Content="{loc:Tr Dialog.Common.Cancel}" Click="Cancel_Click"

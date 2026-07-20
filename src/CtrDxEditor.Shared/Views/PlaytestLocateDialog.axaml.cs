@@ -26,11 +26,17 @@ namespace CtrDxEditor.Views
     /// </remarks>
     public partial class PlaytestLocateDialog : BaseDialog<string?>
     {
-        /// <summary>The <see cref="ManualError"/> property.</summary>
-        public static readonly StyledProperty<string> ManualErrorProperty =
-            AvaloniaProperty.Register<PlaytestLocateDialog, string>(nameof(ManualError), "");
+        /// <summary>The <see cref="ErrorMessage"/> property.</summary>
+        public static readonly StyledProperty<string> ErrorMessageProperty =
+            AvaloniaProperty.Register<PlaytestLocateDialog, string>(nameof(ErrorMessage), "");
 
         private TopLevel? _dropHost;
+        private bool _hostAllowedDrop;
+
+        // DragOver fires continuously over the same item, and judging a folder means listing it. The last
+        // verdict is kept so that lands on one listing per dragged path rather than one per event.
+        private string? _lastJudgedPath;
+        private bool _lastJudgedAcceptable;
 
         /// <summary>Whether this platform uses the typed-path route instead of a file picker.</summary>
         public bool IsMacOS { get; } = OperatingSystem.IsMacOS();
@@ -43,11 +49,11 @@ namespace CtrDxEditor.Views
         public string DropHint { get; } = Localizer.Get(
             OperatingSystem.IsMacOS() ? "Dialog.Playtest.Locate.DropHintMac" : "Dialog.Playtest.Locate.DropHint");
 
-        /// <summary>Why the typed path was rejected, or empty when there is nothing to report.</summary>
-        public string ManualError
+        /// <summary>Why the typed or dropped path was rejected, or empty when there is nothing to report.</summary>
+        public string ErrorMessage
         {
-            get => GetValue(ManualErrorProperty);
-            set => SetValue(ManualErrorProperty, value);
+            get => GetValue(ErrorMessageProperty);
+            set => SetValue(ErrorMessageProperty, value);
         }
 
         /// <summary>Creates the locate dialog.</summary>
@@ -70,6 +76,7 @@ namespace CtrDxEditor.Views
             if (TopLevel.GetTopLevel(this) is { } top)
             {
                 _dropHost = top;
+                _hostAllowedDrop = DragDrop.GetAllowDrop(top);
                 DragDrop.SetAllowDrop(top, true);
                 top.AddHandler(DragDrop.DragOverEvent, Host_DragOver);
                 top.AddHandler(DragDrop.DropEvent, Host_Drop);
@@ -77,14 +84,18 @@ namespace CtrDxEditor.Views
         }
 
         /// <inheritdoc />
-        /// <remarks>Window-wide drop is only wanted while this dialog is up, so it is undone on close.</remarks>
+        /// <remarks>
+        /// Window-wide drop is only wanted while this dialog is up, so it is undone on close. The host's
+        /// own setting is restored rather than cleared: the editor underneath keeps a window-wide drop of
+        /// its own for level XML, and closing this dialog must not switch that off.
+        /// </remarks>
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             if (_dropHost is { } top)
             {
                 top.RemoveHandler(DragDrop.DragOverEvent, Host_DragOver);
                 top.RemoveHandler(DragDrop.DropEvent, Host_Drop);
-                DragDrop.SetAllowDrop(top, false);
+                DragDrop.SetAllowDrop(top, _hostAllowedDrop);
                 _dropHost = null;
             }
 
@@ -99,19 +110,57 @@ namespace CtrDxEditor.Views
             return items is { Length: 1 } ? items[0].TryGetLocalPath() : null;
         }
 
+        // macOS is held to a bundle because that is what the hint asks for and what every real install
+        // looks like there; a dropped plain file is far likelier to be a stray document than a dev build,
+        // and dev builds still go in by typing. Windows and Linux ship a plain executable, so the drop
+        // there is only asked to resolve.
+        private bool IsAcceptableDrop(string path, out string? error)
+        {
+            if (IsMacOS && !DxExecutableResolver.IsBundleOrBundleContainer(path))
+            {
+                error = Localizer.Get("Dialog.Playtest.Locate.DropNotBundle");
+                return false;
+            }
+
+            return DxExecutableResolver.TryResolve(path, out _, out error);
+        }
+
+        private bool IsAcceptableDrop(string path)
+        {
+            if (path != _lastJudgedPath)
+            {
+                _lastJudgedPath = path;
+                _lastJudgedAcceptable = IsAcceptableDrop(path, out _);
+            }
+
+            return _lastJudgedAcceptable;
+        }
+
         private void Host_DragOver(object? sender, DragEventArgs e)
         {
-            e.DragEffects = LocalPathOf(e) is null ? DragDropEffects.None : DragDropEffects.Link;
+            e.DragEffects = LocalPathOf(e) is { } path && IsAcceptableDrop(path)
+                ? DragDropEffects.Link
+                : DragDropEffects.None;
             e.Handled = true;
         }
 
+        // A refused drop reports why rather than doing nothing: the OS cursor says a release will not be
+        // taken, but not what was wrong with the item.
         private void Host_Drop(object? sender, DragEventArgs e)
         {
             e.Handled = true;
-            if (LocalPathOf(e) is { } path)
+            if (LocalPathOf(e) is not { } path)
+            {
+                return;
+            }
+
+            if (IsAcceptableDrop(path, out string? error))
             {
                 Close(path);
+                return;
             }
+
+            ErrorMessage = error ?? Localizer.Get("Dialog.Playtest.Locate.DropNotBundle");
         }
 
         private void ManualPath_KeyDown(object? sender, KeyEventArgs e)
@@ -136,7 +185,7 @@ namespace CtrDxEditor.Views
             string typed = this.FindControl<TextBox>("ManualPathBox")?.Text?.Trim() ?? "";
             if (typed.Length == 0)
             {
-                ManualError = Localizer.Get("Dialog.Playtest.Locate.ManualEmpty");
+                ErrorMessage = Localizer.Get("Dialog.Playtest.Locate.ManualEmpty");
                 return;
             }
 
@@ -146,7 +195,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            ManualError = error ?? Localizer.Get("Dialog.Playtest.Locate.ManualEmpty");
+            ErrorMessage = error ?? Localizer.Get("Dialog.Playtest.Locate.ManualEmpty");
         }
 
         private async void Browse_Click(object? sender, RoutedEventArgs e)

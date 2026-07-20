@@ -222,5 +222,45 @@ namespace CtrDxEditor.Tests
             Assert.Equal("", resolved);
             Assert.False(string.IsNullOrWhiteSpace(error));
         }
+
+        /// <summary>A bundle counts, with or without the trailing separator Finder adds to a drop.</summary>
+        [Fact]
+        public void BundleCountsAsABundle()
+        {
+            string bundle = MakeBundle("CutTheRope-DX", null, "CutTheRope-DX");
+
+            Assert.True(DxExecutableResolver.IsBundleOrBundleContainer(bundle));
+            Assert.True(DxExecutableResolver.IsBundleOrBundleContainer(bundle + Path.DirectorySeparatorChar));
+        }
+
+        /// <summary>The folder a bundle sits in counts too, which is the other thing users drag over.</summary>
+        [Fact]
+        public void FolderHoldingABundleCountsAsABundleContainer()
+        {
+            _ = MakeBundle("CutTheRope-DX", null, "CutTheRope-DX");
+
+            Assert.True(DxExecutableResolver.IsBundleOrBundleContainer(_root));
+        }
+
+        /// <summary>
+        /// The macOS drop is held to a bundle, so a stray document cannot be stored as the game path.
+        /// A dev-build binary is refused here on purpose: it goes in through the typed path instead.
+        /// </summary>
+        [Fact]
+        public void PlainFilesAndBundlelessFoldersAreNotBundles()
+        {
+            string level = Path.Combine(_root, "level.xml");
+            File.WriteAllText(level, "<level />");
+            string empty = Path.Combine(_root, "empty");
+            _ = Directory.CreateDirectory(empty);
+            string devBuild = Path.Combine(_root, "CutTheRopeDX");
+            File.WriteAllText(devBuild, "#!/bin/sh\n");
+
+            Assert.False(DxExecutableResolver.IsBundleOrBundleContainer(level));
+            Assert.False(DxExecutableResolver.IsBundleOrBundleContainer(empty));
+            Assert.False(DxExecutableResolver.IsBundleOrBundleContainer(devBuild));
+            Assert.False(DxExecutableResolver.IsBundleOrBundleContainer(Path.Combine(_root, "nope")));
+            Assert.False(DxExecutableResolver.IsBundleOrBundleContainer("  "));
+        }
     }
 }
