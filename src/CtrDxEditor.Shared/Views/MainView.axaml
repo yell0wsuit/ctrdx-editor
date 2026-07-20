@@ -61,6 +61,19 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
+        <MenuItem Header="{loc:Tr Menu.File.Playtest}" Click="Playtest_Click"
+                  IsVisible="{Binding CanPlaytest}" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="Play" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="{loc:Tr Menu.File.SetDxLocation}" Click="SetDxLocation_Click"
+                  IsVisible="{Binding CanPlaytest}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="FolderCogOutline" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator IsVisible="{Binding CanPlaytest}" />
         <MenuItem Click="Screenshot_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="Camera" />
