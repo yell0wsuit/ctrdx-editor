@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 
 using CtrDxEditor.Core.Editing;
@@ -74,8 +72,9 @@ namespace CtrDxEditor.Views
                         NotificationType.Information));
                 }
             }
-            catch (Exception ex) when (ex is InvalidOperationException or IOException
-                or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+            // Catch-all on purpose: this is an async void handler, so anything that escapes is an
+            // unobserved exception the user would experience as the command silently doing nothing.
+            catch (Exception ex)
             {
                 // A bad bundle, a missing binary, quarantine, permissions: all reach the user as the
                 // OS or resolver described them, rather than as an unhandled async void crash.
@@ -121,39 +120,23 @@ namespace CtrDxEditor.Views
 
         // Returns a usable executable path, prompting on first use or when the stored one has gone
         // missing. Returns null when the user cancels.
-        private async Task<string?> EnsureDxExecutableAsync(EditorViewModel vm)
+        private static async Task<string?> EnsureDxExecutableAsync(EditorViewModel vm)
         {
             string? stored = vm.CurrentSettingsSnapshot.DxExecutablePath;
 
-            // A .app is a directory and a dev build is a plain file, so both existence checks apply.
-            if (!string.IsNullOrWhiteSpace(stored) && (File.Exists(stored) || Directory.Exists(stored)))
-            {
-                return stored;
-            }
-
-            ConfirmDialog dialog = new()
-            {
-                Header = Localizer.Get("Dialog.Playtest.Locate.Header"),
-                Message = Localizer.Get("Dialog.Playtest.Locate.Body"),
-                PositiveText = Localizer.Get("Dialog.Playtest.Locate.Browse"),
-                NegativeText = Localizer.Get("Dialog.Common.Cancel"),
-            };
-            Optional<bool> confirmed = await dialog.ShowAsync();
-            return confirmed.GetValueOrDefault() ? await PickDxExecutableAsync(vm) : null;
+            // A bundle or containing folder is a directory and a dev build is a plain file, so both
+            // existence checks apply.
+            return !string.IsNullOrWhiteSpace(stored) && (File.Exists(stored) || Directory.Exists(stored))
+                ? stored
+                : await PickDxExecutableAsync(vm);
         }
 
-        // Shows the file picker and persists the pick. Returns the chosen path, or null if cancelled.
-        private async Task<string?> PickDxExecutableAsync(EditorViewModel vm)
+        // Shows the locate dialog (drop zone + Browse) and persists the pick. Returns the chosen path,
+        // or null if cancelled.
+        private static async Task<string?> PickDxExecutableAsync(EditorViewModel vm)
         {
-            IReadOnlyList<IStorageFile> files = await TopLevel.GetTopLevel(this)!.StorageProvider.OpenFilePickerAsync(
-                new FilePickerOpenOptions
-                {
-                    Title = Localizer.Get("Dialog.Playtest.Picker.Title"),
-                    AllowMultiple = false,
-                    FileTypeFilter = [DxExecutableFileType()],
-                });
-
-            if (files.Count != 1 || files[0].TryGetLocalPath() is not { } path)
+            Optional<string?> result = await new PlaytestLocateDialog().ShowAsync();
+            if (result.GetValueOrDefault() is not { } path)
             {
                 return null;
             }
@@ -166,16 +149,5 @@ namespace CtrDxEditor.Views
             return path;
         }
 
-        // The macOS entry is the load-bearing one: NSOpenPanel descends into .app bundles instead of
-        // selecting them unless the filter declares the bundle type. Declaring the Unix-executable
-        // type alongside it keeps the extensionless development binary selectable too.
-        private static FilePickerFileType DxExecutableFileType()
-        {
-            return new FilePickerFileType(Localizer.Get("Dialog.FileType.Executable"))
-            {
-                Patterns = OperatingSystem.IsWindows() ? ["*.exe"] : ["*"],
-                AppleUniformTypeIdentifiers = ["com.apple.application-bundle", "public.unix-executable"],
-            };
-        }
     }
 }

@@ -29,17 +29,36 @@ namespace CtrDxEditor.Playtest
                 return false;
             }
 
-            // A plain file is runnable as-is: the dev-mode binary, a Windows .exe, a Linux binary.
+            // A directory dragged from Finder arrives with a trailing separator, which would defeat
+            // the .app suffix test below and send a bundle down the plain-folder path. Trimmed here,
+            // once, so every check afterwards sees the same shape of path. A path that is nothing but
+            // separators is left alone rather than trimmed away to nothing.
+            string trimmed = pickedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (trimmed.Length > 0)
+            {
+                pickedPath = trimmed;
+            }
+
             if (!pickedPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
             {
-                if (!File.Exists(pickedPath))
+                // A plain file is runnable as-is: the dev-mode binary, a Windows .exe, a Linux binary.
+                if (File.Exists(pickedPath))
                 {
-                    error = $"The selected executable no longer exists:\n{pickedPath}";
-                    return false;
+                    executablePath = pickedPath;
+                    error = null;
+                    return true;
                 }
-                executablePath = pickedPath;
-                error = null;
-                return true;
+
+                // A plain directory is what macOS users can actually select: neither picker will
+                // return a .app (the file picker cannot express a directory, and the folder picker
+                // treats a bundle as an unselectable package), so they choose its parent folder.
+                if (Directory.Exists(pickedPath))
+                {
+                    return TryResolveFromContainer(pickedPath, out executablePath, out error);
+                }
+
+                error = $"The selected executable no longer exists:\n{pickedPath}";
+                return false;
             }
 
             string macOsDir = Path.Combine(pickedPath, "Contents", "MacOS");
@@ -81,6 +100,35 @@ namespace CtrDxEditor.Playtest
             error = binaries.Length == 0
                 ? $"The selected app bundle contains no executable:\n{pickedPath}"
                 : $"Could not determine which executable to run in:\n{pickedPath}";
+            return false;
+        }
+
+        // Resolves through a bundle sitting directly inside a dropped folder. Only an unambiguous
+        // single bundle is accepted: guessing between several would risk launching the wrong app,
+        // and the user can always drag the bundle itself instead.
+        private static bool TryResolveFromContainer(string directory, out string executablePath, out string? error)
+        {
+            executablePath = "";
+
+            string[] bundles;
+            try
+            {
+                bundles = Directory.GetDirectories(directory, "*.app");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                error = $"The selected folder could not be read:\n{directory}";
+                return false;
+            }
+
+            if (bundles.Length == 1)
+            {
+                return TryResolve(bundles[0], out executablePath, out error);
+            }
+
+            error = bundles.Length == 0
+                ? $"No application was found in:\n{directory}\n\nDrag CutTheRope-DX.app itself instead."
+                : $"That folder contains several applications:\n{directory}\n\nDrag CutTheRope-DX.app itself instead.";
             return false;
         }
 

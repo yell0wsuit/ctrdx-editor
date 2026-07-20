@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             xmlns:views="using:CtrDxEditor.Views"
+             x:Class="CtrDxEditor.Views.PlaytestLocateDialog"
+             x:CompileBindings="True"
+             x:DataType="views:PlaytestLocateDialog">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel Margin="24" Spacing="16" Width="440">
+    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{loc:Tr Dialog.Playtest.Locate.Header}" />
+    <TextBlock TextWrapping="Wrap" Text="{Binding Body}" />
+
+    <!-- Affordance only. The drop is handled on the window, not here, so the user can release
+         anywhere over the editor instead of having to uncover this exact rectangle. -->
+    <Border MinHeight="110"
+            CornerRadius="8"
+            BorderThickness="2"
+            BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+            Background="{DynamicResource EditorBrush.Surface.Panel}">
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+        <icons:MaterialIcon Kind="TrayArrowDown" Width="32" Height="32"
+                            HorizontalAlignment="Center" Opacity="0.7" />
+        <TextBlock Text="{Binding DropHint}"
+                   TextWrapping="Wrap" TextAlignment="Center" Opacity="0.8" Margin="16,0" />
+      </StackPanel>
+    </Border>
+
+    <!-- macOS only: no file dialog can return a .app, so a typed path is the keyboard-accessible
+         alternative to dragging. Elsewhere the Browse button below does the job. -->
+    <StackPanel IsVisible="{Binding IsMacOS}" Spacing="6">
+      <TextBlock Text="{loc:Tr Dialog.Playtest.Locate.ManualLabel}" Opacity="0.8" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBox Grid.Column="0" x:Name="ManualPathBox"
+                 PlaceholderText="/Applications/CutTheRope-DX.app"
+                 KeyDown="ManualPath_KeyDown" />
+        <Button Grid.Column="1" Margin="8,0,0,0"
+                Content="{loc:Tr Dialog.Playtest.Locate.ManualSet}"
+                Click="SetManualLocation_Click"
+                Padding="16,6" VerticalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center" />
+      </Grid>
+      <TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding ManualError}"
+                 IsVisible="{Binding ManualError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="{loc:Tr Dialog.Common.Cancel}" Click="Cancel_Click"
+              MinWidth="96" Padding="16,6"
+              HorizontalContentAlignment="Center"
+              VerticalContentAlignment="Center" />
+      <Button Content="{loc:Tr Dialog.Playtest.Locate.Browse}" Click="Browse_Click"
+              IsVisible="{Binding !IsMacOS}"
+              MinWidth="96" Padding="16,6"
+              HorizontalContentAlignment="Center"
+              VerticalContentAlignment="Center" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

@@ -70,6 +70,24 @@ namespace CtrDxEditor.Tests
             Assert.Null(error);
         }
 
+        /// <summary>
+        /// Verifies a bundle path ending in a separator still resolves. A bundle dragged from Finder
+        /// arrives as a directory URI with a trailing slash, which would otherwise fail the .app
+        /// suffix test and be treated as a plain folder to search.
+        /// </summary>
+        [Fact]
+        public void BundlePathWithTrailingSeparatorResolves()
+        {
+            string bundle = MakeBundle("CutTheRope-DX", "CutTheRope-DX", "CutTheRope-DX");
+
+            bool ok = DxExecutableResolver.TryResolve(
+                bundle + Path.DirectorySeparatorChar, out string resolved, out string? error);
+
+            Assert.True(ok);
+            Assert.Equal(Path.Combine(bundle, "Contents", "MacOS", "CutTheRope-DX"), resolved);
+            Assert.Null(error);
+        }
+
         /// <summary>Verifies a bundle with no Info.plist falls back to the bundle's own name.</summary>
         [Fact]
         public void BundleWithoutPlistFallsBackToBundleName()
@@ -143,6 +161,50 @@ namespace CtrDxEditor.Tests
             string bundle = MakeBundle("CutTheRopeDX", null, "Alpha", "Beta");
 
             bool ok = DxExecutableResolver.TryResolve(bundle, out string resolved, out string? error);
+
+            Assert.False(ok);
+            Assert.Equal("", resolved);
+            Assert.False(string.IsNullOrWhiteSpace(error));
+        }
+
+        /// <summary>
+        /// Verifies a plain directory holding one bundle resolves through it. macOS pickers cannot
+        /// return a .app at all, so the user selects its containing folder instead.
+        /// </summary>
+        [Fact]
+        public void DirectoryContainingSingleBundleResolvesToItsBinary()
+        {
+            string bundle = MakeBundle("CutTheRope-DX", "CutTheRope-DX", "CutTheRope-DX");
+
+            bool ok = DxExecutableResolver.TryResolve(_root, out string resolved, out string? error);
+
+            Assert.True(ok);
+            Assert.Equal(Path.Combine(bundle, "Contents", "MacOS", "CutTheRope-DX"), resolved);
+            Assert.Null(error);
+        }
+
+        /// <summary>Verifies a folder holding several bundles is an error rather than a guess.</summary>
+        [Fact]
+        public void DirectoryWithManyBundlesReportsError()
+        {
+            _ = MakeBundle("Safari", "Safari", "Safari");
+            _ = MakeBundle("CutTheRope-DX", "CutTheRope-DX", "CutTheRope-DX");
+
+            bool ok = DxExecutableResolver.TryResolve(_root, out string resolved, out string? error);
+
+            Assert.False(ok);
+            Assert.Equal("", resolved);
+            Assert.False(string.IsNullOrWhiteSpace(error));
+        }
+
+        /// <summary>Verifies a directory holding no bundle at all is reported as an error.</summary>
+        [Fact]
+        public void DirectoryWithNoBundleReportsError()
+        {
+            string empty = Path.Combine(_root, "empty");
+            _ = Directory.CreateDirectory(empty);
+
+            bool ok = DxExecutableResolver.TryResolve(empty, out string resolved, out string? error);
 
             Assert.False(ok);
             Assert.Equal("", resolved);
