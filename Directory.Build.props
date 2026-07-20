@@ -24,11 +24,15 @@
     <IncludeSourceRevisionInInformationalVersion Condition="'$(VersionSuffix)' != ''">true</IncludeSourceRevisionInInformationalVersion>
     <IncludeSourceRevisionInInformationalVersion Condition="'$(VersionSuffix)' == ''">false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    <NoWarn>$(NoWarn);EnableGenerateDocumentationFile</NoWarn>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(DesktopPublish)' == 'true'">
     <SelfContained Condition="'$(PublishAot)' == 'true' and '$(Configuration)' == 'Release'">true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <PublishReadyToRun>false</PublishReadyToRun>
     <StripSymbols>true</StripSymbols>
-    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
   </PropertyGroup>
 </Project>
