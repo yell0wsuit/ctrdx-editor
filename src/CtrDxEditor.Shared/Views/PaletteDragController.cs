@@ -11,10 +11,18 @@ using CtrDxEditor.ViewModels;
 namespace CtrDxEditor.Views
 {
     /// <summary>
-    /// Drives palette-to-canvas object placement as an internal pointer-capture drag (no OS drag-drop, so
-    /// no OS drag image): a click drops at the level center, a drag drops where it lands on the canvas, and
-    /// a drag released off-canvas cancels. Pointer coordinates are measured against the supplied root visual.
+    /// Drives palette-to-canvas object placement. With a mouse or pen this is an internal pointer-capture
+    /// drag (no OS drag-drop, so no OS drag image): a click drops at the level center, a drag drops where it
+    /// lands on the canvas, and a drag released off-canvas cancels. Touch has no drag path at all — a tap
+    /// drops at the level center and a swipe scrolls the list. Pointer coordinates are measured against the
+    /// supplied root visual.
     /// </summary>
+    /// <remarks>
+    /// Dragging is meaningless on touch: in the compact shell the palette sheet sits over the canvas, so
+    /// there is nowhere to drag to, and a drop point under the sheet is one the finger never saw. Capturing
+    /// the pointer would also take the gesture away from the sheet's <c>ScrollViewer</c> and stop the list
+    /// scrolling, so touch presses deliberately leave the pointer uncaptured.
+    /// </remarks>
     /// <param name="root">Visual the pointer coordinates and drag threshold are measured against.</param>
     /// <param name="canvas">Canvas the armed palette element is placed onto.</param>
     internal sealed class PaletteDragController(Visual root, LevelCanvas canvas)
@@ -24,13 +32,19 @@ namespace CtrDxEditor.Views
         private string? _pendingElement;
         private Point _pressPos;
         private bool _dragging;
+        private bool _touch;
         private PaletteItemViewModel? _draggingItem;
 
-        /// <summary>Arms a placement on left-press and captures the pointer; the gesture resolves on release.</summary>
+        /// <summary>Arms a placement on press; the gesture resolves on release.</summary>
+        /// <remarks>
+        /// A mouse or pen press captures the pointer so the drag survives leaving the palette. A touch press
+        /// does not, leaving the sheet's scroll gesture intact.
+        /// </remarks>
         public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
             Cancel();
-            if (!e.GetCurrentPoint(root).Properties.IsLeftButtonPressed)
+            bool touch = e.Pointer.Type == PointerType.Touch;
+            if (!touch && !e.GetCurrentPoint(root).Properties.IsLeftButtonPressed)
             {
                 return;
             }
@@ -39,12 +53,19 @@ namespace CtrDxEditor.Views
             if (button is { Tag: string element, IsEnabled: true })
             {
                 _pendingElement = element;
+                _touch = touch;
+                _pressPos = e.GetPosition(root);
+
+                if (touch)
+                {
+                    return;
+                }
+
                 if (button.DataContext is PaletteItemViewModel pressed)
                 {
                     _draggingItem = pressed;
                     pressed.IsDragging = true;
                 }
-                _pressPos = e.GetPosition(root);
                 e.Pointer.Capture(sender as IInputElement);
             }
         }
@@ -65,6 +86,15 @@ namespace CtrDxEditor.Views
                 {
                     return;
                 }
+
+                if (_touch)
+                {
+                    // The finger is scrolling the list, not placing. Drop the pending placement so the
+                    // release cannot mistake the end of a swipe for a tap.
+                    Cancel();
+                    return;
+                }
+
                 _dragging = true;
             }
 
@@ -80,7 +110,10 @@ namespace CtrDxEditor.Views
             }
         }
 
-        /// <summary>Resolves the gesture: a click drops at center, a drag drops where it lands, off-canvas cancels.</summary>
+        /// <summary>
+        /// Resolves the gesture: a click or tap drops at center, a drag drops where it lands, off-canvas
+        /// cancels. Touch never reaches the drag branch, so a tap that survived the move handler places.
+        /// </summary>
         public void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
         {
             if (_pendingElement is string element)
@@ -123,6 +156,7 @@ namespace CtrDxEditor.Views
             canvas.HideGhost();
             _pendingElement = null;
             _dragging = false;
+            _touch = false;
             if (_draggingItem is { } draggingItem)
             {
                 draggingItem.IsDragging = false;

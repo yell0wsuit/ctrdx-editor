@@ -82,6 +82,44 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("StickyHeaderHost", view, StringComparison.Ordinal);
         }
 
+        /// <summary>A touch press neither captures the pointer nor arms a drag.</summary>
+        /// <remarks>
+        /// Capturing takes the gesture from the palette sheet's <c>ScrollViewer</c> and stops the list
+        /// scrolling; the drag path itself is meaningless on touch, because the sheet covers the canvas so
+        /// any drop point is one the finger never saw. A tap places at the level center instead.
+        /// </remarks>
+        [Fact]
+        public void TouchPressDoesNotCaptureOrDrag()
+        {
+            string controller = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteDragController.cs"));
+
+            Assert.Contains("e.Pointer.Type == PointerType.Touch", controller, StringComparison.Ordinal);
+            int press = controller.IndexOf("public void OnPointerPressed", StringComparison.Ordinal);
+            int moved = controller.IndexOf("public void OnPointerMoved", StringComparison.Ordinal);
+            int capture = controller.IndexOf("e.Pointer.Capture(sender", StringComparison.Ordinal);
+            Assert.True(press >= 0 && moved > press && capture > press && capture < moved);
+
+            // The touch branch returns before the capture call, so only mouse and pen reach it.
+            int touchReturn = controller.IndexOf("if (touch)", press, StringComparison.Ordinal);
+            Assert.True(touchReturn > press && touchReturn < capture);
+        }
+
+        /// <summary>A touch swipe abandons the pending placement so scrolling never drops an object.</summary>
+        [Fact]
+        public void TouchSwipeCancelsPendingPlacement()
+        {
+            string controller = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteDragController.cs"));
+
+            int moved = controller.IndexOf("public void OnPointerMoved", StringComparison.Ordinal);
+            int released = controller.IndexOf("public void OnPointerReleased", StringComparison.Ordinal);
+            Assert.True(moved >= 0 && released > moved);
+
+            // Past the drag threshold, a touch gesture cancels rather than promoting itself to a drag.
+            ReadOnlySpan<char> body = controller.AsSpan(moved, released - moved);
+            Assert.Contains("if (_touch)", body, StringComparison.Ordinal);
+            Assert.Contains("Cancel();", body, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;
