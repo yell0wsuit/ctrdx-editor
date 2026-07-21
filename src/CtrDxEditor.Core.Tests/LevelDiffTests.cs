@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using CtrDxEditor.Core.Editing;
 
 using Xunit;
@@ -111,6 +113,50 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(row.IsAdded);
             Assert.False(row.IsRemoved);
             Assert.False(row.IsUnchanged);
+        }
+
+        /// <summary>A modified line becomes two unified rows: the old text, then the new text.</summary>
+        [Fact]
+        public void UnifiedSplitsModifiedIntoTwoRows()
+        {
+            string modified = "<map>\n  <a x=\"1\"/>\n  <b y=\"9\"/>\n</map>";
+            LevelDiffResult result = LevelDiff.Build(Base, modified);
+
+            IReadOnlyList<UnifiedDiffRow> unified = LevelDiff.ToUnified(result.Rows);
+
+            UnifiedDiffRow oldSide = unified[2];
+            UnifiedDiffRow newSide = unified[3];
+            Assert.Equal(DiffRowKind.Deleted, oldSide.Kind);
+            Assert.Equal("  <b y=\"2\"/>", oldSide.Text);
+            Assert.Null(oldSide.NewLine);
+            Assert.Equal(DiffRowKind.Inserted, newSide.Kind);
+            Assert.Equal("  <b y=\"9\"/>", newSide.Text);
+            Assert.Null(newSide.OldLine);
+        }
+
+        /// <summary>Unchanged lines pass through as a single context row keeping both line numbers.</summary>
+        [Fact]
+        public void UnifiedKeepsUnchangedAsOneRow()
+        {
+            IReadOnlyList<UnifiedDiffRow> unified = LevelDiff.ToUnified(LevelDiff.Build(Base, Base).Rows);
+
+            Assert.Equal(4, unified.Count);
+            Assert.All(unified, row => Assert.Equal(DiffRowKind.Unchanged, row.Kind));
+            Assert.Equal(1, unified[0].OldLine);
+            Assert.Equal(1, unified[0].NewLine);
+        }
+
+        /// <summary>Each unified row carries a text marker, so the diff reads without relying on color.</summary>
+        [Fact]
+        public void UnifiedRowsCarryMarkers()
+        {
+            string modified = "<map>\n  <a x=\"1\"/>\n  <c z=\"3\"/>\n  <b y=\"2\"/>\n</map>";
+
+            IReadOnlyList<UnifiedDiffRow> unified = LevelDiff.ToUnified(LevelDiff.Build(Base, modified).Rows);
+
+            Assert.Equal("+", Assert.Single(unified, row => row.IsAdded).Marker);
+            Assert.All(unified, row => Assert.False(string.IsNullOrEmpty(row.Marker)));
+            Assert.Contains(unified, row => row.Marker == " ");
         }
     }
 }

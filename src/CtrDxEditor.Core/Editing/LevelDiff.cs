@@ -45,6 +45,38 @@ namespace CtrDxEditor.Core.Editing
         public bool IsUnchanged => Kind == DiffRowKind.Unchanged;
     }
 
+    /// <summary>
+    /// One row of the unified (single-column) view. A modified line expands into two of these - the
+    /// baseline text as a deletion, then the live text as an insertion - matching how unified diffs read.
+    /// </summary>
+    public sealed record UnifiedDiffRow(
+        int? OldLine,
+        int? NewLine,
+        string Text,
+        DiffRowKind Kind)
+    {
+        /// <summary>Gutter marker, so the row's kind is readable without relying on its color.</summary>
+        public string Marker => Kind switch
+        {
+            DiffRowKind.Inserted => "+",
+            DiffRowKind.Deleted => "-",
+            DiffRowKind.Modified => "~",
+            _ => " ",
+        };
+
+        /// <summary>Whether this line exists only in the live document; drives the added row style.</summary>
+        public bool IsAdded => Kind == DiffRowKind.Inserted;
+
+        /// <summary>Whether this line exists only in the baseline; drives the removed row style.</summary>
+        public bool IsRemoved => Kind == DiffRowKind.Deleted;
+
+        /// <summary>Whether this line differs between the two sides; drives the modified row style.</summary>
+        public bool IsModified => Kind == DiffRowKind.Modified;
+
+        /// <summary>Whether this line is identical on both sides; such rows render without a highlight.</summary>
+        public bool IsUnchanged => Kind == DiffRowKind.Unchanged;
+    }
+
     /// <summary>The full line-by-line comparison of two level XML documents, plus its change tallies.</summary>
     public sealed record LevelDiffResult(
         IReadOnlyList<DiffRow> Rows,
@@ -105,6 +137,37 @@ namespace CtrDxEditor.Core.Editing
             }
 
             return new LevelDiffResult(rows, added, removed, modified);
+        }
+
+        /// <summary>
+        /// Flattens paired rows into the single-column unified sequence. Unchanged and single-sided rows
+        /// pass through as one row each; a modified row expands into its deletion followed by its insertion.
+        /// </summary>
+        public static IReadOnlyList<UnifiedDiffRow> ToUnified(IReadOnlyList<DiffRow> rows)
+        {
+            List<UnifiedDiffRow> unified = new(rows.Count);
+
+            foreach (DiffRow row in rows)
+            {
+                switch (row.Kind)
+                {
+                    case DiffRowKind.Modified:
+                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted));
+                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted));
+                        break;
+                    case DiffRowKind.Deleted:
+                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted));
+                        break;
+                    case DiffRowKind.Inserted:
+                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted));
+                        break;
+                    default:
+                        unified.Add(new UnifiedDiffRow(row.OldLine, row.NewLine, row.NewText ?? row.OldText ?? string.Empty, DiffRowKind.Unchanged));
+                        break;
+                }
+            }
+
+            return unified;
         }
 
         // A row's kind comes from whichever side is real: an imaginary new side means the line was
