@@ -17,7 +17,8 @@
     <ProjectReference Include="..\CtrDxEditor.Core\CtrDxEditor.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <AvaloniaResource Include="Localization\*.json" />
+    <AvaloniaResource Include="..\..\resources\localization\*.json"
+                      Link="Localization\%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\..\resources\fonts\RobotoMono-*.ttf"
                       Link="Assets\Fonts\%(Filename)%(Extension)" />
   </ItemGroup>
