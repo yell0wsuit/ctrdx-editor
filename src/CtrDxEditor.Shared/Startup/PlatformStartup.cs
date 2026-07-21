@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 
+using Avalonia;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.Playtest;
 
@@ -35,5 +37,11 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Plays levels in Cut the Rope: DX for playtesting; null where processes cannot be spawned (the browser).</summary>
         public IPlaytestLauncher? Playtest { get; init; }
+
+        /// <summary>
+        /// Reads platform safe-area insets, when this head can do so more reliably than Avalonia's
+        /// <c>InsetsManager</c>. Null on heads that have nothing better (desktop), where the manager is used.
+        /// </summary>
+        public Func<Thickness>? SafeAreaInsets { get; init; }
     }
 }

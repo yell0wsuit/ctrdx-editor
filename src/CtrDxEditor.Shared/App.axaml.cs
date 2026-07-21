@@ -33,6 +33,10 @@ namespace CtrDxEditor
         /// <inheritdoc />
         public override void OnFrameworkInitializationCompleted()
         {
+            // The browser head reads insets from CSS env(); desktop leaves this null and falls back to
+            // InsetsManager, which reports nothing there anyway.
+            SafeAreaProbe.PlatformSource = _startup.SafeAreaInsets;
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 MainWindow window = new();

@@ -10,7 +10,8 @@
         xmlns:icons="using:Material.Icons.Avalonia"
         xmlns:dialogs="using:AvaloniaDialogs.Views"
         x:Class="CtrDxEditor.Views.MainView"
-        x:DataType="vm:EditorViewModel">
+        x:DataType="vm:EditorViewModel"
+        TopLevel.AutoSafeAreaPadding="False">
   <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
     <Grid>
       <DockPanel>

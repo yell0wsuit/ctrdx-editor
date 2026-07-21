@@ -12,6 +12,7 @@ using CtrDxEditor.Startup;
 
 await IndexedDb.ImportAsync();
 await WebCrypto.ImportAsync();
+await SafeAreaInterop.ImportAsync();
 await BuildAvaloniaApp().StartBrowserAppAsync("out");
 
 AppBuilder BuildAvaloniaApp()
@@ -31,6 +32,11 @@ AppBuilder BuildAvaloniaApp()
         AllowDirectDownload = false,
         ResolveInstalled = async () =>
             await contentStore.IsPopulatedAsync() ? contentStore : null,
+        SafeAreaInsets = () =>
+        {
+            double[] i = SafeAreaInterop.ReadInsets();
+            return new Thickness(i[0], i[1], i[2], i[3]);
+        },
     };
     return AppBuilder.Configure(() => new App(startup)).WithInterFont();
 }
