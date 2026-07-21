@@ -13,7 +13,7 @@ namespace CtrDxEditor.Content
     {
         /// <summary>Direct URL for the latest downloadable asset bundle.</summary>
         public const string AssetsUrl =
-            "https://github.com/yell0wsuit/ctrdx-assets/releases/latest/download/ctrdx-assets.zip";
+            "https://github.com/yell0wsuit/ctrdx-assets/releases/latest/download/ctrdx-assets-vk.zip";
 
         /// <summary>Direct URL for the browser's WebP-sprite asset bundle (smaller download than the desktop bundle).</summary>
         public const string WebpAssetsUrl =
