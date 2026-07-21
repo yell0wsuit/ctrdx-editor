@@ -244,6 +244,13 @@ namespace CtrDxEditor.ViewModels
         }
 
         /// <summary>
+        /// The serialized level as of the last load, new, or save - the "before" side the Review Changes
+        /// dialog diffs against. Null when no level is open. Shares one source of truth with
+        /// <see cref="IsModified"/>, so the dialog and the dirty marker can never disagree.
+        /// </summary>
+        public string? SavedBaselineXml => _savedBaselineXml;
+
+        /// <summary>
         /// True when the open level has edits that differ from the last load, new, or save. Undoing all the
         /// way back to the saved state clears it; decoration, zoom, and selection changes never set it.
         /// </summary>

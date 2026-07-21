@@ -184,6 +184,24 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.IsModified);
         }
 
+        /// <summary>
+        /// The baseline the Review Changes dialog diffs against is the same snapshot IsModified compares,
+        /// so the dialog can never disagree with the title bar's dirty marker.
+        /// </summary>
+        [Fact]
+        public void SavedBaselineMatchesModifiedState()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
+
+            Assert.Null(vm.SavedBaselineXml);
+
+            vm.LoadLevelXml(SpikeLevel("spike3", "3"));
+
+            Assert.NotNull(vm.SavedBaselineXml);
+            Assert.False(vm.IsModified);
+            Assert.Equal(vm.SavedBaselineXml, vm.ToXml());
+        }
+
         private static EditorViewModel CreateLoadedViewModel()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyContentStore()));
