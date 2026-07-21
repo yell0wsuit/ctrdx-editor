@@ -20,9 +20,9 @@ namespace CtrDxEditor.Core.Tests
                 return Empty();
             }
 
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
 
             Assert.Equal(1, calls);
         }
@@ -57,8 +57,8 @@ namespace CtrDxEditor.Core.Tests
                 return Empty();
             }
 
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(width, height, background, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(width, height, background, 0.5, 0.25, Compute);
 
             Assert.Equal(2, calls);
         }
@@ -81,8 +81,8 @@ namespace CtrDxEditor.Core.Tests
                 return Empty();
             }
 
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(800, 600, 0, p1Aspect, p2Aspect, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, p1Aspect, p2Aspect, Compute);
 
             Assert.Equal(2, calls);
         }
@@ -100,9 +100,9 @@ namespace CtrDxEditor.Core.Tests
                 return Empty();
             }
 
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(1024, 600, 0, 0.5, 0.25, Compute);
-            cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(1024, 600, 0, 0.5, 0.25, Compute);
+            _ = cache.Get(800, 600, 0, 0.5, 0.25, Compute);
 
             Assert.Equal(3, calls);
         }
