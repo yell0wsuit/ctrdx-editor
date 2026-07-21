@@ -192,6 +192,7 @@
 
     "Dialog.Unsaved.Header": "Unsaved changes",
     "Dialog.Unsaved.Body": "You have unsaved changes that will be lost.",
+    "Dialog.Unsaved.Body2": "You might want to review your changes in File > Review Changes.",
     "Dialog.Unsaved.Close": "Discard and close",
     "Dialog.Unsaved.Open": "Discard and open",
     "Dialog.Unsaved.New": "Discard and continue",

@@ -21,7 +21,7 @@ namespace CtrDxEditor.Views
             ConfirmDialog dialog = new()
             {
                 Header = Localizer.Get("Dialog.Unsaved.Header"),
-                Message = Localizer.Get("Dialog.Unsaved.Body"),
+                Message = Localizer.Get("Dialog.Unsaved.Body") + "\n\n" + Localizer.Get("Dialog.Unsaved.Body2"),
                 PositiveText = Localizer.Get(proceedKey),
                 NegativeText = Localizer.Get("Dialog.Common.Cancel"),
             };
