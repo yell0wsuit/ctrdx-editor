@@ -12,7 +12,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void PaletteButtonStretchesMarqueeContent()
         {
-            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteView.axaml"));
 
             Assert.Contains("HorizontalContentAlignment=\"Stretch\"", view, StringComparison.Ordinal);
         }
@@ -21,7 +21,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void TutorialPaletteIconUsesDarkThemeMask()
         {
-            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteView.axaml"));
             string theme = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Styles", "EditorTheme.axaml"));
 
             Assert.Contains("IsVisible=\"{Binding InvertOnDarkTheme}\"", view, StringComparison.Ordinal);
@@ -44,6 +44,42 @@ namespace CtrDxEditor.Tests
             // The controller's capture-lost handler and its cleanup share the same Cancel() entry point.
             Assert.Contains("public void OnPointerCaptureLost", controller, StringComparison.Ordinal);
             Assert.Contains("public void Cancel()", controller, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Palette drag-to-place is wired through the extracted view's exposed item host, not a name lookup.
+        /// </summary>
+        /// <remarks>
+        /// <c>FindControl</c> does not cross into a child <c>UserControl</c>'s name scope, so looking up
+        /// "PaletteList" from <c>MainView</c> silently returns null once the palette lives in its own control
+        /// — and mouse drag-to-place would break with no test catching it. The host must be reached through
+        /// the property instead.
+        /// </remarks>
+        [Fact]
+        public void PaletteDragWiresThroughExtractedViewItemHost()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string palette = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteView.axaml.cs"));
+
+            Assert.Contains("FindControl<PaletteView>(\"Palette\")!.ItemsHost", view, StringComparison.Ordinal);
+            Assert.Contains("public ItemsControl ItemsHost", palette, StringComparison.Ordinal);
+            // A name lookup for the inner control from MainView would resolve to null at runtime.
+            Assert.DoesNotContain("FindControl<ItemsControl>(\"PaletteList\")", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>The sticky group header logic moved with the markup, into the palette's own name scope.</summary>
+        [Fact]
+        public void StickyHeaderLogicLivesWithThePaletteMarkup()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string palette = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteView.axaml.cs"));
+
+            Assert.Contains("OnPaletteScrollChanged", palette, StringComparison.Ordinal);
+            Assert.Contains("StickyHeaderHost", palette, StringComparison.Ordinal);
+            Assert.Contains("StickyHeaderText", palette, StringComparison.Ordinal);
+            // Left behind in MainView the handler would compile but find nothing at runtime.
+            Assert.DoesNotContain("OnPaletteScrollChanged", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("StickyHeaderHost", view, StringComparison.Ordinal);
         }
 
         private static string SourcePath(params string[] parts)

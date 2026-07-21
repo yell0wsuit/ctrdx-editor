@@ -301,63 +301,7 @@
       </MenuItem>
     </Menu>
     <Grid ColumnDefinitions="200,1,*,1,280">
-      <Border Grid.Column="0" Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <Grid RowDefinitions="Auto,*">
-          <TextBox Grid.Row="0" Margin="6,6,6,4"
-                   IsVisible="{Binding HasDocument, FallbackValue=False}"
-                   Text="{Binding PaletteSearchText, Mode=TwoWay}"
-                   PlaceholderText="{loc:Tr Palette.SearchPlaceholder}">
-            <TextBox.InnerLeftContent>
-              <icons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="6,0,0,0"
-                                  Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
-            </TextBox.InnerLeftContent>
-          </TextBox>
-          <Grid Grid.Row="1">
-            <ScrollViewer x:Name="PaletteScroll" HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto"
-                          ScrollChanged="OnPaletteScrollChanged">
-              <ItemsControl x:Name="PaletteList" ItemsSource="{Binding PaletteView}" Margin="6,0,6,10">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <StackPanel>
-                      <Border IsVisible="{Binding ShowDivider}" Height="1" Margin="0,8,0,0"
-                              Background="{DynamicResource EditorBrush.Surface.Divider}" />
-                      <TextBlock Text="{Binding GroupName}" FontWeight="Bold"
-                                 IsVisible="{Binding ShowGroupHeader}"
-                                 TextWrapping="Wrap" Margin="2,8,2,4" />
-                      <Button Margin="0,3" Padding="8,6" HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Stretch"
-                              IsEnabled="{Binding Enabled}"
-                              Tag="{Binding Element}">
-                        <Grid ColumnDefinitions="*,Auto">
-                          <ctl:MarqueeTextBlock Grid.Column="0" Text="{Binding DisplayName}"
-                                                ForceActive="{Binding IsDragging}"
-                                                VerticalAlignment="Center" />
-                          <Grid Grid.Column="1" Width="28" Height="28" Margin="6,0,0,0">
-                            <Image Source="{Binding Icon}" Stretch="Uniform" />
-                            <Border IsVisible="{Binding InvertOnDarkTheme}"
-                                    Background="{DynamicResource EditorBrush.TutorialPaletteOverlay}">
-                              <Border.OpacityMask>
-                                <ImageBrush Source="{Binding Icon}" Stretch="Uniform" />
-                              </Border.OpacityMask>
-                            </Border>
-                          </Grid>
-                        </Grid>
-                      </Button>
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </ScrollViewer>
-            <!-- Sticky overlay header: pinned at the top of the scroll area, text updated on scroll. -->
-            <Border x:Name="StickyHeaderHost" VerticalAlignment="Top" IsHitTestVisible="False"
-                    Background="{DynamicResource EditorBrush.Surface.Panel}"
-                    Padding="8,6" IsVisible="False">
-              <TextBlock x:Name="StickyHeaderText" FontWeight="Bold" TextWrapping="Wrap" />
-            </Border>
-          </Grid>
-        </Grid>
-      </Border>
+      <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
         <render:LevelCanvas Grid.Row="0" Grid.Column="0" x:Name="Canvas" Focusable="True"
@@ -405,7 +349,9 @@
         <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Panel}" />
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
-      <Grid Grid.Column="4" Background="{DynamicResource EditorBrush.Surface.Panel}" RowDefinitions="Auto,2*,Auto,Auto,3*">
+      <!-- Named so compact-mode style selectors can reposition the panel without extracting it into its own
+           control; the extraction happens later, alongside this panel's touch rework. -->
+      <Grid x:Name="LayersPanel" Grid.Column="4" Background="{DynamicResource EditorBrush.Surface.Panel}" RowDefinitions="Auto,2*,Auto,Auto,3*">
         <TextBlock Grid.Row="0" Text="{loc:Tr Panel.Layers}" FontWeight="Bold"
                    VerticalAlignment="Center" Margin="8,8,8,4" />
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"

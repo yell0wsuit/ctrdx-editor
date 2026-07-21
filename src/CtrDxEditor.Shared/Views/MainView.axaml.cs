@@ -93,7 +93,7 @@ namespace CtrDxEditor.Views
             // their own left PointerPressed as Handled for click logic, so the handlers are registered with
             // handledEventsToo to still see it.
             _paletteDrag = new PaletteDragController(this, canvas);
-            ItemsControl paletteList = this.FindControl<ItemsControl>("PaletteList")!;
+            ItemsControl paletteList = this.FindControl<PaletteView>("Palette")!.ItemsHost;
             paletteList.AddHandler(
                 PointerPressedEvent, _paletteDrag.OnPointerPressed, RoutingStrategies.Bubble, handledEventsToo: true);
             paletteList.AddHandler(
@@ -432,41 +432,5 @@ namespace CtrDxEditor.Views
             return _notifications;
         }
 
-        private void OnPaletteScrollChanged(object? sender, ScrollChangedEventArgs e)
-        {
-            if (this.FindControl<ScrollViewer>("PaletteScroll") is not { } scroll
-                || this.FindControl<ItemsControl>("PaletteList") is not { } list
-                || this.FindControl<Border>("StickyHeaderHost") is not { } host
-                || this.FindControl<TextBlock>("StickyHeaderText") is not { } text)
-            {
-                return;
-            }
-
-            string? topGroup = null;
-            for (int i = 0; i < list.ItemCount; i++)
-            {
-                if (list.ContainerFromIndex(i) is not Control container)
-                {
-                    continue;
-                }
-                if (container.TranslatePoint(new Point(0, container.Bounds.Height), scroll) is not { } p)
-                {
-                    continue;
-                }
-                // First item whose bottom edge is below the top of the viewport owns the sticky header.
-                if (p.Y > 0 && list.Items[i] is PaletteItemViewModel item)
-                {
-                    topGroup = item.GroupName;
-                    break;
-                }
-            }
-
-            bool scrolled = scroll.Offset.Y > 0.5;
-            host.IsVisible = scrolled && topGroup is not null;
-            if (topGroup is not null)
-            {
-                text.Text = topGroup;
-            }
-        }
     }
 }

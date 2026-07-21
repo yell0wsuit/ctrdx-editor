@@ -371,11 +371,15 @@ namespace CtrDxEditor.Tests
         public void StartupLayerControlsUseSafeDocumentFallbacks()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string palette = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "PaletteView.axaml"));
 
             Assert.Contains("IsVisible=\"{Binding HasLocalizedText, FallbackValue=False}\"", view, StringComparison.Ordinal);
-            Assert.True(
-                view.Split("IsVisible=\"{Binding HasDocument, FallbackValue=False}\"", StringSplitOptions.None).Length >= 3,
-                "Expected both palette search and layer actions to stay hidden before a document loads.");
+            // The palette search box moved into PaletteView, so the two document-gated controls now live in
+            // separate files; both must still be hidden before a document loads.
+            Assert.Contains(
+                "IsVisible=\"{Binding HasDocument, FallbackValue=False}\"", palette, StringComparison.Ordinal);
+            Assert.Contains(
+                "IsVisible=\"{Binding HasDocument, FallbackValue=False}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanDeleteSelectedLayers}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanMoveSelectedLayersUp}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding CanMoveSelectedLayersDown}\"", view, StringComparison.Ordinal);
