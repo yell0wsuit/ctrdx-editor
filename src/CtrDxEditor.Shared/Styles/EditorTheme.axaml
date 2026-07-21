@@ -293,6 +293,11 @@
       <Color x:Key="EditorColor.TextSubtle">#62748E</Color>  <!-- slate-500 -->
       <Color x:Key="EditorColor.TextDisabled">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.TutorialPaletteOverlay">#00FFFFFF</Color>
+      <!-- Review Changes diff rows: tinted row backgrounds, readable against the light card surface. -->
+      <Color x:Key="EditorColor.DiffAdded">#DCFCE7</Color>  <!-- green-100 -->
+      <Color x:Key="EditorColor.DiffRemoved">#FFE2E2</Color>  <!-- red-100 -->
+      <Color x:Key="EditorColor.DiffModified">#FEF3C6</Color>  <!-- amber-100 -->
+      <Color x:Key="EditorColor.DiffGutter">#62748E</Color>  <!-- slate-500 -->
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
       <Color x:Key="EditorColor.CanvasBorder">#90A1B9</Color>  <!-- slate-400 -->
@@ -335,6 +340,11 @@
       <Color x:Key="EditorColor.TextSubtle">#90A1B9</Color>  <!-- slate-400 -->
       <Color x:Key="EditorColor.TextDisabled">#62748E</Color>  <!-- slate-500 -->
       <Color x:Key="EditorColor.TutorialPaletteOverlay">#FFFFFFFF</Color>
+      <!-- Review Changes diff rows: deep tints, readable against the dark card surface. -->
+      <Color x:Key="EditorColor.DiffAdded">#032E15</Color>  <!-- green-950 -->
+      <Color x:Key="EditorColor.DiffRemoved">#460809</Color>  <!-- red-950 -->
+      <Color x:Key="EditorColor.DiffModified">#461901</Color>  <!-- amber-950 -->
+      <Color x:Key="EditorColor.DiffGutter">#90A1B9</Color>  <!-- slate-400 -->
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
       <Color x:Key="EditorColor.CanvasBorder">#45556C</Color>  <!-- slate-600 -->
@@ -378,6 +388,10 @@
   <SolidColorBrush x:Key="EditorBrush.Text.Subtle" Color="{DynamicResource EditorColor.TextSubtle}" />
   <SolidColorBrush x:Key="EditorBrush.Text.Disabled" Color="{DynamicResource EditorColor.TextDisabled}" />
   <SolidColorBrush x:Key="EditorBrush.TutorialPaletteOverlay" Color="{DynamicResource EditorColor.TutorialPaletteOverlay}" />
+  <SolidColorBrush x:Key="EditorBrush.Diff.Added" Color="{DynamicResource EditorColor.DiffAdded}" />
+  <SolidColorBrush x:Key="EditorBrush.Diff.Removed" Color="{DynamicResource EditorColor.DiffRemoved}" />
+  <SolidColorBrush x:Key="EditorBrush.Diff.Modified" Color="{DynamicResource EditorColor.DiffModified}" />
+  <SolidColorBrush x:Key="EditorBrush.Diff.Gutter" Color="{DynamicResource EditorColor.DiffGutter}" />
 
   <!--
     Override FluentTheme's CheckBox disabled-foreground keys so disabled checkbox
