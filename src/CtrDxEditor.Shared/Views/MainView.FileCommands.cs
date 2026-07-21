@@ -337,6 +337,20 @@ namespace CtrDxEditor.Views
                 NotificationType.Success));
         }
 
+        private async void ReviewChanges_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EditorViewModel vm
+                || vm.SavedBaselineXml is not { } baseline
+                || vm.ToXml() is not { } currentXml)
+            {
+                return;
+            }
+            // Snapshot only: the editor is inert behind the modal dialog, so the diff never needs updating.
+            ReviewChangesViewModel dialogVm = new(baseline, currentXml);
+            ReviewChangesDialog dialog = new() { DataContext = dialogVm };
+            _ = await dialog.ShowAsync();
+        }
+
         private async Task SaveAsAsync(EditorViewModel vm)
         {
             if (!vm.HasDocument || !await CanSaveAsync(vm))

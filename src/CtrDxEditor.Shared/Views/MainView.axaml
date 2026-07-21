@@ -85,6 +85,12 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
+        <MenuItem Header="{loc:Tr Menu.File.ReviewChanges}" Click="ReviewChanges_Click"
+                  IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="FileCompare" />
+          </MenuItem.Icon>
+        </MenuItem>
         <Separator />
         <MenuItem Click="Close_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
