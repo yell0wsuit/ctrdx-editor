@@ -63,6 +63,32 @@ namespace CtrDxEditor.Tests
             Assert.Contains("_slopCleared = false;", input, StringComparison.Ordinal);
         }
 
+        /// <summary>Touch has no hover, so handles must render from selection alone.</summary>
+        [Fact]
+        public void HandlesRenderWithoutHoverOnTouch()
+        {
+            string rendering = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Rendering.cs"));
+
+            Assert.Contains("ShowHandlesWithoutHover", rendering, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The water surface handle is the one handle whose existence is gated on hover, so touch must
+        /// force it visible or the water line cannot be dragged on a phone at all.
+        /// </summary>
+        [Fact]
+        public void WaterHandleDrawsWithoutHoverOnTouch()
+        {
+            string rendering = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Rendering.cs"));
+
+            Assert.Contains(
+                "(_waterHandleHovered || _waterDrag || ShowHandlesWithoutHover)",
+                rendering,
+                StringComparison.Ordinal);
+        }
+
         private static string ReadInput()
         {
             return File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));

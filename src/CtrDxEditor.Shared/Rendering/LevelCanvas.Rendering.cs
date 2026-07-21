@@ -39,6 +39,12 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private const double CullMargin = 256;
 
+        /// <summary>
+        /// Whether handles should draw from selection alone rather than waiting for hover. Touch screens
+        /// report no hover, so a hover-gated handle is unreachable: it never appears, so it is never grabbed.
+        /// </summary>
+        private bool ShowHandlesWithoutHover => _lastPointerWasTouch;
+
         /// <summary>Cross-frame memo for the background layout; see <see cref="BackgroundLayoutCache"/>.</summary>
         private readonly BackgroundLayoutCache _backgroundLayout = new();
 
@@ -297,7 +303,7 @@ namespace CtrDxEditor.Rendering
             // The water surface doubles as its own drag handle; it only exists when the level has water,
             // so a water-free level shows nothing to grab and the settings dialog is the way in.
             if (WaterGeometry.Band(doc.Width, doc.Height, doc.Water) is { } handleBand
-                && (_waterHandleHovered || _waterDrag))
+                && (_waterHandleHovered || _waterDrag || ShowHandlesWithoutHover))
             {
                 Vec2 left = v.LevelToScreen(new Vec2(handleBand.X, handleBand.Y));
                 Vec2 right = v.LevelToScreen(new Vec2(handleBand.X + handleBand.W, handleBand.Y));

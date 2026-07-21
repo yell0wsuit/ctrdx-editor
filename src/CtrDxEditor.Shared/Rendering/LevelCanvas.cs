@@ -457,11 +457,13 @@ namespace CtrDxEditor.Rendering
         /// <summary>Cumulative pinch scale from the previous pinch event, used to derive an incremental zoom factor.</summary>
         private double _lastPinchScale = 1;
 
+#pragma warning disable IDE0032
         /// <summary>
         /// Whether the most recent pointer interaction came from a touch contact. Hit tolerance is resolved
         /// against this so a fingertip gets a larger target than a cursor, without changing mouse behaviour.
         /// </summary>
         private bool _lastPointerWasTouch;
+#pragma warning restore IDE0032
 
         /// <summary>Screen-space position where the current press began, used to measure drag slop.</summary>
         private Point _pressOrigin;
