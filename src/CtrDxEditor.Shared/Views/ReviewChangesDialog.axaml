@@ -65,7 +65,8 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="24" Width="900" MaxHeight="640" RowDefinitions="Auto,Auto,*,Auto">
+  <Grid Margin="24" MaxWidth="900" MaxHeight="640" HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch" RowDefinitions="Auto,Auto,*,Auto">
     <!-- Title and the split/unified toggle -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" Classes="dialog-header" FontSize="18" FontWeight="SemiBold"

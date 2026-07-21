@@ -66,7 +66,8 @@
 
   </UserControl.Styles>
 
-  <Grid Margin="24" Width="360" MaxHeight="640" RowDefinitions="Auto,*,Auto">
+  <Grid Margin="24" MaxWidth="360" MaxHeight="640" HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch" RowDefinitions="Auto,*,Auto">
     <TextBlock x:Name="TitleText"
                Grid.Row="0"
                FontSize="18"
