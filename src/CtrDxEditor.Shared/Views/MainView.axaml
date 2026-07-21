@@ -661,7 +661,7 @@
       </Border>
 
       <Border x:Name="CompactRail" IsVisible="False"
-              HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="50"
+              HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
         <!-- Kept to four buttons: the rail floats over the canvas, and portrait has no room to spare.
              Delete earns its place because a touch session has no keyboard Delete key, and Zoom to Fit

@@ -153,8 +153,9 @@ namespace CtrDxEditor.Views
             }
 
             Thickness insets = SafeAreaProbe.Read(this);
-            // The rail hugs the left edge, so a right-side notch cannot overlap it and must not widen it.
-            rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);
+            // The rail is centred, so it already clears both side notches; only the top inset can overlap
+            // it. Padding a side would also shift it off centre, since padding is not symmetric.
+            rail.Padding = new Thickness(0, insets.Top, 0, 0);
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
             // The sheet sits directly above the tab bar and inside any side notches.
             sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);

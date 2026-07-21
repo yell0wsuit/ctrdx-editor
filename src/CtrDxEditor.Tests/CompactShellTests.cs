@@ -71,17 +71,20 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("PART_", view, StringComparison.Ordinal);
         }
 
-        /// <summary>The compact undo/redo rail hugs its controls instead of covering the canvas in landscape.</summary>
+        /// <summary>
+        /// The compact rail is centred and hugs its controls instead of covering the canvas in landscape.
+        /// </summary>
         [Fact]
-        public void CompactRailDoesNotStretchAcrossTheCanvas()
+        public void CompactRailIsCentredAndDoesNotStretchAcrossTheCanvas()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
             int railEnd = view.IndexOf('>', railStart);
 
             Assert.True(railStart >= 0 && railEnd > railStart);
+            // Centre, not Stretch: stretching would paint a bar over the full width of the level.
             Assert.Contains(
-                "HorizontalAlignment=\"Left\"",
+                "HorizontalAlignment=\"Center\"",
                 view.AsSpan(railStart, railEnd - railStart),
                 StringComparison.Ordinal);
         }
@@ -147,14 +150,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("SafeAreaProbe.Read(this)", layout, StringComparison.Ordinal);
         }
 
-        /// <summary>A left-floating rail consumes only the safe-area edges that can overlap it.</summary>
+        /// <summary>A centred rail consumes only the safe-area edge that can overlap it.</summary>
+        /// <remarks>
+        /// Centring puts the rail clear of both side notches, and a one-sided horizontal padding would
+        /// shift it off centre rather than protect it.
+        /// </remarks>
         [Fact]
-        public void CompactRailUsesLeftAndTopSafeAreaOnly()
+        public void CompactRailUsesTopSafeAreaOnly()
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains(
-                "rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);",
+                "rail.Padding = new Thickness(0, insets.Top, 0, 0);",
                 layout,
                 StringComparison.Ordinal);
             Assert.Contains(
