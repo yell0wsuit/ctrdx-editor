@@ -44,6 +44,25 @@ namespace CtrDxEditor.Tests
             Assert.Contains("_lastPointerWasTouch = e.Pointer.Type == PointerType.Touch;", input, StringComparison.Ordinal);
         }
 
+        /// <summary>A touch drag only begins once movement clears the slop threshold.</summary>
+        [Fact]
+        public void ObjectDragWaitsForSlop()
+        {
+            string input = ReadInput();
+
+            Assert.Contains("TouchInput.ExceedsDragSlop", input, StringComparison.Ordinal);
+            Assert.Contains("_slopCleared", input, StringComparison.Ordinal);
+        }
+
+        /// <summary>The slop gate resets on each press so it cannot leak between gestures.</summary>
+        [Fact]
+        public void SlopResetsOnPress()
+        {
+            string input = ReadInput();
+
+            Assert.Contains("_slopCleared = false;", input, StringComparison.Ordinal);
+        }
+
         private static string ReadInput()
         {
             return File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));

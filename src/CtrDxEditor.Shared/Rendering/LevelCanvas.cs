@@ -463,6 +463,15 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private bool _lastPointerWasTouch;
 
+        /// <summary>Screen-space position where the current press began, used to measure drag slop.</summary>
+        private Point _pressOrigin;
+
+        /// <summary>
+        /// Whether the current press has moved far enough to count as a drag. Until it has, pointer movement
+        /// is ignored so a tap cannot nudge what it selected.
+        /// </summary>
+        private bool _slopCleared;
+
         /// <summary>Guards scrollbar/<see cref="View"/> sync so a programmatic scroll update doesn't recurse back through property changes.</summary>
         private bool _syncingScroll;
 

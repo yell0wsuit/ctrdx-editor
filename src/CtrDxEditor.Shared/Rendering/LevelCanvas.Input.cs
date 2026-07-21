@@ -703,6 +703,8 @@ namespace CtrDxEditor.Rendering
             }
 
             _lastPointerWasTouch = e.Pointer.Type == PointerType.Touch;
+            _pressOrigin = e.GetPosition(this);
+            _slopCleared = false;
 
             if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
             {
@@ -1084,6 +1086,23 @@ namespace CtrDxEditor.Rendering
         {
             base.OnPointerMoved(e);
             Point p = e.GetPosition(this);
+
+            // A press that has not yet travelled past the slop threshold is still a tap. Panning is exempt: it
+            // starts on empty space where there is nothing to nudge, and gating it would make the canvas feel
+            // stuck for the first few pixels of every drag.
+            if (!_slopCleared && !_panning)
+            {
+                if (!TouchInput.ExceedsDragSlop(
+                        new Vec2(_pressOrigin.X, _pressOrigin.Y),
+                        new Vec2(p.X, p.Y),
+                        _lastPointerWasTouch))
+                {
+                    return;
+                }
+
+                _slopCleared = true;
+            }
+
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
 
             if (_handJointDrag > 0 && SelectedObject is { } draggedHand)
