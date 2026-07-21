@@ -17,7 +17,8 @@
     <ProjectReference Include="..\CtrDxEditor.Core\CtrDxEditor.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Translations are embedded as Avalonia resources so they load on every platform (incl. browser). -->
     <AvaloniaResource Include="Localization\*.json" />
+    <AvaloniaResource Include="..\..\resources\fonts\RobotoMono-*.ttf"
+                      Link="Assets\Fonts\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
