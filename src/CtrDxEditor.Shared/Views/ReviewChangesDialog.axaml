@@ -77,7 +77,7 @@
           <Binding Path="IsSplitView" />
         </MultiBinding>
       </Border.IsVisible>
-      <ListBox Classes="diff" ItemsSource="{Binding Rows}" Background="Transparent"
+      <ListBox Classes="diff" ItemsSource="{Binding Rows}" Background="Transparent" Padding="8"
                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                ScrollViewer.VerticalScrollBarVisibility="Auto">
         <ListBox.ItemTemplate>
@@ -108,7 +108,7 @@
           <Binding Path="IsUnifiedView" />
         </MultiBinding>
       </Border.IsVisible>
-      <ListBox Classes="diff" ItemsSource="{Binding UnifiedRows}" Background="Transparent"
+      <ListBox Classes="diff" ItemsSource="{Binding UnifiedRows}" Background="Transparent" Padding="8"
                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                ScrollViewer.VerticalScrollBarVisibility="Auto">
         <ListBox.ItemTemplate>
