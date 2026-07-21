@@ -1,0 +1,131 @@
+using System.Collections.Generic;
+
+using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
+
+namespace CtrDxEditor.Core.Editing
+{
+    /// <summary>What happened to one line between the saved baseline and the live document.</summary>
+    public enum DiffRowKind
+    {
+        /// <summary>Present and identical on both sides.</summary>
+        Unchanged,
+
+        /// <summary>Only in the live document.</summary>
+        Inserted,
+
+        /// <summary>Only in the saved baseline.</summary>
+        Deleted,
+
+        /// <summary>Present on both sides with different text.</summary>
+        Modified,
+    }
+
+    /// <summary>
+    /// One row of the diff, pairing the baseline and live sides. The side that does not exist for this
+    /// row (the deleted side of an insertion, and vice versa) has a null line number and null text.
+    /// </summary>
+    public sealed record DiffRow(
+        int? OldLine,
+        string? OldText,
+        int? NewLine,
+        string? NewText,
+        DiffRowKind Kind)
+    {
+        /// <summary>Whether this line exists only in the live document; drives the added row style.</summary>
+        public bool IsAdded => Kind == DiffRowKind.Inserted;
+
+        /// <summary>Whether this line exists only in the baseline; drives the removed row style.</summary>
+        public bool IsRemoved => Kind == DiffRowKind.Deleted;
+
+        /// <summary>Whether this line differs between the two sides; drives the modified row style.</summary>
+        public bool IsModified => Kind == DiffRowKind.Modified;
+
+        /// <summary>Whether this line is identical on both sides; such rows render without a highlight.</summary>
+        public bool IsUnchanged => Kind == DiffRowKind.Unchanged;
+    }
+
+    /// <summary>The full line-by-line comparison of two level XML documents, plus its change tallies.</summary>
+    public sealed record LevelDiffResult(
+        IReadOnlyList<DiffRow> Rows,
+        int Added,
+        int Removed,
+        int Modified)
+    {
+        /// <summary>Whether the two documents differ at all; false drives the dialog's empty state.</summary>
+        public bool HasChanges => Added > 0 || Removed > 0 || Modified > 0;
+    }
+
+    /// <summary>
+    /// Compares two level XML documents line by line for the Review Changes dialog. This is presentation
+    /// input only - it never mutates a document, and the editor's own undo stack remains the way to revert.
+    /// </summary>
+    public static class LevelDiff
+    {
+        /// <summary>
+        /// Builds the line-by-line comparison of <paramref name="oldXml"/> against <paramref name="newXml"/>.
+        /// DiffPlex pads both panes to equal length with imaginary pieces, so the two sides are zipped by
+        /// index into one row list that both the split and unified views render.
+        /// </summary>
+        public static LevelDiffResult Build(string oldXml, string newXml)
+        {
+            SideBySideDiffModel model = SideBySideDiffBuilder.Diff(oldXml, newXml);
+            List<DiffRow> rows = new(model.OldText.Lines.Count);
+            int added = 0;
+            int removed = 0;
+            int modified = 0;
+
+            for (int i = 0; i < model.OldText.Lines.Count; i++)
+            {
+                DiffPiece oldPiece = model.OldText.Lines[i];
+                DiffPiece newPiece = model.NewText.Lines[i];
+                DiffRowKind kind = Classify(oldPiece.Type, newPiece.Type);
+
+                switch (kind)
+                {
+                    case DiffRowKind.Inserted:
+                        added++;
+                        break;
+                    case DiffRowKind.Deleted:
+                        removed++;
+                        break;
+                    case DiffRowKind.Modified:
+                        modified++;
+                        break;
+                }
+
+                // Imaginary pieces are padding: DiffPlex leaves both Position and Text null on them,
+                // so the absent side stays null rather than rendering as an empty numbered line.
+                rows.Add(new DiffRow(
+                    oldPiece.Type == ChangeType.Imaginary ? null : oldPiece.Position,
+                    oldPiece.Type == ChangeType.Imaginary ? null : oldPiece.Text,
+                    newPiece.Type == ChangeType.Imaginary ? null : newPiece.Position,
+                    newPiece.Type == ChangeType.Imaginary ? null : newPiece.Text,
+                    kind));
+            }
+
+            return new LevelDiffResult(rows, added, removed, modified);
+        }
+
+        // A row's kind comes from whichever side is real: an imaginary new side means the line was
+        // deleted, an imaginary old side means it was inserted. Both real and differing is a modification.
+        private static DiffRowKind Classify(ChangeType oldType, ChangeType newType)
+        {
+            if (oldType == ChangeType.Imaginary)
+            {
+                return DiffRowKind.Inserted;
+            }
+            if (newType == ChangeType.Imaginary)
+            {
+                return DiffRowKind.Deleted;
+            }
+            if (oldType == ChangeType.Modified || newType == ChangeType.Modified)
+            {
+                return DiffRowKind.Modified;
+            }
+            return oldType == ChangeType.Inserted ? DiffRowKind.Inserted
+                : oldType == ChangeType.Deleted ? DiffRowKind.Deleted
+                : DiffRowKind.Unchanged;
+        }
+    }
+}

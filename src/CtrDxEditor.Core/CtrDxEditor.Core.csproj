@@ -2,4 +2,7 @@
   <PropertyGroup>
     <RootNamespace>CtrDxEditor.Core</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="DiffPlex" />
+  </ItemGroup>
 </Project>
