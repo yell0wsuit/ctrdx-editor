@@ -80,6 +80,28 @@ namespace CtrDxEditor.Tests
             Assert.True(drawerEnd >= 0 && tabs > drawerEnd);
         }
 
+        /// <summary>Drawer content reserves the overlaid tab bar and horizontal safe areas.</summary>
+        [Fact]
+        public void CompactDrawerContentClearsTheTabBar()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains(
+                "drawerHost.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);",
+                layout,
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>A tab-height change refreshes drawer clearance after safe-area padding is laid out.</summary>
+        [Fact]
+        public void CompactTabBoundsChangesRefreshDrawerClearance()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("tabs.PropertyChanged +=", layout, StringComparison.Ordinal);
+            Assert.Contains("if (e.Property == BoundsProperty && _layoutMode == LayoutMode.Compact)", layout, StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// Panels are moved between the expanded grid and the drawer, never duplicated: two controls named
         /// LayersTree in one name scope is a XAML load error and would break every handler that finds it.
@@ -127,9 +149,14 @@ namespace CtrDxEditor.Tests
         public void CompactBoundsChangesRefreshSafeAreaPadding()
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+            int unchangedModeBranch = layout.IndexOf("if (mode == _layoutMode)", StringComparison.Ordinal);
+            int applyChangedMode = layout.IndexOf("ApplyLayoutMode(mode);", unchangedModeBranch, StringComparison.Ordinal);
 
-            Assert.Contains("if (mode == LayoutMode.Compact)", layout, StringComparison.Ordinal);
-            Assert.Equal(2, CountOccurrences(layout, "ApplyCompactSafeAreaPadding();"));
+            Assert.True(unchangedModeBranch >= 0 && applyChangedMode > unchangedModeBranch);
+            Assert.Contains(
+                "ApplyCompactSafeAreaPadding();",
+                layout.AsSpan(unchangedModeBranch, applyChangedMode - unchangedModeBranch),
+                StringComparison.Ordinal);
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>

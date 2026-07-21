@@ -28,6 +28,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal(new Thickness(0), SafeAreaProbe.Read(detached));
         }
 
+        /// <summary>The parameterless previewer app can initialize without platform services.</summary>
+        [Fact]
+        public void DesignTimeAppDoesNotRequirePlatformStartup()
+        {
+            App app = new();
+
+            Exception? exception = Record.Exception(app.OnFrameworkInitializationCompleted);
+
+            Assert.Null(exception);
+        }
+
         /// <summary>
         /// The platform source wins over InsetsManager, which reports wrong values on iOS Safari.
         /// </summary>

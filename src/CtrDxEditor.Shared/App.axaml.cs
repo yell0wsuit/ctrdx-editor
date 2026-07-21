@@ -33,6 +33,14 @@ namespace CtrDxEditor
         /// <inheritdoc />
         public override void OnFrameworkInitializationCompleted()
         {
+            if (_startup is null)
+            {
+                // The parameterless constructor exists only for the previewer and hot reload.
+                SafeAreaProbe.PlatformSource = null;
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
             // The browser head reads insets from CSS env(); desktop leaves this null and falls back to
             // InsetsManager, which reports nothing there anyway.
             SafeAreaProbe.PlatformSource = _startup.SafeAreaInsets;

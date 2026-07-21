@@ -27,6 +27,18 @@ namespace CtrDxEditor.Views
                 }
             };
 
+            if (this.FindControl<Border>("CompactTabs") is { } tabs)
+            {
+                tabs.PropertyChanged += (_, e) =>
+                {
+                    if (e.Property == BoundsProperty && _layoutMode == LayoutMode.Compact)
+                    {
+                        // Padding changes the tab bar's measured height; keep drawer content above it.
+                        ApplyCompactSafeAreaPadding();
+                    }
+                };
+            }
+
             UpdateLayoutMode();
         }
 
@@ -91,6 +103,7 @@ namespace CtrDxEditor.Views
                 RestoreToColumn(columns, layers, 4);
                 columns.ColumnDefinitions = ColumnDefinitions.Parse("200,1,*,1,280");
 
+                drawerHost.Margin = new Thickness(0);
                 rail.Padding = new Thickness(0);
                 tabs.Padding = new Thickness(0);
             }
@@ -99,7 +112,8 @@ namespace CtrDxEditor.Views
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>
         private void ApplyCompactSafeAreaPadding()
         {
-            if (this.FindControl<Border>("CompactRail") is not { } rail
+            if (this.FindControl<Panel>("DrawerHost") is not { } drawerHost
+                || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactTabs") is not { } tabs)
             {
                 return;
@@ -109,6 +123,7 @@ namespace CtrDxEditor.Views
             // The rail hugs the left edge, so a right-side notch cannot overlap it and must not widen it.
             rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
+            drawerHost.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
         }
 
         /// <summary>Detaches a panel from the column grid so it can be hosted in the drawer.</summary>
