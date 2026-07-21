@@ -457,6 +457,12 @@ namespace CtrDxEditor.Rendering
         /// <summary>Cumulative pinch scale from the previous pinch event, used to derive an incremental zoom factor.</summary>
         private double _lastPinchScale = 1;
 
+        /// <summary>
+        /// Whether the most recent pointer interaction came from a touch contact. Hit tolerance is resolved
+        /// against this so a fingertip gets a larger target than a cursor, without changing mouse behaviour.
+        /// </summary>
+        private bool _lastPointerWasTouch;
+
         /// <summary>Guards scrollbar/<see cref="View"/> sync so a programmatic scroll update doesn't recurse back through property changes.</summary>
         private bool _syncingScroll;
 

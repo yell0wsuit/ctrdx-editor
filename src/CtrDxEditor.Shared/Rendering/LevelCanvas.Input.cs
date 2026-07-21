@@ -18,6 +18,16 @@ namespace CtrDxEditor.Rendering
         private const double WaterHandleTolerance = 6.0;
 
         /// <summary>
+        /// Converts a mouse-sized screen tolerance into a level-space tolerance for the pointer in use.
+        /// </summary>
+        /// <param name="basePx">The tolerance in screen pixels as tuned for the mouse.</param>
+        /// <returns>The tolerance in level units, scaled up for touch and divided by the current zoom.</returns>
+        private double HitTolerance(double basePx)
+        {
+            return View.Zoom <= 0 ? basePx : TouchInput.Tolerance(basePx, _lastPointerWasTouch) / View.Zoom;
+        }
+
+        /// <summary>
         /// Horizontal-resize cursor (col-resize) shown over the auto-catch radius ring or a horizontal rail end/hook.
         /// Created lazily rather than in the static constructor: eager creation would touch Avalonia's cursor factory
         /// at type load, which throws in the headless test host. <see cref="Lazy{T}.Value"/> still allocates the cursor
@@ -54,7 +64,7 @@ namespace CtrDxEditor.Rendering
                 ? GrabRadius.Of(selected)
                 : RadiusRing.Of(selected)?.Radius;
             return radius is double r
-                && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), r, levelPt, 6 / View.Zoom);
+                && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), r, levelPt, HitTolerance(6));
         }
 
         /// <summary>Whether a point is over the selected tutorial text's right-edge width handle.</summary>
@@ -69,7 +79,7 @@ namespace CtrDxEditor.Rendering
                 && TutorialTextResize.HitTest(
                     TutorialRenderer.TextBounds(sprites, selected),
                     levelPt,
-                    9 / View.Zoom);
+                    HitTolerance(9));
         }
 
         /// <summary>What part of the selected movable grab's rail a level point is over, or <see cref="GrabRail.Handle.None"/>.</summary>
@@ -86,7 +96,7 @@ namespace CtrDxEditor.Rendering
                 && View.Zoom > 0
                 && GrabRenderer.DrawsMovableRail(sel)
                 && GrabRail.Of(sel) is { } g
-                ? GrabRail.HitTest(g, levelPt, endTolerance: 9 / View.Zoom, hookTolerance: 24, barThickness: 20)
+                ? GrabRail.HitTest(g, levelPt, endTolerance: HitTolerance(9), hookTolerance: 24, barThickness: 20)
                 : GrabRail.Handle.None;
         }
 
@@ -100,8 +110,8 @@ namespace CtrDxEditor.Rendering
                 return SpikeResize.Handle.None;
             }
 
-            double tol = 9 / View.Zoom;
-            double thickness = 12 / View.Zoom;
+            double tol = HitTolerance(9);
+            double thickness = HitTolerance(12);
             return SpikeObject.IsSpike(sel.Type)
                 ? SpikeResize.HitTest(sel, levelPt, StripSpriteScale(sel), tol, thickness)
                 : BouncerObject.IsBouncer(sel.Type)
@@ -115,7 +125,7 @@ namespace CtrDxEditor.Rendering
         private ConveyorGeometry.Handle HitConveyor(Vec2 levelPt)
         {
             return IsSingleSelection && SelectedObject is { } sel && View.Zoom > 0 && ConveyorGeometry.Of(sel) is { } s
-                ? ConveyorGeometry.HitTest(s, levelPt, endTolerance: 9 / View.Zoom, widthTolerance: 9 / View.Zoom)
+                ? ConveyorGeometry.HitTest(s, levelPt, endTolerance: HitTolerance(9), widthTolerance: HitTolerance(9))
                 : ConveyorGeometry.Handle.None;
         }
 
@@ -191,7 +201,7 @@ namespace CtrDxEditor.Rendering
         private VinylGeometry.Handle HitVinylHandle(Vec2 levelPt)
         {
             return IsSingleSelection && SelectedObject is { Type: "rotatedCircle" } vinyl && View.Zoom > 0
-                ? VinylGeometry.HitTest(vinyl, levelPt, 18 / View.Zoom)
+                ? VinylGeometry.HitTest(vinyl, levelPt, HitTolerance(18))
                 : VinylGeometry.Handle.None;
         }
 
@@ -224,8 +234,8 @@ namespace CtrDxEditor.Rendering
             double radius = RotationDialRenderer.RadiusPx / View.Zoom;
             return ObjectRotation.HitTest(
                 target.Center, target.StoredAngle, target.Spec, radius, levelPt,
-                ringTolerance: RotationDialRenderer.RingTolerancePx / View.Zoom,
-                knobTolerance: RotationDialRenderer.KnobTolerancePx / View.Zoom);
+                ringTolerance: HitTolerance(RotationDialRenderer.RingTolerancePx),
+                knobTolerance: HitTolerance(RotationDialRenderer.KnobTolerancePx));
         }
 
         /// <summary>Resolves an ordinary object or the active hand segment into one dial target.</summary>
@@ -353,7 +363,7 @@ namespace CtrDxEditor.Rendering
             (Vec2 Position, bool Rotatable)? preview = null;
             if (IsSingleSelection && altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
             {
-                double tolerance = 9 / View.Zoom;
+                double tolerance = HitTolerance(9);
                 HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
                 if (hit.Kind == HandGeometry.HandleKind.Bone)
                 {
@@ -381,7 +391,7 @@ namespace CtrDxEditor.Rendering
             int hovered = 0;
             if (IsSingleSelection && !altHeld && SelectedObject is { } hand && HandObject.IsHand(hand.Type))
             {
-                double tolerance = 9 / View.Zoom;
+                double tolerance = HitTolerance(9);
                 HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
                 if (hit.Kind == HandGeometry.HandleKind.Bone)
                 {
@@ -439,7 +449,7 @@ namespace CtrDxEditor.Rendering
         {
             return IsSingleSelection && SelectedObject is { } obj && View.Zoom > 0 && IsEditablePolyline(obj)
                 && EditablePath.For(obj) is { } path
-                ? path.HitPoint(levelPt, tolerance: 9 / View.Zoom)
+                ? path.HitPoint(levelPt, tolerance: HitTolerance(9))
                 : -1;
         }
 
@@ -453,7 +463,7 @@ namespace CtrDxEditor.Rendering
             }
 
             Vec2[] points = path.Points;
-            double tolerance = 7 / View.Zoom;
+            double tolerance = HitTolerance(7);
             double toleranceSquared = tolerance * tolerance;
             for (int i = 0; i < path.SegmentCount; i++)
             {
@@ -503,7 +513,7 @@ namespace CtrDxEditor.Rendering
             }
 
             Vec2 nub = PolylineNubPoint(obj);
-            double tolerance = 9 / View.Zoom;
+            double tolerance = HitTolerance(9);
             double dx = nub.X - levelPt.X;
             double dy = nub.Y - levelPt.Y;
             return (dx * dx) + (dy * dy) <= tolerance * tolerance;
@@ -524,7 +534,7 @@ namespace CtrDxEditor.Rendering
             }
 
             Vec2 nub = PolylineNubPoint(obj);
-            double tolerance = 22 / View.Zoom;
+            double tolerance = HitTolerance(22);
             double dx = nub.X - levelPt.X;
             double dy = nub.Y - levelPt.Y;
             return (dx * dx) + (dy * dy) <= tolerance * tolerance;
@@ -692,6 +702,8 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            _lastPointerWasTouch = e.Pointer.Type == PointerType.Touch;
+
             if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
             {
                 _panning = true;
@@ -706,7 +718,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (IsSingleSelection && SelectedObject is { } rightHand && HandObject.IsHand(rightHand.Type))
                 {
-                    double rightTolerance = 9 / View.Zoom;
+                    double rightTolerance = HitTolerance(9);
                     HandGeometry.Handle rightHandHit = HandGeometry.HitTest(
                         rightHand, levelPt, rightTolerance, rightTolerance / 2);
                     if (rightHandHit.Kind == HandGeometry.HandleKind.Joint)
@@ -834,7 +846,7 @@ namespace CtrDxEditor.Rendering
             HandGeometry.Handle pressedHandHit = new(HandGeometry.HandleKind.None, 0);
             if (IsSingleSelection && SelectedObject is { } pressedHand && HandObject.IsHand(pressedHand.Type))
             {
-                double handTolerance = 9 / View.Zoom;
+                double handTolerance = HitTolerance(9);
                 pressedHandHit = HandGeometry.HitTest(
                     pressedHand, levelPt, handTolerance, handTolerance / 2);
             }
@@ -1229,7 +1241,7 @@ namespace CtrDxEditor.Rendering
                 HandGeometry.HandleKind hoverHandKind = HandGeometry.HandleKind.None;
                 if (IsSingleSelection && SelectedObject is { } hoverHand && HandObject.IsHand(hoverHand.Type))
                 {
-                    double hoverTolerance = 9 / View.Zoom;
+                    double hoverTolerance = HitTolerance(9);
                     HandGeometry.Handle hoverHit = HandGeometry.HitTest(
                         hoverHand, levelPt, hoverTolerance, hoverTolerance / 2);
                     hoverHandKind = hoverHit.Kind;
