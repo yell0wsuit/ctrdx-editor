@@ -2,9 +2,11 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
+        <!-- viewport-fit=cover is required for env(safe-area-inset-*) to report non-zero on iOS; without
+             it the notch and home-indicator insets read as zero no matter what the app asks for. -->
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, user-scalable=no"
+            content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
         />
         <link rel="icon" href="./favicon.ico" sizes="any" />
         <title>Cut the Rope DX: Level Editor</title>
