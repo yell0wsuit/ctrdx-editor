@@ -35,7 +35,7 @@ namespace CtrDxEditor.Desktop
                 Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir, spriteExt),
                 InstalledStore = () => new FolderContentStore(ContentRoot.DefaultContentDir),
                 SpriteImageExtension = spriteExt,
-                DownloadSizeLabel = "340 MB",
+                DownloadSizeLabel = "310 MB",
                 ManualDownloadUrl = ContentDownloader.AssetsUrl,
                 Playtest = new ProcessPlaytestLauncher(),
                 ResolveInstalled = async () =>
