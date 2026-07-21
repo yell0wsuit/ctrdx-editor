@@ -61,6 +61,7 @@ namespace CtrDxEditor.Core.Editing
             DiffRowKind.Inserted => "+",
             DiffRowKind.Deleted => "-",
             DiffRowKind.Modified => "~",
+            DiffRowKind.Unchanged => " ",
             _ => " ",
         };
 
@@ -102,7 +103,7 @@ namespace CtrDxEditor.Core.Editing
         public static LevelDiffResult Build(string oldXml, string newXml)
         {
             SideBySideDiffModel model = SideBySideDiffBuilder.Diff(oldXml, newXml);
-            List<DiffRow> rows = new(model.OldText.Lines.Count);
+            List<DiffRow> rows = [with(model.OldText.Lines.Count)];
             int added = 0;
             int removed = 0;
             int modified = 0;
@@ -123,6 +124,10 @@ namespace CtrDxEditor.Core.Editing
                         break;
                     case DiffRowKind.Modified:
                         modified++;
+                        break;
+                    case DiffRowKind.Unchanged:
+                        break;
+                    default:
                         break;
                 }
 
@@ -145,7 +150,7 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         public static IReadOnlyList<UnifiedDiffRow> ToUnified(IReadOnlyList<DiffRow> rows)
         {
-            List<UnifiedDiffRow> unified = new(rows.Count);
+            List<UnifiedDiffRow> unified = [with(rows.Count)];
 
             foreach (DiffRow row in rows)
             {
@@ -161,6 +166,7 @@ namespace CtrDxEditor.Core.Editing
                     case DiffRowKind.Inserted:
                         unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted));
                         break;
+                    case DiffRowKind.Unchanged:
                     default:
                         unified.Add(new UnifiedDiffRow(row.OldLine, row.NewLine, row.NewText ?? row.OldText ?? string.Empty, DiffRowKind.Unchanged));
                         break;

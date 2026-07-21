@@ -42,7 +42,6 @@ namespace CtrDxEditor.ViewModels
         // Serialized level XML as of the last load/new/save. Null when no level is open. Compared against
         // the live document to detect unsaved changes (see IsModified); reusing ToXml keeps the comparison
         // identical to what a save actually writes, so decoration/zoom/selection never count as edits.
-        private string? _savedBaselineXml;
 
         /// <summary>Persisted editor settings store, for reading/writing decoration defaults; null when unavailable.</summary>
         public ISettingsStore? Settings { get; } = settings;
@@ -248,18 +247,18 @@ namespace CtrDxEditor.ViewModels
         /// dialog diffs against. Null when no level is open. Shares one source of truth with
         /// <see cref="IsModified"/>, so the dialog and the dirty marker can never disagree.
         /// </summary>
-        public string? SavedBaselineXml => _savedBaselineXml;
+        public string? SavedBaselineXml { get; private set; }
 
         /// <summary>
         /// True when the open level has edits that differ from the last load, new, or save. Undoing all the
         /// way back to the saved state clears it; decoration, zoom, and selection changes never set it.
         /// </summary>
-        public bool IsModified => Document is not null && ToXml() != _savedBaselineXml;
+        public bool IsModified => Document is not null && ToXml() != SavedBaselineXml;
 
         /// <summary>Marks the current document as saved, so it no longer counts as modified until the next edit.</summary>
         public void MarkSaved()
         {
-            _savedBaselineXml = ToXml();
+            SavedBaselineXml = ToXml();
         }
 
         /// <summary>Whether the selected object has real polyline movement with direct-edit handles.</summary>
@@ -296,7 +295,7 @@ namespace CtrDxEditor.ViewModels
             RefreshLocales();
             // Baseline captured before load-time repairs so a level that needs normalization
             // loads as a pending (savable) change, while a consistent level stays clean.
-            _savedBaselineXml = ToXml();
+            SavedBaselineXml = ToXml();
             bool normalized = Document.NormalizeDuplicateLayerNames();
             normalized |= LevelObjectPolicy.NormalizeSizedElements(Document);
             // The legacy `mouse` tag is an alias for `gap` (same game loader), so it loads renamed
@@ -319,7 +318,7 @@ namespace CtrDxEditor.ViewModels
             Document = null;
             SelectedObject = null;
             LockedObject = null;
-            _savedBaselineXml = null;
+            SavedBaselineXml = null;
             ClearHistory();
             Palette.Clear();
             RebuildPaletteView();
@@ -360,7 +359,7 @@ namespace CtrDxEditor.ViewModels
             RefreshPalette();
             RefreshObjectList();
             RefreshLocales();
-            _savedBaselineXml = ToXml();
+            SavedBaselineXml = ToXml();
             LevelLoaded?.Invoke();
         }
 

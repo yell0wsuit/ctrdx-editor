@@ -8,7 +8,7 @@ using Xunit;
 namespace CtrDxEditor.Tests
 {
     /// <summary>
-    /// The locate dialog's drop route. The rules it applies live in <see cref="CtrDxEditor.Playtest.DxExecutableResolver"/>
+    /// The locate dialog's drop route. The rules it applies live in <see cref="Playtest.DxExecutableResolver"/>
     /// and are tested directly there; what is asserted here is that the dialog actually applies them,
     /// which has to be read off the source because DragEventArgs cannot be constructed in a unit test.
     /// </summary>
