@@ -10,7 +10,7 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Margin="24" Spacing="16" Width="460">
+  <StackPanel Margin="24" Spacing="16" MaxWidth="460" HorizontalAlignment="Stretch">
     <TextBlock Classes="dialog-header" Classes.danger="{Binding IsDanger}"
                FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
     <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />

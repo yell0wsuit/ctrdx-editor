@@ -12,7 +12,7 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Margin="24" Spacing="16" Width="440">
+  <StackPanel Margin="24" Spacing="16" MaxWidth="440" HorizontalAlignment="Stretch">
     <TextBlock FontSize="18" FontWeight="SemiBold" Text="{loc:Tr Dialog.Playtest.Locate.Header}" />
     <TextBlock TextWrapping="Wrap" Text="{Binding Body}" />
 
