@@ -83,8 +83,7 @@ namespace CtrDxEditor.Views
             }
 
             bool compact = mode == LayoutMode.Compact;
-            rail.IsVisible = compact;
-            UpdateCompactTabsVisibility();
+            UpdateCompactChromeVisibility();
 
             if (compact)
             {
@@ -112,16 +111,19 @@ namespace CtrDxEditor.Views
         }
 
         /// <summary>
-        /// Shows the compact tab bar only while a document is open, and closes the drawer with it.
+        /// Shows the compact tab bar and undo/redo rail only while a document is open, and closes the
+        /// drawer with them.
         /// </summary>
         /// <remarks>
-        /// Both panels are empty without a document, so the tabs would open a blank sheet over the start
-        /// screen. Set in code rather than bound in XAML because the layout mode is also code-driven, and a
-        /// local <c>IsVisible</c> value would permanently outrank a binding on the same property.
+        /// With no document both panels are empty and there is nothing to undo, so the chrome would float
+        /// two blank-sheet buttons and two permanently disabled ones over the start screen. Set in code
+        /// rather than bound in XAML because the layout mode is also code-driven, and a local
+        /// <c>IsVisible</c> value would permanently outrank a binding on the same property.
         /// </remarks>
-        private void UpdateCompactTabsVisibility()
+        private void UpdateCompactChromeVisibility()
         {
             if (this.FindControl<Border>("CompactTabs") is not { } tabs
+                || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Panel>("DrawerHost") is not { } drawerHost)
             {
@@ -131,6 +133,7 @@ namespace CtrDxEditor.Views
             bool show = _layoutMode == LayoutMode.Compact
                 && DataContext is EditorViewModel { HasDocument: true };
             tabs.IsVisible = show;
+            rail.IsVisible = show;
 
             if (!show)
             {

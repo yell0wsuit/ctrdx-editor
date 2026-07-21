@@ -179,20 +179,23 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The compact tab bar is gated on an open document, and closes the drawer when it hides.
+        /// All compact chrome is gated on an open document, and hiding it closes the drawer.
         /// </summary>
         /// <remarks>
-        /// Both panels are empty with no document, so leaving the tabs up offers two buttons that open a
-        /// blank sheet over the start screen.
+        /// With no document both panels are empty and there is nothing to undo, so the tab bar would open a
+        /// blank sheet and the rail would float two permanently disabled buttons over the start screen.
         /// </remarks>
         [Fact]
-        public void CompactTabsRequireAnOpenDocument()
+        public void CompactChromeRequiresAnOpenDocument()
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains("bool show = _layoutMode == LayoutMode.Compact", layout, StringComparison.Ordinal);
             Assert.Contains("EditorViewModel { HasDocument: true }", layout, StringComparison.Ordinal);
             Assert.Contains("tabs.IsVisible = show;", layout, StringComparison.Ordinal);
+            Assert.Contains("rail.IsVisible = show;", layout, StringComparison.Ordinal);
+            // The rail must be gated through the same predicate, not left on for the whole compact mode.
+            Assert.DoesNotContain("rail.IsVisible = compact;", layout, StringComparison.Ordinal);
             // Closing a document must take the open sheet down with the tabs that raised it.
             int gate = layout.IndexOf("tabs.IsVisible = show;", StringComparison.Ordinal);
             Assert.Contains(
@@ -201,14 +204,14 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
-        /// <summary>Opening or closing a document re-evaluates the tab bar without a layout-mode change.</summary>
+        /// <summary>Opening or closing a document re-evaluates the chrome without a layout-mode change.</summary>
         [Fact]
-        public void DocumentChangesRefreshCompactTabs()
+        public void DocumentChangesRefreshCompactChrome()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
 
             Assert.Contains("nameof(EditorViewModel.HasDocument)", view, StringComparison.Ordinal);
-            Assert.Contains("UpdateCompactTabsVisibility();", view, StringComparison.Ordinal);
+            Assert.Contains("UpdateCompactChromeVisibility();", view, StringComparison.Ordinal);
         }
 
         /// <summary>The compact palette tab reuses the existing "Objects" panel label.</summary>
