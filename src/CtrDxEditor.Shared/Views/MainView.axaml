@@ -660,7 +660,7 @@
       </DrawerPage>
 
       <Border x:Name="CompactRail" IsVisible="False"
-              VerticalAlignment="Top" ZIndex="50"
+              HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
         <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
           <Button Click="Undo_Click" IsEnabled="{Binding CanUndo}" ToolTip.Tip="{loc:Tr Menu.Edit.Undo}">

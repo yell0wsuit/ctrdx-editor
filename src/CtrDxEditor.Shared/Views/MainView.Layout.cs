@@ -106,7 +106,8 @@ namespace CtrDxEditor.Views
             }
 
             Thickness insets = SafeAreaProbe.Read(this);
-            rail.Padding = new Thickness(insets.Left, insets.Top, insets.Right, 0);
+            // The rail hugs the left edge, so a right-side notch cannot overlap it and must not widen it.
+            rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
         }
 

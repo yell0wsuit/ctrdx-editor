@@ -10,10 +10,9 @@ namespace CtrDxEditor.Views
     /// window. Desktop reports nothing, so the zero fallback is the normal case there rather than an error.
     /// </summary>
     /// <remarks>
-    /// Measured on iOS Safari 2026-07-21, Avalonia's <c>InsetsManager</c> reported left 48 / top 0 /
-    /// right 20 / bottom 0 where the browser reported left 48 / top 0 / right 48 / bottom 20 — the right
-    /// inset dropped and the bottom value shifted into it. A head that can read the insets correctly
-    /// therefore supplies <see cref="PlatformSource"/>, which takes precedence.
+    /// iOS Safari changes these values with orientation and browser chrome. Device measurements on
+    /// 2026-07-21 showed <c>InsetsManager</c> under-reporting the landscape right and bottom edges, so a
+    /// head that can read the current CSS values supplies <see cref="PlatformSource"/>, which takes precedence.
     /// </remarks>
     public static class SafeAreaProbe
     {

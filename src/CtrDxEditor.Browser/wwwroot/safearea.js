@@ -1,6 +1,6 @@
-// Reads the CSS safe-area insets. Avalonia's InsetsManager reports these incorrectly on iOS Safari
-// (right dropped, bottom shifted into right, measured 2026-07-21), so the browser head reads them here
-// instead. Requires viewport-fit=cover on the viewport meta tag, without which iOS reports all zeroes.
+// Reads the current CSS safe-area insets. They vary with orientation and Safari's browser chrome, and
+// Avalonia's InsetsManager under-reported the landscape right and bottom edges in device measurements,
+// so the browser head reads them here instead. Requires viewport-fit=cover on the viewport meta tag.
 
 let probe = null;
 

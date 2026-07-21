@@ -53,6 +53,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains("x:Name=\"CompactRail\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>The compact undo/redo rail hugs its controls instead of covering the canvas in landscape.</summary>
+        [Fact]
+        public void CompactRailDoesNotStretchAcrossTheCanvas()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf('>', railStart);
+
+            Assert.True(railStart >= 0 && railEnd > railStart);
+            Assert.Contains(
+                "HorizontalAlignment=\"Left\"",
+                view.AsSpan(railStart, railEnd - railStart),
+                StringComparison.Ordinal);
+        }
+
         /// <summary>The tab bar stays above the drawer so an open sheet cannot block panel switching.</summary>
         [Fact]
         public void CompactTabsOverlayTheDrawer()
@@ -89,6 +104,22 @@ namespace CtrDxEditor.Tests
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains("SafeAreaProbe.Read(this)", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>A left-floating rail consumes only the safe-area edges that can overlap it.</summary>
+        [Fact]
+        public void CompactRailUsesLeftAndTopSafeAreaOnly()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains(
+                "rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);",
+                layout,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);",
+                layout,
+                StringComparison.Ordinal);
         }
 
         /// <summary>Rotating a compact device refreshes insets even though its layout mode is unchanged.</summary>
