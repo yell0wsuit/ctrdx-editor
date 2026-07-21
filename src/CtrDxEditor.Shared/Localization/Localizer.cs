@@ -51,14 +51,15 @@ namespace CtrDxEditor.Localization
         private static Dictionary<string, string> ReadResource(string lang)
         {
             Uri uri = new($"avares://CtrDxEditor.Shared/Localization/{lang}.json");
+            StandardAssetLoader assetLoader = new();
             try
             {
-                if (!AssetLoader.Exists(uri))
+                if (!assetLoader.Exists(uri))
                 {
                     return [];
                 }
 
-                using Stream stream = AssetLoader.Open(uri);
+                using Stream stream = assetLoader.Open(uri);
                 return JsonSerializer.Deserialize(stream, AppJsonContext.Default.DictionaryStringString) ?? [];
             }
             catch (InvalidOperationException)
