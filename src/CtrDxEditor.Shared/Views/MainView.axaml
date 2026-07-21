@@ -301,7 +301,19 @@
         </MenuItem>
       </MenuItem>
     </Menu>
-    <Grid ColumnDefinitions="200,1,*,1,280">
+    <Grid>
+      <DrawerPage x:Name="Shell"
+                  DrawerPlacement="Bottom"
+                  DrawerBehavior="Disabled"
+                  DrawerLayoutBehavior="Overlay"
+                  IsGestureEnabled="True"
+                  DrawerLength="360"
+                  DrawerBackground="{DynamicResource EditorBrush.Surface.Panel}">
+        <DrawerPage.Drawer>
+          <!-- Panels are moved in here in compact mode; empty in expanded mode. -->
+          <Panel x:Name="DrawerHost" />
+        </DrawerPage.Drawer>
+        <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280">
       <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
@@ -644,7 +656,35 @@
         <Border Grid.Row="3" Height="1" Background="{DynamicResource EditorBrush.Surface.Divider}" Margin="4,0" />
         <views:PropertyPanel Grid.Row="4" />
       </Grid>
-    </Grid>
+        </Grid>
+      </DrawerPage>
+
+      <Border x:Name="CompactRail" IsVisible="False"
+              VerticalAlignment="Top" ZIndex="50"
+              Background="{DynamicResource EditorBrush.Surface.Panel}">
+        <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
+          <Button Click="Undo_Click" IsEnabled="{Binding CanUndo}" ToolTip.Tip="{loc:Tr Menu.Edit.Undo}">
+            <icons:MaterialIcon Kind="Undo" Width="22" Height="22" />
+          </Button>
+          <Button Click="Redo_Click" IsEnabled="{Binding CanRedo}" ToolTip.Tip="{loc:Tr Menu.Edit.Redo}">
+            <icons:MaterialIcon Kind="Redo" Width="22" Height="22" />
+          </Button>
+        </StackPanel>
+      </Border>
+
+      <Border x:Name="CompactTabs" IsVisible="False"
+              VerticalAlignment="Bottom" ZIndex="50"
+              Background="{DynamicResource EditorBrush.Surface.Panel}">
+        <UniformGrid Columns="2" Margin="0,4">
+          <Button x:Name="PaletteTab" Click="CompactPaletteTab_Click"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="{loc:Tr Panel.Palette}" />
+          <Button x:Name="LayersTab" Click="CompactLayersTab_Click"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="{loc:Tr Panel.Layers}" />
+        </UniformGrid>
+      </Border>
+      </Grid>
       </DockPanel>
       <Canvas IsHitTestVisible="False">
         <Image x:Name="RowDragPreview"
