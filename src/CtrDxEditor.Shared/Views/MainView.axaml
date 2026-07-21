@@ -679,7 +679,7 @@
         <UniformGrid Columns="2" Margin="0,4">
           <Button x:Name="PaletteTab" Click="CompactPaletteTab_Click"
                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  Content="{loc:Tr Panel.Palette}" />
+                  Content="{loc:Tr Panel.Objects}" />
           <Button x:Name="LayersTab" Click="CompactLayersTab_Click"
                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="{loc:Tr Panel.Layers}" />
