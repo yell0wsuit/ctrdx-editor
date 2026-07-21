@@ -33,6 +33,12 @@ namespace CtrDxEditor.Rendering
                 DashStyle = new DashStyle([4, 3], 0),
             };
 
+        /// <summary>
+        /// Screen-pixel slack added around the viewport when culling objects, absorbing art that overhangs its
+        /// bounds box (duration text, tutorial overhang, glow halos) so nothing pops at the edge.
+        /// </summary>
+        private const double CullMargin = 256;
+
         /// <summary>The pixel size and view transform for a clean full-level screenshot.</summary>
         /// <param name="Size">Output bitmap size in pixels (level units x MapScale).</param>
         /// <param name="View">Transform placing the frame's top-left at pixel (0, 0).</param>
@@ -821,6 +827,17 @@ namespace CtrDxEditor.Rendering
                 }
                 else
                 {
+                    // Offscreen objects are skipped: at high zoom most of the level lies outside the viewport, and
+                    // drawing it costs a full sprite pass per object for no pixels. Only this branch is culled —
+                    // a grab's rope reaches an arbitrary target, and a vinyl's handles extend past its disc, so
+                    // neither object's own bounds predict where it draws.
+                    LevelBounds cullBounds = LevelSceneRenderer.SelectionBounds(
+                        sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
+                    if (!LevelSceneRenderer.IsWithinViewport(cullBounds, v, renderSize, CullMargin))
+                    {
+                        continue;
+                    }
+
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
                         ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText,
                         objects,

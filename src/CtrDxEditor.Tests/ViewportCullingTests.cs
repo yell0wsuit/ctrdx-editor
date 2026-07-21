@@ -1,9 +1,12 @@
 using System;
+using System.Globalization;
 using System.Reflection;
+using System.Xml.Linq;
 
 using Avalonia;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
 
 using Xunit;
@@ -74,6 +77,60 @@ namespace CtrDxEditor.Tests
             Assert.False(IsWithinViewport(bounds, new(1.0, -2000, 0), new Size(800, 600), 0));
             Assert.True(IsWithinViewport(bounds, new(4.0, 0, 0), new Size(800, 600), 0));
             Assert.False(IsWithinViewport(bounds, new(8.0, 0, 0), new Size(800, 600), 0));
+        }
+
+        /// <summary>The cull margin is generous enough to cover the widest overhanging art.</summary>
+        [Fact]
+        public void CullMarginIsAtLeastTwoFiftySix()
+        {
+            FieldInfo field = typeof(SpriteCache).Assembly
+                .GetType("CtrDxEditor.Rendering.LevelCanvas")!
+                .GetField("CullMargin", BindingFlags.NonPublic | BindingFlags.Static)!;
+
+            Assert.True((double)field.GetRawConstantValue()! >= 256);
+        }
+
+        /// <summary>
+        /// End-to-end cull decision over real objects: bounds come from <c>SelectionBounds</c> exactly as the
+        /// draw loop computes them, so this covers the pairing the renderer actually relies on rather than the
+        /// predicate in isolation.
+        /// </summary>
+        [Fact]
+        public void CullKeepsOnlyObjectsNearTheViewport()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            ViewTransform view = new(1.0, 0, 0);
+            Size renderSize = new(800, 600);
+
+            // Without art, SelectionBounds falls back to a 16x16 box centered on the object, which is all the
+            // cull decision needs — it is the geometry, not the pixels, under test here.
+            Assert.True(Kept(sprites, Obj(400, 300), view, renderSize));
+            Assert.True(Kept(sprites, Obj(0, 0), view, renderSize));
+            Assert.True(Kept(sprites, Obj(800, 600), view, renderSize));
+
+            // Inside the margin: kept, so overhanging art never pops at the edge.
+            Assert.True(Kept(sprites, Obj(1000, 300), view, renderSize));
+
+            // Well beyond the margin: culled.
+            Assert.False(Kept(sprites, Obj(5000, 300), view, renderSize));
+            Assert.False(Kept(sprites, Obj(400, -3000), view, renderSize));
+        }
+
+        private static bool Kept(SpriteCache sprites, LevelObject obj, ViewTransform view, Size renderSize)
+        {
+            MethodInfo boundsMethod = SceneRenderer.GetMethod(
+                "SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
+            LevelBounds bounds = (LevelBounds)boundsMethod.Invoke(null, [sprites, obj, 0, 0, false])!;
+
+            return IsWithinViewport(bounds, view, renderSize, 256);
+        }
+
+        private static LevelObject Obj(double x, double y)
+        {
+            XElement element = new("candy");
+            element.SetAttributeValue("x", x.ToString(CultureInfo.InvariantCulture));
+            element.SetAttributeValue("y", y.ToString(CultureInfo.InvariantCulture));
+            return new LevelObject(element);
         }
     }
 }
