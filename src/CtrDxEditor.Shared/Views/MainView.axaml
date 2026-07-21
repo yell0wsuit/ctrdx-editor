@@ -12,15 +12,6 @@
         x:Class="CtrDxEditor.Views.MainView"
         x:DataType="vm:EditorViewModel"
         TopLevel.AutoSafeAreaPadding="False">
-  <UserControl.Styles>
-    <!-- This shell opens the drawer from its own compact tabs; DrawerPage's pane bars are never used. -->
-    <Style Selector="DrawerPage#Shell /template/ Border#PART_TopBar">
-      <Setter Property="IsVisible" Value="False" />
-    </Style>
-    <Style Selector="DrawerPage#Shell /template/ Border#PART_BottomBar">
-      <Setter Property="IsVisible" Value="False" />
-    </Style>
-  </UserControl.Styles>
   <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
     <Grid>
       <DockPanel>
@@ -311,18 +302,7 @@
       </MenuItem>
     </Menu>
     <Grid>
-      <DrawerPage x:Name="Shell"
-                  DrawerPlacement="Bottom"
-                  DrawerBehavior="Disabled"
-                  DrawerLayoutBehavior="Overlay"
-                  IsGestureEnabled="True"
-                  DrawerLength="360"
-                  DrawerBackground="{DynamicResource EditorBrush.Surface.Panel}">
-        <DrawerPage.Drawer>
-          <!-- Panels are moved in here in compact mode; empty in expanded mode. -->
-          <Panel x:Name="DrawerHost" />
-        </DrawerPage.Drawer>
-        <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280">
+      <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280">
       <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
@@ -665,8 +645,20 @@
         <Border Grid.Row="3" Height="1" Background="{DynamicResource EditorBrush.Surface.Divider}" Margin="4,0" />
         <views:PropertyPanel Grid.Row="4" />
       </Grid>
-        </Grid>
-      </DrawerPage>
+      </Grid>
+
+      <!-- Compact bottom sheet. A plain overlay rather than a DrawerPage: that control is a page-level
+           navigation shell whose template carries its own title bars and pane toggles, which this shell
+           does not want and cannot reliably suppress from outside. Height is set in code from the
+           available space. -->
+      <Border x:Name="CompactSheet" IsVisible="False"
+              VerticalAlignment="Bottom" ZIndex="40"
+              Background="{DynamicResource EditorBrush.Surface.Panel}"
+              BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+              BorderThickness="0,1,0,0"
+              CornerRadius="12,12,0,0">
+        <Panel x:Name="DrawerHost" />
+      </Border>
 
       <Border x:Name="CompactRail" IsVisible="False"
               HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="50"

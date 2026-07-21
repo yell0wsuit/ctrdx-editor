@@ -45,28 +45,30 @@ namespace CtrDxEditor.Tests
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
-            Assert.Contains("<DrawerPage", view, StringComparison.Ordinal);
-            Assert.Contains("DrawerPlacement=\"Bottom\"", view, StringComparison.Ordinal);
-            Assert.Contains("x:Name=\"Shell\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"CompactSheet\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"DrawerHost\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"CompactTabs\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"CompactRail\"", view, StringComparison.Ordinal);
         }
 
-        /// <summary>The shell uses custom chrome, so DrawerPage's built-in pane bars never leak into desktop.</summary>
+        /// <summary>
+        /// The sheet is a plain overlay, not a <c>DrawerPage</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>DrawerPage</c> was tried first and reverted: it is a page-level navigation shell whose
+        /// template carries its own title bars and pane toggle buttons, which rendered over the editor in
+        /// expanded mode and could not be reliably suppressed from outside the template. Suppressing them
+        /// needs selectors that name internal parts, which are not part of Avalonia's public contract and
+        /// silently stop matching when a part's type changes.
+        /// </remarks>
         [Fact]
-        public void DrawerPageBuiltInChromeIsHidden()
+        public void ShellDoesNotUseDrawerPage()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
-            Assert.Contains(
-                "DrawerPage#Shell /template/ Border#PART_TopBar",
-                view,
-                StringComparison.Ordinal);
-            Assert.Contains(
-                "DrawerPage#Shell /template/ Border#PART_BottomBar",
-                view,
-                StringComparison.Ordinal);
+            // The element, not the word: the markup comment explaining why it was dropped must survive.
+            Assert.DoesNotContain("<DrawerPage", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("PART_", view, StringComparison.Ordinal);
         }
 
         /// <summary>The compact undo/redo rail hugs its controls instead of covering the canvas in landscape.</summary>
@@ -90,10 +92,11 @@ namespace CtrDxEditor.Tests
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
-            int drawerEnd = view.IndexOf("</DrawerPage>", StringComparison.Ordinal);
+            int sheet = view.IndexOf("x:Name=\"CompactSheet\"", StringComparison.Ordinal);
             int tabs = view.IndexOf("x:Name=\"CompactTabs\"", StringComparison.Ordinal);
 
-            Assert.True(drawerEnd >= 0 && tabs > drawerEnd);
+            // Later siblings paint on top, so the tab bar must be declared after the sheet.
+            Assert.True(sheet >= 0 && tabs > sheet);
         }
 
         /// <summary>Drawer content reserves the overlaid tab bar and horizontal safe areas.</summary>
@@ -103,7 +106,7 @@ namespace CtrDxEditor.Tests
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains(
-                "drawerHost.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);",
+                "sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);",
                 layout,
                 StringComparison.Ordinal);
         }

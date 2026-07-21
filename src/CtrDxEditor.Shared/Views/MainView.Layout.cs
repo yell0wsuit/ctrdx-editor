@@ -1,3 +1,5 @@
+using System;
+
 using Avalonia;
 using Avalonia.Controls;
 
@@ -68,7 +70,7 @@ namespace CtrDxEditor.Views
         /// <param name="mode">The layout mode to apply.</param>
         private void ApplyLayoutMode(LayoutMode mode)
         {
-            if (this.FindControl<DrawerPage>("Shell") is not { } shell
+            if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Panel>("DrawerHost") is not { } drawerHost
                 || this.FindControl<Grid>("ExpandedColumns") is not { } columns
                 || this.FindControl<Border>("CompactRail") is not { } rail
@@ -82,7 +84,6 @@ namespace CtrDxEditor.Views
             bool compact = mode == LayoutMode.Compact;
             rail.IsVisible = compact;
             tabs.IsVisible = compact;
-            shell.DrawerBehavior = compact ? DrawerBehavior.Flyout : DrawerBehavior.Disabled;
 
             if (compact)
             {
@@ -96,14 +97,14 @@ namespace CtrDxEditor.Views
             }
             else
             {
-                shell.IsOpen = false;
+                sheet.IsVisible = false;
                 drawerHost.Children.Clear();
 
                 RestoreToColumn(columns, palette, 0);
                 RestoreToColumn(columns, layers, 4);
                 columns.ColumnDefinitions = ColumnDefinitions.Parse("200,1,*,1,280");
 
-                drawerHost.Margin = new Thickness(0);
+                sheet.Margin = new Thickness(0);
                 rail.Padding = new Thickness(0);
                 tabs.Padding = new Thickness(0);
             }
@@ -112,7 +113,7 @@ namespace CtrDxEditor.Views
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>
         private void ApplyCompactSafeAreaPadding()
         {
-            if (this.FindControl<Panel>("DrawerHost") is not { } drawerHost
+            if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactTabs") is not { } tabs)
             {
@@ -123,7 +124,20 @@ namespace CtrDxEditor.Views
             // The rail hugs the left edge, so a right-side notch cannot overlap it and must not widen it.
             rail.Padding = new Thickness(insets.Left, insets.Top, 0, 0);
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
-            drawerHost.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
+            // The sheet sits directly above the tab bar and inside any side notches.
+            sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
+            sheet.Height = CompactSheetHeight();
+        }
+
+        /// <summary>
+        /// The sheet's height: a little over half the view, leaving a strip of canvas visible so the level
+        /// never disappears entirely behind a panel.
+        /// </summary>
+        /// <returns>The height in logical pixels, floored so the sheet stays usable on short screens.</returns>
+        private double CompactSheetHeight()
+        {
+            double available = Bounds.Height;
+            return available > 0 ? Math.Max(200, available * 0.55) : 320;
         }
 
         /// <summary>Detaches a panel from the column grid so it can be hosted in the drawer.</summary>
@@ -159,7 +173,7 @@ namespace CtrDxEditor.Views
         /// <param name="panel">The panel to host.</param>
         private void ShowPanelInDrawer(Control panel)
         {
-            if (this.FindControl<DrawerPage>("Shell") is not { } shell
+            if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Panel>("DrawerHost") is not { } drawerHost)
             {
                 return;
@@ -168,7 +182,7 @@ namespace CtrDxEditor.Views
             if (drawerHost.Children.Contains(panel))
             {
                 // Tapping the active tab closes the sheet, giving the canvas back.
-                shell.IsOpen = !shell.IsOpen;
+                sheet.IsVisible = !sheet.IsVisible;
                 return;
             }
 
@@ -179,7 +193,8 @@ namespace CtrDxEditor.Views
             }
 
             drawerHost.Children.Add(panel);
-            shell.IsOpen = true;
+            sheet.Height = CompactSheetHeight();
+            sheet.IsVisible = true;
         }
 
         /// <summary>Raises the palette in the compact drawer.</summary>
