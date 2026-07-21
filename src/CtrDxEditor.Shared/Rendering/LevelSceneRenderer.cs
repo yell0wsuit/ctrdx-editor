@@ -159,6 +159,31 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
+        /// <summary>
+        /// Whether an object's level-space bounds fall inside the rendered viewport, and so must be drawn.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="bounds"/> is the art box from <see cref="SelectionBounds"/>, but some visuals
+        /// legitimately overhang it — a star's duration text, tutorial overhang, glow halos. The margin keeps
+        /// those drawing correctly; without it they would pop at the viewport edge. Callers that draw
+        /// unbounded visuals (a grab's rope reaches an arbitrary target elsewhere) must not cull at all.
+        /// </remarks>
+        /// <param name="bounds">The object's bounds in level units.</param>
+        /// <param name="view">The active view transform.</param>
+        /// <param name="renderSize">The render surface size in screen pixels.</param>
+        /// <param name="margin">Extra screen-pixel slack around the viewport, absorbing art that overhangs its bounds.</param>
+        /// <returns>True when the bounds intersect the margin-expanded viewport.</returns>
+        public static bool IsWithinViewport(LevelBounds bounds, ViewTransform view, Size renderSize, double margin)
+        {
+            Vec2 topLeft = view.LevelToScreen(new Vec2(bounds.X, bounds.Y));
+            Vec2 bottomRight = view.LevelToScreen(new Vec2(bounds.X + bounds.W, bounds.Y + bounds.H));
+
+            return bottomRight.X >= -margin
+                && topLeft.X <= renderSize.Width + margin
+                && bottomRight.Y >= -margin
+                && topLeft.Y <= renderSize.Height + margin;
+        }
+
         /// <summary>The object's fixed draw layer in the game's z-order.</summary>
         /// <remarks>
         /// The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
