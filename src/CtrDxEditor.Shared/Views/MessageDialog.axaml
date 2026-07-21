@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:conv="using:CtrDxEditor.Converters"
              xmlns:views="using:CtrDxEditor.Views"
              x:Class="CtrDxEditor.Views.MessageDialog"
              x:CompileBindings="True"
@@ -10,7 +11,9 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Margin="24" Spacing="16" MaxWidth="460" HorizontalAlignment="Stretch">
+  <StackPanel Margin="24" Spacing="16"
+              Width="{Binding $parent[TopLevel].Bounds.Width,
+                      Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=460}">
     <TextBlock Classes="dialog-header" Classes.danger="{Binding IsDanger}"
                FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
     <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />

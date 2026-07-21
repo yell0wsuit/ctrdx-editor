@@ -4,6 +4,7 @@
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:core="using:CtrDxEditor.Core.Editing"
              xmlns:controls="using:CtrDxEditor.Controls"
+             xmlns:conv="using:CtrDxEditor.Converters"
              x:Class="CtrDxEditor.Views.ReviewChangesDialog"
              x:CompileBindings="True"
              x:DataType="vm:ReviewChangesViewModel">
@@ -65,8 +66,11 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="24" MaxWidth="900" MaxHeight="640" HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch" RowDefinitions="Auto,Auto,*,Auto">
+  <Grid Margin="24" RowDefinitions="Auto,Auto,*,Auto"
+        Width="{Binding $parent[TopLevel].Bounds.Width,
+                Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=900}"
+        MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
+                    Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=640}">
     <!-- Title and the split/unified toggle -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" Classes="dialog-header" FontSize="18" FontWeight="SemiBold"

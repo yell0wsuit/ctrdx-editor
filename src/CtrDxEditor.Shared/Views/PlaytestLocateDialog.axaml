@@ -3,6 +3,7 @@
              xmlns:loc="using:CtrDxEditor.Localization"
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:conv="using:Avalonia.Data.Converters"
+             xmlns:dconv="using:CtrDxEditor.Converters"
              xmlns:views="using:CtrDxEditor.Views"
              x:Class="CtrDxEditor.Views.PlaytestLocateDialog"
              x:CompileBindings="True"
@@ -12,7 +13,9 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Margin="24" Spacing="16" MaxWidth="440" HorizontalAlignment="Stretch">
+  <StackPanel Margin="24" Spacing="16"
+              Width="{Binding $parent[TopLevel].Bounds.Width,
+                      Converter={x:Static dconv:DialogSizeConverter.Clamp}, ConverterParameter=440}">
     <TextBlock FontSize="18" FontWeight="SemiBold" Text="{loc:Tr Dialog.Playtest.Locate.Header}" />
     <TextBlock TextWrapping="Wrap" Text="{Binding Body}" />
 

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:dlgconv="using:CtrDxEditor.Converters"
              xmlns:ctrl="using:CtrDxEditor.Controls"
              xmlns:icons="using:Material.Icons.Avalonia"
              x:Class="CtrDxEditor.Views.LevelSettingsDialog"
@@ -66,8 +67,11 @@
 
   </UserControl.Styles>
 
-  <Grid Margin="24" MaxWidth="360" MaxHeight="640" HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch" RowDefinitions="Auto,*,Auto">
+  <Grid Margin="24" RowDefinitions="Auto,*,Auto"
+        Width="{Binding $parent[TopLevel].Bounds.Width,
+                Converter={x:Static dlgconv:DialogSizeConverter.Clamp}, ConverterParameter=360}"
+        MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
+                    Converter={x:Static dlgconv:DialogSizeConverter.Clamp}, ConverterParameter=640}">
     <TextBlock x:Name="TitleText"
                Grid.Row="0"
                FontSize="18"

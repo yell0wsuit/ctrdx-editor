@@ -1,14 +1,20 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:conv="using:CtrDxEditor.Converters"
              xmlns:vm="using:CtrDxEditor.ViewModels"
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
              x:DataType="vm:ContentSetupViewModel">
-  <!-- MaxHeight + Auto scrollbar: a long invalid-files list (see ErrorMessage below) can otherwise
-       grow the dialog taller than the window/viewport, cutting off the buttons beneath it. -->
+  <!-- Clamped MaxHeight + Auto scrollbar: a long invalid-files list (see ErrorMessage below) can
+       otherwise grow the dialog taller than the window/viewport, cutting off the buttons beneath it.
+       Clamping to the top level rather than a fixed 500 also covers a landscape phone, which is
+       shorter than 500 to begin with. -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                VerticalAlignment="Stretch">
-    <StackPanel Margin="24" Spacing="16" MaxWidth="500" HorizontalAlignment="Stretch">
+                MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
+                            Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
+    <StackPanel Margin="24" Spacing="16"
+                Width="{Binding $parent[TopLevel].Bounds.Width,
+                        Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
       <!-- Title reflects the current phase. -->
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
                  Text="{loc:Tr Dialog.ContentSetup.Title}" />
