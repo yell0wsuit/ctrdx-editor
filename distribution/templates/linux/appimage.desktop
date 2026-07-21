@@ -4,6 +4,6 @@ Name={{DISPLAY_NAME}}
 Comment={{DESCRIPTION}}
 Exec={{APP_NAME}}
 Icon={{APP_NAME}}
-Categories=Development;Graphics;
+Categories=Development;
 Terminal=false
 StartupNotify=true
