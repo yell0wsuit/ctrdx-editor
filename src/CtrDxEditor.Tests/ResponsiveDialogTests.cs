@@ -81,6 +81,42 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotMatch(new Regex(@"MaxHeight=""\d"), markup);
         }
 
+        /// <summary>No dialog scrolls horizontally.</summary>
+        /// <remarks>
+        /// A dialog is already clamped to the window's width, so horizontal overflow means a child that
+        /// cannot wrap — and an <c>Auto</c> scrollbar turns that into a scrollbar pinned across the bottom
+        /// of the dialog rather than a visible layout bug. Disabling it measures children to the viewport
+        /// width instead, which is what makes the wrapping button row take effect.
+        /// </remarks>
+        [Theory]
+        [InlineData("ConfirmDialog.axaml")]
+        [InlineData("MessageDialog.axaml")]
+        [InlineData("PlaytestLocateDialog.axaml")]
+        [InlineData("ContentSetupDialog.axaml")]
+        [InlineData("LevelSettingsDialog.axaml")]
+        [InlineData("ReviewChangesDialog.axaml")]
+        public void DialogsDoNotScrollHorizontally(string file)
+        {
+            string markup = ReadDialog(file);
+
+            Assert.DoesNotContain("HorizontalScrollBarVisibility=\"Auto\"", markup, StringComparison.Ordinal);
+            Assert.DoesNotContain("HorizontalScrollBarVisibility=\"Visible\"", markup, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The asset-setup buttons wrap, because four long labels cannot share one phone-width row.
+        /// </summary>
+        [Fact]
+        public void ContentSetupButtonsWrapOnANarrowDialog()
+        {
+            string markup = ReadDialog("ContentSetupDialog.axaml");
+
+            Assert.Contains("<WrapPanel", markup, StringComparison.Ordinal);
+            // A horizontal StackPanel here overflows instead of wrapping, which is what produced the
+            // horizontal scrollbar this replaced.
+            Assert.DoesNotContain("Orientation=\"Horizontal\"", markup, StringComparison.Ordinal);
+        }
+
         /// <summary>A window wider than the dialog yields the dialog's unchanged desktop width.</summary>
         [Fact]
         public void ClampKeepsThePreferredWidthOnADesktopWindow()

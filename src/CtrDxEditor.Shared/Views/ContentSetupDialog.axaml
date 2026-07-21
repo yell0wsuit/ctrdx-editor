@@ -9,7 +9,7 @@
        otherwise grow the dialog taller than the window/viewport, cutting off the buttons beneath it.
        Clamping to the top level rather than a fixed 500 also covers a landscape phone, which is
        shorter than 500 to begin with. -->
-  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                 MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
                             Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
     <StackPanel Margin="24" Spacing="16"
@@ -53,15 +53,18 @@
         <ProgressBar IsIndeterminate="True" />
       </StackPanel>
 
-      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
-                  IsVisible="{Binding !IsBusy}">
+      <!-- Wraps rather than a horizontal StackPanel: up to four buttons with long labels ("Manual
+           download", "Browse zip…") overflow a phone-width dialog, and a row that cannot wrap forces the
+           ScrollViewer into a horizontal scrollbar. -->
+      <WrapPanel ItemSpacing="8" LineSpacing="8" HorizontalAlignment="Right"
+                 IsVisible="{Binding !IsBusy}">
         <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}"
                 IsVisible="{Binding AllowDownload}" />
         <Button Content="{loc:Tr Dialog.ContentSetup.DownloadManually}" Click="DownloadManually_Click"
                 IsVisible="{Binding AllowManualDownload}" />
         <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
         <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
-      </StackPanel>
+      </WrapPanel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>
