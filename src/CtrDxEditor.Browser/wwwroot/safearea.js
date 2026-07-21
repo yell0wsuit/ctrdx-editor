@@ -4,7 +4,7 @@
 
 let probe = null;
 
-function ensureProbe() {
+const ensureProbe = () => {
     if (probe) {
         return probe;
     }
@@ -17,10 +17,10 @@ function ensureProbe() {
         "padding-left:env(safe-area-inset-left,0px);";
     document.body.appendChild(probe);
     return probe;
-}
+};
 
 // Returns [left, top, right, bottom] in CSS pixels, matching Avalonia's Thickness argument order.
-export function readInsets() {
+export const readInsets = () => {
     const s = getComputedStyle(ensureProbe());
     return [
         parseFloat(s.paddingLeft) || 0,
@@ -28,4 +28,4 @@ export function readInsets() {
         parseFloat(s.paddingRight) || 0,
         parseFloat(s.paddingBottom) || 0,
     ];
-}
+};
