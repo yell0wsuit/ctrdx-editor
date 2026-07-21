@@ -281,7 +281,16 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Loads a level from its XML text into the editor.</summary>
         public void LoadLevelXml(string xml)
         {
-            LevelDocument loaded = LevelDocument.Parse(xml);
+            LoadLevel(LevelDocument.Parse(xml));
+        }
+
+        /// <summary>
+        /// Loads an already-parsed level into the editor. Callers that had to parse the document
+        /// ahead of time (the Open path validates before loading) pass it here rather than handing
+        /// back XML for a second parse. Must run on the UI thread: it refreshes bound collections.
+        /// </summary>
+        public void LoadLevel(LevelDocument loaded)
+        {
             StopAnimationPreview();
             ResetDocumentSessionState();
             Document = loaded;

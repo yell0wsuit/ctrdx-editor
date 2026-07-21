@@ -175,15 +175,27 @@ namespace CtrDxEditor.Views
         // this working in the browser build, where IStorageFile exposes no filesystem path.
         private async Task OpenLevelFileAsync(EditorViewModel vm, IStorageFile file)
         {
-            string xml;
+            LevelDocument document;
             IReadOnlyList<LevelWarning> warnings;
             try
             {
-                await using Stream stream = await file.OpenReadAsync();
-                using StreamReader reader = new(stream);
-                xml = await reader.ReadToEndAsync();
+                // The read stays here: it is async I/O that never blocks the thread, and on the
+                // browser build the storage stream is JS interop that has to run on this thread.
+                string xml;
+                await using (Stream stream = await file.OpenReadAsync())
+                {
+                    using StreamReader reader = new(stream);
+                    xml = await reader.ReadToEndAsync();
+                }
 
-                warnings = LevelValidator.Validate(LevelDocument.Parse(xml));
+                // Parse and validation are pure CPU over the text and are the part that actually
+                // stalls the UI on a large level, so they go off-thread on desktop. The browser is
+                // single-threaded (no WasmEnableThreads), where this simply runs inline.
+                (document, warnings) = await Task.Run(() =>
+                {
+                    LevelDocument parsed = LevelDocument.Parse(xml);
+                    return (parsed, LevelValidator.Validate(parsed));
+                });
             }
             catch (Exception ex)
             {
@@ -206,7 +218,7 @@ namespace CtrDxEditor.Views
             {
                 return;
             }
-            vm.LoadLevelXml(xml);
+            vm.LoadLevel(document);
             _currentLevelFile = file;
         }
 
