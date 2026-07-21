@@ -125,6 +125,7 @@
     "Dialog.LevelSettings.Special.None": "None",
     "Dialog.LevelSettings.Special.Default": "Default",
     "Dialog.LevelSettings.EnterNumber": "Enter a number",
+    "Dialog.LevelSettings.OutOfRange": "Must be between {0} and {1}",
     "Dialog.LevelSettings.HalfCandy": "Half candy",
     "Dialog.LevelSettings.NightLevel": "Night level",
     "Dialog.LevelSettings.HalfCandyDescription": "Enable the usage of split candy mechanic, as demonstrated in Valentine's Box.",

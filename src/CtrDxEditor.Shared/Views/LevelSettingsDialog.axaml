@@ -96,13 +96,13 @@
                 RowDefinitions="Auto,Auto"
                 Margin="0,4,0,0"
                 IsVisible="{Binding IsCustom}">
-            <NumericUpDown Grid.Row="0"
-                           Grid.Column="0"
-                           Minimum="320"
-                           Maximum="9999"
-                           Increment="1"
-                           FormatString="0"
-                           Value="{Binding CustomWidth, Mode=TwoWay}" />
+            <!-- Minimum is 0 rather than the real 320 so a longer number can be typed a digit at a
+                 time; the actual bound is enforced by CanConfirm and reported below the box. -->
+            <ctrl:NumericTextBox Grid.Row="0"
+                                 Grid.Column="0"
+                                 Minimum="0"
+                                 Maximum="9999"
+                                 Text="{Binding CustomWidthText, Mode=TwoWay}" />
 
             <TextBlock Grid.Row="0"
                        Grid.Column="1"
@@ -110,29 +110,29 @@
                        VerticalAlignment="Center"
                        Margin="8,0" />
 
-            <NumericUpDown Grid.Row="0"
-                           Grid.Column="2"
-                           Minimum="480"
-                           Maximum="9999"
-                           Increment="1"
-                           FormatString="0"
-                           Value="{Binding CustomHeight, Mode=TwoWay}" />
+            <ctrl:NumericTextBox Grid.Row="0"
+                                 Grid.Column="2"
+                                 Minimum="0"
+                                 Maximum="9999"
+                                 Text="{Binding CustomHeightText, Mode=TwoWay}" />
 
             <TextBlock Grid.Row="1"
                        Grid.Column="0"
-                       Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                       Text="{Binding CustomWidthError}"
+                       TextWrapping="Wrap"
                        Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
                        Margin="0,2,0,0"
-                       IsVisible="{Binding CustomWidth, Converter={x:Static ObjectConverters.IsNull}}" />
+                       IsVisible="{Binding HasCustomWidthError}" />
 
             <TextBlock Grid.Row="1"
                        Grid.Column="2"
-                       Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+                       Text="{Binding CustomHeightError}"
+                       TextWrapping="Wrap"
                        Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
                        Margin="0,2,0,0"
-                       IsVisible="{Binding CustomHeight, Converter={x:Static ObjectConverters.IsNull}}" />
+                       IsVisible="{Binding HasCustomHeightError}" />
           </Grid>
         </StackPanel>
 
@@ -140,16 +140,16 @@
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}" />
 
           <!-- Negatives are permitted (DX parses them without clamping), though only positive speeds are meaningful. -->
-          <NumericUpDown Minimum="-100"
-                         Maximum="100"
-                         Increment="0.1"
-                         FormatString="0.0#"
-                         Value="{Binding RopePhysicsSpeed, Mode=TwoWay}" />
+          <ctrl:NumericTextBox Minimum="-100"
+                               Maximum="100"
+                               AcceptDecimal="True"
+                               Text="{Binding RopePhysicsSpeedText, Mode=TwoWay}" />
 
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+          <TextBlock Text="{Binding RopePhysicsSpeedError}"
+                     TextWrapping="Wrap"
                      Foreground="{DynamicResource EditorBrush.DangerText}"
                      FontSize="12"
-                     IsVisible="{Binding RopePhysicsSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
+                     IsVisible="{Binding HasRopePhysicsSpeedError}" />
         </StackPanel>
 
         <StackPanel Spacing="4">
@@ -170,16 +170,15 @@
           <!-- The manual value input only appears when the "Custom…" option is selected. -->
           <StackPanel Spacing="2"
                       IsVisible="{Binding IsSpecialCustom}">
-            <NumericUpDown Minimum="0"
-                           Maximum="99"
-                           Increment="1"
-                           FormatString="0"
-                           Value="{Binding CustomSpecial, Mode=TwoWay}" />
+            <ctrl:NumericTextBox Minimum="0"
+                                 Maximum="99"
+                                 Text="{Binding CustomSpecialText, Mode=TwoWay}" />
 
-            <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+            <TextBlock Text="{Binding CustomSpecialError}"
+                       TextWrapping="Wrap"
                        Foreground="{DynamicResource EditorBrush.DangerText}"
                        FontSize="12"
-                       IsVisible="{Binding CustomSpecial, Converter={x:Static ObjectConverters.IsNull}}" />
+                       IsVisible="{Binding HasCustomSpecialError}" />
           </StackPanel>
         </StackPanel>
 
@@ -220,32 +219,32 @@
 
         <StackPanel Spacing="4">
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.Water}" />
-          <NumericUpDown Minimum="0"
-                         Maximum="10000"
-                         Increment="1"
-                         FormatString="0.##"
-                         Value="{Binding Water, Mode=TwoWay}" />
+          <ctrl:NumericTextBox Minimum="0"
+                               Maximum="10000"
+                               AcceptDecimal="True"
+                               Text="{Binding WaterText, Mode=TwoWay}" />
 
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+          <TextBlock Text="{Binding WaterError}"
+                     TextWrapping="Wrap"
                      Foreground="{DynamicResource EditorBrush.DangerText}"
                      FontSize="12"
-                     IsVisible="{Binding Water, Converter={x:Static ObjectConverters.IsNull}}" />
+                     IsVisible="{Binding HasWaterError}" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterDescription}"
                      TextWrapping="Wrap"
                      Opacity="0.7" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeed}" />
-          <NumericUpDown Minimum="0"
-                         Maximum="10000"
-                         Increment="1"
-                         FormatString="0.##"
-                         Value="{Binding WaterSpeed, Mode=TwoWay}" />
+          <ctrl:NumericTextBox Minimum="0"
+                               Maximum="10000"
+                               AcceptDecimal="True"
+                               Text="{Binding WaterSpeedText, Mode=TwoWay}" />
 
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.EnterNumber}"
+          <TextBlock Text="{Binding WaterSpeedError}"
+                     TextWrapping="Wrap"
                      Foreground="{DynamicResource EditorBrush.DangerText}"
                      FontSize="12"
-                     IsVisible="{Binding WaterSpeed, Converter={x:Static ObjectConverters.IsNull}}" />
+                     IsVisible="{Binding HasWaterSpeedError}" />
 
           <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeedDescription}"
                      TextWrapping="Wrap"

@@ -102,10 +102,16 @@ namespace CtrDxEditor.ViewModels
         private static readonly CompositeFormat WaterDrainHintFormat =
             CompositeFormat.Parse(Localizer.Get("Dialog.LevelSettings.WaterDrainHint"));
 
+        private static readonly CompositeFormat RangeErrorFormat =
+            CompositeFormat.Parse(Localizer.Get("Dialog.LevelSettings.OutOfRange"));
+
         private const int MinWidth = 320;
         private const int MinHeight = 480;
         private const int MaxDimension = 9999;
         private const int MaxSpecial = 99;
+        private const int MinRopeSpeed = -100;
+        private const int MaxRopeSpeed = 100;
+        private const int MaxWater = 10000;
 
         /// <summary>Available resolutions; the last entry is the custom sentinel.</summary>
         public ObservableCollection<ResolutionPreset> Presets { get; } =
@@ -134,50 +140,122 @@ namespace CtrDxEditor.ViewModels
             new(Localizer.Get("Dialog.LevelSettings.Custom"), 0, IsCustom: true),
         ];
 
-        // NumericUpDown.Value is decimal?, so these bind as decimal? (an exact match avoids the
-        // raw "could not convert (null)" cast errors, and an empty box is a valid null that
-        // CanConfirm rejects so the level can't be created with a blank number).
+        // The numeric fields are stored as the raw text the box holds, because NumericTextBox filters
+        // input character by character and so has to bind a string. Each one exposes a decimal? view
+        // over that text: null means "empty or not a number", which CanConfirm rejects. The bounds
+        // below are only enforced by CanConfirm, not by the box - the box has to accept an out-of-range
+        // prefix ("6" on the way to "640") for a value above its minimum to be typeable at all.
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CustomWidth))]
+        [NotifyPropertyChangedFor(nameof(CustomWidthError))]
+        [NotifyPropertyChangedFor(nameof(HasCustomWidthError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial decimal? CustomWidth { get; set; } = MinWidth;
+        public partial string CustomWidthText { get; set; } = Format(MinWidth);
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CustomHeight))]
+        [NotifyPropertyChangedFor(nameof(CustomHeightError))]
+        [NotifyPropertyChangedFor(nameof(HasCustomHeightError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial decimal? CustomHeight { get; set; } = MinHeight;
+        public partial string CustomHeightText { get; set; } = Format(MinHeight);
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(RopePhysicsSpeed))]
+        [NotifyPropertyChangedFor(nameof(RopePhysicsSpeedError))]
+        [NotifyPropertyChangedFor(nameof(HasRopePhysicsSpeedError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial decimal? RopePhysicsSpeed { get; set; } = 1.0m;
+        public partial string RopePhysicsSpeedText { get; set; } = Format(1.0m);
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsSpecialCustom))]
+        [NotifyPropertyChangedFor(nameof(HasCustomSpecialError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         public partial SpecialOption SelectedSpecial { get; set; }
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CustomSpecial))]
+        [NotifyPropertyChangedFor(nameof(CustomSpecialError))]
+        [NotifyPropertyChangedFor(nameof(HasCustomSpecialError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial decimal? CustomSpecial { get; set; } = 0m;
+        public partial string CustomSpecialText { get; set; } = Format(0m);
+
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
         [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
 
-        // Nullable so clearing the box or typing a non-number reads back as null rather than failing to
-        // convert (which surfaces a raw exception instead of the field's own "enter a number" message).
-        // CanConfirm rejects null, as it does for the other numeric fields.
-
         /// <summary>Height of the water pool in level units; 0 means the level has no water.</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Water))]
+        [NotifyPropertyChangedFor(nameof(WaterError))]
+        [NotifyPropertyChangedFor(nameof(HasWaterError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
         [NotifyPropertyChangedFor(nameof(HasWaterDrainHint))]
-        public partial decimal? Water { get; set; } = 0m;
+        public partial string WaterText { get; set; } = Format(0m);
 
         /// <summary>Rate at which the water drains, in level units per second; 0 is a static pool.</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(WaterSpeed))]
+        [NotifyPropertyChangedFor(nameof(WaterSpeedError))]
+        [NotifyPropertyChangedFor(nameof(HasWaterSpeedError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         [NotifyPropertyChangedFor(nameof(WaterDrainHint))]
         [NotifyPropertyChangedFor(nameof(HasWaterDrainHint))]
-        public partial decimal? WaterSpeed { get; set; } = 0m;
+        public partial string WaterSpeedText { get; set; } = Format(0m);
+
+        /// <summary>Custom level width, or null when the box is empty or holds something unparseable.</summary>
+        public decimal? CustomWidth { get => Parse(CustomWidthText); set => CustomWidthText = Format(value); }
+
+        /// <summary>Custom level height, or null when the box is empty or holds something unparseable.</summary>
+        public decimal? CustomHeight { get => Parse(CustomHeightText); set => CustomHeightText = Format(value); }
+
+        /// <summary>Rope simulation speed multiplier, or null when the box holds no usable number.</summary>
+        public decimal? RopePhysicsSpeed { get => Parse(RopePhysicsSpeedText); set => RopePhysicsSpeedText = Format(value); }
+
+        /// <summary>Manually entered special value, or null when the box holds no usable number.</summary>
+        public decimal? CustomSpecial { get => Parse(CustomSpecialText); set => CustomSpecialText = Format(value); }
+
+        /// <summary>Water height, or null when the box holds no usable number.</summary>
+        public decimal? Water { get => Parse(WaterText); set => WaterText = Format(value); }
+
+        /// <summary>Water drain speed, or null when the box holds no usable number.</summary>
+        public decimal? WaterSpeed { get => Parse(WaterSpeedText); set => WaterSpeedText = Format(value); }
+
+        /// <summary>Why the width box is unusable, or empty text when it holds a valid width.</summary>
+        public string CustomWidthError => Validate(CustomWidthText, MinWidth, MaxDimension);
+
+        /// <summary>Why the height box is unusable, or empty text when it holds a valid height.</summary>
+        public string CustomHeightError => Validate(CustomHeightText, MinHeight, MaxDimension);
+
+        /// <summary>Why the rope speed box is unusable, or empty text when it holds a valid speed.</summary>
+        public string RopePhysicsSpeedError => Validate(RopePhysicsSpeedText, MinRopeSpeed, MaxRopeSpeed);
+
+        /// <summary>Why the special box is unusable, or empty text when it holds a valid special value.</summary>
+        public string CustomSpecialError => Validate(CustomSpecialText, 0, MaxSpecial);
+
+        /// <summary>Why the water box is unusable, or empty text when it holds a valid height.</summary>
+        public string WaterError => Validate(WaterText, 0, MaxWater);
+
+        /// <summary>Why the water speed box is unusable, or empty text when it holds a valid speed.</summary>
+        public string WaterSpeedError => Validate(WaterSpeedText, 0, MaxWater);
+
+        /// <summary>Whether the width box has something to complain about (bound to its message's visibility).</summary>
+        public bool HasCustomWidthError => CustomWidthError.Length > 0;
+
+        /// <summary>Whether the height box has something to complain about.</summary>
+        public bool HasCustomHeightError => CustomHeightError.Length > 0;
+
+        /// <summary>Whether the rope speed box has something to complain about.</summary>
+        public bool HasRopePhysicsSpeedError => RopePhysicsSpeedError.Length > 0;
+
+        /// <summary>Whether the special box has something to complain about. Hidden while the box itself is.</summary>
+        public bool HasCustomSpecialError => IsSpecialCustom && CustomSpecialError.Length > 0;
+
+        /// <summary>Whether the water box has something to complain about.</summary>
+        public bool HasWaterError => WaterError.Length > 0;
+
+        /// <summary>Whether the water speed box has something to complain about.</summary>
+        public bool HasWaterSpeedError => WaterSpeedError.Length > 0;
 
         /// <summary>
         /// How long the pool takes to empty, or empty text when there is no water or no drain. Derived so
@@ -238,13 +316,46 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the manual width/height inputs are active.</summary>
         public bool IsCustom => SelectedPreset.IsCustom;
 
-        /// <summary>Whether every currently-required numeric field has a value (gates the confirm button).</summary>
+        /// <summary>
+        /// Whether every currently-required numeric field holds a number within its bounds (gates the
+        /// confirm button). The hidden custom inputs are exempt, since a preset supplies their values.
+        /// </summary>
         public bool CanConfirm =>
-            RopePhysicsSpeed is not null
-            && Water is not null
-            && WaterSpeed is not null
-            && (!IsCustom || (CustomWidth is not null && CustomHeight is not null))
-            && (!IsSpecialCustom || CustomSpecial is not null);
+            RopePhysicsSpeedError.Length == 0
+            && WaterError.Length == 0
+            && WaterSpeedError.Length == 0
+            && (!IsCustom || (CustomWidthError.Length == 0 && CustomHeightError.Length == 0))
+            && (!IsSpecialCustom || CustomSpecialError.Length == 0);
+
+        /// <summary>
+        /// Reads a box's text as a number. Invariant culture because <c>NumericTextBox</c> only ever lets
+        /// "." through as the decimal separator, whatever the current locale would otherwise use.
+        /// </summary>
+        private static decimal? Parse(string? text)
+        {
+            return decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal value)
+                ? value
+                : null;
+        }
+
+        /// <summary>Renders a value back into box text; null (no value) becomes an empty box.</summary>
+        private static string Format(decimal? value)
+        {
+            return value?.ToString("0.####", CultureInfo.InvariantCulture) ?? string.Empty;
+        }
+
+        /// <summary>
+        /// The message to show under a box: empty text when it holds a number within
+        /// [<paramref name="min"/>, <paramref name="max"/>], and otherwise a prompt to fix it.
+        /// </summary>
+        private static string Validate(string? text, int min, int max)
+        {
+            return Parse(text) is not { } value
+                ? Localizer.Get("Dialog.LevelSettings.EnterNumber")
+                : value < min || value > max
+                    ? string.Format(CultureInfo.CurrentCulture, RangeErrorFormat, min, max)
+                    : string.Empty;
+        }
 
         private LevelSettingsViewModel(bool isNewMode)
         {

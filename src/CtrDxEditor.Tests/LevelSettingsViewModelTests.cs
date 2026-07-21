@@ -130,6 +130,53 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.CanConfirm);
         }
 
+        /// <summary>
+        /// Confirm is blocked while a box holds a number outside its bounds. The box itself has to accept
+        /// out-of-range text (its minimum is relaxed so longer numbers can be typed a digit at a time), so
+        /// this is the only thing standing between a stray value and a level built from it.
+        /// </summary>
+        [Fact]
+        public void CanConfirmRejectsOutOfRangeValues()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.SelectedPreset = vm.Presets.Single(p => p.IsCustom);
+
+            vm.CustomWidthText = "100"; // below the 320 minimum
+            Assert.False(vm.CanConfirm);
+            Assert.True(vm.HasCustomWidthError);
+
+            vm.CustomWidthText = "640";
+            Assert.True(vm.CanConfirm);
+            Assert.False(vm.HasCustomWidthError);
+        }
+
+        /// <summary>Non-numeric text reads back as no value at all, and says so rather than blowing up.</summary>
+        [Fact]
+        public void UnparseableTextReadsAsNull()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.RopePhysicsSpeedText = "abc";
+
+            Assert.Null(vm.RopePhysicsSpeed);
+            Assert.False(vm.CanConfirm);
+            Assert.True(vm.HasRopePhysicsSpeedError);
+        }
+
+        /// <summary>Decimal rope speeds survive the text round-trip, in invariant form.</summary>
+        [Fact]
+        public void RopePhysicsSpeedKeepsDecimals()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            vm.RopePhysicsSpeedText = "1.5";
+
+            Assert.Equal(1.5m, vm.RopePhysicsSpeed);
+            Assert.True(vm.CanConfirm);
+            Assert.Equal(1.5f, vm.ToSettings().RopePhysicsSpeed);
+
+            vm.RopePhysicsSpeed = 2.25m;
+            Assert.Equal("2.25", vm.RopePhysicsSpeedText);
+        }
+
         /// <summary>A hidden custom field being null does not block confirm (only visible required fields count).</summary>
         [Fact]
         public void CanConfirmIgnoresHiddenCustomFields()
