@@ -110,6 +110,7 @@ namespace CtrDxEditor.Views
             // globally at the TopLevel (see MainView.Shortcuts.cs). Menu hint text is bound in XAML via
             // ShortcutHint.
             WireLocalShortcuts();
+            WireLayoutMode();
         }
 
         private void WireObjectMutated()
