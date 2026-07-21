@@ -178,6 +178,49 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// The compact tab bar is gated on an open document, and closes the drawer when it hides.
+        /// </summary>
+        /// <remarks>
+        /// Both panels are empty with no document, so leaving the tabs up offers two buttons that open a
+        /// blank sheet over the start screen.
+        /// </remarks>
+        [Fact]
+        public void CompactTabsRequireAnOpenDocument()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("bool show = _layoutMode == LayoutMode.Compact", layout, StringComparison.Ordinal);
+            Assert.Contains("EditorViewModel { HasDocument: true }", layout, StringComparison.Ordinal);
+            Assert.Contains("tabs.IsVisible = show;", layout, StringComparison.Ordinal);
+            // Closing a document must take the open sheet down with the tabs that raised it.
+            int gate = layout.IndexOf("tabs.IsVisible = show;", StringComparison.Ordinal);
+            Assert.Contains(
+                "sheet.IsVisible = false;",
+                layout.AsSpan(gate),
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>Opening or closing a document re-evaluates the tab bar without a layout-mode change.</summary>
+        [Fact]
+        public void DocumentChangesRefreshCompactTabs()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+
+            Assert.Contains("nameof(EditorViewModel.HasDocument)", view, StringComparison.Ordinal);
+            Assert.Contains("UpdateCompactTabsVisibility();", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>The compact palette tab reuses the existing "Objects" panel label.</summary>
+        [Fact]
+        public void CompactTabsUseTheObjectsLabel()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains("{loc:Tr Panel.Objects}", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("Panel.Palette", view, StringComparison.Ordinal);
+        }
+
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
         [Fact]
         public void ExpandedModeRestoresTheColumns()

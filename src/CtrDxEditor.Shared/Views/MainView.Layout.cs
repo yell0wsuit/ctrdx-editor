@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 
 using CtrDxEditor.Core.Editing;
+using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Views
 {
@@ -83,7 +84,7 @@ namespace CtrDxEditor.Views
 
             bool compact = mode == LayoutMode.Compact;
             rail.IsVisible = compact;
-            tabs.IsVisible = compact;
+            UpdateCompactTabsVisibility();
 
             if (compact)
             {
@@ -107,6 +108,34 @@ namespace CtrDxEditor.Views
                 sheet.Margin = new Thickness(0);
                 rail.Padding = new Thickness(0);
                 tabs.Padding = new Thickness(0);
+            }
+        }
+
+        /// <summary>
+        /// Shows the compact tab bar only while a document is open, and closes the drawer with it.
+        /// </summary>
+        /// <remarks>
+        /// Both panels are empty without a document, so the tabs would open a blank sheet over the start
+        /// screen. Set in code rather than bound in XAML because the layout mode is also code-driven, and a
+        /// local <c>IsVisible</c> value would permanently outrank a binding on the same property.
+        /// </remarks>
+        private void UpdateCompactTabsVisibility()
+        {
+            if (this.FindControl<Border>("CompactTabs") is not { } tabs
+                || this.FindControl<Border>("CompactSheet") is not { } sheet
+                || this.FindControl<Panel>("DrawerHost") is not { } drawerHost)
+            {
+                return;
+            }
+
+            bool show = _layoutMode == LayoutMode.Compact
+                && DataContext is EditorViewModel { HasDocument: true };
+            tabs.IsVisible = show;
+
+            if (!show)
+            {
+                sheet.IsVisible = false;
+                drawerHost.Children.Clear();
             }
         }
 

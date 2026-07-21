@@ -136,6 +136,8 @@ namespace CtrDxEditor.Views
             }
 
             SyncAnimationPreviewTimer();
+            // A swapped view model carries its own document state, which the compact tab bar is gated on.
+            UpdateCompactTabsVisibility();
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -148,6 +150,11 @@ namespace CtrDxEditor.Views
             if (e.PropertyName == nameof(EditorViewModel.SelectedTreeItem))
             {
                 Dispatcher.UIThread.Post(BringSelectedTreeItemIntoView, DispatcherPriority.Loaded);
+            }
+
+            if (e.PropertyName == nameof(EditorViewModel.HasDocument))
+            {
+                UpdateCompactTabsVisibility();
             }
 
             if (e.PropertyName == nameof(EditorViewModel.EffectivelyLockedObjects))
