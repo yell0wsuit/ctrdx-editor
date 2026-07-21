@@ -39,6 +39,9 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private const double CullMargin = 256;
 
+        /// <summary>Cross-frame memo for the background layout; see <see cref="BackgroundLayoutCache"/>.</summary>
+        private readonly BackgroundLayoutCache _backgroundLayout = new();
+
         /// <summary>The pixel size and view transform for a clean full-level screenshot.</summary>
         /// <param name="Size">Output bitmap size in pixels (level units x MapScale).</param>
         /// <param name="View">Transform placing the frame's top-left at pixel (0, 0).</param>
@@ -687,10 +690,13 @@ namespace CtrDxEditor.Rendering
             {
                 Bitmap? p2 = sprites.GetBackgroundP2(ActiveBackground);
                 double p2Aspect = p2 is { Size: { Width: > 0 } p2s } ? p2s.Height / p2s.Width : 0.0;
-                BackgroundLayout layout = BackgroundPlacement.Compute(
-                    doc.Width, doc.Height, bgSize.Height / bgSize.Width,
-                    p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
-                    SpriteCache.GetEarthBgPosition(ActiveBackground));
+                double p1Aspect = bgSize.Height / bgSize.Width;
+                BackgroundLayout layout = _backgroundLayout.Get(
+                    doc.Width, doc.Height, ActiveBackground, p1Aspect, p2Aspect,
+                    () => BackgroundPlacement.Compute(
+                        doc.Width, doc.Height, p1Aspect,
+                        p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
+                        SpriteCache.GetEarthBgPosition(ActiveBackground)));
 
                 using (context.PushClip(levelClip))
                 {
