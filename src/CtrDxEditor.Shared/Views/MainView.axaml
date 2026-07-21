@@ -12,6 +12,15 @@
         x:Class="CtrDxEditor.Views.MainView"
         x:DataType="vm:EditorViewModel"
         TopLevel.AutoSafeAreaPadding="False">
+  <UserControl.Styles>
+    <!-- This shell opens the drawer from its own compact tabs; DrawerPage's pane bars are never used. -->
+    <Style Selector="DrawerPage#Shell /template/ Border#PART_TopBar">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="DrawerPage#Shell /template/ Border#PART_BottomBar">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+  </UserControl.Styles>
   <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
     <Grid>
       <DockPanel>

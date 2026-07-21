@@ -53,6 +53,22 @@ namespace CtrDxEditor.Tests
             Assert.Contains("x:Name=\"CompactRail\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>The shell uses custom chrome, so DrawerPage's built-in pane bars never leak into desktop.</summary>
+        [Fact]
+        public void DrawerPageBuiltInChromeIsHidden()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+
+            Assert.Contains(
+                "DrawerPage#Shell /template/ Border#PART_TopBar",
+                view,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "DrawerPage#Shell /template/ Border#PART_BottomBar",
+                view,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>The compact undo/redo rail hugs its controls instead of covering the canvas in landscape.</summary>
         [Fact]
         public void CompactRailDoesNotStretchAcrossTheCanvas()
