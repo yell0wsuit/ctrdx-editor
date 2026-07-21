@@ -6,6 +6,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 
+using AvaloniaDialogs.Views;
+
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
 
@@ -47,9 +49,15 @@ namespace CtrDxEditor.Views
             TopLevel.GetTopLevel(this)?.RemoveHandler(KeyDownEvent, OnTopLevelKeyDown);
         }
 
+        // A dialog hosted in this same TopLevel is modal over the editor, so the chords stand down while one
+        // is up - same reasoning as DialogOwnsDrop, and the handler above deliberately sees keys the dialog
+        // has already handled, so nothing else would stop them.
+        private bool DialogOwnsKeyboard => this.FindControl<ReactiveDialogHost>("DialogHost")?.IsOpen == true;
+
         private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
         {
-            if (TryRunShortcut(EditorShortcuts.ResolveCommand(e.Key, e.KeyModifiers, CmdModifier, OperatingSystem.IsMacOS())))
+            if (TryRunShortcut(EditorShortcuts.ResolveCommand(
+                e.Key, e.KeyModifiers, CmdModifier, OperatingSystem.IsMacOS(), DialogOwnsKeyboard)))
             {
                 e.Handled = true;
             }

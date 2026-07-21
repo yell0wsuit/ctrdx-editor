@@ -73,9 +73,18 @@ namespace CtrDxEditor.Views
         /// does not carry <paramref name="commandModifier"/> (⌘ on macOS, Ctrl elsewhere), so Delete/Space and
         /// bare typing fall through. On non-macOS, Ctrl+Y is an additional redo binding.
         /// </summary>
-        public static EditorShortcut ResolveCommand(Key key, KeyModifiers modifiers, KeyModifiers commandModifier, bool isMacOS)
+        /// <param name="key">The key that was pressed.</param>
+        /// <param name="modifiers">The modifiers held with it.</param>
+        /// <param name="commandModifier">The platform's command modifier: Meta on macOS, Control elsewhere.</param>
+        /// <param name="isMacOS">Whether the host is macOS, which drops the Ctrl+Y redo binding.</param>
+        /// <param name="dialogOpen">
+        /// Whether a modal dialog is up. These chords are handled at the TopLevel in the tunnel phase, so
+        /// without this guard they fire straight past the dialog: Ctrl+W would close the level behind it,
+        /// and Ctrl+C/V/A would be swallowed before the dialog's own text fields ever saw them.
+        /// </param>
+        public static EditorShortcut ResolveCommand(Key key, KeyModifiers modifiers, KeyModifiers commandModifier, bool isMacOS, bool dialogOpen)
         {
-            if (!modifiers.HasFlag(commandModifier))
+            if (dialogOpen || !modifiers.HasFlag(commandModifier))
             {
                 return EditorShortcut.None;
             }

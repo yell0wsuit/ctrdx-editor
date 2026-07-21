@@ -31,32 +31,74 @@ namespace CtrDxEditor.Tests
         [InlineData(Key.NumPad0, KeyModifiers.Control, EditorShortcut.ZoomFit)]
         public void ResolveCommandMapsChords(Key key, KeyModifiers modifiers, EditorShortcut expected)
         {
-            Assert.Equal(expected, EditorShortcuts.ResolveCommand(key, modifiers, KeyModifiers.Control, isMacOS: false));
+            Assert.Equal(expected, EditorShortcuts.ResolveCommand(key, modifiers, KeyModifiers.Control, isMacOS: false, dialogOpen: false));
+        }
+
+        /// <summary>
+        /// An open modal dialog suppresses every command chord: the editor behind it is inert, so Ctrl+W
+        /// must not close the level out from under the dialog, and Ctrl+N/O/Z must not mutate it either.
+        /// </summary>
+        [Theory]
+        [InlineData(Key.W)]
+        [InlineData(Key.N)]
+        [InlineData(Key.O)]
+        [InlineData(Key.Z)]
+        [InlineData(Key.S)]
+        public void OpenDialogSuppressesCommandChords(Key key)
+        {
+            Assert.Equal(
+                EditorShortcut.None,
+                EditorShortcuts.ResolveCommand(key, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false, dialogOpen: true));
+        }
+
+        /// <summary>
+        /// Suppression also hands the chord back to the dialog, so Ctrl+C/V/A keep working in its text
+        /// fields instead of being swallowed by the global handler.
+        /// </summary>
+        [Theory]
+        [InlineData(Key.C)]
+        [InlineData(Key.V)]
+        [InlineData(Key.X)]
+        [InlineData(Key.A)]
+        public void OpenDialogLeavesTextEditingChordsToTheDialog(Key key)
+        {
+            Assert.Equal(
+                EditorShortcut.None,
+                EditorShortcuts.ResolveCommand(key, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false, dialogOpen: true));
+        }
+
+        /// <summary>With no dialog open the chords resolve as normal, so the guard is not always-on.</summary>
+        [Fact]
+        public void ClosedDialogLeavesCommandChordsIntact()
+        {
+            Assert.Equal(
+                EditorShortcut.Close,
+                EditorShortcuts.ResolveCommand(Key.W, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false, dialogOpen: false));
         }
 
         /// <summary>Keys without the command modifier (bare typing, Shift-only) are never command chords.</summary>
         [Fact]
         public void ResolveCommandRequiresCommandModifier()
         {
-            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.None, KeyModifiers.Control, false));
-            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.N, KeyModifiers.Shift, KeyModifiers.Control, false));
-            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.Delete, KeyModifiers.None, KeyModifiers.Control, false));
+            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.None, KeyModifiers.Control, false, dialogOpen: false));
+            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.N, KeyModifiers.Shift, KeyModifiers.Control, false, dialogOpen: false));
+            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.Delete, KeyModifiers.None, KeyModifiers.Control, false, dialogOpen: false));
         }
 
         /// <summary>The command modifier is platform-supplied: on macOS it is Meta, so Ctrl there is not a command.</summary>
         [Fact]
         public void ResolveCommandHonorsPlatformModifier()
         {
-            Assert.Equal(EditorShortcut.Save, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true));
-            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.Control, KeyModifiers.Meta, isMacOS: true));
+            Assert.Equal(EditorShortcut.Save, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
+            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.S, KeyModifiers.Control, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
         }
 
         /// <summary>Ctrl+Y is an extra redo binding on Windows/Linux only; macOS uses Cmd+Shift+Z.</summary>
         [Fact]
         public void CtrlYRedoIsNonMacOnly()
         {
-            Assert.Equal(EditorShortcut.Redo, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false));
-            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true));
+            Assert.Equal(EditorShortcut.Redo, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false, dialogOpen: false));
+            Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
         }
 
         /// <summary>Delete and unmodified Space resolve to their editor actions.</summary>
