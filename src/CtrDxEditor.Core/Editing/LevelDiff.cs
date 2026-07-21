@@ -174,21 +174,15 @@ namespace CtrDxEditor.Core.Editing
         // deleted, an imaginary old side means it was inserted. Both real and differing is a modification.
         private static DiffRowKind Classify(ChangeType oldType, ChangeType newType)
         {
-            if (oldType == ChangeType.Imaginary)
+            return (oldType, newType) switch
             {
-                return DiffRowKind.Inserted;
-            }
-            if (newType == ChangeType.Imaginary)
-            {
-                return DiffRowKind.Deleted;
-            }
-            if (oldType == ChangeType.Modified || newType == ChangeType.Modified)
-            {
-                return DiffRowKind.Modified;
-            }
-            return oldType == ChangeType.Inserted ? DiffRowKind.Inserted
-                : oldType == ChangeType.Deleted ? DiffRowKind.Deleted
-                : DiffRowKind.Unchanged;
+                (ChangeType.Imaginary, _) => DiffRowKind.Inserted,
+                (_, ChangeType.Imaginary) => DiffRowKind.Deleted,
+                (ChangeType.Modified, _) or (_, ChangeType.Modified) => DiffRowKind.Modified,
+                (ChangeType.Inserted, _) => DiffRowKind.Inserted,
+                (ChangeType.Deleted, _) => DiffRowKind.Deleted,
+                _ => DiffRowKind.Unchanged,
+            };
         }
     }
 }
