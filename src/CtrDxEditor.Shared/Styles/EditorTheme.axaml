@@ -296,12 +296,10 @@
       <!-- Review Changes diff rows: tinted row backgrounds, readable against the light card surface. -->
       <Color x:Key="EditorColor.DiffAdded">#DCFCE7</Color>  <!-- green-100 -->
       <Color x:Key="EditorColor.DiffRemoved">#FFE2E2</Color>  <!-- red-100 -->
-      <Color x:Key="EditorColor.DiffModified">#FEF3C6</Color>  <!-- amber-100 -->
       <!-- Intra-line highlight: two steps up the same ramp, so the edited characters read as a
            darker block on the row tint while keeping dark body text legible on top. -->
       <Color x:Key="EditorColor.DiffAddedStrong">#7BF1A8</Color>  <!-- green-300 -->
       <Color x:Key="EditorColor.DiffRemovedStrong">#FFA2A2</Color>  <!-- red-300 -->
-      <Color x:Key="EditorColor.DiffModifiedStrong">#FFD230</Color>  <!-- amber-300 -->
       <Color x:Key="EditorColor.DiffGutter">#62748E</Color>  <!-- slate-500 -->
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
@@ -348,14 +346,10 @@
       <!-- Review Changes diff rows: deep tints, readable against the dark card surface. -->
       <Color x:Key="EditorColor.DiffAdded">#032E15</Color>  <!-- green-950 -->
       <Color x:Key="EditorColor.DiffRemoved">#460809</Color>  <!-- red-950 -->
-      <!-- Modified sits at the 950 step like its neighbours so all three row tints share one depth;
-           the 700 step above is reserved for the intra-line highlight. -->
-      <Color x:Key="EditorColor.DiffModified">#432004</Color>  <!-- yellow-950 -->
       <!-- Intra-line highlight: brightened up the same ramp so the edited characters lift off the deep
            row tint, while staying dark enough for light body text to stay legible on top. -->
       <Color x:Key="EditorColor.DiffAddedStrong">#008236</Color>  <!-- green-700 -->
       <Color x:Key="EditorColor.DiffRemovedStrong">#C10007</Color>  <!-- red-700 -->
-      <Color x:Key="EditorColor.DiffModifiedStrong">#A65F00</Color>  <!-- yellow-700 -->
       <Color x:Key="EditorColor.DiffGutter">#90A1B9</Color>  <!-- slate-400 -->
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
@@ -402,10 +396,8 @@
   <SolidColorBrush x:Key="EditorBrush.TutorialPaletteOverlay" Color="{DynamicResource EditorColor.TutorialPaletteOverlay}" />
   <SolidColorBrush x:Key="EditorBrush.Diff.Added" Color="{DynamicResource EditorColor.DiffAdded}" />
   <SolidColorBrush x:Key="EditorBrush.Diff.Removed" Color="{DynamicResource EditorColor.DiffRemoved}" />
-  <SolidColorBrush x:Key="EditorBrush.Diff.Modified" Color="{DynamicResource EditorColor.DiffModified}" />
   <SolidColorBrush x:Key="EditorBrush.Diff.AddedStrong" Color="{DynamicResource EditorColor.DiffAddedStrong}" />
   <SolidColorBrush x:Key="EditorBrush.Diff.RemovedStrong" Color="{DynamicResource EditorColor.DiffRemovedStrong}" />
-  <SolidColorBrush x:Key="EditorBrush.Diff.ModifiedStrong" Color="{DynamicResource EditorColor.DiffModifiedStrong}" />
   <SolidColorBrush x:Key="EditorBrush.Diff.Gutter" Color="{DynamicResource EditorColor.DiffGutter}" />
 
   <!--

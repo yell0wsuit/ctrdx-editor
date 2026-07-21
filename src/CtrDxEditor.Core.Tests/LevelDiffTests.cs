@@ -160,6 +160,55 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(unified, row => row.Marker == " ");
         }
 
+        /// <summary>
+        /// A modified row is a deletion on the left and an insertion on the right, so each pane carries its
+        /// own side's colour rather than the row sharing one.
+        /// </summary>
+        [Fact]
+        public void ModifiedRowMarksBothSidesChanged()
+        {
+            string modified = "<map>\n  <a x=\"1\"/>\n  <b y=\"9\"/>\n</map>";
+
+            DiffRow row = Assert.Single(LevelDiff.Build(Base, modified).Rows, r => r.IsModified);
+
+            Assert.True(row.OldSideChanged);
+            Assert.True(row.NewSideChanged);
+        }
+
+        /// <summary>An insertion has no baseline side, so only the live pane is tinted.</summary>
+        [Fact]
+        public void InsertedRowMarksOnlyTheNewSideChanged()
+        {
+            string modified = "<map>\n  <a x=\"1\"/>\n  <c z=\"3\"/>\n  <b y=\"2\"/>\n</map>";
+
+            DiffRow row = Assert.Single(LevelDiff.Build(Base, modified).Rows, r => r.IsAdded);
+
+            Assert.False(row.OldSideChanged);
+            Assert.True(row.NewSideChanged);
+        }
+
+        /// <summary>A deletion has no live side, so only the baseline pane is tinted.</summary>
+        [Fact]
+        public void DeletedRowMarksOnlyTheOldSideChanged()
+        {
+            string modified = "<map>\n  <a x=\"1\"/>\n</map>";
+
+            DiffRow row = Assert.Single(LevelDiff.Build(Base, modified).Rows, r => r.IsRemoved);
+
+            Assert.True(row.OldSideChanged);
+            Assert.False(row.NewSideChanged);
+        }
+
+        /// <summary>An unchanged row tints neither pane.</summary>
+        [Fact]
+        public void UnchangedRowMarksNeitherSideChanged()
+        {
+            DiffRow row = LevelDiff.Build(Base, Base).Rows[0];
+
+            Assert.False(row.OldSideChanged);
+            Assert.False(row.NewSideChanged);
+        }
+
         /// <summary>An unchanged line is one run covering the whole text, so it renders with no highlight.</summary>
         [Fact]
         public void UnchangedRowIsASingleUnchangedRun()

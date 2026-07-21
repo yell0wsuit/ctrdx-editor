@@ -50,11 +50,21 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Whether this line exists only in the baseline; drives the removed row style.</summary>
         public bool IsRemoved => Kind == DiffRowKind.Deleted;
 
-        /// <summary>Whether this line differs between the two sides; drives the modified row style.</summary>
+        /// <summary>Whether this line differs between the two sides.</summary>
         public bool IsModified => Kind == DiffRowKind.Modified;
 
         /// <summary>Whether this line is identical on both sides; such rows render without a highlight.</summary>
         public bool IsUnchanged => Kind == DiffRowKind.Unchanged;
+
+        /// <summary>
+        /// Whether the baseline pane shows a change, and so takes the removed tint. A modification counts
+        /// on both sides: split view reads it as a deletion on the left paired with an insertion on the
+        /// right, which is why the two panes are coloured independently rather than as one row.
+        /// </summary>
+        public bool OldSideChanged => Kind is DiffRowKind.Deleted or DiffRowKind.Modified;
+
+        /// <summary>Whether the live pane shows a change, and so takes the added tint.</summary>
+        public bool NewSideChanged => Kind is DiffRowKind.Inserted or DiffRowKind.Modified;
     }
 
     /// <summary>

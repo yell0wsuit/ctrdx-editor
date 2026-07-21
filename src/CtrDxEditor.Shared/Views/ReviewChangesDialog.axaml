@@ -24,14 +24,20 @@
     <Style Selector="ListBox.diff > ListBoxItem:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="Transparent" />
     </Style>
+    <!-- Unified rows are single-sided by construction, so the whole row takes one tint. -->
     <Style Selector="Border.row.added">
       <Setter Property="Background" Value="{DynamicResource EditorBrush.Diff.Added}" />
     </Style>
     <Style Selector="Border.row.removed">
       <Setter Property="Background" Value="{DynamicResource EditorBrush.Diff.Removed}" />
     </Style>
-    <Style Selector="Border.row.modified">
-      <Setter Property="Background" Value="{DynamicResource EditorBrush.Diff.Modified}" />
+    <!-- Split panes are tinted independently: a modified line is a deletion on the left beside an
+         insertion on the right, so red and green carry every change and no third colour is needed. -->
+    <Style Selector="Border.side.removed">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Diff.Removed}" />
+    </Style>
+    <Style Selector="Border.side.added">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Diff.Added}" />
     </Style>
     <Style Selector="TextBlock.gutter">
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Diff.Gutter}" />
@@ -51,14 +57,11 @@
     <!-- Intra-line highlight, matched to the row tint: the characters that actually changed are
          painted a step darker than the row they sit on. Unchanged rows leave the brush unset, so
          their runs render flat. -->
-    <Style Selector="Border.row.added TextBlock.code">
+    <Style Selector="Border.row.added TextBlock.code, Border.side.added TextBlock.code">
       <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.AddedStrong}" />
     </Style>
-    <Style Selector="Border.row.removed TextBlock.code">
+    <Style Selector="Border.row.removed TextBlock.code, Border.side.removed TextBlock.code">
       <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.RemovedStrong}" />
-    </Style>
-    <Style Selector="Border.row.modified TextBlock.code">
-      <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.ModifiedStrong}" />
     </Style>
   </UserControl.Styles>
 
@@ -100,17 +103,20 @@
                ScrollViewer.VerticalScrollBarVisibility="Auto">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="core:DiffRow">
-            <Border Classes="row"
-                    Classes.added="{Binding IsAdded}"
-                    Classes.removed="{Binding IsRemoved}"
-                    Classes.modified="{Binding IsModified}">
-              <Grid ColumnDefinitions="44,*,44,*">
-                <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding OldLine}" />
-                <TextBlock Grid.Column="1" Classes="code" controls:DiffTextBlock.Runs="{Binding OldRuns}" />
-                <TextBlock Grid.Column="2" Classes="gutter" Text="{Binding NewLine}" />
-                <TextBlock Grid.Column="3" Classes="code" controls:DiffTextBlock.Runs="{Binding NewRuns}" />
-              </Grid>
-            </Border>
+            <Grid ColumnDefinitions="*,*">
+              <Border Grid.Column="0" Classes="side" Classes.removed="{Binding OldSideChanged}">
+                <Grid ColumnDefinitions="44,*">
+                  <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding OldLine}" />
+                  <TextBlock Grid.Column="1" Classes="code" controls:DiffTextBlock.Runs="{Binding OldRuns}" />
+                </Grid>
+              </Border>
+              <Border Grid.Column="1" Classes="side" Classes.added="{Binding NewSideChanged}">
+                <Grid ColumnDefinitions="44,*">
+                  <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding NewLine}" />
+                  <TextBlock Grid.Column="1" Classes="code" controls:DiffTextBlock.Runs="{Binding NewRuns}" />
+                </Grid>
+              </Border>
+            </Grid>
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
@@ -133,8 +139,7 @@
           <DataTemplate x:DataType="core:UnifiedDiffRow">
             <Border Classes="row"
                     Classes.added="{Binding IsAdded}"
-                    Classes.removed="{Binding IsRemoved}"
-                    Classes.modified="{Binding IsModified}">
+                    Classes.removed="{Binding IsRemoved}">
               <Grid ColumnDefinitions="44,44,16,*">
                 <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding OldLine}" />
                 <TextBlock Grid.Column="1" Classes="gutter" Text="{Binding NewLine}" />
