@@ -224,6 +224,38 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("Panel.Palette", view, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// The rail carries the four actions a touch session cannot otherwise reach quickly, each gated on
+        /// the same capability its menu item uses.
+        /// </summary>
+        /// <remarks>
+        /// Delete is on the rail because a touch session has no keyboard Delete key, and Zoom to Fit because
+        /// it is the only way back from a pinch that threw the level off-screen. The rail floats over the
+        /// canvas, so this list is deliberately short — anything further belongs in the menu bar.
+        /// </remarks>
+        [Fact]
+        public void CompactRailCarriesTheTouchCriticalActions()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf("</Border>", railStart, StringComparison.Ordinal);
+            Assert.True(railStart >= 0 && railEnd > railStart);
+            string rail = view[railStart..railEnd];
+
+            Assert.Contains("Click=\"Undo_Click\"", rail, StringComparison.Ordinal);
+            Assert.Contains("Click=\"Redo_Click\"", rail, StringComparison.Ordinal);
+            Assert.Contains("Click=\"Delete_Click\"", rail, StringComparison.Ordinal);
+            Assert.Contains("Click=\"ZoomFit_Click\"", rail, StringComparison.Ordinal);
+
+            // Each action is gated on the capability its menu item uses, so the rail cannot invoke a command
+            // the menu considers unavailable.
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", rail, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
+
+            // Four buttons: the rail overlays the canvas and portrait has no room for a fifth.
+            Assert.Equal(4, CountOccurrences(rail, "<Button "));
+        }
+
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
         [Fact]
         public void ExpandedModeRestoresTheColumns()

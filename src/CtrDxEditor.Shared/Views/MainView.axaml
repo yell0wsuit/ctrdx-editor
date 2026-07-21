@@ -663,12 +663,24 @@
       <Border x:Name="CompactRail" IsVisible="False"
               HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
+        <!-- Kept to four buttons: the rail floats over the canvas, and portrait has no room to spare.
+             Delete earns its place because a touch session has no keyboard Delete key, and Zoom to Fit
+             is how a pinch that threw the level off-screen is recovered. Everything else stays in the
+             menu bar, which is still reachable in compact mode. -->
         <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
           <Button Click="Undo_Click" IsEnabled="{Binding CanUndo}" ToolTip.Tip="{loc:Tr Menu.Edit.Undo}">
             <icons:MaterialIcon Kind="Undo" Width="22" Height="22" />
           </Button>
           <Button Click="Redo_Click" IsEnabled="{Binding CanRedo}" ToolTip.Tip="{loc:Tr Menu.Edit.Redo}">
             <icons:MaterialIcon Kind="Redo" Width="22" Height="22" />
+          </Button>
+          <Button Click="Delete_Click" IsEnabled="{Binding CanDeleteSelection}"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.Delete}">
+            <icons:MaterialIcon Kind="DeleteOutline" Width="22" Height="22" />
+          </Button>
+          <Button Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}"
+                  ToolTip.Tip="{loc:Tr Menu.View.ZoomFit}">
+            <icons:MaterialIcon Kind="FitToScreen" Width="22" Height="22" />
           </Button>
         </StackPanel>
       </Border>
