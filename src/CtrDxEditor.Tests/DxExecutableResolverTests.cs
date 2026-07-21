@@ -43,18 +43,56 @@ namespace CtrDxEditor.Tests
             return bundle;
         }
 
+        // Writes <root>/<name> and marks it executable, the way a real binary or a chmod'd AppImage
+        // arrives. Resolution refuses a file without the bit, so the bit is part of the fixture.
+        private string MakeRunnableFile(string name)
+        {
+            string path = Path.Combine(_root, name);
+            File.WriteAllText(path, "#!/bin/sh\n");
+            if (!OperatingSystem.IsWindows())
+            {
+                File.SetUnixFileMode(
+                    path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            }
+            return path;
+        }
+
         /// <summary>Verifies a plain (non-bundle) executable path is used unchanged.</summary>
         [Fact]
         public void NonBundlePathPassesThroughUnchanged()
         {
-            string exe = Path.Combine(_root, "CutTheRopeDX");
-            File.WriteAllText(exe, "#!/bin/sh\n");
+            string exe = MakeRunnableFile("CutTheRopeDX");
 
             bool ok = DxExecutableResolver.TryResolve(exe, out string resolved, out string? error);
 
             Assert.True(ok);
             Assert.Equal(exe, resolved);
             Assert.Null(error);
+        }
+
+        /// <summary>
+        /// Verifies a file without the execute bit is refused with a fixable message. An AppImage
+        /// downloaded from a release page arrives non-executable, and letting it through would surface
+        /// the OS's bare "Permission denied" instead of naming the one command that fixes it.
+        /// </summary>
+        [Fact]
+        public void NonExecutableFileReportsError()
+        {
+            // Windows has no execute bit; the check does not apply and the file resolves as-is.
+            if (OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+            string appImage = Path.Combine(_root, "CutTheRope-DX-x86_64.AppImage");
+            File.WriteAllText(appImage, "#!/bin/sh\n");
+            File.SetUnixFileMode(appImage, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+            bool ok = DxExecutableResolver.TryResolve(appImage, out string resolved, out string? error);
+
+            Assert.False(ok);
+            Assert.Equal("", resolved);
+            Assert.Contains("chmod +x", error);
         }
 
         /// <summary>Verifies a bundle resolves through CFBundleExecutable, not through its name.</summary>

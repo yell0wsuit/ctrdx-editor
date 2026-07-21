@@ -68,6 +68,16 @@
     "Notification.Playtest.Failed": "Could not play this level",
     "Notification.Playtest.LocationSet": "The location of Cut the Rope: DX has been set",
 
+    "Playtest.Resolve.NothingSelected": "No Cut the Rope: DX executable has been selected.",
+    "Playtest.Resolve.MissingFile": "The selected executable no longer exists:\n{0}",
+    "Playtest.Resolve.NotExecutable": "This file is not marked executable:\n{0}\n\nMake it runnable with:\nchmod +x \"{0}\"",
+    "Playtest.Resolve.BundleNoMacOsDir": "The selected app bundle has no Contents/MacOS directory:\n{0}",
+    "Playtest.Resolve.BundleEmpty": "The selected app bundle contains no executable:\n{0}",
+    "Playtest.Resolve.BundleAmbiguous": "Could not determine which executable to run in:\n{0}",
+    "Playtest.Resolve.FolderUnreadable": "The selected folder could not be read:\n{0}",
+    "Playtest.Resolve.FolderNoBundle": "No application was found in:\n{0}\n\nDrag CutTheRope-DX.app itself instead.",
+    "Playtest.Resolve.FolderManyBundles": "That folder contains several applications:\n{0}\n\nDrag CutTheRope-DX.app itself instead.",
+
     "Dialog.Common.Cancel": "Cancel",
     "Dialog.Common.Ok": "OK",
     "Dialog.Common.Error": "Error",

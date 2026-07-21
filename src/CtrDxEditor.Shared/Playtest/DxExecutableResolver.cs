@@ -4,6 +4,8 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
+using CtrDxEditor.Localization;
+
 namespace CtrDxEditor.Playtest
 {
     /// <summary>Resolves a user-picked path to a runnable Cut the Rope: DX binary.</summary>
@@ -25,7 +27,7 @@ namespace CtrDxEditor.Playtest
 
             if (string.IsNullOrWhiteSpace(pickedPath))
             {
-                error = "No Cut the Rope: DX executable has been selected.";
+                error = Localizer.Get("Playtest.Resolve.NothingSelected");
                 return false;
             }
 
@@ -33,9 +35,17 @@ namespace CtrDxEditor.Playtest
 
             if (!pickedPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
             {
-                // A plain file is runnable as-is: the dev-mode binary, a Windows .exe, a Linux binary.
+                // A plain file is runnable as-is: the dev-mode binary, a Windows .exe, a Linux binary
+                // or AppImage. Only the execute bit stands between it and a launch.
                 if (File.Exists(pickedPath))
                 {
+                    if (!IsExecutable(pickedPath))
+                    {
+                        executablePath = "";
+                        error = Message("Playtest.Resolve.NotExecutable", pickedPath);
+                        return false;
+                    }
+
                     executablePath = pickedPath;
                     error = null;
                     return true;
@@ -49,14 +59,14 @@ namespace CtrDxEditor.Playtest
                     return TryResolveFromContainer(pickedPath, out executablePath, out error);
                 }
 
-                error = $"The selected executable no longer exists:\n{pickedPath}";
+                error = Message("Playtest.Resolve.MissingFile", pickedPath);
                 return false;
             }
 
             string macOsDir = Path.Combine(pickedPath, "Contents", "MacOS");
             if (!Directory.Exists(macOsDir))
             {
-                error = $"The selected app bundle has no Contents/MacOS directory:\n{pickedPath}";
+                error = Message("Playtest.Resolve.BundleNoMacOsDir", pickedPath);
                 return false;
             }
 
@@ -89,9 +99,9 @@ namespace CtrDxEditor.Playtest
                 return true;
             }
 
-            error = binaries.Length == 0
-                ? $"The selected app bundle contains no executable:\n{pickedPath}"
-                : $"Could not determine which executable to run in:\n{pickedPath}";
+            error = Message(
+                binaries.Length == 0 ? "Playtest.Resolve.BundleEmpty" : "Playtest.Resolve.BundleAmbiguous",
+                pickedPath);
             return false;
         }
 
@@ -130,6 +140,39 @@ namespace CtrDxEditor.Playtest
             }
         }
 
+        // Localized message with the offending path substituted in. Replace rather than string.Format:
+        // a path is arbitrary user text that may contain braces, which a format call would choke on,
+        // and several of these strings use {0} more than once.
+        private static string Message(string key, string path)
+        {
+            return Localizer.Get(key).Replace("{0}", path, StringComparison.Ordinal);
+        }
+
+        // Whether a file carries an execute bit. An AppImage downloaded from a release page has none
+        // until the user chmods it, and Process.Start would surface that as a bare "Permission denied"
+        // with no hint of the fix. Only the plain-file route is checked: a binary inside a .app got its
+        // bits from the packaging, and any bundle that lost them has bigger problems than this message.
+        // Windows has no execute bit, so every file passes there.
+        private static bool IsExecutable(string path)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return true;
+            }
+
+            try
+            {
+                UnixFileMode mode = File.GetUnixFileMode(path);
+                return (mode & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) != 0;
+            }
+            // An unreadable mode is not evidence of a missing bit, so the launch is allowed to proceed
+            // and fail with the OS's own error rather than being blocked by a guess.
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
+            {
+                return true;
+            }
+        }
+
         // A directory dragged from Finder arrives with a trailing separator, which would defeat the .app
         // suffix tests and send a bundle down the plain-folder path. Trimmed once, up front, so every
         // check afterwards sees the same shape of path. A path that is nothing but separators is left
@@ -154,7 +197,7 @@ namespace CtrDxEditor.Playtest
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                error = $"The selected folder could not be read:\n{directory}";
+                error = Message("Playtest.Resolve.FolderUnreadable", directory);
                 return false;
             }
 
@@ -163,9 +206,9 @@ namespace CtrDxEditor.Playtest
                 return TryResolve(bundles[0], out executablePath, out error);
             }
 
-            error = bundles.Length == 0
-                ? $"No application was found in:\n{directory}\n\nDrag CutTheRope-DX.app itself instead."
-                : $"That folder contains several applications:\n{directory}\n\nDrag CutTheRope-DX.app itself instead.";
+            error = Message(
+                bundles.Length == 0 ? "Playtest.Resolve.FolderNoBundle" : "Playtest.Resolve.FolderManyBundles",
+                directory);
             return false;
         }
 
