@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Text;
 
+using DiffPlex;
+using DiffPlex.Chunkers;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 
@@ -22,6 +25,13 @@ namespace CtrDxEditor.Core.Editing
     }
 
     /// <summary>
+    /// A stretch of one line that is either wholly edited or wholly shared with the other side. Rendering
+    /// these in sequence gives the intra-line highlight: the changed characters sit on a stronger tint
+    /// than the rest of the row.
+    /// </summary>
+    public sealed record DiffRun(string Text, bool IsChanged);
+
+    /// <summary>
     /// One row of the diff, pairing the baseline and live sides. The side that does not exist for this
     /// row (the deleted side of an insertion, and vice versa) has a null line number and null text.
     /// </summary>
@@ -30,7 +40,9 @@ namespace CtrDxEditor.Core.Editing
         string? OldText,
         int? NewLine,
         string? NewText,
-        DiffRowKind Kind)
+        DiffRowKind Kind,
+        IReadOnlyList<DiffRun> OldRuns,
+        IReadOnlyList<DiffRun> NewRuns)
     {
         /// <summary>Whether this line exists only in the live document; drives the added row style.</summary>
         public bool IsAdded => Kind == DiffRowKind.Inserted;
@@ -53,7 +65,8 @@ namespace CtrDxEditor.Core.Editing
         int? OldLine,
         int? NewLine,
         string Text,
-        DiffRowKind Kind)
+        DiffRowKind Kind,
+        IReadOnlyList<DiffRun> Runs)
     {
         /// <summary>Gutter marker, so the row's kind is readable without relying on its color.</summary>
         public string Marker => Kind switch
@@ -95,6 +108,14 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public static class LevelDiff
     {
+        // Level XML is dense with numeric attributes, where an edit is usually a digit or two inside an
+        // otherwise identical line. Chunking sub-pieces by character rather than by word narrows the
+        // highlight to exactly those digits; adjacent ones are coalesced back into one run below.
+        private static readonly SideBySideDiffBuilder Builder =
+            new(Differ.Instance, new LineChunker(), new CharacterChunker());
+
+        private static readonly IReadOnlyList<DiffRun> NoRuns = [];
+
         /// <summary>
         /// Builds the line-by-line comparison of <paramref name="oldXml"/> against <paramref name="newXml"/>.
         /// DiffPlex pads both panes to equal length with imaginary pieces, so the two sides are zipped by
@@ -102,7 +123,7 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         public static LevelDiffResult Build(string oldXml, string newXml)
         {
-            SideBySideDiffModel model = SideBySideDiffBuilder.Diff(oldXml, newXml);
+            SideBySideDiffModel model = Builder.BuildDiffModel(oldXml, newXml);
             List<DiffRow> rows = [with(model.OldText.Lines.Count)];
             int added = 0;
             int removed = 0;
@@ -138,7 +159,9 @@ namespace CtrDxEditor.Core.Editing
                     oldPiece.Type == ChangeType.Imaginary ? null : oldPiece.Text,
                     newPiece.Type == ChangeType.Imaginary ? null : newPiece.Position,
                     newPiece.Type == ChangeType.Imaginary ? null : newPiece.Text,
-                    kind));
+                    kind,
+                    BuildRuns(oldPiece),
+                    BuildRuns(newPiece)));
             }
 
             return new LevelDiffResult(rows, added, removed, modified);
@@ -157,23 +180,73 @@ namespace CtrDxEditor.Core.Editing
                 switch (row.Kind)
                 {
                     case DiffRowKind.Modified:
-                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted));
-                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted));
+                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted, row.OldRuns));
+                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted, row.NewRuns));
                         break;
                     case DiffRowKind.Deleted:
-                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted));
+                        unified.Add(new UnifiedDiffRow(row.OldLine, null, row.OldText ?? string.Empty, DiffRowKind.Deleted, row.OldRuns));
                         break;
                     case DiffRowKind.Inserted:
-                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted));
+                        unified.Add(new UnifiedDiffRow(null, row.NewLine, row.NewText ?? string.Empty, DiffRowKind.Inserted, row.NewRuns));
                         break;
                     case DiffRowKind.Unchanged:
                     default:
-                        unified.Add(new UnifiedDiffRow(row.OldLine, row.NewLine, row.NewText ?? row.OldText ?? string.Empty, DiffRowKind.Unchanged));
+                        unified.Add(new UnifiedDiffRow(row.OldLine, row.NewLine, row.NewText ?? row.OldText ?? string.Empty, DiffRowKind.Unchanged, row.NewRuns.Count > 0 ? row.NewRuns : row.OldRuns));
                         break;
                 }
             }
 
             return unified;
+        }
+
+        /// <summary>
+        /// Projects one line's sub-piece diff into renderable runs. DiffPlex only fills SubPieces for a
+        /// line it matched against a counterpart, so a wholly inserted or deleted line falls back to one
+        /// changed run covering it, and an unchanged line to one unchanged run.
+        /// </summary>
+        private static IReadOnlyList<DiffRun> BuildRuns(DiffPiece piece)
+        {
+            if (piece.Type == ChangeType.Imaginary)
+            {
+                return NoRuns;
+            }
+
+            if (piece.SubPieces.Count == 0)
+            {
+                string text = piece.Text ?? string.Empty;
+                return text.Length == 0 ? NoRuns : [new DiffRun(text, piece.Type != ChangeType.Unchanged)];
+            }
+
+            // Character chunking emits one sub-piece per character, so runs of the same kind are merged
+            // into a single block - otherwise a three-digit edit would render as three separate highlights.
+            List<DiffRun> runs = [];
+            StringBuilder pending = new();
+            bool pendingChanged = false;
+
+            foreach (DiffPiece sub in piece.SubPieces)
+            {
+                if (sub.Type == ChangeType.Imaginary || sub.Text is null)
+                {
+                    continue;
+                }
+
+                bool changed = sub.Type != ChangeType.Unchanged;
+                if (pending.Length > 0 && changed != pendingChanged)
+                {
+                    runs.Add(new DiffRun(pending.ToString(), pendingChanged));
+                    _ = pending.Clear();
+                }
+
+                pendingChanged = changed;
+                _ = pending.Append(sub.Text);
+            }
+
+            if (pending.Length > 0)
+            {
+                runs.Add(new DiffRun(pending.ToString(), pendingChanged));
+            }
+
+            return runs;
         }
 
         // A row's kind comes from whichever side is real: an imaginary new side means the line was

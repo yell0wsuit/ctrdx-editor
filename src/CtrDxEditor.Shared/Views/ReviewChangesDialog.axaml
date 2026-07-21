@@ -3,6 +3,7 @@
              xmlns:loc="using:CtrDxEditor.Localization"
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:core="using:CtrDxEditor.Core.Editing"
+             xmlns:controls="using:CtrDxEditor.Controls"
              x:Class="CtrDxEditor.Views.ReviewChangesDialog"
              x:CompileBindings="True"
              x:DataType="vm:ReviewChangesViewModel">
@@ -46,6 +47,18 @@
       <Setter Property="LineHeight" Value="18" />
       <Setter Property="Margin" Value="4,0" />
       <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <!-- Intra-line highlight, matched to the row tint: the characters that actually changed are
+         painted a step darker than the row they sit on. Unchanged rows leave the brush unset, so
+         their runs render flat. -->
+    <Style Selector="Border.row.added TextBlock.code">
+      <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.AddedStrong}" />
+    </Style>
+    <Style Selector="Border.row.removed TextBlock.code">
+      <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.RemovedStrong}" />
+    </Style>
+    <Style Selector="Border.row.modified TextBlock.code">
+      <Setter Property="controls:DiffTextBlock.HighlightBrush" Value="{DynamicResource EditorBrush.Diff.ModifiedStrong}" />
     </Style>
   </UserControl.Styles>
 
@@ -93,9 +106,9 @@
                     Classes.modified="{Binding IsModified}">
               <Grid ColumnDefinitions="44,*,44,*">
                 <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding OldLine}" />
-                <TextBlock Grid.Column="1" Classes="code" Text="{Binding OldText}" />
+                <TextBlock Grid.Column="1" Classes="code" controls:DiffTextBlock.Runs="{Binding OldRuns}" />
                 <TextBlock Grid.Column="2" Classes="gutter" Text="{Binding NewLine}" />
-                <TextBlock Grid.Column="3" Classes="code" Text="{Binding NewText}" />
+                <TextBlock Grid.Column="3" Classes="code" controls:DiffTextBlock.Runs="{Binding NewRuns}" />
               </Grid>
             </Border>
           </DataTemplate>
@@ -126,7 +139,7 @@
                 <TextBlock Grid.Column="0" Classes="gutter" Text="{Binding OldLine}" />
                 <TextBlock Grid.Column="1" Classes="gutter" Text="{Binding NewLine}" />
                 <TextBlock Grid.Column="2" Classes="code" Text="{Binding Marker}" />
-                <TextBlock Grid.Column="3" Classes="code" Text="{Binding Text}" />
+                <TextBlock Grid.Column="3" Classes="code" controls:DiffTextBlock.Runs="{Binding Runs}" />
               </Grid>
             </Border>
           </DataTemplate>
