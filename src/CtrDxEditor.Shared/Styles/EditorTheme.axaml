@@ -1,9 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!--
-    Tailwind CSS v4 color tokens.
-    Raw hex values converted from Tailwind's canonical OKLCH definitions to sRGB.
-    Consume the semantic EditorBrush.* layer in views, not these raw tokens.
+  Tailwind CSS v4 color tokens.
+  Raw hex values converted from Tailwind's canonical OKLCH definitions to sRGB.
+  Consume the semantic EditorBrush.* layer in views, not these raw tokens.
   -->
   <Color x:Key="white">#FFFFFF</Color>
   <Color x:Key="black">#000000</Color>
@@ -314,7 +314,7 @@
       <Color x:Key="EditorColor.OverlayOrbitPath">#2563EB</Color>      <!-- blue-600 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
-           Light tints so the dark row text stays readable. -->
+      Light tints so the dark row text stays readable. -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#BEDBFF" />     <!-- blue-200, selected -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#8EC5FF" />  <!-- blue-300, selected+hover -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#51A2FF" />    <!-- blue-400, selected+pressed -->
@@ -343,7 +343,7 @@
       <!-- Review Changes diff rows: deep tints, readable against the dark card surface. -->
       <Color x:Key="EditorColor.DiffAdded">#032E15</Color>  <!-- green-950 -->
       <Color x:Key="EditorColor.DiffRemoved">#460809</Color>  <!-- red-950 -->
-      <Color x:Key="EditorColor.DiffModified">#461901</Color>  <!-- amber-950 -->
+      <Color x:Key="EditorColor.DiffModified">#894B00</Color>  <!-- yellow-800 -->
       <Color x:Key="EditorColor.DiffGutter">#90A1B9</Color>  <!-- slate-400 -->
 
       <!-- Editor canvas chrome: level-rect border + dashed grid lines over the backdrop. -->
@@ -361,7 +361,7 @@
       <Color x:Key="EditorColor.OverlayOrbitPath">#93C5FD</Color>      <!-- blue-300, 8.37 -->
 
       <!-- FluentTheme list-selection accent (ListBox/TreeView selected row) -> Tailwind blue.
-           Deep blues so the light row text stays readable. -->
+      Deep blues so the light row text stays readable. -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#193CB8" />     <!-- blue-800, selected -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#1447E6" />  <!-- blue-700, selected+hover -->
       <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#155DFC" />    <!-- blue-600, selected+pressed -->
@@ -394,9 +394,9 @@
   <SolidColorBrush x:Key="EditorBrush.Diff.Gutter" Color="{DynamicResource EditorColor.DiffGutter}" />
 
   <!--
-    Override FluentTheme's CheckBox disabled-foreground keys so disabled checkbox
-    text uses our themed disabled color. In Application.Resources these take
-    precedence over the FluentTheme defaults regardless of selector specificity.
+  Override FluentTheme's CheckBox disabled-foreground keys so disabled checkbox
+  text uses our themed disabled color. In Application.Resources these take
+  precedence over the FluentTheme defaults regardless of selector specificity.
   -->
   <SolidColorBrush x:Key="CheckBoxForegroundUncheckedDisabled" Color="{DynamicResource EditorColor.TextDisabled}" />
   <SolidColorBrush x:Key="CheckBoxForegroundCheckedDisabled" Color="{DynamicResource EditorColor.TextDisabled}" />
