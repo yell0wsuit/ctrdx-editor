@@ -1,9 +1,14 @@
 using System;
 using System.Globalization;
+using System.Reflection;
+
+using Avalonia;
 
 using BenchmarkDotNet.Running;
 
+using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Benchmarks
 {
@@ -43,6 +48,56 @@ namespace CtrDxEditor.Benchmarks
                     name,
                     document.AllObjects.Count,
                     length));
+            }
+
+            DescribeCulling();
+        }
+
+        // Prints how many objects survive the viewport cull at each zoom. A count that does not fall as zoom
+        // rises means the cull is not discarding anything, which is the failure the optimization is meant to
+        // prevent — visible here without reading a timing table.
+        private static void DescribeCulling()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Viewport cull — objects kept of 56 (1400x900 surface, pan 200,100):");
+
+            SpriteCache sprites = new(new SceneCullingBenchmarks.NoContentStore());
+            Type renderer = typeof(Rendering.LevelCanvas).Assembly
+                .GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
+            MethodInfo boundsMethod = renderer.GetMethod(
+                "SelectionBounds", BindingFlags.Public | BindingFlags.Static)!;
+            MethodInfo cullMethod = renderer.GetMethod(
+                "IsWithinViewport", BindingFlags.Public | BindingFlags.Static)!;
+
+            (string Name, LevelDocument Document)[] shapes =
+            [
+                ("DenseStatic", StressLevels.DenseStatic(56)),
+                ("OffMapMovers", StressLevels.OffMapMovers(56)),
+            ];
+
+            foreach ((string shapeName, LevelDocument document) in shapes)
+            {
+                foreach (double zoom in (double[])[0.5, 1.0, 2.0, 4.0])
+                {
+                    ViewTransform view = new(zoom, 200, 100);
+                    int kept = 0;
+                    foreach (LevelObject obj in document.AllObjects)
+                    {
+                        LevelBounds bounds =
+                            (LevelBounds)boundsMethod.Invoke(null, [sprites, obj, 0, 0, false])!;
+                        if ((bool)cullMethod.Invoke(null, [bounds, view, new Size(1400, 900), 256.0])!)
+                        {
+                            kept++;
+                        }
+                    }
+
+                    Console.WriteLine(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "  {0,-13} zoom={1,-4} kept={2,3}",
+                        shapeName,
+                        zoom,
+                        kept));
+                }
             }
         }
     }
