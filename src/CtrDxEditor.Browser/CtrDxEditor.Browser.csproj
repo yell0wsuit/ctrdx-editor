@@ -4,8 +4,7 @@
     <RootNamespace>CtrDxEditor.Browser</RootNamespace>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- Browser uses the wasm SDK's own publish pipeline; never single-file/AOT-desktop. -->
-    <RunAOTCompilation>false</RunAOTCompilation>
+    <RunAOTCompilation>true</RunAOTCompilation>
     <WasmNativeStrip>true</WasmNativeStrip>
   </PropertyGroup>
   <ItemGroup>
