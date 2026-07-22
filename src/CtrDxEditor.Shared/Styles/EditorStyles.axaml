@@ -22,4 +22,16 @@
     <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.DangerPressed}" />
     <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
   </Style>
+
+  <!-- Compact-rail icon button: tighter than the Fluent default so all six fit across a 320px phone. -->
+  <Style Selector="Button.railAction">
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+
+  <!-- Latched state, shared by the rail's mode pair and the compact drawer tabs. -->
+  <Style Selector="Button.active /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Primary}" />
+  </Style>
 </Styles>

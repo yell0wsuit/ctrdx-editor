@@ -259,8 +259,9 @@ namespace CtrDxEditor.Tests
             Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", rail, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
 
-            // Four buttons: the rail overlays the canvas and portrait has no room for a fifth.
-            Assert.Equal(4, CountOccurrences(rail, "<Button "));
+            // Six buttons: the four actions plus the mode pair. This only fits because rail buttons use
+            // the tightened .railAction padding; anything further belongs in the menu bar.
+            Assert.Equal(6, CountOccurrences(rail, "<Button "));
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
@@ -271,6 +272,84 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("LayoutMode.Expanded", layout, StringComparison.Ordinal);
             Assert.Contains("Grid.SetColumn", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>The rail carries a latched mode pair alongside the one-shot actions.</summary>
+        /// <remarks>
+        /// The pair is declared first and divided off from the actions: a latched mode and a one-shot
+        /// action read differently, and interleaving them makes the row ambiguous at a glance.
+        /// </remarks>
+        [Fact]
+        public void CompactRailCarriesTheModePair()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf("</Border>", railStart, StringComparison.Ordinal);
+            Assert.True(railStart >= 0 && railEnd > railStart);
+            string rail = view[railStart..railEnd];
+
+            Assert.Contains("x:Name=\"EditModeButton\"", rail, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"PanModeButton\"", rail, StringComparison.Ordinal);
+            // The pair leads the row, before the first action.
+            Assert.True(
+                rail.IndexOf("x:Name=\"EditModeButton\"", StringComparison.Ordinal)
+                    < rail.IndexOf("Click=\"Undo_Click\"", StringComparison.Ordinal));
+        }
+
+        /// <summary>Six rail buttons fit only at the tightened padding, so every one must opt in.</summary>
+        [Fact]
+        public void CompactRailButtonsUseTheTightenedPadding()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf("</Border>", railStart, StringComparison.Ordinal);
+            string rail = view[railStart..railEnd];
+
+            Assert.Equal(CountOccurrences(rail, "<Button "), CountOccurrences(rail, "Classes=\"railAction\""));
+        }
+
+        /// <summary>The mode is applied to the canvas and latched on one button in a single place.</summary>
+        [Fact]
+        public void RailModeButtonsLatchThroughOneHelper()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("private void SetInteractionMode(CanvasInteractionMode mode)", layout, StringComparison.Ordinal);
+            Assert.Contains("_canvas.InteractionMode = mode;", layout, StringComparison.Ordinal);
+            Assert.Contains("edit.Classes.Set(\"active\", mode == CanvasInteractionMode.Edit);", layout, StringComparison.Ordinal);
+            Assert.Contains("pan.Classes.Set(\"active\", mode == CanvasInteractionMode.Pan);", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Hiding the rail resets the mode, so pan mode can never outlive its only exit.
+        /// </summary>
+        /// <remarks>
+        /// The same predicate covers both ways the rail disappears — widening to the expanded layout and
+        /// closing the document — so there is one reset site rather than two that can drift apart.
+        /// </remarks>
+        [Fact]
+        public void HidingTheRailResetsInteractionMode()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+            int gate = layout.IndexOf("rail.IsVisible = show;", StringComparison.Ordinal);
+
+            Assert.True(gate >= 0);
+            Assert.Contains(
+                "SetInteractionMode(CanvasInteractionMode.Edit);",
+                layout.AsSpan(gate),
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>The latched style targets the template part so Fluent's own states cannot win.</summary>
+        [Fact]
+        public void ActiveStyleTargetsTheTemplatePart()
+        {
+            string styles = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Styles", "EditorStyles.axaml"));
+
+            Assert.Contains(
+                "Selector=\"Button.active /template/ ContentPresenter#PART_ContentPresenter\"",
+                styles,
+                StringComparison.Ordinal);
         }
 
         private static int CountOccurrences(string haystack, string needle)

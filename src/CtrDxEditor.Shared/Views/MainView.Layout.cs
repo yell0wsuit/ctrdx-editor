@@ -139,6 +139,10 @@ namespace CtrDxEditor.Views
             {
                 sheet.IsVisible = false;
                 drawerHost.Children.Clear();
+                // The rail is the only way out of pan mode, so a latched mode must not outlive it. This one
+                // site covers both ways the rail disappears: widening to the expanded layout, and closing
+                // the document.
+                SetInteractionMode(CanvasInteractionMode.Edit);
             }
         }
 
@@ -245,6 +249,43 @@ namespace CtrDxEditor.Views
             if (this.FindControl<Grid>("LayersPanel") is { } layers)
             {
                 ShowPanelInDrawer(layers);
+            }
+        }
+
+        /// <summary>Switches the canvas to edit mode from the compact rail.</summary>
+        /// <param name="sender">The rail button (unused).</param>
+        /// <param name="e">Routed event data (unused).</param>
+        private void CompactEditMode_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            SetInteractionMode(CanvasInteractionMode.Edit);
+        }
+
+        /// <summary>Switches the canvas to pan mode from the compact rail.</summary>
+        /// <param name="sender">The rail button (unused).</param>
+        /// <param name="e">Routed event data (unused).</param>
+        private void CompactPanMode_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            SetInteractionMode(CanvasInteractionMode.Pan);
+        }
+
+        /// <summary>Applies an interaction mode to the canvas and latches the matching rail button.</summary>
+        /// <param name="mode">The mode to apply.</param>
+        /// <remarks>
+        /// Both the canvas property and the button classes are set here so the two cannot drift: a mode
+        /// the canvas is in but no button shows would be indistinguishable from a stuck canvas.
+        /// </remarks>
+        private void SetInteractionMode(CanvasInteractionMode mode)
+        {
+            _canvas.InteractionMode = mode;
+
+            if (this.FindControl<Button>("EditModeButton") is { } edit)
+            {
+                edit.Classes.Set("active", mode == CanvasInteractionMode.Edit);
+            }
+
+            if (this.FindControl<Button>("PanModeButton") is { } pan)
+            {
+                pan.Classes.Set("active", mode == CanvasInteractionMode.Pan);
             }
         }
     }
