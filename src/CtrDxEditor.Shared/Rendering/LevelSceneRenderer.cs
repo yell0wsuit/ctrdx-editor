@@ -159,11 +159,44 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(minX - (w * grow / 2.0), minY - (h * grow / 2.0), w * (1 + grow), h * (1 + grow));
         }
 
+        /// <summary>The bounds to cull an object against: its art box, moved to wherever the object actually draws.</summary>
+        /// <remarks>
+        /// A mover of a type that <see cref="DrawsAtPreviewPosition"/> accepts draws at its live-preview position
+        /// along its path, which can be thousands of units from the authored one, so culling on
+        /// <see cref="SelectionBounds"/> alone erases it for the whole stretch it spends on screen. Passing the
+        /// same elapsed seconds the draw call receives keeps the two in step. Types that draw from authored
+        /// geometry keep the authored box: an ant conveyor carries a path by default yet never moves its trail,
+        /// so shifting its box would cull art that is plainly visible.
+        /// </remarks>
+        /// <param name="sprites">Sprite cache used to resolve the object's art.</param>
+        /// <param name="obj">The object to bound.</param>
+        /// <param name="candySkin">Active candy skin index, so the box matches the drawn candy art.</param>
+        /// <param name="omNomSupport">Active Om Nom support index, so the box matches the drawn platform art.</param>
+        /// <param name="nightLevel">Whether night sprite variants apply.</param>
+        /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null when the object is drawn static.</param>
+        /// <returns>The bounds in level units at the object's drawn position.</returns>
+        public static LevelBounds CullBounds(
+            SpriteCache sprites,
+            LevelObject obj,
+            int candySkin,
+            int omNomSupport,
+            bool nightLevel,
+            double? animationPreviewSeconds)
+        {
+            LevelBounds bounds = SelectionBounds(sprites, obj, candySkin, omNomSupport, nightLevel);
+
+            // Preview off is the common case and runs per object per frame, so it short-circuits before
+            // re-parsing the path attributes that could only ever return the authored position anyway.
+            return animationPreviewSeconds is null || !DrawsAtPreviewPosition(obj)
+                ? bounds
+                : PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
+        }
+
         /// <summary>
         /// Whether an object's level-space bounds fall inside the rendered viewport, and so must be drawn.
         /// </summary>
         /// <remarks>
-        /// <paramref name="bounds"/> is the art box from <see cref="SelectionBounds"/>, but some visuals
+        /// <paramref name="bounds"/> is the art box from <see cref="CullBounds"/>, but some visuals
         /// legitimately overhang it — a star's duration text, tutorial overhang, glow halos. The margin keeps
         /// those drawing correctly; without it they would pop at the viewport edge. Callers that draw
         /// unbounded visuals (a grab's rope reaches an arbitrary target elsewhere) must not cull at all.
@@ -230,11 +263,37 @@ namespace CtrDxEditor.Rendering
             };
         }
 
+        /// <summary>Whether <see cref="DrawObject"/> honours the live-preview position for this object's type.</summary>
+        /// <remarks>
+        /// Most types draw their sprite at the preview position, so their bounds travel with them. The types
+        /// listed here draw from authored geometry instead — an ant conveyor lays its trail along the whole
+        /// authored path and only marches individual ants down it, a conveyor, hand, and tutorial ignore preview
+        /// time entirely — so their bounds must stay put. This mirrors the early returns in
+        /// <see cref="DrawObject"/>: whenever a branch there draws without using <c>previewPosition</c>, its type
+        /// belongs in this list, or <see cref="CullBounds"/> will move the cull box off the art and cull it while
+        /// it is still on screen. <c>DrawsAtPreviewPositionTests</c> locks the list so the pairing is not silently
+        /// broken.
+        /// </remarks>
+        /// <param name="obj">The object to classify.</param>
+        /// <returns>True when the drawn position follows live preview, and so the cull box must follow it too.</returns>
+        public static bool DrawsAtPreviewPosition(LevelObject obj)
+        {
+            return !TutorialObject.IsText(obj.Type)
+                && !TutorialObject.IsImage(obj.Type)
+                && obj.Type != "transporter"
+                && !AntPath.IsAnts(obj.Type)
+                && !HandObject.IsHand(obj.Type);
+        }
+
         /// <summary>
         /// Draws a non-grab object: its optional decorative back-layer variant, then every sprite layer,
         /// then any overlays. Grabs go through <see cref="DrawGrab"/> instead so their rope can slot between
         /// hook layers.
         /// </summary>
+        /// <remarks>
+        /// Every branch below that draws without applying <c>previewPosition</c> must have its type excluded by
+        /// <see cref="DrawsAtPreviewPosition"/>, which is what keeps the viewport cull aligned with the art.
+        /// </remarks>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the object's art.</param>

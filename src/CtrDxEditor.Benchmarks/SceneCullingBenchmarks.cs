@@ -20,7 +20,7 @@ namespace CtrDxEditor.Benchmarks
     /// </summary>
     /// <remarks>
     /// This measures the <em>decision</em>, not the drawing it avoids: the benchmark project ships no art, so
-    /// <c>SelectionBounds</c> takes its no-sprite fallback and every object gets a uniform 16x16 box. The
+    /// <c>CullBounds</c> takes its no-sprite fallback and every object gets a uniform 16x16 box. The
     /// kept-object counts are therefore the honest signal here; the saved draw cost needs real content and a
     /// device, which is phase 7's measurement.
     /// </remarks>
@@ -38,12 +38,17 @@ namespace CtrDxEditor.Benchmarks
         private delegate bool IsWithinViewportFn(
             LevelBounds bounds, ViewTransform view, Size renderSize, double margin);
 
-        private delegate LevelBounds SelectionBoundsFn(
-            SpriteCache sprites, LevelObject obj, int candySkin, int omNomSupport, bool nightLevel);
+        private delegate LevelBounds CullBoundsFn(
+            SpriteCache sprites,
+            LevelObject obj,
+            int candySkin,
+            int omNomSupport,
+            bool nightLevel,
+            double? animationPreviewSeconds);
 
         private HeadlessRenderTarget _target = null!;
         private IsWithinViewportFn _isWithinViewport = null!;
-        private SelectionBoundsFn _selectionBounds = null!;
+        private CullBoundsFn _cullBounds = null!;
         private SpriteCache _sprites = null!;
         private IReadOnlyList<LevelObject> _objects = null!;
 
@@ -54,6 +59,13 @@ namespace CtrDxEditor.Benchmarks
         /// <summary>The level shape under test.</summary>
         [Params(LevelShape.DenseStatic, LevelShape.OffMapMovers)]
         public LevelShape Shape { get; set; }
+
+        /// <summary>
+        /// Elapsed live-preview seconds, or null for preview off. Preview on is the costlier path: a mover's cull
+        /// box has to be walked along its path, which for a circular orbit builds a point per two radius units.
+        /// </summary>
+        [Params(null, 74.0)]
+        public double? PreviewSeconds { get; set; }
 
         /// <summary>Which generated level a run uses.</summary>
         public enum LevelShape
@@ -80,9 +92,9 @@ namespace CtrDxEditor.Benchmarks
                 ?? throw new InvalidOperationException("IsWithinViewport not found.");
             _isWithinViewport = cull.CreateDelegate<IsWithinViewportFn>();
 
-            MethodInfo bounds = renderer.GetMethod("SelectionBounds", BindingFlags.Public | BindingFlags.Static)
-                ?? throw new InvalidOperationException("SelectionBounds not found.");
-            _selectionBounds = bounds.CreateDelegate<SelectionBoundsFn>();
+            MethodInfo bounds = renderer.GetMethod("CullBounds", BindingFlags.Public | BindingFlags.Static)
+                ?? throw new InvalidOperationException("CullBounds not found.");
+            _cullBounds = bounds.CreateDelegate<CullBoundsFn>();
 
             LevelDocument document = Shape switch
             {
@@ -118,7 +130,7 @@ namespace CtrDxEditor.Benchmarks
 
             foreach (LevelObject obj in _objects)
             {
-                LevelBounds bounds = _selectionBounds(_sprites, obj, 0, 0, false);
+                LevelBounds bounds = _cullBounds(_sprites, obj, 0, 0, false, PreviewSeconds);
                 if (_isWithinViewport(bounds, view, renderSize, CullMargin))
                 {
                     kept++;

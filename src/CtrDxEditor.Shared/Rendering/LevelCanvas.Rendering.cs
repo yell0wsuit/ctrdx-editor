@@ -843,8 +843,13 @@ namespace CtrDxEditor.Rendering
                     // drawing it costs a full sprite pass per object for no pixels. Only this branch is culled —
                     // a grab's rope reaches an arbitrary target, and a vinyl's handles extend past its disc, so
                     // neither object's own bounds predict where it draws.
-                    LevelBounds cullBounds = LevelSceneRenderer.SelectionBounds(
-                        sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel);
+                    //
+                    // One elapsed-seconds value feeds both the cull and the draw: a mover is drawn at its preview
+                    // position, so the cull has to test that same position or it drops the object mid-flight.
+                    double? previewSeconds =
+                        useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null;
+                    LevelBounds cullBounds = LevelSceneRenderer.CullBounds(
+                        sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel, previewSeconds);
                     if (!LevelSceneRenderer.IsWithinViewport(cullBounds, v, renderSize, CullMargin))
                     {
                         continue;
@@ -853,7 +858,7 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
                         ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText,
                         objects,
-                        useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null,
+                        previewSeconds,
                         opBounds,
                         tutorialDark);
                 }
