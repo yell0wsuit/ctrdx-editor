@@ -235,6 +235,17 @@ namespace CtrDxEditor.Rendering
         /// </remarks>
         public CanvasInteractionMode InteractionMode { get; set; } = CanvasInteractionMode.Edit;
 
+        /// <summary>
+        /// Consulted before anything else on a pointer press; returning true swallows the press whole.
+        /// </summary>
+        /// <remarks>
+        /// The compact shell uses this to dismiss an open drawer with a tap on the canvas. The press is
+        /// swallowed rather than acted on because the canvas under a just-dismissed sheet is territory the
+        /// user has not seen: hit-testing it would be a blind hit that could select or deselect something
+        /// they never looked at.
+        /// </remarks>
+        public Func<bool>? PressIntercepted { get; set; }
+
         /// <summary>Callback used to toggle the locked object from canvas gestures.</summary>
         public Action<LevelObject?>? ToggleLock { get; set; }
 

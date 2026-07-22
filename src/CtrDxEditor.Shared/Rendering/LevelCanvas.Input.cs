@@ -696,6 +696,15 @@ namespace CtrDxEditor.Rendering
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             base.OnPointerPressed(e);
+
+            // Ahead of the document check: the shell may want this press even for state the canvas itself
+            // has no opinion about.
+            if (PressIntercepted?.Invoke() == true)
+            {
+                e.Handled = true;
+                return;
+            }
+
             LevelDocument? doc = Document;
             if (doc is null)
             {

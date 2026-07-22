@@ -392,6 +392,70 @@ namespace CtrDxEditor.Tests
             Assert.True(CountOccurrences(layout, "UpdateCompactTabState();") >= 3);
         }
 
+        /// <summary>The press interceptor is consulted before any other work on a canvas press.</summary>
+        /// <remarks>
+        /// A callback rather than a tunnel-route handler: this does not depend on Avalonia's ordering
+        /// between tunnel handlers and the class handler that raises <c>OnPointerPressed</c>, and it
+        /// matches the PlaceAt/SelectionRequested callbacks the canvas already carries.
+        /// </remarks>
+        [Fact]
+        public void CanvasPressInterceptorRunsFirst()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            int intercept = input.IndexOf("PressIntercepted?.Invoke() == true", StringComparison.Ordinal);
+            int docCheck = input.IndexOf("LevelDocument? doc = Document;", StringComparison.Ordinal);
+
+            Assert.True(intercept >= 0, "OnPointerPressed does not consult PressIntercepted.");
+            Assert.True(docCheck > intercept, "The interceptor must run before anything else.");
+        }
+
+        /// <summary>An intercepted press is swallowed whole rather than passed on.</summary>
+        [Fact]
+        public void InterceptedPressIsSwallowed()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            int intercept = input.IndexOf("PressIntercepted?.Invoke() == true", StringComparison.Ordinal);
+            int docCheck = input.IndexOf("LevelDocument? doc = Document;", StringComparison.Ordinal);
+
+            Assert.True(intercept >= 0 && docCheck > intercept);
+            string block = input[intercept..docCheck];
+            Assert.Contains("e.Handled = true;", block, StringComparison.Ordinal);
+            Assert.Contains("return;", block, StringComparison.Ordinal);
+        }
+
+        /// <summary>The compact shell wires the interceptor to dismiss an open drawer.</summary>
+        [Fact]
+        public void CompactShellDismissesTheDrawerOnCanvasPress()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("canvas.PressIntercepted = DismissCompactDrawerOnCanvasPress;", view, StringComparison.Ordinal);
+            Assert.Contains("private bool DismissCompactDrawerOnCanvasPress()", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>Only a compact layout with an open sheet intercepts; everything else falls through.</summary>
+        /// <remarks>
+        /// Returning true unconditionally would make the expanded canvas inert, which is the sort of bug
+        /// that only shows up on desktop after the mobile work looks finished.
+        /// </remarks>
+        [Fact]
+        public void DrawerDismissalIsGatedOnAnOpenCompactSheet()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+            int method = layout.IndexOf("private bool DismissCompactDrawerOnCanvasPress()", StringComparison.Ordinal);
+
+            Assert.True(method >= 0);
+            Assert.Contains(
+                "_layoutMode != LayoutMode.Compact",
+                layout.AsSpan(method),
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "is not { IsVisible: true } sheet",
+                layout.AsSpan(method),
+                StringComparison.Ordinal);
+        }
+
         private static int CountOccurrences(string haystack, string needle)
         {
             return haystack.Split(needle, StringSplitOptions.None).Length - 1;

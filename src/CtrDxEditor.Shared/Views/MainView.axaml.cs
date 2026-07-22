@@ -88,6 +88,7 @@ namespace CtrDxEditor.Views
             canvas.BeginDocumentEdit = () => (DataContext as EditorViewModel)?.BeginUndoTransaction();
             canvas.CompleteDocumentEdit = () => (DataContext as EditorViewModel)?.CompleteUndoTransaction();
             canvas.EditTutorialTextRequested = BeginTextEdit;
+            canvas.PressIntercepted = DismissCompactDrawerOnCanvasPress;
 
             // Palette placement is an internal pointer-capture drag (see PaletteDragController). Buttons mark
             // their own left PointerPressed as Handled for click logic, so the handlers are registered with

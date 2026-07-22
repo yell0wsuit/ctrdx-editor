@@ -264,6 +264,24 @@ namespace CtrDxEditor.Views
                 hosted is not null && ReferenceEquals(hosted, this.FindControl<Grid>("LayersPanel")));
         }
 
+        /// <summary>Closes an open compact drawer when the canvas is pressed.</summary>
+        /// <returns>
+        /// True when a drawer was open and has been closed, meaning the canvas should ignore the press;
+        /// false whenever the press should reach the canvas as usual.
+        /// </returns>
+        private bool DismissCompactDrawerOnCanvasPress()
+        {
+            if (_layoutMode != LayoutMode.Compact
+                || this.FindControl<Border>("CompactSheet") is not { IsVisible: true } sheet)
+            {
+                return false;
+            }
+
+            sheet.IsVisible = false;
+            UpdateCompactTabState();
+            return true;
+        }
+
         /// <summary>Raises the palette in the compact drawer.</summary>
         private void CompactPaletteTab_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
