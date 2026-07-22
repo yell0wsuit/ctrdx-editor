@@ -39,7 +39,7 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
-        <MenuItem Click="Save_Click" IsEnabled="{Binding HasDocument}">
+        <MenuItem Click="Save_Click" IsEnabled="{Binding HasDocument}" IsVisible="{Binding CanSaveInPlace}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="ContentSave" />
           </MenuItem.Icon>

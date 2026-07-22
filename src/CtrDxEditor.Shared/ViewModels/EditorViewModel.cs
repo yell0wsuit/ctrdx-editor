@@ -55,6 +55,18 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this platform can play levels at all; hides the commands when false.</summary>
         public bool CanPlaytest => Playtest is not null;
 
+        /// <summary>
+        /// Whether this platform can overwrite the file a level was opened from; hides Save when false.
+        /// </summary>
+        /// <remarks>
+        /// In the browser this really depends on the engine rather than the platform: Chromium exposes the
+        /// File System Access API, so Avalonia returns a writable handle and Save works, while Safari and
+        /// Firefox fall back to an <c>&lt;input type="file"&gt;</c> whose handle is read-only and throws
+        /// <c>NotAllowedError</c> on write. Rather than ship a Save that quietly works in some browsers and
+        /// fails in others, the browser head standardises on Save As - every save there is a download.
+        /// </remarks>
+        public bool CanSaveInPlace { get; } = !OperatingSystem.IsBrowser();
+
         [ObservableProperty] public partial LevelDocument? Document { get; set; }
         [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
         [ObservableProperty] public partial LevelObject? LockedObject { get; set; }

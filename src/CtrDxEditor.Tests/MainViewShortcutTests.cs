@@ -56,6 +56,49 @@ namespace CtrDxEditor.Tests
             Assert.Contains("{ CanToggleAnimationPreview: true } previewVm", shortcuts, StringComparison.Ordinal);
         }
 
+        /// <summary>Save is hidden on heads that cannot overwrite the opened file; Save As stays everywhere.</summary>
+        [Fact]
+        public void SaveIsHiddenWhereInPlaceSaveIsUnsupported()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string viewModel = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "ViewModels", "EditorViewModel.cs"));
+
+            Assert.Contains("IsVisible=\"{Binding CanSaveInPlace}\"", MenuItem(view, "Save_Click"), StringComparison.Ordinal);
+
+            // The positive assertion proves the slice really is the Save As element, so the negative one
+            // below cannot pass just because the extraction returned something empty or unrelated.
+            string saveAs = MenuItem(view, "SaveAs_Click");
+            Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", saveAs, StringComparison.Ordinal);
+            Assert.DoesNotContain("IsVisible", saveAs, StringComparison.Ordinal);
+            // The browser is the head without in-place save; Chromium could write back, but Safari cannot.
+            Assert.Contains("CanSaveInPlace { get; } = !OperatingSystem.IsBrowser()", viewModel, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Save falls back to Save As at the handler, not just on the menu item, so neither the Ctrl+S chord
+        /// nor the header's access key can reach a write the platform cannot perform.
+        /// </summary>
+        [Fact]
+        public void SaveFallsBackToSaveAsAtTheHandler()
+        {
+            string commands = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.FileCommands.cs"));
+            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
+
+            Assert.Contains("_currentLevelFile is null || !vm.CanSaveInPlace", commands, StringComparison.Ordinal);
+            // The chord stays a plain dispatch: the capability decision lives in one place, the handler.
+            Assert.Contains("case EditorShortcut.Save when DataContext is EditorViewModel { HasDocument: true }:",
+                shortcuts, StringComparison.Ordinal);
+        }
+
+        // The opening tag of the MenuItem carrying the given Click handler, so attribute assertions do not
+        // depend on the order the attributes are written in or on where the line happens to wrap.
+        private static string MenuItem(string xaml, string clickHandler)
+        {
+            int click = xaml.IndexOf($"Click=\"{clickHandler}\"", StringComparison.Ordinal);
+            Assert.True(click >= 0, $"No MenuItem with Click=\"{clickHandler}\".");
+            return xaml[xaml.LastIndexOf('<', click)..xaml.IndexOf('>', click)];
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

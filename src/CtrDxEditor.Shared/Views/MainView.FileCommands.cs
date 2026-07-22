@@ -246,7 +246,10 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (_currentLevelFile is null)
+            // Guarded here rather than only on the menu item, so neither the Ctrl+S chord nor the header's
+            // access key can reach a write this platform cannot perform. Where Save is hidden every save is
+            // a download, so the chord lands on Save As instead of doing nothing.
+            if (_currentLevelFile is null || !vm.CanSaveInPlace)
             {
                 await SaveAsAsync(vm);
                 return;
