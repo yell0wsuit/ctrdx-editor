@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
@@ -85,6 +86,10 @@ namespace CtrDxEditor
             }
             _started = true;
 
+            // Deliberately not awaited: nothing here needs the result, and the import it triggers should
+            // overlap the content resolve and sprite preload below rather than delay them.
+            _ = WarmUpFilePickerAsync(root);
+
             IContentStore? installed = await _startup.ResolveInstalled();
             if (installed is not null && await TryShowEditorAsync(root, installed))
             {
@@ -117,6 +122,39 @@ namespace CtrDxEditor
                 }
             }
             while (root.DataContext is null);
+        }
+
+        /// <summary>
+        /// Resolves Avalonia's browser storage module up front, so the first file picker opens on one tap.
+        /// </summary>
+        /// <remarks>
+        /// <c>BrowserStorageProvider.OpenFilePickerAsync</c> opens with <c>await AvaloniaModule.ImportStorage()</c>,
+        /// a <c>Lazy&lt;Task&gt;</c> around a dynamic import of storage.js. On the very first call that await
+        /// genuinely suspends, so the picker's <c>input.click()</c> lands after the tap's user activation has
+        /// lapsed - and iOS Safari opens the file sheet only from inside one, which cost the user a wasted
+        /// first tap on both the level open and the content zip upload. Later calls await an already-completed
+        /// task and resume synchronously, which is why only the first pick per page load misbehaved.
+        /// <c>TryGetWellKnownFolderAsync</c> awaits that same import while needing no activation and showing no
+        /// UI, so it resolves the Lazy long before the user can reach a picker.
+        /// </remarks>
+        private static async Task WarmUpFilePickerAsync(Control root)
+        {
+            // Desktop has a native picker with no module to import, so there is nothing to warm there.
+            if (!OperatingSystem.IsBrowser() || TopLevel.GetTopLevel(root)?.StorageProvider is not { } storage)
+            {
+                return;
+            }
+
+            try
+            {
+                _ = await storage.TryGetWellKnownFolderAsync(WellKnownFolder.Documents);
+            }
+            catch (Exception ex)
+            {
+                // Caught rather than left to fault this unawaited task: the worst case is the extra tap
+                // this exists to avoid, which must never take startup down with an unobserved exception.
+                Console.WriteLine($"[CtrDx] File picker warm-up failed; the first pick may need two taps.\n{ex}");
+            }
         }
 
         private async Task<bool> TryShowEditorAsync(Control root, IContentStore store)
