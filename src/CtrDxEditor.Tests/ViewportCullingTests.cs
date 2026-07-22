@@ -241,10 +241,16 @@ namespace CtrDxEditor.Tests
         private static bool Kept(
             SpriteCache sprites, LevelObject obj, ViewTransform view, Size renderSize, double? previewSeconds = null)
         {
+            // Resolves the offset through the same single source the draw loop uses, so the test exercises
+            // the pairing the renderer relies on rather than a cull box computed some other way.
+            MethodInfo offsetMethod = SceneRenderer.GetMethod(
+                "DrawOffset", BindingFlags.Public | BindingFlags.Static)!;
+            object drawOffset = offsetMethod.Invoke(null, [obj, previewSeconds])!;
+
             MethodInfo boundsMethod = SceneRenderer.GetMethod(
                 "CullBounds", BindingFlags.Public | BindingFlags.Static)!;
             LevelBounds bounds = (LevelBounds)boundsMethod.Invoke(
-                null, [sprites, obj, 0, 0, false, previewSeconds])!;
+                null, [sprites, obj, 0, 0, false, drawOffset])!;
 
             return IsWithinViewport(bounds, view, renderSize, 256);
         }

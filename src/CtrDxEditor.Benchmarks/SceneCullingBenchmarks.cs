@@ -38,17 +38,20 @@ namespace CtrDxEditor.Benchmarks
         private delegate bool IsWithinViewportFn(
             LevelBounds bounds, ViewTransform view, Size renderSize, double margin);
 
+        private delegate Vec2 DrawOffsetFn(LevelObject obj, double? animationPreviewSeconds);
+
         private delegate LevelBounds CullBoundsFn(
             SpriteCache sprites,
             LevelObject obj,
             int candySkin,
             int omNomSupport,
             bool nightLevel,
-            double? animationPreviewSeconds);
+            Vec2 drawOffset);
 
         private HeadlessRenderTarget _target = null!;
         private IsWithinViewportFn _isWithinViewport = null!;
         private CullBoundsFn _cullBounds = null!;
+        private DrawOffsetFn _drawOffset = null!;
         private SpriteCache _sprites = null!;
         private IReadOnlyList<LevelObject> _objects = null!;
 
@@ -96,6 +99,10 @@ namespace CtrDxEditor.Benchmarks
                 ?? throw new InvalidOperationException("CullBounds not found.");
             _cullBounds = bounds.CreateDelegate<CullBoundsFn>();
 
+            MethodInfo offset = renderer.GetMethod("DrawOffset", BindingFlags.Public | BindingFlags.Static)
+                ?? throw new InvalidOperationException("DrawOffset not found.");
+            _drawOffset = offset.CreateDelegate<DrawOffsetFn>();
+
             LevelDocument document = Shape switch
             {
                 LevelShape.DenseStatic => StressLevels.DenseStatic(ObjectCount),
@@ -130,7 +137,7 @@ namespace CtrDxEditor.Benchmarks
 
             foreach (LevelObject obj in _objects)
             {
-                LevelBounds bounds = _cullBounds(_sprites, obj, 0, 0, false, PreviewSeconds);
+                LevelBounds bounds = _cullBounds(_sprites, obj, 0, 0, false, _drawOffset(obj, PreviewSeconds));
                 if (_isWithinViewport(bounds, view, renderSize, CullMargin))
                 {
                     kept++;

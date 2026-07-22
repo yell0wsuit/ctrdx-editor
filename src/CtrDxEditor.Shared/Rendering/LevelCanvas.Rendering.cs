@@ -844,12 +844,14 @@ namespace CtrDxEditor.Rendering
                     // a grab's rope reaches an arbitrary target, and a vinyl's handles extend past its disc, so
                     // neither object's own bounds predict where it draws.
                     //
-                    // One elapsed-seconds value feeds both the cull and the draw: a mover is drawn at its preview
-                    // position, so the cull has to test that same position or it drops the object mid-flight.
+                    // The object's drawn position is resolved once here and handed to both the cull and the
+                    // draw. A mover is drawn where preview has carried it, so a cull that re-derived that
+                    // position could disagree and drop the object mid-flight.
                     double? previewSeconds =
                         useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null;
+                    Vec2 drawOffset = LevelSceneRenderer.DrawOffset(obj, previewSeconds);
                     LevelBounds cullBounds = LevelSceneRenderer.CullBounds(
-                        sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel, previewSeconds);
+                        sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel, drawOffset);
                     if (!LevelSceneRenderer.IsWithinViewport(cullBounds, v, renderSize, CullMargin))
                     {
                         continue;
@@ -858,6 +860,7 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
                         ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText,
                         objects,
+                        drawOffset,
                         previewSeconds,
                         opBounds,
                         tutorialDark);

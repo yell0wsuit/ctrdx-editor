@@ -173,7 +173,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="candySkin">Active candy skin index, so the box matches the drawn candy art.</param>
         /// <param name="omNomSupport">Active Om Nom support index, so the box matches the drawn platform art.</param>
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
-        /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null when the object is drawn static.</param>
+        /// <param name="drawOffset">How far preview has moved the object, from <see cref="DrawOffset"/>.</param>
         /// <returns>The bounds in level units at the object's drawn position.</returns>
         public static LevelBounds CullBounds(
             SpriteCache sprites,
@@ -181,19 +181,21 @@ namespace CtrDxEditor.Rendering
             int candySkin,
             int omNomSupport,
             bool nightLevel,
-            double? animationPreviewSeconds)
+            Vec2 drawOffset)
         {
             LevelBounds bounds = SelectionBounds(sprites, obj, candySkin, omNomSupport, nightLevel);
+            return Shift(bounds, drawOffset);
+        }
 
-            // Ordered cheapest first, because during preview this runs for every object in the level every
-            // frame and LevelObject re-reads the XML on each attribute access. A pathless object cannot move,
-            // and most of a level is pathless, so one probe for the attribute skips resolving a position that
-            // would re-parse x, y, path and moveSpeed only to hand back the authored point.
-            return animationPreviewSeconds is null
-                || !DrawsAtPreviewPosition(obj)
-                || string.IsNullOrWhiteSpace(obj.GetAttr("path"))
-                    ? bounds
-                    : PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
+        /// <summary>Moves a box by a preview offset, returning it untouched when the offset is zero.</summary>
+        /// <param name="bounds">The box at the object's authored position.</param>
+        /// <param name="offset">The offset from <see cref="DrawOffset"/>.</param>
+        /// <returns>The box at the object's drawn position.</returns>
+        private static LevelBounds Shift(LevelBounds bounds, Vec2 offset)
+        {
+            return offset.X == 0.0 && offset.Y == 0.0
+                ? bounds
+                : new LevelBounds(bounds.X + offset.X, bounds.Y + offset.Y, bounds.W, bounds.H);
         }
 
         /// <summary>
@@ -273,10 +275,10 @@ namespace CtrDxEditor.Rendering
         /// listed here draw from authored geometry instead — an ant conveyor lays its trail along the whole
         /// authored path and only marches individual ants down it, a conveyor, hand, and tutorial ignore preview
         /// time entirely — so their bounds must stay put. This mirrors the early returns in
-        /// <see cref="DrawObject"/>: whenever a branch there draws without using <c>previewPosition</c>, its type
-        /// belongs in this list, or <see cref="CullBounds"/> will move the cull box off the art and cull it while
-        /// it is still on screen. <c>DrawsAtPreviewPositionTests</c> locks the list so the pairing is not silently
-        /// broken.
+        /// <see cref="DrawObject"/>: whenever a branch there draws without using <c>drawOffset</c>, its type
+        /// belongs in this list, or <see cref="DrawOffset"/> will report a move that never happens and the cull
+        /// box will slide off the art. <c>ViewportCullingTests.DrawsAtPreviewPositionMatchesTheDrawBranches</c>
+        /// locks the list so the pairing is not silently broken.
         /// </remarks>
         /// <param name="obj">The object to classify.</param>
         /// <returns>True when the drawn position follows live preview, and so the cull box must follow it too.</returns>
@@ -295,8 +297,10 @@ namespace CtrDxEditor.Rendering
         /// hook layers.
         /// </summary>
         /// <remarks>
-        /// Every branch below that draws without applying <c>previewPosition</c> must have its type excluded by
-        /// <see cref="DrawsAtPreviewPosition"/>, which is what keeps the viewport cull aligned with the art.
+        /// The drawn position arrives as <paramref name="drawOffset"/> rather than being derived here, so the
+        /// caller's viewport cull and this draw read one answer and cannot disagree about where the object is.
+        /// Every branch below that draws without applying it must have its type excluded by
+        /// <see cref="DrawsAtPreviewPosition"/>, which is what keeps the two aligned for the rest.
         /// </remarks>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
@@ -307,6 +311,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
         /// <param name="starDurationText">Brush for the timed-star duration label.</param>
         /// <param name="objects">All level objects, used to decide whether binding id labels are needed.</param>
+        /// <param name="drawOffset">How far preview has moved the object, from <see cref="DrawOffset"/>.</param>
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
         /// <param name="tutorialBounds">Screen bounds for tutorial custom draw operations.</param>
         /// <param name="tutorialDark">Whether tutorials use dark blank-canvas styling.</param>
@@ -320,6 +325,7 @@ namespace CtrDxEditor.Rendering
             bool nightLevel,
             IBrush starDurationText,
             IReadOnlyList<LevelObject> objects,
+            Vec2 drawOffset,
             double? animationPreviewSeconds = null,
             Rect tutorialBounds = default,
             bool tutorialDark = false)
@@ -336,9 +342,8 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
-            double x = previewPosition.X;
-            double y = previewPosition.Y;
+            double x = obj.X + drawOffset.X;
+            double y = obj.Y + drawOffset.Y;
             double? spinRotation = SpinPreviewRotation(obj, animationPreviewSeconds);
             if (obj.Type == "steamTube")
             {
@@ -788,11 +793,45 @@ namespace CtrDxEditor.Rendering
             };
         }
 
-        private static Vec2 PreviewPosition(LevelObject obj, double? animationPreviewSeconds)
+        /// <summary>How far live preview has carried an object from where it is authored, or zero when it has not.</summary>
+        /// <remarks>
+        /// The single answer to "has this object moved, and by how much" — the draw, the viewport cull, the
+        /// selection outline, and hit testing all resolve through it, so none of them can place the object
+        /// somewhere the others do not. That matters most for the cull, which decides whether the object is
+        /// drawn at all: an answer derived twice is an answer that can drift, and the two derivations
+        /// disagreeing is what made movers vanish mid-playback.
+        /// <para>
+        /// An offset rather than a position so the answer costs nothing when there is nothing to say: the
+        /// early-out returns before reading a single attribute. Types that <see cref="DrawsAtPreviewPosition"/>
+        /// rejects draw from authored geometry and never move; a pathless object cannot move either, and most
+        /// of a level is pathless. During preview this runs for every object every frame, and
+        /// <see cref="LevelObject"/> re-reads the XML on each attribute access, so the order matters.
+        /// </para>
+        /// </remarks>
+        /// <param name="obj">The object to locate.</param>
+        /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null when drawn static.</param>
+        /// <returns>The level-unit offset from the authored position, or zero when the object draws where authored.</returns>
+        public static Vec2 DrawOffset(LevelObject obj, double? animationPreviewSeconds)
         {
-            return animationPreviewSeconds is double seconds
-                ? ObjectSpin.PreviewPosition(obj, seconds)
-                : new Vec2(obj.X, obj.Y);
+            if (animationPreviewSeconds is not double seconds
+                || !DrawsAtPreviewPosition(obj)
+                || string.IsNullOrWhiteSpace(obj.GetAttr("path")))
+            {
+                return default;
+            }
+
+            Vec2 moved = ObjectSpin.PreviewPosition(obj, seconds);
+            return new Vec2(moved.X - obj.X, moved.Y - obj.Y);
+        }
+
+        /// <summary>Where an object draws this frame: its authored point shifted by <see cref="DrawOffset"/>.</summary>
+        /// <param name="obj">The object to locate.</param>
+        /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null when drawn static.</param>
+        /// <returns>The position in level units the object's art is drawn around.</returns>
+        public static Vec2 DrawPosition(LevelObject obj, double? animationPreviewSeconds)
+        {
+            Vec2 offset = DrawOffset(obj, animationPreviewSeconds);
+            return new Vec2(obj.X + offset.X, obj.Y + offset.Y);
         }
 
         private static double? SpinPreviewRotation(LevelObject obj, double? spinPreviewSeconds)
@@ -935,12 +974,7 @@ namespace CtrDxEditor.Rendering
 
         private static LevelBounds PreviewSelectionBounds(LevelObject obj, LevelBounds bounds, double? animationPreviewSeconds)
         {
-            Vec2 position = PreviewPosition(obj, animationPreviewSeconds);
-            double dx = position.X - obj.X;
-            double dy = position.Y - obj.Y;
-            return dx == 0.0 && dy == 0.0
-                ? bounds
-                : new LevelBounds(bounds.X + dx, bounds.Y + dy, bounds.W, bounds.H);
+            return Shift(bounds, DrawOffset(obj, animationPreviewSeconds));
         }
 
         /// <summary>Whether a level-space point is inside the selected object's drawn selection outline.</summary>
@@ -1001,7 +1035,7 @@ namespace CtrDxEditor.Rendering
             double? animationPreviewSeconds)
         {
             Vec2 authoredPosition = new(obj.X, obj.Y);
-            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
+            Vec2 previewPosition = DrawPosition(obj, animationPreviewSeconds);
             Vec2 center = spec is null ? authoredPosition : ObjectRotation.Center(obj, spec);
             return center + (previewPosition - authoredPosition);
         }
@@ -1201,7 +1235,7 @@ namespace CtrDxEditor.Rendering
             bool hookHighlighted,
             double? animationPreviewSeconds = null)
         {
-            Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
+            Vec2 previewPosition = DrawPosition(obj, animationPreviewSeconds);
             // The hook art and Christmas lights are DrawImage calls that PushOpacity fades; the rope is a
             // Skia custom draw op that PushOpacity does not reach, so its alpha is passed through explicitly.
             double opacity = IsInvisible(obj) ? InvisibleGrabOpacity : 1.0;
@@ -1764,7 +1798,7 @@ namespace CtrDxEditor.Rendering
                 + (RotationTable.For(obj.Type) is { } rotSpec ? ObjectRotation.DisplayDegrees(obj, rotSpec) : 0.0);
             if (deg != 0)
             {
-                Vec2 previewPosition = PreviewPosition(obj, animationPreviewSeconds);
+                Vec2 previewPosition = DrawPosition(obj, animationPreviewSeconds);
                 Vec2 center = v.LevelToScreen(previewPosition);
                 Matrix m = Matrix.CreateTranslation(-center.X, -center.Y)
                     * Matrix.CreateRotation(deg * Math.PI / 180.0)
@@ -1813,17 +1847,9 @@ namespace CtrDxEditor.Rendering
             HitboxModel model,
             double? animationPreviewSeconds)
         {
-            if (HitboxTable.Compute(obj, scale, model) is not { } bounds)
-            {
-                return null;
-            }
-
-            Vec2 position = PreviewPosition(obj, animationPreviewSeconds);
-            double dx = position.X - obj.X;
-            double dy = position.Y - obj.Y;
-            return dx == 0.0 && dy == 0.0
-                ? bounds
-                : new LevelBounds(bounds.X + dx, bounds.Y + dy, bounds.W, bounds.H);
+            return HitboxTable.Compute(obj, scale, model) is not { } bounds
+                ? null
+                : Shift(bounds, DrawOffset(obj, animationPreviewSeconds));
         }
 
         /// <summary>Draws the circular path used by active <c>RC</c>/<c>RW</c> orbit movement.</summary>
