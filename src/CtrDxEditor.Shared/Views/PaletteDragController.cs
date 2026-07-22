@@ -3,6 +3,7 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using CtrDxEditor.Rendering;
@@ -35,6 +36,18 @@ namespace CtrDxEditor.Views
         private bool _touch;
         private PaletteItemViewModel? _draggingItem;
 
+        /// <summary>How long a placed item shows its confirmation before reverting to its icon.</summary>
+        private static readonly TimeSpan PlacedFeedbackDuration = TimeSpan.FromMilliseconds(900);
+
+        /// <summary>The item under the current press, recorded for touch as well as mouse.</summary>
+        private PaletteItemViewModel? _pendingItem;
+
+        /// <summary>The item currently showing a placement confirmation, or null when none is.</summary>
+        private PaletteItemViewModel? _placedItem;
+
+        /// <summary>Clears <see cref="_placedItem"/> once its confirmation has been shown long enough.</summary>
+        private DispatcherTimer? _placedTimer;
+
         /// <summary>Arms a placement on press; the gesture resolves on release.</summary>
         /// <remarks>
         /// A mouse or pen press captures the pointer so the drag survives leaving the palette. A touch press
@@ -53,6 +66,8 @@ namespace CtrDxEditor.Views
             if (button is { Tag: string element, IsEnabled: true })
             {
                 _pendingElement = element;
+                // Recorded before the touch return: touch is the case the confirmation exists for.
+                _pendingItem = button.DataContext as PaletteItemViewModel;
                 _touch = touch;
                 _pressPos = e.GetPosition(root);
 
@@ -61,7 +76,7 @@ namespace CtrDxEditor.Views
                     return;
                 }
 
-                if (button.DataContext is PaletteItemViewModel pressed)
+                if (_pendingItem is { } pressed)
                 {
                     _draggingItem = pressed;
                     pressed.IsDragging = true;
@@ -121,8 +136,9 @@ namespace CtrDxEditor.Views
                 canvas.HideGhost();
                 if (!_dragging)
                 {
-                    if (canvas.AddAtCenter(element)) // a click: drop at the level center
+                    if (canvas.AddAtCenter(element)) // a click or tap: drop at the level center
                     {
+                        ConfirmPlacement();
                         _ = canvas.Focus();
                     }
                 }
@@ -133,6 +149,7 @@ namespace CtrDxEditor.Views
                     {
                         if (canvas.DropElement(element, onCanvas)) // dragged onto the canvas
                         {
+                            ConfirmPlacement();
                             _ = canvas.Focus();
                         }
                     }
@@ -150,11 +167,59 @@ namespace CtrDxEditor.Views
             Cancel();
         }
 
+        /// <summary>Flags the pressed item as just placed and starts the timer that clears it.</summary>
+        /// <remarks>
+        /// One item is confirmed at a time: a second placement clears the first immediately rather than
+        /// leaving two rows lit, so the cue always points at the row that was last tapped. The timer is
+        /// created once and restarted, not recreated, so a burst of taps cannot leave stray timers behind.
+        /// </remarks>
+        private void ConfirmPlacement()
+        {
+            if (_pendingItem is not { } placed)
+            {
+                return;
+            }
+
+            if (_placedItem is { } previous && !ReferenceEquals(previous, placed))
+            {
+                previous.JustPlaced = false;
+            }
+
+            _placedItem = placed;
+            placed.JustPlaced = true;
+
+            if (_placedTimer is null)
+            {
+                _placedTimer = new DispatcherTimer { Interval = PlacedFeedbackDuration };
+                _placedTimer.Tick += (_, _) => ClearPlacementFeedback();
+            }
+
+            _placedTimer.Stop();
+            _placedTimer.Start();
+        }
+
+        /// <summary>Reverts the confirmed row to its icon and stops the timer.</summary>
+        private void ClearPlacementFeedback()
+        {
+            _placedTimer?.Stop();
+            if (_placedItem is { } placed)
+            {
+                placed.JustPlaced = false;
+            }
+            _placedItem = null;
+        }
+
         /// <summary>Clears drag state, hides the ghost, and unsets the dragged item's flag.</summary>
+        /// <remarks>
+        /// Deliberately leaves <see cref="_placedItem"/> alone: <c>Cancel</c> runs at the end of every
+        /// release, immediately after a successful placement has confirmed, so clearing the confirmation
+        /// here would blank it in the frame it was set.
+        /// </remarks>
         public void Cancel()
         {
             canvas.HideGhost();
             _pendingElement = null;
+            _pendingItem = null;
             _dragging = false;
             _touch = false;
             if (_draggingItem is { } draggingItem)

@@ -33,19 +33,27 @@
                   <Button Margin="0,3" Padding="8,6" HorizontalAlignment="Stretch"
                           HorizontalContentAlignment="Stretch"
                           IsEnabled="{Binding Enabled}"
+                          Classes.placed="{Binding JustPlaced}"
                           Tag="{Binding Element}">
                     <Grid ColumnDefinitions="*,Auto">
                       <ctl:MarqueeTextBlock Grid.Column="0" Text="{Binding DisplayName}"
                                             ForceActive="{Binding IsDragging}"
                                             VerticalAlignment="Center" />
                       <Grid Grid.Column="1" Width="28" Height="28" Margin="6,0,0,0">
-                        <Image Source="{Binding Icon}" Stretch="Uniform" />
-                        <Border IsVisible="{Binding InvertOnDarkTheme}"
-                                Background="{DynamicResource EditorBrush.TutorialPaletteOverlay}">
-                          <Border.OpacityMask>
-                            <ImageBrush Source="{Binding Icon}" Stretch="Uniform" />
-                          </Border.OpacityMask>
-                        </Border>
+                        <!-- The whole icon stack hides together: the dark-theme overlay is masked by the
+                             icon, so hiding only the Image would leave its silhouette over the check. -->
+                        <Grid IsVisible="{Binding !JustPlaced}">
+                          <Image Source="{Binding Icon}" Stretch="Uniform" />
+                          <Border IsVisible="{Binding InvertOnDarkTheme}"
+                                  Background="{DynamicResource EditorBrush.TutorialPaletteOverlay}">
+                            <Border.OpacityMask>
+                              <ImageBrush Source="{Binding Icon}" Stretch="Uniform" />
+                            </Border.OpacityMask>
+                          </Border>
+                        </Grid>
+                        <icons:MaterialIcon Kind="CheckCircle" Width="22" Height="22"
+                                            IsVisible="{Binding JustPlaced}"
+                                            Foreground="{DynamicResource EditorBrush.Primary}" />
                       </Grid>
                     </Grid>
                   </Button>

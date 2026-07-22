@@ -34,4 +34,9 @@
     <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
     <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Primary}" />
   </Style>
+
+  <!-- Palette row confirming it just placed an object. -->
+  <Style Selector="Button.placed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
+  </Style>
 </Styles>

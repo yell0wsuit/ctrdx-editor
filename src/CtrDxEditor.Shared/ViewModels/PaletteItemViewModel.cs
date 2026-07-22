@@ -51,5 +51,17 @@ namespace CtrDxEditor.ViewModels
             get;
             set => SetProperty(ref field, value);
         }
+
+        /// <summary>True for a moment after this item placed an object, driving the row's confirmation.</summary>
+        /// <remarks>
+        /// A palette tap drops the object at the level centre, which in the compact shell sits behind the
+        /// drawer. With no cue on the row itself the tap reads as having failed, and users tap again —
+        /// so the confirmation lives on the control that was touched rather than out on the canvas.
+        /// </remarks>
+        public bool JustPlaced
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
     }
 }
