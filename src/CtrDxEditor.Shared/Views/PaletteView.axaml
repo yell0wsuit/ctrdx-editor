@@ -53,7 +53,7 @@
                         </Grid>
                         <icons:MaterialIcon Kind="CheckCircle" Width="22" Height="22"
                                             IsVisible="{Binding JustPlaced}"
-                                            Foreground="{DynamicResource EditorBrush.Primary}" />
+                                            Foreground="{DynamicResource EditorBrush.SuccessText}" />
                       </Grid>
                     </Grid>
                   </Button>

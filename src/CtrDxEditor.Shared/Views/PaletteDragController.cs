@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -180,13 +181,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (_placedItem is { } previous && !ReferenceEquals(previous, placed))
-            {
-                previous.JustPlaced = false;
-            }
-
-            _placedItem = placed;
-            placed.JustPlaced = true;
+            _placedItem = ApplyPlacementFeedback(root.DataContext, placed, _placedItem);
 
             if (_placedTimer is null)
             {
@@ -196,6 +191,33 @@ namespace CtrDxEditor.Views
 
             _placedTimer.Stop();
             _placedTimer.Start();
+        }
+
+        /// <summary>Applies confirmation to the currently displayed instance of a placed palette item.</summary>
+        /// <param name="dataContext">The root view's data context, used to find the refreshed palette.</param>
+        /// <param name="pending">The item captured when the pointer was pressed.</param>
+        /// <param name="previous">The item previously showing confirmation, if any.</param>
+        /// <returns>The item that now shows confirmation.</returns>
+        /// <remarks>
+        /// Successful placement refreshes the palette before returning, replacing <paramref name="pending"/>
+        /// with a new instance. Resolving by element ensures the visible row receives the flag; the fallback
+        /// preserves the controller's behavior when used with a data context that does not own a palette.
+        /// </remarks>
+        private static PaletteItemViewModel ApplyPlacementFeedback(
+            object? dataContext,
+            PaletteItemViewModel pending,
+            PaletteItemViewModel? previous)
+        {
+            PaletteItemViewModel placed = (dataContext as EditorViewModel)?.PaletteView
+                .FirstOrDefault(item => item.Element == pending.Element) ?? pending;
+
+            if (previous is not null && !ReferenceEquals(previous, placed))
+            {
+                previous.JustPlaced = false;
+            }
+
+            placed.JustPlaced = true;
+            return placed;
         }
 
         /// <summary>Reverts the confirmed row to its icon and stops the timer.</summary>

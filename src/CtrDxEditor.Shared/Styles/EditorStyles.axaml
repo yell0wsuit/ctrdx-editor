@@ -37,6 +37,6 @@
 
   <!-- Palette row confirming it just placed an object. -->
   <Style Selector="Button.placed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.SuccessLow}" />
   </Style>
 </Styles>
