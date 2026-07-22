@@ -227,6 +227,14 @@ namespace CtrDxEditor.Rendering
         /// <summary>Callback used to place a new object at level coordinates.</summary>
         public Func<string, int, int, LevelObject?>? PlaceAt { get; set; }
 
+        /// <summary>What a primary pointer contact on the canvas does.</summary>
+        /// <remarks>
+        /// Set by the compact shell's rail toggle. <c>MainView</c> resets it to
+        /// <see cref="CanvasInteractionMode.Edit"/> whenever the rail leaves the screen, so a user cannot
+        /// be stranded in a mode whose only exit is hidden.
+        /// </remarks>
+        public CanvasInteractionMode InteractionMode { get; set; } = CanvasInteractionMode.Edit;
+
         /// <summary>Callback used to toggle the locked object from canvas gestures.</summary>
         public Action<LevelObject?>? ToggleLock { get; set; }
 

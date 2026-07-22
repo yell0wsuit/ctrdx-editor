@@ -706,6 +706,19 @@ namespace CtrDxEditor.Rendering
             _pressOrigin = e.GetPosition(this);
             _slopCleared = false;
 
+            // Pan mode owns the primary contact outright: no hit-testing, and — unlike the empty-space pan
+            // further down — no selection clear, since framing a selected object is the main reason to
+            // reach for the mode and losing the selection on the way would defeat it.
+            if (InteractionMode == CanvasInteractionMode.Pan
+                && (_lastPointerWasTouch || e.GetCurrentPoint(this).Properties.IsLeftButtonPressed))
+            {
+                _panning = true;
+                _panLast = _pressOrigin;
+                e.Pointer.Capture(this);
+                e.Handled = true;
+                return;
+            }
+
             if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
             {
                 _panning = true;
