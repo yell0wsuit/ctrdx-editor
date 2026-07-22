@@ -1,6 +1,7 @@
 using System;
 
 using Avalonia;
+using Avalonia.Threading;
 
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
@@ -55,6 +56,7 @@ namespace CtrDxEditor.Rendering
         public void ZoomBy(double factor, Point anchor)
         {
             View = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
+            MarkScrollActivity();
             UpdateScrollState();
         }
 
@@ -77,7 +79,26 @@ namespace CtrDxEditor.Rendering
             }
 
             View = ViewNavigation.ScrollTo(View, doc.Width, doc.Height, Bounds.Width, Bounds.Height, offsetX, offsetY);
+            MarkScrollActivity();
             UpdateScrollState();
+        }
+
+        /// <summary>Shows the scrollbar overlay and restarts the idle countdown that hides it again.</summary>
+        private void MarkScrollActivity()
+        {
+            IsScrollActive = true;
+            if (_scrollIdleTimer is null)
+            {
+                _scrollIdleTimer = new DispatcherTimer { Interval = ScrollIdleDelay };
+                _scrollIdleTimer.Tick += (_, _) =>
+                {
+                    _scrollIdleTimer.Stop();
+                    IsScrollActive = false;
+                };
+            }
+
+            _scrollIdleTimer.Stop();
+            _scrollIdleTimer.Start();
         }
 
         /// <summary>Recomputes the scrollbar viewport, maximum, and value from the current document and view, without recursing.</summary>

@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -40,6 +41,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Avalonia property backing <see cref="SnapEnabled"/>.</summary>
         public static readonly StyledProperty<bool> SnapEnabledProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(SnapEnabled));
+
+        /// <summary>Avalonia property backing <see cref="IsScrollActive"/>.</summary>
+        public static readonly StyledProperty<bool> IsScrollActiveProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(IsScrollActive));
 
         /// <summary>Avalonia property backing <see cref="SelectedObject"/>.</summary>
         public static readonly StyledProperty<LevelObject?> SelectedObjectProperty =
@@ -148,6 +153,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether object moves and placements snap to the level grid.</summary>
         public bool SnapEnabled { get => GetValue(SnapEnabledProperty); set => SetValue(SnapEnabledProperty, value); }
+
+        /// <summary>True while the view is being panned or zoomed, driving the scrollbar overlay's fade.</summary>
+        public bool IsScrollActive { get => GetValue(IsScrollActiveProperty); private set => SetValue(IsScrollActiveProperty, value); }
 
         /// <summary>The currently selected object, if any.</summary>
         public LevelObject? SelectedObject { get => GetValue(SelectedObjectProperty); set => SetValue(SelectedObjectProperty, value); }
@@ -476,6 +484,12 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Guards scrollbar/<see cref="View"/> sync so a programmatic scroll update doesn't recurse back through property changes.</summary>
         private bool _syncingScroll;
+
+        /// <summary>Clears <see cref="IsScrollActive"/> once the view has been still for <see cref="ScrollIdleDelay"/>.</summary>
+        private DispatcherTimer? _scrollIdleTimer;
+
+        /// <summary>How long the scrollbar overlay stays visible after the last pan or zoom.</summary>
+        private static readonly TimeSpan ScrollIdleDelay = TimeSpan.FromSeconds(1);
 
         /// <summary>True when a fit-to-view is queued, waiting for the control to be laid out with non-zero bounds.</summary>
         private bool _pendingFit;

@@ -305,8 +305,8 @@
       <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280">
       <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
-      <Grid Grid.Column="2" RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
-        <render:LevelCanvas Grid.Row="0" Grid.Column="0" x:Name="Canvas" Focusable="True"
+      <Grid Grid.Column="2">
+        <render:LevelCanvas x:Name="Canvas" Focusable="True"
                             ClipToBounds="True"
                             Document="{Binding Document}"
                             HiddenObjects="{Binding EffectivelyHiddenObjects}"
@@ -326,29 +326,45 @@
                             AnimationPreviewElapsedSeconds="{Binding AnimationPreviewElapsedSeconds}"
                             SelectedObject="{Binding SelectedObject, Mode=TwoWay}"
                             LockedObject="{Binding LockedObject, Mode=TwoWay}" />
-        <TextBox Grid.Row="0" Grid.Column="0" x:Name="TextEditor"
+        <TextBox x:Name="TextEditor"
                  IsVisible="False"
                  HorizontalAlignment="Left" VerticalAlignment="Top"
                  AcceptsReturn="True" TextWrapping="Wrap"
                  MinWidth="60" MinHeight="26"
                  KeyDown="TextEditor_KeyDown" LostFocus="TextEditor_LostFocus" />
-        <ScrollBar Grid.Row="0" Grid.Column="1"
-                   Orientation="Vertical"
-                   Minimum="0"
-                   Maximum="{Binding #Canvas.VerticalScrollMaximum}"
-                   Value="{Binding #Canvas.VerticalScrollValue, Mode=TwoWay}"
-                   ViewportSize="{Binding #Canvas.VerticalScrollViewport}"
-                   SmallChange="48"
-                   LargeChange="{Binding #Canvas.VerticalScrollViewport}" />
-        <ScrollBar Grid.Row="1" Grid.Column="0"
-                   Orientation="Horizontal"
-                   Minimum="0"
-                   Maximum="{Binding #Canvas.HorizontalScrollMaximum}"
-                   Value="{Binding #Canvas.HorizontalScrollValue, Mode=TwoWay}"
-                   ViewportSize="{Binding #Canvas.HorizontalScrollViewport}"
-                   SmallChange="48"
-                   LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
-        <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Panel}" />
+        <!-- Overlaid rather than laid out in Auto tracks: a bar that takes layout space would resize the
+             viewport as it appears, fighting the cursor-anchored zoom in ViewNavigation.ZoomBy. -->
+        <Grid x:Name="ScrollOverlay" IsHitTestVisible="True">
+          <Grid.Opacity>
+            <MultiBinding Converter="{x:Static conv:ScrollOverlayOpacityConverter.Instance}">
+              <Binding Path="IsScrollActive" ElementName="Canvas" />
+              <Binding Path="IsPointerOver" ElementName="Canvas" />
+            </MultiBinding>
+          </Grid.Opacity>
+          <Grid.Transitions>
+            <Transitions>
+              <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+            </Transitions>
+          </Grid.Transitions>
+          <ScrollBar Orientation="Vertical"
+                     HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                     Margin="0,0,0,12"
+                     Minimum="0"
+                     Maximum="{Binding #Canvas.VerticalScrollMaximum}"
+                     Value="{Binding #Canvas.VerticalScrollValue, Mode=TwoWay}"
+                     ViewportSize="{Binding #Canvas.VerticalScrollViewport}"
+                     SmallChange="48"
+                     LargeChange="{Binding #Canvas.VerticalScrollViewport}" />
+          <ScrollBar Orientation="Horizontal"
+                     VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                     Margin="0,0,12,0"
+                     Minimum="0"
+                     Maximum="{Binding #Canvas.HorizontalScrollMaximum}"
+                     Value="{Binding #Canvas.HorizontalScrollValue, Mode=TwoWay}"
+                     ViewportSize="{Binding #Canvas.HorizontalScrollViewport}"
+                     SmallChange="48"
+                     LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
+        </Grid>
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <!-- Named so compact-mode style selectors can reposition the panel without extracting it into its own
