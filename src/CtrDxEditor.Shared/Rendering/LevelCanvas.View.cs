@@ -86,19 +86,13 @@ namespace CtrDxEditor.Rendering
             LevelDocument? doc = Document;
             double viewportWidth = Math.Max(0, Bounds.Width);
             double viewportHeight = Math.Max(0, Bounds.Height);
-            double maxX = 0;
-            double maxY = 0;
-            double valueX = 0;
-            double valueY = 0;
+            ScrollRange horizontal = default;
+            ScrollRange vertical = default;
 
             if (doc is not null)
             {
-                double contentWidth = Math.Max(0, doc.Width * View.Zoom);
-                double contentHeight = Math.Max(0, doc.Height * View.Zoom);
-                maxX = Math.Max(0, contentWidth - viewportWidth);
-                maxY = Math.Max(0, contentHeight - viewportHeight);
-                valueX = Math.Clamp(-View.PanX, 0, maxX);
-                valueY = Math.Clamp(-View.PanY, 0, maxY);
+                horizontal = ViewNavigation.ComputeScrollRange(doc.Width * View.Zoom, viewportWidth, View.PanX);
+                vertical = ViewNavigation.ComputeScrollRange(doc.Height * View.Zoom, viewportHeight, View.PanY);
             }
 
             _syncingScroll = true;
@@ -106,10 +100,10 @@ namespace CtrDxEditor.Rendering
             {
                 HorizontalScrollViewport = viewportWidth;
                 VerticalScrollViewport = viewportHeight;
-                HorizontalScrollMaximum = maxX;
-                VerticalScrollMaximum = maxY;
-                HorizontalScrollValue = valueX;
-                VerticalScrollValue = valueY;
+                HorizontalScrollMaximum = horizontal.Maximum;
+                VerticalScrollMaximum = vertical.Maximum;
+                HorizontalScrollValue = horizontal.Value;
+                VerticalScrollValue = vertical.Value;
             }
             finally
             {
