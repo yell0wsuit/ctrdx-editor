@@ -352,6 +352,46 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>The open drawer's tab is latched, so the tab bar shows which panel is up.</summary>
+        /// <remarks>
+        /// Identity, not type name: the panels are reparented between the columns and the drawer, and a
+        /// reference check cannot go stale the way a name-string match can.
+        /// </remarks>
+        [Fact]
+        public void OpenDrawerLatchesItsTab()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("private void UpdateCompactTabState()", layout, StringComparison.Ordinal);
+            Assert.Contains("paletteTab.Classes.Set(\"active\",", layout, StringComparison.Ordinal);
+            Assert.Contains("layersTab.Classes.Set(\"active\",", layout, StringComparison.Ordinal);
+            Assert.Contains("ReferenceEquals(hosted,", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>A closed sheet latches neither tab, whatever it still holds.</summary>
+        /// <remarks>
+        /// Closing the drawer leaves the panel parented in <c>DrawerHost</c>, so hosting alone is not
+        /// enough — visibility has to be part of the predicate or the tab stays lit over a closed sheet.
+        /// </remarks>
+        [Fact]
+        public void ClosedDrawerLatchesNoTab()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("bool open = sheet.IsVisible;", layout, StringComparison.Ordinal);
+            Assert.Contains("open && drawerHost.Children.Count > 0", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>Every path that changes sheet visibility refreshes the tab latch.</summary>
+        [Fact]
+        public void TabStateRefreshesWhereverTheSheetToggles()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            // Both branches of ShowPanelInDrawer (re-tap toggle and fresh open) plus the chrome gate.
+            Assert.True(CountOccurrences(layout, "UpdateCompactTabState();") >= 3);
+        }
+
         private static int CountOccurrences(string haystack, string needle)
         {
             return haystack.Split(needle, StringSplitOptions.None).Length - 1;

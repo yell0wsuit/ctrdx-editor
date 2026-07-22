@@ -144,6 +144,8 @@ namespace CtrDxEditor.Views
                 // the document.
                 SetInteractionMode(CanvasInteractionMode.Edit);
             }
+
+            UpdateCompactTabState();
         }
 
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>
@@ -220,6 +222,7 @@ namespace CtrDxEditor.Views
             {
                 // Tapping the active tab closes the sheet, giving the canvas back.
                 sheet.IsVisible = !sheet.IsVisible;
+                UpdateCompactTabState();
                 return;
             }
 
@@ -232,6 +235,33 @@ namespace CtrDxEditor.Views
             drawerHost.Children.Add(panel);
             sheet.Height = CompactSheetHeight();
             sheet.IsVisible = true;
+            UpdateCompactTabState();
+        }
+
+        /// <summary>Latches whichever compact tab has its panel up in an open drawer.</summary>
+        /// <remarks>
+        /// Matched by reference against the named panels rather than by type or name string: both panels
+        /// are reparented between the expanded columns and the drawer, and a reference check cannot go
+        /// stale when one of them is renamed or wrapped. Visibility is part of the predicate because
+        /// closing the sheet leaves its panel parented in <c>DrawerHost</c>.
+        /// </remarks>
+        private void UpdateCompactTabState()
+        {
+            if (this.FindControl<Border>("CompactSheet") is not { } sheet
+                || this.FindControl<Panel>("DrawerHost") is not { } drawerHost
+                || this.FindControl<Button>("PaletteTab") is not { } paletteTab
+                || this.FindControl<Button>("LayersTab") is not { } layersTab)
+            {
+                return;
+            }
+
+            bool open = sheet.IsVisible;
+            Control? hosted = open && drawerHost.Children.Count > 0 ? drawerHost.Children[0] : null;
+
+            paletteTab.Classes.Set("active",
+                hosted is not null && ReferenceEquals(hosted, this.FindControl<PaletteView>("Palette")));
+            layersTab.Classes.Set("active",
+                hosted is not null && ReferenceEquals(hosted, this.FindControl<Grid>("LayersPanel")));
         }
 
         /// <summary>Raises the palette in the compact drawer.</summary>
