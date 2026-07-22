@@ -55,7 +55,12 @@ namespace CtrDxEditor.Rendering
         /// <param name="anchor">Screen-space point that stays fixed under the cursor while zooming.</param>
         public void ZoomBy(double factor, Point anchor)
         {
-            View = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
+            ViewTransform zoomed = ViewNavigation.ZoomBy(View, factor, new Vec2(anchor.X, anchor.Y), 0.1, 10.0);
+            if (Document is { } doc)
+            {
+                zoomed = ViewNavigation.ClampPan(zoomed, doc.Width, doc.Height, Bounds.Width, Bounds.Height);
+            }
+            View = zoomed;
             MarkScrollActivity();
             UpdateScrollState();
         }

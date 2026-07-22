@@ -49,9 +49,9 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(336, t.PanY);
         }
 
-        /// <summary>Verifies that content smaller than the viewport pans freely instead of snapping to center.</summary>
+        /// <summary>Verifies that content smaller than the viewport is locked to its centered position.</summary>
         [Fact]
-        public void ScrollToPansContentSmallerThanViewport()
+        public void ScrollToCentersContentSmallerThanViewport()
         {
             ViewTransform t = ViewNavigation.ScrollTo(
                 new ViewTransform(Zoom: 0.5, PanX: 0, PanY: 0),
@@ -62,9 +62,9 @@ namespace CtrDxEditor.Core.Tests
                 offsetX: 100,
                 offsetY: 100);
 
-            // Centering would give 120/90; free panning tracks the requested offset instead.
-            Assert.Equal(236, t.PanX);
-            Assert.Equal(136, t.PanY);
+            // Content 160x120 fits the 400x300 viewport, so both axes lock to center regardless of offset.
+            Assert.Equal(120, t.PanX);
+            Assert.Equal(90, t.PanY);
         }
 
         /// <summary>Verifies that panning to the maximum offset leaves exactly the keep sliver on screen.</summary>
@@ -103,9 +103,9 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(336, t.PanY);
         }
 
-        /// <summary>Verifies that the keep sliver shrinks to the content when the content is narrower than 64px.</summary>
+        /// <summary>Verifies that an axis whose content fits the viewport is locked to center at every offset.</summary>
         [Fact]
-        public void ScrollToKeepDegradesForContentNarrowerThanSliver()
+        public void ScrollToLocksContentToCenterWhenItFitsViewport()
         {
             ViewTransform atZero = ViewNavigation.ScrollTo(
                 new ViewTransform(Zoom: 1.0, PanX: 0, PanY: 0),
@@ -125,9 +125,9 @@ namespace CtrDxEditor.Core.Tests
                 offsetX: 360,
                 offsetY: 360);
 
-            // keep collapses to 40, so the whole level stays visible at both extremes.
-            Assert.Equal(360, atZero.PanX);
-            Assert.Equal(0, atMax.PanX);
+            // Content 40 fits the 400 viewport, so both extremes resolve to the centered pan (400-40)/2 = 180.
+            Assert.Equal(180, atZero.PanX);
+            Assert.Equal(180, atMax.PanX);
         }
 
         /// <summary>Verifies that the overscroll bounds hold at both ends of the zoom clamp range.</summary>
@@ -152,10 +152,10 @@ namespace CtrDxEditor.Core.Tests
                 offsetX: 99999,
                 offsetY: 99999);
 
-            // Zoomed out: content 100, keep 64, so the level stops with 64 of its 100px on screen.
-            Assert.Equal(-36, farOut.PanX);
+            // Zoomed out: content 100 fits the 400 viewport, so it locks to center (400-100)/2 = 150.
+            Assert.Equal(150, farOut.PanX);
 
-            // Zoomed in: content 10000, keep 64, leaving a 64px sliver against the left edge.
+            // Zoomed in: content 10000 > viewport, keep 64, leaving a 64px sliver against the left edge.
             Assert.Equal(-9936, farIn.PanX);
         }
 
@@ -186,6 +186,48 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal(500, range.Value);
             Assert.InRange(range.Value, 0, range.Maximum);
+        }
+
+        /// <summary>Verifies that an axis whose content fits the viewport reports an empty scroll range.</summary>
+        [Fact]
+        public void ComputeScrollRangeIsZeroWhenContentFitsViewport()
+        {
+            ScrollRange range = ViewNavigation.ComputeScrollRange(contentSize: 200, viewportSize: 400, pan: 100);
+
+            Assert.Equal(0, range.Maximum);
+            Assert.Equal(0, range.Value);
+        }
+
+        /// <summary>Verifies that clamping recenters an axis whose content fits the viewport.</summary>
+        [Fact]
+        public void ClampPanCentersAxisWhoseContentFitsViewport()
+        {
+            ViewTransform clamped = ViewNavigation.ClampPan(
+                new ViewTransform(Zoom: 1.0, PanX: 40, PanY: 0),
+                levelWidth: 200,
+                levelHeight: 200,
+                viewportWidth: 400,
+                viewportHeight: 400);
+
+            // Content 200 fits the 400 viewport, so an off-center pan snaps to (400-200)/2 = 100.
+            Assert.Equal(100, clamped.PanX);
+            Assert.Equal(100, clamped.PanY);
+        }
+
+        /// <summary>Verifies that clamping pulls an overscrolled axis back inside the keep-sliver bounds.</summary>
+        [Fact]
+        public void ClampPanClampsOverscrolledAxisIntoBounds()
+        {
+            ViewTransform clamped = ViewNavigation.ClampPan(
+                new ViewTransform(Zoom: 1.0, PanX: 5000, PanY: -5000),
+                levelWidth: 1000,
+                levelHeight: 1000,
+                viewportWidth: 400,
+                viewportHeight: 400);
+
+            // Content 1000 > viewport 400: overscroll bounds are [64 - 1000, 400 - 64] = [-936, 336].
+            Assert.Equal(336, clamped.PanX);
+            Assert.Equal(-936, clamped.PanY);
         }
 
         /// <summary>Verifies that pointer-centered zoom preserves the level point under the pointer.</summary>

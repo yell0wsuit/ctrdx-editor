@@ -58,6 +58,31 @@ namespace CtrDxEditor.Core.Geometry
                 PanForOffset(contentHeight, viewportHeight, offsetY));
         }
 
+        /// <summary>Clamps a view's pan to the overscroll bounds on both axes for the given level and viewport.</summary>
+        /// <param name="view">The view transform to clamp.</param>
+        /// <param name="levelWidth">The level width in level units.</param>
+        /// <param name="levelHeight">The level height in level units.</param>
+        /// <param name="viewportWidth">The viewport width in screen pixels.</param>
+        /// <param name="viewportHeight">The viewport height in screen pixels.</param>
+        /// <returns>
+        /// The same transform with each axis pan brought inside its bounds, so an axis whose content fits the
+        /// viewport is recentered and one larger than the viewport keeps at least the keep sliver on screen.
+        /// </returns>
+        public static ViewTransform ClampPan(
+            ViewTransform view,
+            double levelWidth,
+            double levelHeight,
+            double viewportWidth,
+            double viewportHeight)
+        {
+            double contentWidth = Math.Max(0, levelWidth * view.Zoom);
+            double contentHeight = Math.Max(0, levelHeight * view.Zoom);
+            return new ViewTransform(
+                view.Zoom,
+                ClampPanAxis(contentWidth, viewportWidth, view.PanX),
+                ClampPanAxis(contentHeight, viewportHeight, view.PanY));
+        }
+
         /// <summary>Returns the scrollbar range and position for one axis at the given pan.</summary>
         /// <param name="contentSize">The zoomed content size in screen pixels.</param>
         /// <param name="viewportSize">The viewport size in screen pixels.</param>
@@ -78,15 +103,27 @@ namespace CtrDxEditor.Core.Geometry
             return max - Math.Clamp(offset, 0, range);
         }
 
+        /// <summary>Clamps one axis's pan to its bounds, recentering when the content fits the viewport.</summary>
+        private static double ClampPanAxis(double contentSize, double viewportSize, double pan)
+        {
+            (double min, double max) = PanBounds(contentSize, viewportSize);
+            return Math.Clamp(pan, min, max);
+        }
+
         /// <summary>
-        /// Returns the inclusive pan bounds for one axis. The level and the viewport must overlap by at least
-        /// <see cref="OverscrollKeep"/> pixels, or by the smaller of the two when either is narrower than that,
-        /// which keeps the resulting range non-negative for every size combination.
+        /// Returns the inclusive pan bounds for one axis. Content that fits the viewport collapses to a single
+        /// centered pan so the axis cannot scroll; content larger than the viewport must overlap it by at least
+        /// <see cref="OverscrollKeep"/> pixels, or by the smaller of the two when either is narrower than that.
         /// </summary>
         private static (double Min, double Max) PanBounds(double contentSize, double viewportSize)
         {
             double content = Math.Max(0, contentSize);
             double viewport = Math.Max(0, viewportSize);
+            if (content <= viewport)
+            {
+                double centered = (viewport - content) / 2;
+                return (centered, centered);
+            }
             double keep = Math.Min(OverscrollKeep, Math.Min(content, viewport));
             return (keep - content, viewport - keep);
         }
