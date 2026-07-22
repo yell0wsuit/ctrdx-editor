@@ -75,19 +75,31 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// Save falls back to Save As at the handler, not just on the menu item, so neither the Ctrl+S chord
-        /// nor the header's access key can reach a write the platform cannot perform.
+        /// The Ctrl+S chord is gated on the same capability as the menu item, so it is inert on heads where
+        /// Save is hidden rather than redirecting to a command the user did not press.
+        /// </summary>
+        [Fact]
+        public void SaveChordIsGatedOnTheSameCapabilityAsTheMenuItem()
+        {
+            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
+
+            Assert.Contains("EditorShortcut.Save when DataContext is EditorViewModel { HasDocument: true, CanSaveInPlace: true }",
+                shortcuts, StringComparison.Ordinal);
+            // Save As keeps its own chord on every head, so saving stays reachable by keyboard.
+            Assert.Contains("case EditorShortcut.SaveAs when DataContext is EditorViewModel { HasDocument: true }:",
+                shortcuts, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Save still falls back to Save As at the handler, so the header's access key cannot reach a write
+        /// the platform cannot perform even though the chord no longer routes there.
         /// </summary>
         [Fact]
         public void SaveFallsBackToSaveAsAtTheHandler()
         {
             string commands = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.FileCommands.cs"));
-            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
 
             Assert.Contains("_currentLevelFile is null || !vm.CanSaveInPlace", commands, StringComparison.Ordinal);
-            // The chord stays a plain dispatch: the capability decision lives in one place, the handler.
-            Assert.Contains("case EditorShortcut.Save when DataContext is EditorViewModel { HasDocument: true }:",
-                shortcuts, StringComparison.Ordinal);
         }
 
         // The opening tag of the MenuItem carrying the given Click handler, so attribute assertions do not

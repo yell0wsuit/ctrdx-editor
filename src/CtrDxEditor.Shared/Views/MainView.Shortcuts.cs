@@ -76,7 +76,7 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Open:
                     Open_Click(this, new RoutedEventArgs());
                     return true;
-                case EditorShortcut.Save when DataContext is EditorViewModel { HasDocument: true }:
+                case EditorShortcut.Save when DataContext is EditorViewModel { HasDocument: true, CanSaveInPlace: true }:
                     Save_Click(this, new RoutedEventArgs());
                     return true;
                 case EditorShortcut.SaveAs when DataContext is EditorViewModel { HasDocument: true }:
