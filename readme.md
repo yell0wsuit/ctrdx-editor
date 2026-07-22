@@ -100,7 +100,10 @@ The editor is an [Avalonia](https://avaloniaui.net/) app targeting .NET 10. It s
 
 #### Prerequisites
 
-1. Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/) (or higher).
+1. Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/), version 10.0.302 or higher.
+
+> [!note]
+> The minimum is pinned in `global.json` with `rollForward: latestFeature`, so newer 10.0.x SDKs work automatically. However, if your SDK is older than that, `dotnet` commands will fail with a version-mismatch error until you update.
 
 2. Clone the repository:
 
