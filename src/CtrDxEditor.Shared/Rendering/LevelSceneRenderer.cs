@@ -185,11 +185,15 @@ namespace CtrDxEditor.Rendering
         {
             LevelBounds bounds = SelectionBounds(sprites, obj, candySkin, omNomSupport, nightLevel);
 
-            // Preview off is the common case and runs per object per frame, so it short-circuits before
-            // re-parsing the path attributes that could only ever return the authored position anyway.
-            return animationPreviewSeconds is null || !DrawsAtPreviewPosition(obj)
-                ? bounds
-                : PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
+            // Ordered cheapest first, because during preview this runs for every object in the level every
+            // frame and LevelObject re-reads the XML on each attribute access. A pathless object cannot move,
+            // and most of a level is pathless, so one probe for the attribute skips resolving a position that
+            // would re-parse x, y, path and moveSpeed only to hand back the authored point.
+            return animationPreviewSeconds is null
+                || !DrawsAtPreviewPosition(obj)
+                || string.IsNullOrWhiteSpace(obj.GetAttr("path"))
+                    ? bounds
+                    : PreviewSelectionBounds(obj, bounds, animationPreviewSeconds);
         }
 
         /// <summary>
