@@ -408,10 +408,6 @@ namespace CtrDxEditor.Views
         private static async Task WriteXmlAsync(IStorageFile file, string xml)
         {
             await using Stream stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-            {
-                stream.SetLength(0);
-            }
             await using StreamWriter writer = new(stream);
             await writer.WriteAsync(xml);
         }
