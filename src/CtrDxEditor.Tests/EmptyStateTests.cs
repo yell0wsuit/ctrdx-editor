@@ -55,14 +55,14 @@ namespace CtrDxEditor.Tests
                 SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             XElement columns = NamedElement(markup, "ExpandedColumns");
             XElement empty = NamedElement(markup, "EmptyState");
-            string view = SourceText("MainView.axaml");
-            int emptyPosition = view.IndexOf("x:Name=\"EmptyState\"", StringComparison.Ordinal);
-            int sheetPosition = view.IndexOf("x:Name=\"CompactSheet\"", StringComparison.Ordinal);
+            XElement sheet = NamedElement(markup, "CompactSheet");
 
             Assert.Same(columns.Parent, empty.Parent);
+            Assert.Same(columns.Parent, sheet.Parent);
+            Assert.Same(empty, columns.ElementsAfterSelf().First());
+            Assert.Same(sheet, empty.ElementsAfterSelf().First());
             Assert.Equal("{Binding HasDocument}", columns.Attribute("IsVisible")?.Value);
             Assert.Equal("{Binding !HasDocument}", empty.Attribute("IsVisible")?.Value);
-            Assert.True(emptyPosition >= 0 && sheetPosition > emptyPosition);
             Assert.DoesNotContain(
                 empty.Attributes(),
                 attribute => attribute.Name.LocalName == "ZIndex");
