@@ -302,7 +302,8 @@
       </MenuItem>
     </Menu>
     <Grid>
-      <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280">
+      <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280"
+            IsVisible="{Binding HasDocument}">
       <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <Grid Grid.Column="2">
@@ -365,9 +366,6 @@
                      SmallChange="48"
                      LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
         </Grid>
-        <!-- Last child of the canvas column so it draws over the canvas and its scrollbars, and inside
-             that column so it stays below the compact chrome's ZIndex band without declaring one. -->
-        <views:EmptyStateView x:Name="EmptyState" IsVisible="{Binding !HasDocument}" />
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <!-- Named so compact-mode style selectors can reposition the panel without extracting it into its own
@@ -665,6 +663,10 @@
         <views:PropertyPanel Grid.Row="4" />
       </Grid>
       </Grid>
+
+      <!-- Mutually exclusive with the editor columns so inactive palette, canvas and property controls do
+           not frame the start surface. Kept in this grid so later compact chrome remains above it. -->
+      <views:EmptyStateView x:Name="EmptyState" IsVisible="{Binding !HasDocument}" />
 
       <!-- Compact bottom sheet. A plain overlay rather than a DrawerPage: that control is a page-level
            navigation shell whose template carries its own title bars and pane toggles, which this shell

@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 
 using Xunit;
 
@@ -44,24 +46,26 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// It lives in the canvas column, not the compact overlay band.
+        /// The no-document surface replaces the editor workspace but remains below compact chrome.
         /// </summary>
-        /// <remarks>
-        /// The compact chrome sits in the outer grid at ZIndex 40-62. Parenting the empty state inside the
-        /// canvas column keeps it underneath all of it without an explicit ZIndex, so the hamburger stays
-        /// tappable on the start screen - which is the only way to reach New and Open from there.
-        /// </remarks>
         [Fact]
-        public void EmptyStateSitsBelowTheCompactChrome()
+        public void EmptyStateReplacesTheEditorWorkspaceBelowCompactChrome()
         {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            XElement columns = NamedElement(markup, "ExpandedColumns");
+            XElement empty = NamedElement(markup, "EmptyState");
             string view = SourceText("MainView.axaml");
-            int empty = view.IndexOf("x:Name=\"EmptyState\"", StringComparison.Ordinal);
-            int sheet = view.IndexOf("x:Name=\"CompactSheet\"", StringComparison.Ordinal);
-            int columns = view.IndexOf("x:Name=\"ExpandedColumns\"", StringComparison.Ordinal);
+            int emptyPosition = view.IndexOf("x:Name=\"EmptyState\"", StringComparison.Ordinal);
+            int sheetPosition = view.IndexOf("x:Name=\"CompactSheet\"", StringComparison.Ordinal);
 
-            Assert.True(columns >= 0 && empty > columns);
-            Assert.True(sheet > empty);
-            Assert.DoesNotContain("ZIndex", view[empty..(empty + 400)], StringComparison.Ordinal);
+            Assert.Same(columns.Parent, empty.Parent);
+            Assert.Equal("{Binding HasDocument}", columns.Attribute("IsVisible")?.Value);
+            Assert.Equal("{Binding !HasDocument}", empty.Attribute("IsVisible")?.Value);
+            Assert.True(emptyPosition >= 0 && sheetPosition > emptyPosition);
+            Assert.DoesNotContain(
+                empty.Attributes(),
+                attribute => attribute.Name.LocalName == "ZIndex");
         }
 
         /// <summary>
@@ -110,6 +114,13 @@ namespace CtrDxEditor.Tests
         private static string SourceText(string file)
         {
             return File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", file));
+        }
+
+        private static XElement NamedElement(XDocument markup, string name)
+        {
+            return markup.Descendants().Single(element =>
+                element.Attributes().Any(attribute =>
+                    attribute.Name.LocalName == "Name" && attribute.Value == name));
         }
 
         private static string SourcePath(params string[] parts)
