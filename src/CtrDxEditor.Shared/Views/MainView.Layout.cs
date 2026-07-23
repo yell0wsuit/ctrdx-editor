@@ -97,7 +97,13 @@ namespace CtrDxEditor.Views
             }
             else
             {
+                bool focusCanvas = IsCommandDrawerOpen;
                 SetCommandDrawerOpen(false, restoreFocus: false);
+                if (focusCanvas)
+                {
+                    _ = _canvas.Focus();
+                }
+
                 sheet.IsVisible = false;
                 drawerHost.Children.Clear();
 

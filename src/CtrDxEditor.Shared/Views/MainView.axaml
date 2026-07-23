@@ -768,7 +768,9 @@
               BorderThickness="0,0,1,0"
               KeyboardNavigation.TabNavigation="Cycle"
               KeyDown="CompactCommandDrawer_KeyDown">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid RowDefinitions="48,*">
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.File}" />
             <StackPanel x:Name="CommandDrawerFileSection">
@@ -934,6 +936,7 @@
             </StackPanel>
           </StackPanel>
         </ScrollViewer>
+        </Grid>
       </Border>
 
       <Button x:Name="CompactMenuButton" IsVisible="False" ZIndex="62"

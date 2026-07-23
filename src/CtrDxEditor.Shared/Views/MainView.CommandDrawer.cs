@@ -114,7 +114,7 @@ namespace CtrDxEditor.Views
         /// </remarks>
         private void CloseDrawerThen(System.Action run)
         {
-            SetCommandDrawerOpen(false, restoreFocus: false);
+            SetCommandDrawerOpen(false);
             run();
         }
 

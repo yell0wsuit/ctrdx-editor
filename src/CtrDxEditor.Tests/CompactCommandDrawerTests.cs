@@ -165,6 +165,47 @@ namespace CtrDxEditor.Tests
             Assert.Contains("IsVisible=\"{Binding ShowMovementPaths}\"", markup, StringComparison.Ordinal);
         }
 
+        /// <summary>The drawer reserves a header row so the higher-Z hamburger covers no command content.</summary>
+        [Fact]
+        public void DrawerContentClearsTheHamburger()
+        {
+            string view = SourceText("MainView.axaml");
+            int drawer = view.IndexOf("x:Name=\"CompactCommandDrawer\"", StringComparison.Ordinal);
+            int button = view.IndexOf("x:Name=\"CompactMenuButton\"", drawer, StringComparison.Ordinal);
+
+            Assert.True(drawer >= 0 && button > drawer);
+            Assert.Contains("<Grid RowDefinitions=\"48,*\">", view[drawer..button], StringComparison.Ordinal);
+            Assert.Contains("<ScrollViewer Grid.Row=\"1\"", view[drawer..button], StringComparison.Ordinal);
+        }
+
+        /// <summary>One-shot rows restore focus to the still-visible hamburger before running.</summary>
+        [Fact]
+        public void OneShotRowsRestoreHamburgerFocus()
+        {
+            string drawer = SourceText("MainView.CommandDrawer.cs");
+            int method = drawer.IndexOf("private void CloseDrawerThen", StringComparison.Ordinal);
+            int end = drawer.IndexOf("\n        }", method, StringComparison.Ordinal);
+
+            Assert.True(method >= 0 && end > method);
+            string body = drawer[method..end];
+            Assert.Contains("SetCommandDrawerOpen(false);", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("restoreFocus: false", body, StringComparison.Ordinal);
+        }
+
+        /// <summary>Widening an open drawer moves focus to the expanded canvas, not a hidden row.</summary>
+        [Fact]
+        public void ExpandedResizeMovesDrawerFocusToCanvas()
+        {
+            string layout = SourceText("MainView.Layout.cs");
+            int expanded = layout.IndexOf("else\n            {", StringComparison.Ordinal);
+            int end = layout.IndexOf("\n            }", expanded, StringComparison.Ordinal);
+
+            Assert.True(expanded >= 0 && end > expanded);
+            string branch = layout[expanded..end];
+            Assert.Contains("bool focusCanvas = IsCommandDrawerOpen;", branch, StringComparison.Ordinal);
+            Assert.Contains("_ = _canvas.Focus();", branch, StringComparison.Ordinal);
+        }
+
         private static int CountOccurrences(string haystack, string needle)
         {
             int count = 0;
