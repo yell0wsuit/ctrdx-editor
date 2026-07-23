@@ -23,10 +23,20 @@ namespace CtrDxEditor.Localization
         /// <summary>The localization key to resolve.</summary>
         public string Key { get; set; } = "";
 
+        /// <summary>Whether to strip access-key underscores from the resolved string.</summary>
+        /// <remarks>
+        /// <c>AccessText</c> consumes the <c>_</c> marker; tooltips and plain <c>TextBlock</c>s render it
+        /// literally, so touch surfaces reusing a desktop menu key need it removed. Kept here rather than
+        /// in a converter because the extension returns a string, not a binding - reusing the same
+        /// resource keys is what stops the drawer and the menu drifting apart in translation.
+        /// </remarks>
+        public bool Plain { get; set; }
+
         /// <inheritdoc />
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
-            return Localizer.Get(Key);
+            string value = Localizer.Get(Key);
+            return Plain ? value.Replace("_", string.Empty, StringComparison.Ordinal) : value;
         }
     }
 }

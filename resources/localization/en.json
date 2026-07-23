@@ -42,6 +42,7 @@
     "Panel.Language": "Tutorial language",
     "Panel.Properties": "Properties",
     "Panel.HandSegment": "Segment {0}",
+    "EditBar.Properties": "Properties",
     "Canvas.Mode.Edit": "Edit objects",
     "Canvas.Mode.Pan": "Move the view",
     "Palette.SearchPlaceholder": "Search…",

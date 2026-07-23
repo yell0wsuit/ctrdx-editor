@@ -679,13 +679,11 @@
       <Border x:Name="CompactRail" IsVisible="False"
               HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <!-- Six buttons: the latched mode pair, then the four actions a touch session cannot otherwise
-             reach. The pair leads and is divided off because a mode and a one-shot action read
-             differently, and interleaving them makes the row ambiguous. Delete earns its place because a
-             touch session has no keyboard Delete key, and Zoom to Fit is how a pinch that threw the level
-             off-screen is recovered. Everything else stays in the menu bar, which is still reachable in
-             compact mode. Six only fit because .railAction tightens the Fluent default padding; a seventh
-             would not. -->
+        <!-- Five buttons: the latched mode pair, then the three actions that always apply to an open
+             document. Delete moved to the compact edit bar, which is where the rest of the
+             selection-gated group lives; keeping it here made it the only button on the rail whose
+             availability depended on what was selected. Dropping it also frees the width the hamburger
+             needs at 320px. -->
         <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
           <Button x:Name="EditModeButton" Classes="railAction" Click="CompactEditMode_Click"
                   ToolTip.Tip="{loc:Tr Canvas.Mode.Edit}">
@@ -704,15 +702,44 @@
                   ToolTip.Tip="{loc:Tr Menu.Edit.Redo}">
             <icons:MaterialIcon Kind="Redo" Width="20" Height="20" />
           </Button>
-          <Button Classes="railAction" Click="Delete_Click" IsEnabled="{Binding CanDeleteSelection}"
-                  ToolTip.Tip="{loc:Tr Menu.Edit.Delete}">
-            <icons:MaterialIcon Kind="DeleteOutline" Width="20" Height="20" />
-          </Button>
           <Button Classes="railAction" Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}"
                   ToolTip.Tip="{loc:Tr Menu.View.ZoomFit}">
             <icons:MaterialIcon Kind="FitToScreen" Width="20" Height="20" />
           </Button>
         </StackPanel>
+      </Border>
+
+      <!-- Contextual edit bar. Docked above the tab bar rather than floating beside the selection: a
+           fixed position needs no repositioning maths, stays in thumb reach, and can never occlude the
+           object that was just tapped. -->
+      <Border x:Name="CompactEditBar" IsVisible="False"
+              VerticalAlignment="Bottom" ZIndex="45"
+              Background="{DynamicResource EditorBrush.Surface.Panel}"
+              BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+              BorderThickness="0,1,0,0">
+        <UniformGrid Columns="5" Margin="4,6">
+          <Button Classes="editBarAction" Click="Cut_Click" IsEnabled="{Binding CanCutSelection}"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.Cut, Plain=True}">
+            <icons:MaterialIcon Kind="ContentCut" Width="22" Height="22" />
+          </Button>
+          <Button Classes="editBarAction" Click="Copy_Click" IsEnabled="{Binding CanCopySelection}"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.Copy, Plain=True}">
+            <icons:MaterialIcon Kind="ContentCopy" Width="22" Height="22" />
+          </Button>
+          <Button Classes="editBarAction" Click="Paste_Click" IsEnabled="{Binding CanPaste}"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.Paste, Plain=True}">
+            <icons:MaterialIcon Kind="ContentPaste" Width="22" Height="22" />
+          </Button>
+          <Button Classes="editBarAction" Click="Delete_Click" IsEnabled="{Binding CanDeleteSelection}"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.Delete, Plain=True}">
+            <icons:MaterialIcon Kind="DeleteOutline" Width="22" Height="22" />
+          </Button>
+          <Button Classes="editBarAction" Click="CompactProperties_Click"
+                  IsEnabled="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  ToolTip.Tip="{loc:Tr EditBar.Properties}">
+            <icons:MaterialIcon Kind="Cog" Width="22" Height="22" />
+          </Button>
+        </UniformGrid>
       </Border>
 
       <Border x:Name="CompactTabs" IsVisible="False"

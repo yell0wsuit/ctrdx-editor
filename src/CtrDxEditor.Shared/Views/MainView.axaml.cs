@@ -158,6 +158,13 @@ namespace CtrDxEditor.Views
                 UpdateCompactChromeVisibility();
             }
 
+            if (e.PropertyName is nameof(EditorViewModel.CanCutSelection)
+                or nameof(EditorViewModel.CanPaste)
+                or nameof(EditorViewModel.SelectedObject))
+            {
+                UpdateCompactEditBarVisibility();
+            }
+
             if (e.PropertyName == nameof(EditorViewModel.EffectivelyLockedObjects))
             {
                 ClearLockedTreeSelection();

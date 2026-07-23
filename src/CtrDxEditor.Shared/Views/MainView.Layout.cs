@@ -146,6 +146,7 @@ namespace CtrDxEditor.Views
             }
 
             UpdateCompactTabState();
+            UpdateCompactEditBarVisibility();
         }
 
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>
@@ -153,7 +154,8 @@ namespace CtrDxEditor.Views
         {
             if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Border>("CompactRail") is not { } rail
-                || this.FindControl<Border>("CompactTabs") is not { } tabs)
+                || this.FindControl<Border>("CompactTabs") is not { } tabs
+                || this.FindControl<Border>("CompactEditBar") is not { } editBar)
             {
                 return;
             }
@@ -163,6 +165,8 @@ namespace CtrDxEditor.Views
             // it. Padding a side would also shift it off centre, since padding is not symmetric.
             rail.Padding = new Thickness(0, insets.Top, 0, 0);
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
+            // The bar sits directly above the tab bar, which already absorbs the bottom inset.
+            editBar.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
             // The sheet sits directly above the tab bar and inside any side notches.
             sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
             sheet.Height = CompactSheetHeight();
@@ -223,6 +227,7 @@ namespace CtrDxEditor.Views
                 // Tapping the active tab closes the sheet, giving the canvas back.
                 sheet.IsVisible = !sheet.IsVisible;
                 UpdateCompactTabState();
+                UpdateCompactEditBarVisibility();
                 return;
             }
 
@@ -236,6 +241,7 @@ namespace CtrDxEditor.Views
             sheet.Height = CompactSheetHeight();
             sheet.IsVisible = true;
             UpdateCompactTabState();
+            UpdateCompactEditBarVisibility();
         }
 
         /// <summary>Latches whichever compact tab has its panel up in an open drawer.</summary>
@@ -279,6 +285,7 @@ namespace CtrDxEditor.Views
 
             sheet.IsVisible = false;
             UpdateCompactTabState();
+            UpdateCompactEditBarVisibility();
             return true;
         }
 
@@ -298,6 +305,56 @@ namespace CtrDxEditor.Views
             {
                 ShowPanelInDrawer(layers);
             }
+        }
+
+        /// <summary>Raises the layers panel so the selected object's properties are reachable.</summary>
+        /// <remarks>
+        /// <c>PropertyPanel</c> is the <c>3*</c> row of <c>LayersPanel</c>, so it is already visible once
+        /// that panel is in the sheet. The problem this solves is naming: the only route there today is a
+        /// tab labelled "Layers", which does not advertise that it holds the properties.
+        /// </remarks>
+        private void CompactProperties_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (this.FindControl<Grid>("LayersPanel") is not { } layers
+                || this.FindControl<Border>("CompactSheet") is not { } sheet)
+            {
+                return;
+            }
+
+            // ShowPanelInDrawer toggles when the panel is already hosted; Properties must always open.
+            if (!sheet.IsVisible || !ReferenceEquals(HostedDrawerPanel(), layers))
+            {
+                ShowPanelInDrawer(layers);
+            }
+        }
+
+        /// <summary>The panel currently hosted in the compact sheet, or null when it is closed.</summary>
+        private Control? HostedDrawerPanel()
+        {
+            return this.FindControl<Border>("CompactSheet") is { IsVisible: true }
+                && this.FindControl<Panel>("DrawerHost") is { Children.Count: > 0 } host
+                ? host.Children[0]
+                : null;
+        }
+
+        /// <summary>Shows the edit bar while there is a selection to act on or a clipboard to paste.</summary>
+        /// <remarks>
+        /// The predicate is deliberately wider than "something is selected": <c>CanPaste</c> is gated on
+        /// the clipboard, not the selection, so a selection-only bar would hide Paste at exactly the
+        /// moment it is wanted - copy an object, tap empty canvas to deselect, paste. The bar also stands
+        /// down while either overlay is up, since both cover the strip it occupies.
+        /// </remarks>
+        private void UpdateCompactEditBarVisibility()
+        {
+            if (this.FindControl<Border>("CompactEditBar") is not { } bar)
+            {
+                return;
+            }
+
+            bool sheetOpen = this.FindControl<Border>("CompactSheet") is { IsVisible: true };
+            bool actionable = DataContext is EditorViewModel { CanCutSelection: true } or EditorViewModel { CanPaste: true };
+
+            bar.IsVisible = _layoutMode == LayoutMode.Compact && !sheetOpen && actionable;
         }
 
         /// <summary>Switches the canvas to edit mode from the compact rail.</summary>

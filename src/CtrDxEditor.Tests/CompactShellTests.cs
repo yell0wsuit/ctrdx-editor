@@ -232,13 +232,14 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The rail carries the four actions a touch session cannot otherwise reach quickly, each gated on
+        /// The rail carries the three always-applicable actions a touch session cannot otherwise reach
+        /// quickly, each gated on
         /// the same capability its menu item uses.
         /// </summary>
         /// <remarks>
-        /// Delete is on the rail because a touch session has no keyboard Delete key, and Zoom to Fit because
-        /// it is the only way back from a pinch that threw the level off-screen. The rail floats over the
-        /// canvas, so this list is deliberately short — anything further belongs in the menu bar.
+        /// Delete moved to the contextual edit bar with the other selection-gated commands. Zoom to Fit
+        /// stays because it is the only way back from a pinch that threw the level off-screen. The rail
+        /// floats over the canvas, so this list is deliberately short.
         /// </remarks>
         [Fact]
         public void CompactRailCarriesTheTouchCriticalActions()
@@ -251,17 +252,15 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("Click=\"Undo_Click\"", rail, StringComparison.Ordinal);
             Assert.Contains("Click=\"Redo_Click\"", rail, StringComparison.Ordinal);
-            Assert.Contains("Click=\"Delete_Click\"", rail, StringComparison.Ordinal);
+            Assert.DoesNotContain("Click=\"Delete_Click\"", rail, StringComparison.Ordinal);
             Assert.Contains("Click=\"ZoomFit_Click\"", rail, StringComparison.Ordinal);
 
             // Each action is gated on the capability its menu item uses, so the rail cannot invoke a command
             // the menu considers unavailable.
-            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", rail, StringComparison.Ordinal);
             Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
 
-            // Six buttons: the four actions plus the mode pair. This only fits because rail buttons use
-            // the tightened .railAction padding; anything further belongs in the menu bar.
-            Assert.Equal(6, CountOccurrences(rail, "<Button "));
+            // Five buttons: the three always-applicable actions plus the mode pair.
+            Assert.Equal(5, CountOccurrences(rail, "<Button "));
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
@@ -296,7 +295,7 @@ namespace CtrDxEditor.Tests
                     < rail.IndexOf("Click=\"Undo_Click\"", StringComparison.Ordinal));
         }
 
-        /// <summary>Six rail buttons fit only at the tightened padding, so every one must opt in.</summary>
+        /// <summary>Five rail buttons use the tightened padding, so every one must opt in.</summary>
         [Fact]
         public void CompactRailButtonsUseTheTightenedPadding()
         {
