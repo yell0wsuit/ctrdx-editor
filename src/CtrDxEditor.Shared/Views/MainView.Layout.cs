@@ -148,6 +148,12 @@ namespace CtrDxEditor.Views
                 menuButton.IsVisible = _layoutMode == LayoutMode.Compact;
             }
 
+            // Dropping needs a file to drag from, which a phone does not have.
+            if (this.FindControl<EmptyStateView>("EmptyState") is { } emptyState)
+            {
+                emptyState.ShowDropHint = _layoutMode != LayoutMode.Compact;
+            }
+
             bool compact = _layoutMode == LayoutMode.Compact;
             if (this.FindControl<Menu>("DesktopMenu") is { } desktopMenu)
             {
