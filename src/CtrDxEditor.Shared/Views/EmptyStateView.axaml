@@ -20,10 +20,10 @@
     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
                 HorizontalAlignment="Center">
       <Button Classes="primaryAction" MinWidth="120" MinHeight="40"
-              HorizontalContentAlignment="Center"
+              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
               Click="New_Click" Content="{loc:Tr EmptyState.NewLevel}" />
       <Button MinWidth="120" MinHeight="40"
-              HorizontalContentAlignment="Center"
+              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
               Click="Open_Click" Content="{loc:Tr EmptyState.OpenLevel}" />
     </StackPanel>
     <TextBlock x:Name="DropHint"

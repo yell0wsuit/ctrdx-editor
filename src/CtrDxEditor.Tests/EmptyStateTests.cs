@@ -22,6 +22,17 @@ namespace CtrDxEditor.Tests
             Assert.Contains("EmptyState.DropHint", view, StringComparison.Ordinal);
         }
 
+        /// <summary>Both command labels are centred within their buttons.</summary>
+        [Fact]
+        public void EmptyStateCentersBothButtonLabelsVertically()
+        {
+            string view = SourceText("EmptyStateView.axaml");
+
+            Assert.Equal(
+                2,
+                view.Split("VerticalContentAlignment=\"Center\"", StringSplitOptions.None).Length - 1);
+        }
+
         /// <summary>The host shows it only while no document is open.</summary>
         [Fact]
         public void EmptyStateIsBoundToTheAbsenceOfADocument()
