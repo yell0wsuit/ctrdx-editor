@@ -104,5 +104,110 @@ namespace CtrDxEditor.Views
                 e.Handled = true;
             }
         }
+
+        /// <summary>Closes the drawer, then runs a one-shot command.</summary>
+        /// <param name="run">The command to run once the drawer is down.</param>
+        /// <remarks>
+        /// Closing first matters because most of these open a dialog or a file picker: leaving the drawer
+        /// up would put it over the thing the user is being asked to answer. Toggles deliberately do not
+        /// use this - their effect is on the canvas behind the drawer, so closing would hide the result.
+        /// </remarks>
+        private void CloseDrawerThen(System.Action run)
+        {
+            SetCommandDrawerOpen(false, restoreFocus: false);
+            run();
+        }
+
+        private void DrawerSelectAll_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => SelectAll_Click(sender, e));
+        }
+
+        private void DrawerLevelSettings_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => LevelSettings_Click(sender, e));
+        }
+
+        private void DrawerZoomIn_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => ZoomIn_Click(sender, e));
+        }
+
+        private void DrawerZoomOut_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => ZoomOut_Click(sender, e));
+        }
+
+        // The four view toggles and the animation preview keep the drawer open: each one is flip-and-look,
+        // and what the user needs to look at is the canvas the drawer is covering.
+        private void DrawerAnimationPreview_Click(object? sender, RoutedEventArgs e)
+        {
+            AnimationPreviewToggle_Click(sender, e);
+        }
+
+        private void DrawerSnapToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            SnapToggle_Click(sender, e);
+        }
+
+        private void DrawerShowHitboxes_Click(object? sender, RoutedEventArgs e)
+        {
+            ShowHitboxesToggle_Click(sender, e);
+        }
+
+        private void DrawerShowForceFields_Click(object? sender, RoutedEventArgs e)
+        {
+            ShowForceFieldsToggle_Click(sender, e);
+        }
+
+        private void DrawerShowMovementPaths_Click(object? sender, RoutedEventArgs e)
+        {
+            ShowMovementPathsToggle_Click(sender, e);
+        }
+
+        private void DrawerNew_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => New_Click(sender, e));
+        }
+
+        private void DrawerOpen_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => Open_Click(sender, e));
+        }
+
+        private void DrawerSave_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => Save_Click(sender, e));
+        }
+
+        private void DrawerSaveAs_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => SaveAs_Click(sender, e));
+        }
+
+        private void DrawerScreenshot_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => Screenshot_Click(sender, e));
+        }
+
+        private void DrawerReviewChanges_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => ReviewChanges_Click(sender, e));
+        }
+
+        private void DrawerPlaytest_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => Playtest_Click(sender, e));
+        }
+
+        private void DrawerSetDxLocation_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => SetDxLocation_Click(sender, e));
+        }
+
+        private void DrawerClose_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => Close_Click(sender, e));
+        }
     }
 }

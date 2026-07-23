@@ -772,7 +772,7 @@
           <StackPanel>
             <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.File}" />
             <StackPanel x:Name="CommandDrawerFileSection">
-              <Button Classes="drawerRow" Click="New_Click">
+              <Button Classes="drawerRow" Click="DrawerNew_Click">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="FilePlusOutline" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -780,7 +780,7 @@
                              Text="{loc:Tr Menu.File.New, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="Open_Click">
+              <Button Classes="drawerRow" Click="DrawerOpen_Click">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="FolderOpenOutline" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -788,7 +788,7 @@
                              Text="{loc:Tr Menu.File.Open, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="Save_Click"
+              <Button Classes="drawerRow" Click="DrawerSave_Click"
                       IsEnabled="{Binding HasDocument}" IsVisible="{Binding CanSaveInPlace}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="ContentSave" Width="20" Height="20"
@@ -797,7 +797,7 @@
                              Text="{loc:Tr Menu.File.Save, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="SaveAs_Click" IsEnabled="{Binding HasDocument}">
+              <Button Classes="drawerRow" Click="DrawerSaveAs_Click" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="ContentSaveEdit" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -805,7 +805,7 @@
                              Text="{loc:Tr Menu.File.SaveAs, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="Screenshot_Click" IsEnabled="{Binding HasDocument}">
+              <Button Classes="drawerRow" Click="DrawerScreenshot_Click" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="Camera" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -813,7 +813,7 @@
                              Text="{loc:Tr Menu.File.Screenshot, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="ReviewChanges_Click" IsEnabled="{Binding HasDocument}">
+              <Button Classes="drawerRow" Click="DrawerReviewChanges_Click" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="FileCompare" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -821,7 +821,7 @@
                              Text="{loc:Tr Menu.File.ReviewChanges, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="Playtest_Click"
+              <Button Classes="drawerRow" Click="DrawerPlaytest_Click"
                       IsVisible="{Binding CanPlaytest}" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="Play" Width="20" Height="20"
@@ -830,7 +830,7 @@
                              Text="{loc:Tr Menu.File.Playtest, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="SetDxLocation_Click" IsVisible="{Binding CanPlaytest}">
+              <Button Classes="drawerRow" Click="DrawerSetDxLocation_Click" IsVisible="{Binding CanPlaytest}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="FolderCogOutline" Width="20" Height="20"
                                       VerticalAlignment="Center" />
@@ -838,12 +838,97 @@
                              Text="{loc:Tr Menu.File.SetDxLocation, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="Close_Click" IsEnabled="{Binding HasDocument}">
+              <Button Classes="drawerRow" Click="DrawerClose_Click" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="CloseBoxOutline" Width="20" Height="20"
                                       VerticalAlignment="Center" />
                   <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
                              Text="{loc:Tr Menu.File.Close, Plain=True}" />
+                </Grid>
+              </Button>
+            </StackPanel>
+
+            <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.Edit}" />
+            <StackPanel x:Name="CommandDrawerEditSection">
+              <Button Classes="drawerRow" Click="DrawerSelectAll_Click" IsEnabled="{Binding CanSelectAllObjects}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="SelectAll" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.Edit.SelectAll, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerLevelSettings_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="Cog" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.Edit.LevelSettings, Plain=True}" />
+                </Grid>
+              </Button>
+            </StackPanel>
+
+            <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.View}" />
+            <StackPanel x:Name="CommandDrawerViewSection">
+              <Button Classes="drawerRow" Click="DrawerZoomIn_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="MagnifyPlusOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.ZoomIn, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerZoomOut_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="MagnifyMinusOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.ZoomOut, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerAnimationPreview_Click"
+                      IsEnabled="{Binding CanToggleAnimationPreview}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="PlayArrow" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{Binding AnimationPreviewMenuText}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerSnapToggle_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.SnapToGrid, Plain=True}" />
+                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
+                                      VerticalAlignment="Center" IsVisible="{Binding SnapEnabled}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerShowHitboxes_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.ShowHitboxes, Plain=True}" />
+                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
+                                      VerticalAlignment="Center" IsVisible="{Binding ShowHitboxes}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerShowForceFields_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.ShowForceFields, Plain=True}" />
+                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
+                                      VerticalAlignment="Center" IsVisible="{Binding ShowForceFields}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerShowMovementPaths_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.View.ShowMovementPaths, Plain=True}" />
+                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
+                                      VerticalAlignment="Center" IsVisible="{Binding ShowMovementPaths}" />
                 </Grid>
               </Button>
             </StackPanel>

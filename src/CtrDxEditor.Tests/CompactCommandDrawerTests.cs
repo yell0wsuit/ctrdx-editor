@@ -111,6 +111,60 @@ namespace CtrDxEditor.Tests
             Assert.Contains("!IsCommandDrawerOpen", layout[method..end], StringComparison.Ordinal);
         }
 
+        /// <summary>All three sections are present, in the same order as the desktop menu.</summary>
+        [Fact]
+        public void DrawerHasFileEditAndViewSections()
+        {
+            string view = SourceText("MainView.axaml");
+            int file = view.IndexOf("x:Name=\"CommandDrawerFileSection\"", StringComparison.Ordinal);
+            int edit = view.IndexOf("x:Name=\"CommandDrawerEditSection\"", StringComparison.Ordinal);
+            int viewSection = view.IndexOf("x:Name=\"CommandDrawerViewSection\"", StringComparison.Ordinal);
+
+            Assert.True(file >= 0);
+            Assert.True(edit > file);
+            Assert.True(viewSection > edit);
+        }
+
+        /// <summary>
+        /// Toggles keep the drawer open because their effect is on the canvas behind it; one-shot
+        /// commands close it first so the drawer is not left covering the dialog they open.
+        /// </summary>
+        [Fact]
+        public void OneShotRowsCloseTheDrawerAndTogglesDoNot()
+        {
+            string drawer = SourceText("MainView.CommandDrawer.cs");
+            string view = SourceText("MainView.axaml");
+
+            Assert.Contains("private void CloseDrawerThen(", drawer, StringComparison.Ordinal);
+            Assert.Contains("Click=\"DrawerSnapToggle_Click\"", view, StringComparison.Ordinal);
+            Assert.Contains("Click=\"DrawerShowHitboxes_Click\"", view, StringComparison.Ordinal);
+            Assert.Contains("Click=\"DrawerZoomIn_Click\"", view, StringComparison.Ordinal);
+
+            int snap = drawer.IndexOf("DrawerSnapToggle_Click", StringComparison.Ordinal);
+            int snapEnd = drawer.IndexOf("private void", snap + 10, StringComparison.Ordinal);
+            Assert.DoesNotContain("CloseDrawerThen", drawer[snap..snapEnd], StringComparison.Ordinal);
+
+            int zoom = drawer.IndexOf("DrawerZoomIn_Click", StringComparison.Ordinal);
+            int zoomEnd = drawer.IndexOf("private void", zoom + 10, StringComparison.Ordinal);
+            Assert.Contains("CloseDrawerThen", drawer[zoom..zoomEnd], StringComparison.Ordinal);
+        }
+
+        /// <summary>Toggle rows show their state, matching the desktop menu's check treatment.</summary>
+        [Fact]
+        public void ToggleRowsShowACheck()
+        {
+            string view = SourceText("MainView.axaml");
+            int viewSection = view.IndexOf("x:Name=\"CommandDrawerViewSection\"", StringComparison.Ordinal);
+
+            Assert.True(viewSection >= 0);
+            string markup = view[viewSection..];
+
+            Assert.Contains("IsVisible=\"{Binding SnapEnabled}\"", markup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowHitboxes}\"", markup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowForceFields}\"", markup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowMovementPaths}\"", markup, StringComparison.Ordinal);
+        }
+
         private static int CountOccurrences(string haystack, string needle)
         {
             int count = 0;
