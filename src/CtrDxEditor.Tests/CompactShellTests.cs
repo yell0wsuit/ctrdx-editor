@@ -455,6 +455,29 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>The desktop menu is named so layout code can hide it in compact mode.</summary>
+        [Fact]
+        public void DesktopMenuIsNamedAndCompactHidden()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("x:Name=\"DesktopMenu\"", view, StringComparison.Ordinal);
+            Assert.Contains("desktopMenu.IsVisible = !compact;", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The hamburger is not document-gated the way the rail and tabs are: New and Open live in the
+        /// drawer, so it must work before any document exists.
+        /// </summary>
+        [Fact]
+        public void HamburgerIsCompactGatedNotDocumentGated()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("menuButton.IsVisible = _layoutMode == LayoutMode.Compact;", layout, StringComparison.Ordinal);
+        }
+
         private static int CountOccurrences(string haystack, string needle)
         {
             return haystack.Split(needle, StringSplitOptions.None).Length - 1;

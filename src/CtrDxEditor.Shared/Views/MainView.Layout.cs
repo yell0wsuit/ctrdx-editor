@@ -142,6 +142,13 @@ namespace CtrDxEditor.Views
                 menuButton.IsVisible = _layoutMode == LayoutMode.Compact;
             }
 
+            bool compact = _layoutMode == LayoutMode.Compact;
+            if (this.FindControl<Menu>("DesktopMenu") is { } desktopMenu)
+            {
+                // Docked, so hiding it gives the row back to the canvas rather than leaving a gap.
+                desktopMenu.IsVisible = !compact;
+            }
+
             if (!show)
             {
                 sheet.IsVisible = false;

@@ -15,7 +15,7 @@
   <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
     <Grid>
       <DockPanel>
-    <Menu DockPanel.Dock="Top">
+    <Menu x:Name="DesktopMenu" DockPanel.Dock="Top">
       <MenuItem Header="{loc:Tr Menu.File}">
         <MenuItem Click="New_Click">
           <MenuItem.Icon>
