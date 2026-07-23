@@ -42,7 +42,7 @@
     "Panel.Language": "Tutorial language",
     "Panel.Properties": "Properties",
     "Panel.HandSegment": "Segment {0}",
-    "EmptyState.Title": "No level open",
+    "EmptyState.Title": "No level opened",
     "EmptyState.Subtitle": "Create a new level or open an existing one",
     "EmptyState.NewLevel": "New Level",
     "EmptyState.OpenLevel": "Open Level",
