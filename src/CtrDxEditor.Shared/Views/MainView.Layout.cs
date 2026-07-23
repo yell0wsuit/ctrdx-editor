@@ -97,6 +97,7 @@ namespace CtrDxEditor.Views
             }
             else
             {
+                SetCommandDrawerOpen(false, restoreFocus: false);
                 sheet.IsVisible = false;
                 drawerHost.Children.Clear();
 
@@ -134,6 +135,12 @@ namespace CtrDxEditor.Views
                 && DataContext is EditorViewModel { HasDocument: true };
             tabs.IsVisible = show;
             rail.IsVisible = show;
+            // The hamburger is not document-gated like the rail and tabs: New and Open live in the
+            // drawer, so it has to be reachable from the start screen.
+            if (this.FindControl<Button>("CompactMenuButton") is { } menuButton)
+            {
+                menuButton.IsVisible = _layoutMode == LayoutMode.Compact;
+            }
 
             if (!show)
             {
@@ -155,7 +162,9 @@ namespace CtrDxEditor.Views
             if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactTabs") is not { } tabs
-                || this.FindControl<Border>("CompactEditBar") is not { } editBar)
+                || this.FindControl<Border>("CompactEditBar") is not { } editBar
+                || this.FindControl<Border>("CompactCommandDrawer") is not { } commandDrawer
+                || this.FindControl<Button>("CompactMenuButton") is not { } menuButton)
             {
                 return;
             }
@@ -167,6 +176,11 @@ namespace CtrDxEditor.Views
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
             // The bar sits directly above the tab bar, which already absorbs the bottom inset.
             editBar.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
+            menuButton.Margin = new Thickness(insets.Left, insets.Top, 0, 0);
+            commandDrawer.Padding = new Thickness(insets.Left, insets.Top, 0, insets.Bottom);
+            // Narrower than a typical nav drawer on purpose: toggles leave it open, and their effect is
+            // on the canvas behind it. 260 caps it on tablets; 70% keeps ~96px of canvas at 320.
+            commandDrawer.Width = Bounds.Width > 0 ? Math.Min(260, Bounds.Width * 0.70) : 260;
             // The sheet sits directly above the tab bar and inside any side notches.
             sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
             sheet.Height = CompactSheetHeight();
@@ -277,8 +291,18 @@ namespace CtrDxEditor.Views
         /// </returns>
         private bool DismissCompactDrawerOnCanvasPress()
         {
-            if (_layoutMode != LayoutMode.Compact
-                || this.FindControl<Border>("CompactSheet") is not { IsVisible: true } sheet)
+            if (_layoutMode != LayoutMode.Compact)
+            {
+                return false;
+            }
+
+            if (IsCommandDrawerOpen)
+            {
+                SetCommandDrawerOpen(false);
+                return true;
+            }
+
+            if (this.FindControl<Border>("CompactSheet") is not { IsVisible: true } sheet)
             {
                 return false;
             }
@@ -354,7 +378,7 @@ namespace CtrDxEditor.Views
             bool sheetOpen = this.FindControl<Border>("CompactSheet") is { IsVisible: true };
             bool actionable = DataContext is EditorViewModel { CanCutSelection: true } or EditorViewModel { CanPaste: true };
 
-            bar.IsVisible = _layoutMode == LayoutMode.Compact && !sheetOpen && actionable;
+            bar.IsVisible = _layoutMode == LayoutMode.Compact && !sheetOpen && !IsCommandDrawerOpen && actionable;
         }
 
         /// <summary>Switches the canvas to edit mode from the compact rail.</summary>

@@ -754,6 +754,111 @@
                   Content="{loc:Tr Panel.Layers}" />
         </UniformGrid>
       </Border>
+
+      <!-- Command drawer. The scrim is lighter than a standard modal because toggles deliberately leave
+           the drawer open, and their effect is on the canvas behind it. -->
+      <Border x:Name="CompactCommandScrim" IsVisible="False" ZIndex="60"
+              Background="#66000000"
+              PointerPressed="CompactCommandScrim_PointerPressed" />
+
+      <Border x:Name="CompactCommandDrawer" IsVisible="False" ZIndex="61"
+              HorizontalAlignment="Left" VerticalAlignment="Stretch"
+              Background="{DynamicResource EditorBrush.Surface.Panel}"
+              BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+              BorderThickness="0,0,1,0"
+              KeyboardNavigation.TabNavigation="Cycle"
+              KeyDown="CompactCommandDrawer_KeyDown">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.File}" />
+            <StackPanel x:Name="CommandDrawerFileSection">
+              <Button Classes="drawerRow" Click="New_Click">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="FilePlusOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.New, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="Open_Click">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="FolderOpenOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.Open, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="Save_Click"
+                      IsEnabled="{Binding HasDocument}" IsVisible="{Binding CanSaveInPlace}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="ContentSave" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.Save, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="SaveAs_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="ContentSaveEdit" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.SaveAs, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="Screenshot_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="Camera" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.Screenshot, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="ReviewChanges_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="FileCompare" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.ReviewChanges, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="Playtest_Click"
+                      IsVisible="{Binding CanPlaytest}" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="Play" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.Playtest, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="SetDxLocation_Click" IsVisible="{Binding CanPlaytest}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="FolderCogOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.SetDxLocation, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="Close_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="CloseBoxOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.File.Close, Plain=True}" />
+                </Grid>
+              </Button>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+
+      <Button x:Name="CompactMenuButton" IsVisible="False" ZIndex="62"
+              HorizontalAlignment="Left" VerticalAlignment="Top"
+              Width="48" Height="48" Padding="0"
+              Background="{DynamicResource EditorBrush.Surface.Panel}"
+              Click="CompactMenuButton_Click"
+              AutomationProperties.Name="{loc:Tr CommandDrawer.Open}">
+        <icons:MaterialIcon Kind="Menu" Width="24" Height="24" />
+      </Button>
       </Grid>
       </DockPanel>
       <Canvas IsHitTestVisible="False">

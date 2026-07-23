@@ -1,0 +1,144 @@
+using System;
+using System.IO;
+
+using Xunit;
+
+namespace CtrDxEditor.Tests
+{
+    /// <summary>Tests the compact command drawer's markup, sizing and dismissal wiring.</summary>
+    public class CompactCommandDrawerTests
+    {
+        /// <summary>The hamburger, scrim and drawer all exist and start hidden.</summary>
+        [Fact]
+        public void DrawerChromeExistsAndStartsHidden()
+        {
+            string view = SourceText("MainView.axaml");
+
+            Assert.Contains("x:Name=\"CompactMenuButton\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"CompactCommandScrim\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"CompactCommandDrawer\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"CommandDrawerFileSection\"", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The drawer never uses a nested Menu: MenuItem carries Fluent's pointer-sized metrics and
+        /// flyout behaviour, which is the whole reason the compact shell is replacing it.
+        /// </summary>
+        [Fact]
+        public void DrawerDoesNotNestAMenu()
+        {
+            string view = SourceText("MainView.axaml");
+            int drawer = view.IndexOf("x:Name=\"CompactCommandDrawer\"", StringComparison.Ordinal);
+
+            Assert.True(drawer >= 0);
+            string markup = view[drawer..];
+            int end = markup.IndexOf("x:Name=\"CompactMenuButton\"", StringComparison.Ordinal);
+
+            Assert.DoesNotContain("<MenuItem", markup[..end], StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Width leaves usable canvas behind an open drawer, because toggles keep it open and their
+        /// whole point is watching the canvas change.
+        /// </summary>
+        [Fact]
+        public void DrawerWidthLeavesCanvasVisible()
+        {
+            string layout = SourceText("MainView.Layout.cs");
+
+            Assert.Contains("Math.Min(260, Bounds.Width * 0.70)", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Android's back button in a browser is a history popstate, not a key event, and iOS has no
+        /// back key at all. Wiring them produces tests that pass and behaviour that never fires.
+        /// </summary>
+        [Fact]
+        public void DrawerDoesNotWireBrowserBackKeys()
+        {
+            string drawer = SourceText("MainView.CommandDrawer.cs");
+
+            Assert.DoesNotContain("Key.BrowserBack", drawer, StringComparison.Ordinal);
+            Assert.DoesNotContain("Key.Back", drawer, StringComparison.Ordinal);
+            Assert.Contains("Key.Escape", drawer, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// A left-edge swipe is Safari's back gesture on iOS, so the hamburger is the only way in.
+        /// </summary>
+        [Fact]
+        public void DrawerHasNoEdgeSwipeGesture()
+        {
+            string drawer = SourceText("MainView.CommandDrawer.cs");
+
+            Assert.DoesNotContain("Gesture", drawer, StringComparison.Ordinal);
+            Assert.DoesNotContain("Swipe", drawer, StringComparison.Ordinal);
+        }
+
+        /// <summary>Every dismissal path funnels through one method, so states cannot drift.</summary>
+        [Fact]
+        public void AllDismissalPathsUseOneMethod()
+        {
+            string drawer = SourceText("MainView.CommandDrawer.cs");
+
+            Assert.Contains("private void SetCommandDrawerOpen(bool open, bool restoreFocus = true)", drawer, StringComparison.Ordinal);
+            Assert.Equal(1, CountOccurrences(drawer, "scrim.IsVisible ="));
+        }
+
+        /// <summary>A canvas press closes the command drawer before it considers the bottom sheet.</summary>
+        [Fact]
+        public void CanvasPressClosesCommandDrawerFirst()
+        {
+            string layout = SourceText("MainView.Layout.cs");
+            int method = layout.IndexOf("private bool DismissCompactDrawerOnCanvasPress", StringComparison.Ordinal);
+
+            Assert.True(method >= 0);
+            int close = layout.IndexOf("SetCommandDrawerOpen(false", method, StringComparison.Ordinal);
+            int sheet = layout.IndexOf("CompactSheet", method, StringComparison.Ordinal);
+
+            Assert.True(close >= 0 && close < sheet);
+        }
+
+        /// <summary>The edit bar stands down while the drawer covers it.</summary>
+        [Fact]
+        public void EditBarHidesWhileTheDrawerIsOpen()
+        {
+            string layout = SourceText("MainView.Layout.cs");
+            int method = layout.IndexOf("private void UpdateCompactEditBarVisibility", StringComparison.Ordinal);
+
+            Assert.True(method >= 0);
+            int end = layout.IndexOf("\n        }", method, StringComparison.Ordinal);
+            Assert.Contains("!IsCommandDrawerOpen", layout[method..end], StringComparison.Ordinal);
+        }
+
+        private static int CountOccurrences(string haystack, string needle)
+        {
+            int count = 0;
+            int index = haystack.IndexOf(needle, StringComparison.Ordinal);
+            while (index >= 0)
+            {
+                count++;
+                index = haystack.IndexOf(needle, index + needle.Length, StringComparison.Ordinal);
+            }
+
+            return count;
+        }
+
+        private static string SourceText(string file)
+        {
+            return File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", file));
+        }
+
+        private static string SourcePath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                       ?? throw new InvalidOperationException("Could not locate src directory.");
+            }
+
+            return Path.Combine([path, .. parts]);
+        }
+    }
+}

@@ -40,6 +40,25 @@
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 
+  <!-- Command-drawer row: 48px touch target, full-width hit area, left-aligned like a list row. -->
+  <Style Selector="Button.drawerRow">
+    <Setter Property="MinHeight" Value="48" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Padding" Value="14,0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <!-- Section heading above each group of drawer rows. -->
+  <Style Selector="TextBlock.drawerSection">
+    <Setter Property="Margin" Value="14,14,14,4" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Subtle}" />
+  </Style>
+
   <!-- Latched state, shared by the rail's mode pair and the compact drawer tabs. -->
   <Style Selector="Button.active /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
