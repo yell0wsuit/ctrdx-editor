@@ -51,6 +51,23 @@
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 
+  <!-- Accent button for a screen's single primary action. -->
+  <Style Selector="Button.primaryAction /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.primaryAction:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.PrimaryHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.primaryAction:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryPressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.PrimaryPressed}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
+  </Style>
+
   <!-- Section heading above each group of drawer rows. -->
   <Style Selector="TextBlock.drawerSection">
     <Setter Property="Margin" Value="14,14,14,4" />

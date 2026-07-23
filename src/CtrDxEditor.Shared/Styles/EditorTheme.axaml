@@ -276,6 +276,8 @@
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
       <Color x:Key="EditorColor.Primary">#155DFC</Color>  <!-- blue-600 -->
+      <Color x:Key="EditorColor.PrimaryHover">#1447E6</Color>  <!-- blue-700 -->
+      <Color x:Key="EditorColor.PrimaryPressed">#193CB8</Color>  <!-- blue-800 -->
       <Color x:Key="EditorColor.PrimaryLow">#DBEAFE</Color>  <!-- blue-100 -->
       <Color x:Key="EditorColor.OnPrimary">#FFFFFF</Color>  <!-- white -->
       <Color x:Key="EditorColor.Danger">#E7000B</Color>  <!-- red-600 -->
@@ -327,6 +329,8 @@
 
     <ResourceDictionary x:Key="Dark">
       <Color x:Key="EditorColor.Primary">#2B7FFF</Color>  <!-- blue-500 -->
+      <Color x:Key="EditorColor.PrimaryHover">#51A2FF</Color>  <!-- blue-400 -->
+      <Color x:Key="EditorColor.PrimaryPressed">#155DFC</Color>  <!-- blue-600 -->
       <Color x:Key="EditorColor.PrimaryLow">#162456</Color>  <!-- blue-950 -->
       <Color x:Key="EditorColor.OnPrimary">#FFFFFF</Color>  <!-- white -->
       <Color x:Key="EditorColor.Danger">#E7000B</Color>  <!-- red-600 -->
@@ -379,6 +383,8 @@
 
   <!-- Semantic brushes: the public theming API used across the app. -->
   <SolidColorBrush x:Key="EditorBrush.Primary" Color="{DynamicResource EditorColor.Primary}" />
+  <SolidColorBrush x:Key="EditorBrush.PrimaryHover" Color="{DynamicResource EditorColor.PrimaryHover}" />
+  <SolidColorBrush x:Key="EditorBrush.PrimaryPressed" Color="{DynamicResource EditorColor.PrimaryPressed}" />
   <SolidColorBrush x:Key="EditorBrush.PrimaryLow" Color="{DynamicResource EditorColor.PrimaryLow}" />
   <SolidColorBrush x:Key="EditorBrush.OnPrimary" Color="{DynamicResource EditorColor.OnPrimary}" />
   <SolidColorBrush x:Key="EditorBrush.Danger" Color="{DynamicResource EditorColor.Danger}" />

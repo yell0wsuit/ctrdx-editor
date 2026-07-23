@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:loc="using:CtrDxEditor.Localization"
+        x:Class="CtrDxEditor.Views.EmptyStateView"
+        x:Name="Root">
+  <!-- Not hit-test transparent: with no document there is nothing on the canvas to reach past it, and
+       swallowing presses here keeps a stray tap from starting a canvas interaction on an empty level. -->
+  <StackPanel Orientation="Vertical" Spacing="10"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+    <icons:MaterialIcon Kind="FilePlusOutline" Width="64" Height="64"
+                        HorizontalAlignment="Center"
+                        Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+    <TextBlock Text="{loc:Tr EmptyState.Title}" FontSize="18" FontWeight="SemiBold"
+               HorizontalAlignment="Center" TextAlignment="Center" />
+    <TextBlock Text="{loc:Tr EmptyState.Subtitle}" FontSize="13"
+               HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+               MaxWidth="280"
+               Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
+                HorizontalAlignment="Center">
+      <Button Classes="primaryAction" MinWidth="120" MinHeight="40"
+              HorizontalContentAlignment="Center"
+              Click="New_Click" Content="{loc:Tr EmptyState.NewLevel}" />
+      <Button MinWidth="120" MinHeight="40"
+              HorizontalContentAlignment="Center"
+              Click="Open_Click" Content="{loc:Tr EmptyState.OpenLevel}" />
+    </StackPanel>
+    <TextBlock x:Name="DropHint"
+               Text="{loc:Tr EmptyState.DropHint}" FontSize="12"
+               Margin="0,6,0,0"
+               HorizontalAlignment="Center" TextAlignment="Center"
+               Foreground="{DynamicResource EditorBrush.Text.Subtle}"
+               IsVisible="{Binding ShowDropHint, ElementName=Root}" />
+  </StackPanel>
+</UserControl>

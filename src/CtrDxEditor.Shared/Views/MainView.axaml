@@ -365,6 +365,9 @@
                      SmallChange="48"
                      LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
         </Grid>
+        <!-- Last child of the canvas column so it draws over the canvas and its scrollbars, and inside
+             that column so it stays below the compact chrome's ZIndex band without declaring one. -->
+        <views:EmptyStateView x:Name="EmptyState" IsVisible="{Binding !HasDocument}" />
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <!-- Named so compact-mode style selectors can reposition the panel without extracting it into its own
