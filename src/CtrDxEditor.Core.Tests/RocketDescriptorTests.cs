@@ -39,7 +39,7 @@ namespace CtrDxEditor.Core.Tests
 
             AttributeSpec impulse = rocket.Attributes.Single(a => a.Name == "impulse");
             Assert.Equal(AttrType.Number, impulse.Type);
-            Assert.Equal("0", impulse.Default);
+            Assert.Equal("20", impulse.Default);
 
             AttributeSpec impulseFactor = rocket.Attributes.Single(a => a.Name == "impulseFactor");
             Assert.Equal(AttrType.Number, impulseFactor.Type);

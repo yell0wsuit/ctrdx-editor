@@ -210,7 +210,7 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("rocket", "Rocket",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
-                new AttributeSpec("impulse", AttrType.Number, "0"),
+                new AttributeSpec("impulse", AttrType.Number, "20"),
                 new AttributeSpec("impulseFactor", AttrType.Number, "0.6"),
                 new AttributeSpec("time", AttrType.Number, "-1"),
                 new AttributeSpec("isRotatable", AttrType.Bool, "false"),
