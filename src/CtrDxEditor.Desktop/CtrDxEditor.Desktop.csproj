@@ -8,6 +8,8 @@
     <DesktopPublish>true</DesktopPublish>
     <PublishAot>true</PublishAot>
     <TrimMode>full</TrimMode>
+    <WindowsDistributionIcon>../../distribution/icons/CtrDxEditorIcon.ico</WindowsDistributionIcon>
+    <ApplicationIcon Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(WindowsDistributionIcon)</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
