@@ -74,6 +74,12 @@ namespace CtrDxEditor.Localization
             return Strings.TryGetValue(key, out string? value) ? value : key;
         }
 
+        /// <summary>UI string for a key, formatted with <paramref name="args"/> under the current culture.</summary>
+        public static string Format(string key, params object?[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, Get(key), args);
+        }
+
         /// <summary>Resolves a validator <see cref="LevelWarning"/> to its localized, formatted message.</summary>
         public static string Format(LevelWarning warning)
         {

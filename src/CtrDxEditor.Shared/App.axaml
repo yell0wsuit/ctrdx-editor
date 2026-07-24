@@ -2,9 +2,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:dialogHostAvalonia="using:DialogHostAvalonia"
+             xmlns:loc="using:CtrDxEditor.Localization"
              x:Class="CtrDxEditor.App"
              Name="Level Editor"
              RequestedThemeVariant="Dark">
+  <!-- macOS application menu. Providing our own menu here replaces Avalonia's default
+       "About Avalonia" item; the standard Services/Hide/Quit block is still appended. -->
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="{loc:Tr Menu.About}" Click="OnAboutClick" />
+    </NativeMenu>
+  </NativeMenu.Menu>
+
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>

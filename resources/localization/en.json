@@ -1,6 +1,10 @@
 {
     "Window.Title": "Cut the Rope DX: Level Editor",
 
+    "Menu.About": "About Cut the Rope DX: Level Editor",
+    "Dialog.About.Title": "About",
+    "Dialog.About.Version": "Version {0}",
+
     "Menu.File": "_File",
     "Menu.File.New": "_New...",
     "Menu.File.Open": "_Open...",

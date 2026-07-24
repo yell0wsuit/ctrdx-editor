@@ -54,6 +54,15 @@ namespace CtrDxEditor
             base.OnFrameworkInitializationCompleted();
         }
 
+        /// <summary>macOS app-menu "About" handler: shows the editor's own About window, owned by the main window.</summary>
+        private void OnAboutClick(object? sender, EventArgs e)
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } owner })
+            {
+                _ = new AboutDialog().ShowDialog(owner);
+            }
+        }
+
         private bool _started;
 
         private async Task StartAsync(Control root, bool allowQuit, IClassicDesktopStyleApplicationLifetime? desktop)

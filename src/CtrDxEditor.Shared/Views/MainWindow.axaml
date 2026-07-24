@@ -6,6 +6,7 @@
         x:Class="CtrDxEditor.Views.MainWindow"
         x:DataType="vm:EditorViewModel"
         Width="1100" Height="720"
+        Icon="/Assets/Icon/icon-256.png"
         Title="{loc:Tr Window.Title}">
   <views:MainView />
 </Window>
