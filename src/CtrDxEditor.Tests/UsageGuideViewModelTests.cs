@@ -9,6 +9,8 @@ namespace CtrDxEditor.Tests
     public class UsageGuideViewModelTests
     {
         /// <summary>Search covers both visible copy and deliberate discovery aliases.</summary>
+        /// <param name="query">Search text entered by the reader.</param>
+        /// <param name="expectedId">Article identifier expected in the filtered results.</param>
         [Theory]
         [InlineData("mechanical hand", "mechanical-hands")]
         [InlineData("ctrl shift p", "keyboard-shortcuts")]
@@ -97,6 +99,8 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.CanGoBack);
         }
 
+        /// <summary>Creates a deterministic three-article navigation fixture.</summary>
+        /// <returns>A view model whose home article is <c>home</c>.</returns>
         private static UsageGuideViewModel CreateSmallViewModel()
         {
             GuideArticle[] articles =
@@ -108,6 +112,10 @@ namespace CtrDxEditor.Tests
             return new UsageGuideViewModel(articles, "home");
         }
 
+        /// <summary>Creates one minimal article for navigation-only tests.</summary>
+        /// <param name="id">Stable test article identifier.</param>
+        /// <param name="title">Localization-key segment used to distinguish the fixture article.</param>
+        /// <returns>A single-paragraph test article.</returns>
         private static GuideArticle Article(string id, string title)
         {
             return new GuideArticle(

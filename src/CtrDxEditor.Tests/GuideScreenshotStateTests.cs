@@ -8,6 +8,7 @@ namespace CtrDxEditor.Tests
     public class GuideScreenshotStateTests
     {
         /// <summary>An unfilled screenshot slot renders its informative placeholder.</summary>
+        /// <param name="source">Missing or whitespace-only screenshot resource URI.</param>
         [Theory]
         [InlineData(null)]
         [InlineData("")]

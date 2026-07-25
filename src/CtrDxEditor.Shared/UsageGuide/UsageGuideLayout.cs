@@ -7,6 +7,12 @@ namespace CtrDxEditor.UsageGuide
         public const double SidebarMinWidth = 900;
 
         /// <summary>Whether the current viewport should keep the table of contents persistently visible.</summary>
+        /// <param name="width">Available guide width in logical pixels.</param>
+        /// <param name="height">Available guide height in logical pixels.</param>
+        /// <returns>
+        /// <see langword="true"/> for a sufficiently wide landscape viewport; otherwise
+        /// <see langword="false"/> so the table of contents uses a drawer.
+        /// </returns>
         public static bool UsesPersistentSidebar(double width, double height)
         {
             return width >= SidebarMinWidth && width >= height;

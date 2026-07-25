@@ -14,7 +14,14 @@ namespace CtrDxEditor.ViewModels
     {
         private readonly Dictionary<string, GuideArticle> _byId;
         private readonly string _homeArticleId;
+
         /// <summary>Creates guide state over an article catalog.</summary>
+        /// <param name="articles">Complete ordered article catalog.</param>
+        /// <param name="homeArticleId">Stable identifier selected initially and by <see cref="GoHome"/>.</param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="articles"/> is empty or does not contain
+        /// <paramref name="homeArticleId"/>.
+        /// </exception>
         public UsageGuideViewModel(IReadOnlyList<GuideArticle> articles, string homeArticleId)
         {
             if (articles.Count == 0)
@@ -43,8 +50,10 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Articles matching <see cref="SearchText"/>.</summary>
         public ObservableCollection<GuideArticle> FilteredArticles { get; }
 
+        /// <summary>Previously visited articles, nearest destination on top.</summary>
         private Stack<GuideArticle> Back { get; } = [];
 
+        /// <summary>Articles left by backward navigation, nearest destination on top.</summary>
         private Stack<GuideArticle> Forward { get; } = [];
 
         /// <summary>The article shown in the reading pane.</summary>
@@ -88,6 +97,7 @@ namespace CtrDxEditor.ViewModels
         public bool CanGoForward => Forward.Count > 0;
 
         /// <summary>Navigates to an article by stable identifier.</summary>
+        /// <param name="articleId">Destination identifier; unknown or current identifiers are ignored.</param>
         public void NavigateTo(string articleId)
         {
             if (!_byId.TryGetValue(articleId, out GuideArticle? destination)
@@ -130,6 +140,10 @@ namespace CtrDxEditor.ViewModels
             NavigateTo(_homeArticleId);
         }
 
+        /// <summary>
+        /// Rebuilds <see cref="FilteredArticles"/> from the trimmed query and every localized searchable
+        /// article field.
+        /// </summary>
         private void ApplySearch()
         {
             string query = SearchText.Trim();
@@ -155,17 +169,26 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
+        /// <summary>Tests a localized value for an ordinal, case-insensitive query match.</summary>
+        /// <param name="value">Localized text to inspect.</param>
+        /// <param name="query">Non-empty trimmed search query.</param>
+        /// <returns><see langword="true"/> when <paramref name="query"/> occurs in <paramref name="value"/>.</returns>
         private static bool Contains(string value, string query)
         {
             return value.Contains(query, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>Notifies bindings that both history-derived availability flags may have changed.</summary>
         private void RaiseHistoryChanged()
         {
             OnPropertyChanged(nameof(CanGoBack));
             OnPropertyChanged(nameof(CanGoForward));
         }
 
+        /// <summary>Raises <see cref="PropertyChanged"/> for a changed presentation property.</summary>
+        /// <param name="propertyName">
+        /// Changed property name, supplied automatically by the compiler when omitted.
+        /// </param>
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

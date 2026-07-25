@@ -103,6 +103,12 @@ namespace CtrDxEditor.UsageGuide
                 ["level-settings", "layers", "save-export-playtest"]),
         ];
 
+        /// <summary>Creates a localized article definition from stable naming conventions.</summary>
+        /// <param name="id">Stable article identifier and localization-key segment.</param>
+        /// <param name="section">Localization-key suffix for the article's section.</param>
+        /// <param name="blocks">Structured content in reading order.</param>
+        /// <param name="related">Stable identifiers for related-topic links.</param>
+        /// <returns>A catalog article whose visible metadata resolves through <c>Localizer</c>.</returns>
         private static GuideArticle A(
             string id,
             string section,
@@ -120,41 +126,74 @@ namespace CtrDxEditor.UsageGuide
                 related);
         }
 
+        /// <summary>Creates a localized paragraph block.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Block-specific localization-key suffix.</param>
+        /// <returns>A paragraph backed by the convention-based localization key.</returns>
         private static GuideParagraph P(string id, string name)
         {
             return new GuideParagraph(Key(id, name));
         }
 
+        /// <summary>Creates a localized in-article heading.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Heading-specific localization-key suffix.</param>
+        /// <returns>A heading backed by the convention-based localization key.</returns>
         private static GuideHeading H(string id, string name)
         {
             return new GuideHeading(Key(id, $"{name}.Heading"));
         }
 
+        /// <summary>Creates a localized ordered procedure.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Procedure-specific localization-key suffix.</param>
+        /// <returns>A steps block whose localized value is split on newlines.</returns>
         private static GuideSteps Steps(string id, string name)
         {
             return new GuideSteps(Key(id, $"{name}.Steps"));
         }
 
+        /// <summary>Creates a localized optional-advice callout.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Callout-specific localization-key suffix.</param>
+        /// <returns>A tip callout backed by the convention-based localization key.</returns>
         private static GuideCallout Tip(string id, string name)
         {
             return new GuideCallout(GuideCalloutKind.Tip, Key(id, $"{name}.Tip"));
         }
 
+        /// <summary>Creates a localized contextual-note callout.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Callout-specific localization-key suffix.</param>
+        /// <returns>A note callout backed by the convention-based localization key.</returns>
         private static GuideCallout Note(string id, string name)
         {
             return new GuideCallout(GuideCalloutKind.Note, Key(id, $"{name}.Note"));
         }
 
+        /// <summary>Creates a localized warning callout.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Callout-specific localization-key suffix.</param>
+        /// <returns>A warning callout backed by the convention-based localization key.</returns>
         private static GuideCallout Warning(string id, string name)
         {
             return new GuideCallout(GuideCalloutKind.Warning, Key(id, $"{name}.Warning"));
         }
 
+        /// <summary>Creates a replaceable, localized screenshot slot.</summary>
+        /// <param name="id">Article identifier used in the localization-key prefix.</param>
+        /// <param name="name">Caption-specific localization-key suffix.</param>
+        /// <param name="suggestedFileName">Filename shown while the screenshot asset is absent.</param>
+        /// <returns>A screenshot block with an empty source and visible placeholder.</returns>
         private static GuideScreenshot Shot(string id, string name, string suggestedFileName)
         {
             return new GuideScreenshot(Key(id, $"{name}.Caption"), suggestedFileName);
         }
 
+        /// <summary>Creates a localized shortcut table from convention-based row names.</summary>
+        /// <param name="id">Article identifier used in every row's localization-key prefix.</param>
+        /// <param name="names">Row suffixes whose <c>Action</c> and <c>Keys</c> values form the table.</param>
+        /// <returns>A shortcut table preserving the supplied row order.</returns>
         private static GuideShortcutTable ShortcutTable(string id, params string[] names)
         {
             GuideShortcut[] rows = new GuideShortcut[names.Length];
@@ -166,6 +205,10 @@ namespace CtrDxEditor.UsageGuide
             return new GuideShortcutTable(rows);
         }
 
+        /// <summary>Builds a content localization key for one article.</summary>
+        /// <param name="id">Stable article identifier.</param>
+        /// <param name="name">Content-specific key suffix.</param>
+        /// <returns>A key under <c>Guide.Article.&lt;id&gt;</c>.</returns>
         private static string Key(string id, string name)
         {
             return $"Guide.Article.{id}.{name}";

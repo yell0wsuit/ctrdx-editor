@@ -116,6 +116,9 @@ namespace CtrDxEditor.Tests
             Assert.Contains(screenshots, screenshot => string.IsNullOrWhiteSpace(screenshot.Source));
         }
 
+        /// <summary>Asserts that a guide key resolves to meaningful localized copy.</summary>
+        /// <param name="key">Localization key retained by the guide model.</param>
+        /// <param name="value">Display value resolved through <c>Localizer</c>.</param>
         private static void AssertLocalized(string key, string value)
         {
             Assert.StartsWith("Guide.", key, StringComparison.Ordinal);
