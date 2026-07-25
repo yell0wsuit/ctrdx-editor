@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using CtrDxEditor.UsageGuide;
 using CtrDxEditor.ViewModels;
 
@@ -99,6 +101,22 @@ namespace CtrDxEditor.Tests
             Assert.False(vm.CanGoBack);
         }
 
+        /// <summary>Related-topic identifiers resolve to article rows for the reading pane.</summary>
+        [Fact]
+        public void RelatedArticlesFollowTheSelectedArticle()
+        {
+            GuideArticle home = Article("home", "Home", ["second"]);
+            UsageGuideViewModel vm = new(
+                [home, Article("second", "Second"), Article("third", "Third")],
+                "home");
+
+            Assert.Collection(vm.RelatedArticles, article => Assert.Equal("second", article.Id));
+
+            vm.NavigateTo("third");
+
+            Assert.Empty(vm.RelatedArticles);
+        }
+
         /// <summary>Creates a deterministic three-article navigation fixture.</summary>
         /// <returns>A view model whose home article is <c>home</c>.</returns>
         private static UsageGuideViewModel CreateSmallViewModel()
@@ -115,8 +133,12 @@ namespace CtrDxEditor.Tests
         /// <summary>Creates one minimal article for navigation-only tests.</summary>
         /// <param name="id">Stable test article identifier.</param>
         /// <param name="title">Localization-key segment used to distinguish the fixture article.</param>
+        /// <param name="relatedArticleIds">Optional related-topic identifiers for the fixture article.</param>
         /// <returns>A single-paragraph test article.</returns>
-        private static GuideArticle Article(string id, string title)
+        private static GuideArticle Article(
+            string id,
+            string title,
+            IReadOnlyList<string>? relatedArticleIds = null)
         {
             return new GuideArticle(
                 id,
@@ -125,7 +147,7 @@ namespace CtrDxEditor.Tests
                 $"Guide.Test.{title}.Summary",
                 $"Guide.Test.{title}.SearchTerms",
                 [new GuideParagraph($"Guide.Test.{title}.Paragraph")],
-                []);
+                relatedArticleIds ?? []);
         }
     }
 }

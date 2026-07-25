@@ -223,5 +223,21 @@ namespace CtrDxEditor.Views
         {
             CloseDrawerThen(() => Close_Click(sender, e));
         }
+
+        /// <summary>Closes the compact command drawer and opens the Usage Guide.</summary>
+        /// <param name="sender">Drawer row that raised the event.</param>
+        /// <param name="e">Click event data forwarded to the shared command.</param>
+        private void DrawerUsageGuide_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => UsageGuide_Click(sender, e));
+        }
+
+        /// <summary>Closes the compact command drawer and opens About on supported platforms.</summary>
+        /// <param name="sender">Drawer row that raised the event.</param>
+        /// <param name="e">Click event data forwarded to the shared command.</param>
+        private void DrawerAbout_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => About_Click(sender, e));
+        }
     }
 }

@@ -314,6 +314,19 @@
           </MenuItem.Header>
         </MenuItem>
       </MenuItem>
+      <MenuItem Header="{loc:Tr Menu.Help}">
+        <MenuItem Header="{loc:Tr Menu.Help.UsageGuide}" Click="UsageGuide_Click">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="HelpCircleOutline" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="{loc:Tr Menu.About}" Click="About_Click"
+                  IsVisible="{x:Static views:HelpMenuPolicy.ShowAboutInHelp}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="InformationOutline" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
     </Menu>
     <Grid x:Name="EditorSurface" RowDefinitions="*,Auto,Auto">
       <Grid x:Name="ExpandedColumns" Grid.Row="0" ColumnDefinitions="200,1,*,1,280"
@@ -964,6 +977,27 @@
                              Text="{loc:Tr Menu.View.ShowMovementPaths, Plain=True}" />
                   <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
                                       VerticalAlignment="Center" IsVisible="{Binding ShowMovementPaths}" />
+                </Grid>
+              </Button>
+            </StackPanel>
+
+            <TextBlock Classes="drawerSection" Text="{loc:Tr CommandDrawer.Help}" />
+            <StackPanel x:Name="CommandDrawerHelpSection">
+              <Button Classes="drawerRow" Click="DrawerUsageGuide_Click">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="HelpCircleOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.Help.UsageGuide, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerAbout_Click"
+                      IsVisible="{x:Static views:HelpMenuPolicy.ShowAboutInHelp}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="InformationOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.About, Plain=True}" />
                 </Grid>
               </Button>
             </StackPanel>

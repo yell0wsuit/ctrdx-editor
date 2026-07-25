@@ -53,6 +53,9 @@ namespace CtrDxEditor.UsageGuide
     {
         /// <summary>Localized callout text.</summary>
         public string Text => Localizer.Get(TextKey);
+
+        /// <summary>Localized callout-kind label.</summary>
+        public string Label => Localizer.Get($"Guide.Callout.{Kind}");
     }
 
     /// <summary>One command and its key gesture.</summary>
@@ -85,5 +88,11 @@ namespace CtrDxEditor.UsageGuide
     {
         /// <summary>Localized illustration caption.</summary>
         public string Caption => Localizer.Get(CaptionKey);
+
+        /// <summary>Whether an embedded screenshot source should be rendered.</summary>
+        public bool ShowImage => GuideScreenshotState.From(Source).ShowImage;
+
+        /// <summary>Whether the informative screenshot placeholder should be rendered.</summary>
+        public bool ShowPlaceholder => GuideScreenshotState.From(Source).ShowPlaceholder;
     }
 }

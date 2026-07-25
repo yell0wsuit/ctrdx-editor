@@ -69,6 +69,8 @@ namespace CtrDxEditor.ViewModels
 
                 field = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(RelatedArticles));
+                OnPropertyChanged(nameof(HasRelatedArticles));
             }
         }
 
@@ -95,6 +97,15 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether an article left by going back is available.</summary>
         public bool CanGoForward => Forward.Count > 0;
+
+        /// <summary>Resolved articles offered as related topics for <see cref="SelectedArticle"/>.</summary>
+        public IReadOnlyList<GuideArticle> RelatedArticles =>
+            [.. SelectedArticle.RelatedArticleIds
+                .Where(_byId.ContainsKey)
+                .Select(id => _byId[id])];
+
+        /// <summary>Whether the selected article has at least one valid related-topic destination.</summary>
+        public bool HasRelatedArticles => RelatedArticles.Count > 0;
 
         /// <summary>Navigates to an article by stable identifier.</summary>
         /// <param name="articleId">Destination identifier; unknown or current identifiers are ignored.</param>

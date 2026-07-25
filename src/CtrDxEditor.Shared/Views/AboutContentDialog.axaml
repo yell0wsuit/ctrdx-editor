@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:CtrDxEditor.Localization"
+             x:Class="CtrDxEditor.Views.AboutContentDialog">
+  <StackPanel Margin="28" Spacing="14" HorizontalAlignment="Center" MinWidth="300">
+    <Image Source="/Assets/Icon/icon-256.png" Width="96" Height="96" />
+    <TextBlock x:Name="TitleText" FontSize="18" FontWeight="SemiBold"
+               HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+    <TextBlock x:Name="VersionText" Opacity="0.7" HorizontalAlignment="Center" />
+    <Button Content="{loc:Tr Dialog.Common.Close}" Click="Close_Click"
+            HorizontalAlignment="Center" IsDefault="True" IsCancel="True" />
+  </StackPanel>
+</UserControl>

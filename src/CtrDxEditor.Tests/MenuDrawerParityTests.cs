@@ -95,7 +95,7 @@ namespace CtrDxEditor.Tests
 
         private static HashSet<string> CommandKeys(string markup)
         {
-            return Regex.Matches(markup, @"loc:Tr (Menu\.(?:File|Edit|View)\.[A-Za-z]+)")
+            return Regex.Matches(markup, @"loc:Tr (Menu\.(?:File|Edit|View|Help)\.[A-Za-z]+)")
                 .Select(m => m.Groups[1].Value)
                 .ToHashSet(StringComparer.Ordinal);
         }

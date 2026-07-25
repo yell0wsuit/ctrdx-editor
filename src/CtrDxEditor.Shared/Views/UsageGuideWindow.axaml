@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:CtrDxEditor.Views"
+        xmlns:loc="using:CtrDxEditor.Localization"
+        x:Class="CtrDxEditor.Views.UsageGuideWindow"
+        Width="1080" Height="760" MinWidth="620" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/Icon/icon-256.png"
+        Title="{loc:Tr Dialog.UsageGuide.Title}">
+  <views:UsageGuideView />
+</Window>
