@@ -34,5 +34,26 @@ namespace CtrDxEditor.Tests
         {
             Assert.True(UsageGuideLayout.UsesPersistentSidebar(UsageGuideLayout.SidebarMinWidth, 600));
         }
+
+        /// <summary>A narrow guide stacks search beneath navigation before the toolbar becomes cramped.</summary>
+        [Fact]
+        public void NarrowGuideUsesStackedToolbar()
+        {
+            Assert.True(UsageGuideLayout.UsesStackedToolbar(620));
+        }
+
+        /// <summary>A roomy guide keeps navigation and search together in one toolbar row.</summary>
+        [Fact]
+        public void WideGuideUsesSingleRowToolbar()
+        {
+            Assert.False(UsageGuideLayout.UsesStackedToolbar(900));
+        }
+
+        /// <summary>The named toolbar breakpoint has stable boundary behavior.</summary>
+        [Fact]
+        public void ToolbarBreakpointIsInclusive()
+        {
+            Assert.False(UsageGuideLayout.UsesStackedToolbar(UsageGuideLayout.ToolbarMinWidth));
+        }
     }
 }

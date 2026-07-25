@@ -18,15 +18,19 @@
                HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
                MaxWidth="280"
                Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
-    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
-                HorizontalAlignment="Center">
-      <Button Classes="primaryAction" MinWidth="120" MinHeight="40"
+    <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,10,Auto"
+          Margin="0,8,0,0" HorizontalAlignment="Center">
+      <Button Grid.Column="0" Classes="primaryAction" MinWidth="120" MinHeight="40"
               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
               Click="New_Click" Content="{loc:Tr EmptyState.NewLevel}" />
-      <Button MinWidth="120" MinHeight="40"
+      <Button Grid.Column="2" MinWidth="120" MinHeight="40"
               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
               Click="Open_Click" Content="{loc:Tr EmptyState.OpenLevel}" />
-    </StackPanel>
+      <Button Grid.Row="2" Grid.ColumnSpan="3" MinHeight="40"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+              Click="UsageGuide_Click" Content="{loc:Tr Menu.Help.UsageGuide}" />
+    </Grid>
     <TextBlock x:Name="DropHint"
                Text="{loc:Tr EmptyState.DropHint}" FontSize="12"
                Margin="0,6,0,0"

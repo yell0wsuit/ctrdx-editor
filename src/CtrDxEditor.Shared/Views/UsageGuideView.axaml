@@ -104,10 +104,13 @@
     </DataTemplate>
   </UserControl.DataTemplates>
 
-  <Grid RowDefinitions="56,*" Background="{DynamicResource EditorBrush.Surface.Panel}">
+  <Grid RowDefinitions="Auto,*" Background="{DynamicResource EditorBrush.Surface.Panel}">
     <Border Grid.Row="0" BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
             BorderThickness="0,0,0,1" Background="{DynamicResource EditorBrush.Surface.Panel}">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,2*" Margin="10,7">
+      <Grid x:Name="GuideToolbarGrid"
+            RowDefinitions="Auto,Auto"
+            ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*"
+            Margin="10,7">
         <Button x:Name="SidebarButton" Grid.Column="0" Width="40" Height="40" Padding="0"
                 Click="SidebarButton_Click"
                 ToolTip.Tip="{loc:Tr Guide.Navigation.ShowContents}">
@@ -132,13 +135,13 @@
                    FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0" />
         <TextBox x:Name="GuideSearchBox" Grid.Column="5"
                  Text="{Binding SearchText, Mode=TwoWay}"
-                 Width="300" Height="36"
-                 HorizontalAlignment="Right" VerticalAlignment="Center"
-                 VerticalContentAlignment="Center" Padding="10,0,12,0"
+                 MaxWidth="360" Height="36" Margin="8,0,0,0"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                 VerticalContentAlignment="Center" Padding="0,0,12,0"
                  PlaceholderText="{loc:Tr Guide.Search.Placeholder}">
           <TextBox.InnerLeftContent>
             <icons:MaterialIcon Kind="Magnify" Width="18" Height="18"
-                                Margin="0,0,8,0" Opacity="0.6" />
+                                Margin="10,0,6,0" Opacity="0.6" />
           </TextBox.InnerLeftContent>
         </TextBox>
       </Grid>

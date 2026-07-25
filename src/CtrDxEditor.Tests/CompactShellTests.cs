@@ -302,8 +302,27 @@ namespace CtrDxEditor.Tests
             // the menu considers unavailable.
             Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
 
-            // Six buttons: the three always-applicable actions, the mode pair, and rotation snap.
-            Assert.Equal(6, CountOccurrences(rail, "<Button "));
+            // Seven buttons: the three document actions, Help, the mode pair, and rotation snap.
+            Assert.Equal(7, CountOccurrences(rail, "<Button "));
+        }
+
+        /// <summary>The usage guide follows Zoom to Fit in its own divided rail group.</summary>
+        [Fact]
+        public void CompactRailPlacesUsageGuideAfterZoomFitDivider()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int railStart = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf("</Border>", railStart, StringComparison.Ordinal);
+            Assert.True(railStart >= 0 && railEnd > railStart);
+            string rail = view[railStart..railEnd];
+
+            int zoomFit = rail.IndexOf("Click=\"ZoomFit_Click\"", StringComparison.Ordinal);
+            int divider = rail.IndexOf("x:Name=\"RailHelpDivider\"", StringComparison.Ordinal);
+            int usageGuide = rail.IndexOf("Click=\"UsageGuide_Click\"", StringComparison.Ordinal);
+
+            Assert.True(zoomFit >= 0 && divider > zoomFit && usageGuide > divider);
+            Assert.Contains("ToolTip.Tip=\"{loc:Tr Menu.Help.UsageGuide}\"", rail, StringComparison.Ordinal);
+            Assert.Contains("Kind=\"HelpCircleOutline\"", rail, StringComparison.Ordinal);
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
@@ -368,7 +387,7 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("vm.SnapEnabled = !vm.SnapEnabled;", layout, StringComparison.Ordinal);
         }
 
-        /// <summary>Six rail buttons shift right on narrow phones so they do not collide with the menu.</summary>
+        /// <summary>Seven rail buttons shift right on narrow phones so they do not collide with the menu.</summary>
         [Fact]
         public void CompactRailClearsMenuAtNarrowWidths()
         {

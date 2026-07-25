@@ -92,6 +92,7 @@ namespace CtrDxEditor.Views
             EmptyStateView emptyState = this.FindControl<EmptyStateView>("EmptyState")!;
             emptyState.NewRequested = () => New_Click(this, new RoutedEventArgs());
             emptyState.OpenRequested = () => Open_Click(this, new RoutedEventArgs());
+            emptyState.UsageGuideRequested = () => UsageGuide_Click(this, new RoutedEventArgs());
 
             // Palette placement is an internal pointer-capture drag (see PaletteDragController). Buttons mark
             // their own left PointerPressed as Handled for click logic, so the handlers are registered with

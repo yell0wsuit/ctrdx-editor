@@ -716,8 +716,8 @@
       <Border x:Name="CompactRail" IsVisible="False" Grid.Row="0"
               HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <!-- Six buttons: the latched mode pair and rotation snap, then the three actions that always apply to an open
-             document. Delete moved to the compact edit bar, which is where the rest of the
+        <!-- Seven buttons: the latched mode pair and rotation snap, three document actions, and Help.
+             Delete moved to the compact edit bar, which is where the rest of the
              selection-gated group lives; keeping it here made it the only button on the rail whose
              availability depended on what was selected. On narrow phones the rail shifts right to clear
              the hamburger without shrinking these controls further. -->
@@ -748,6 +748,12 @@
           <Button Classes="railAction" Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}"
                   ToolTip.Tip="{loc:Tr Menu.View.ZoomFit}">
             <icons:MaterialIcon Kind="FitToScreen" Width="20" Height="20" />
+          </Button>
+          <Border x:Name="RailHelpDivider" Width="1" Margin="2,4"
+                  Background="{DynamicResource EditorBrush.Surface.Divider}" />
+          <Button Classes="railAction" Click="UsageGuide_Click"
+                  ToolTip.Tip="{loc:Tr Menu.Help.UsageGuide}">
+            <icons:MaterialIcon Kind="HelpCircleOutline" Width="20" Height="20" />
           </Button>
         </StackPanel>
       </Border>

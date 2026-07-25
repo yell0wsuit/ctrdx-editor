@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 
 using Xunit;
 
@@ -52,17 +54,45 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Text=\"{Binding SuggestedFileName}\"", view, StringComparison.Ordinal);
         }
 
-        /// <summary>The guide search field stays compact, right-aligned, and vertically centered.</summary>
+        /// <summary>The search field stretches responsively while preserving a comfortable desktop cap.</summary>
         [Fact]
-        public void SearchBoxUsesCompactToolbarLayout()
+        public void SearchBoxUsesResponsiveToolbarWidth()
         {
-            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement search = NamedElement(markup, "GuideSearchBox");
 
-            Assert.Contains("x:Name=\"GuideSearchBox\" Grid.Column=\"5\"", view, StringComparison.Ordinal);
-            Assert.Contains("Width=\"300\" Height=\"36\"", view, StringComparison.Ordinal);
-            Assert.Contains("HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"", view, StringComparison.Ordinal);
-            Assert.Contains("VerticalContentAlignment=\"Center\" Padding=\"10,0,12,0\"", view, StringComparison.Ordinal);
-            Assert.Contains("Margin=\"0,0,8,0\"", view, StringComparison.Ordinal);
+            Assert.Null(search.Attribute("Width"));
+            Assert.Equal("360", search.Attribute("MaxWidth")?.Value);
+            Assert.Equal("Stretch", search.Attribute("HorizontalAlignment")?.Value);
+            Assert.Equal("0,0,12,0", search.Attribute("Padding")?.Value);
+        }
+
+        /// <summary>The search icon has left breathing room and a short, explicit gap before the placeholder.</summary>
+        [Fact]
+        public void SearchIconAndPlaceholderUseBalancedInsets()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement search = NamedElement(markup, "GuideSearchBox");
+            XElement icon = search.Descendants().Single(element =>
+                element.Name.LocalName == "MaterialIcon");
+
+            Assert.Equal("10,0,6,0", icon.Attribute("Margin")?.Value);
+            Assert.Equal("0,0,12,0", search.Attribute("Padding")?.Value);
+        }
+
+        /// <summary>The guide toolbar moves search onto a second row at narrow widths.</summary>
+        [Fact]
+        public void SearchBoxReflowsAtNarrowWidths()
+        {
+            string code = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml.cs"));
+
+            Assert.Contains("UsageGuideLayout.UsesStackedToolbar(Bounds.Width)", code, StringComparison.Ordinal);
+            Assert.Contains("Grid.SetRow(searchBox, stacked ? 1 : 0);", code, StringComparison.Ordinal);
+            Assert.Contains("Grid.SetColumn(searchBox, stacked ? 0 : 5);", code, StringComparison.Ordinal);
+            Assert.Contains("Grid.SetColumnSpan(searchBox, stacked ? 6 : 1);", code, StringComparison.Ordinal);
         }
 
         /// <summary>Tip, note, and warning callouts use distinct theme-aware semantic palettes.</summary>
@@ -91,6 +121,29 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("<views:UsageGuideView", window, StringComparison.Ordinal);
             Assert.Contains("<views:UsageGuideView", dialog, StringComparison.Ordinal);
+        }
+
+        /// <summary>The desktop guide can shrink to a compact but still usable reading surface.</summary>
+        [Fact]
+        public void DesktopWindowAllowsCompactResizing()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideWindow.axaml"));
+            XElement window = markup.Root!;
+
+            Assert.Equal("360", window.Attribute("MinWidth")?.Value);
+            Assert.Equal("300", window.Attribute("MinHeight")?.Value);
+        }
+
+        /// <summary>Finds an element carrying the requested XAML name.</summary>
+        /// <param name="markup">Parsed Avalonia markup.</param>
+        /// <param name="name">Value of the XAML <c>Name</c> attribute.</param>
+        /// <returns>The single matching element.</returns>
+        private static XElement NamedElement(XDocument markup, string name)
+        {
+            return markup.Descendants().Single(element =>
+                element.Attributes().Any(attribute =>
+                    attribute.Name.LocalName == "Name" && attribute.Value == name));
         }
 
         /// <summary>Locates a source file relative to the repository's <c>src</c> directory.</summary>

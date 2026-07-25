@@ -57,7 +57,8 @@ namespace CtrDxEditor.Views
         private void ApplyAdaptiveLayout()
         {
             if (this.FindControl<SplitView>("GuideSplitView") is not { } splitView
-                || this.FindControl<Button>("SidebarButton") is not { } sidebarButton)
+                || this.FindControl<Button>("SidebarButton") is not { } sidebarButton
+                || this.FindControl<TextBox>("GuideSearchBox") is not { } searchBox)
             {
                 return;
             }
@@ -70,6 +71,19 @@ namespace CtrDxEditor.Views
             Avalonia.Automation.AutomationProperties.SetName(
                 sidebarButton,
                 Localizer.Get("Guide.Navigation.ShowContents"));
+            ApplyToolbarLayout(searchBox);
+        }
+
+        /// <summary>Places search beside navigation or on a full-width second toolbar row.</summary>
+        /// <param name="searchBox">Search field whose responsive grid placement is updated.</param>
+        private void ApplyToolbarLayout(TextBox searchBox)
+        {
+            bool stacked = UsageGuideLayout.UsesStackedToolbar(Bounds.Width);
+            Grid.SetRow(searchBox, stacked ? 1 : 0);
+            Grid.SetColumn(searchBox, stacked ? 0 : 5);
+            Grid.SetColumnSpan(searchBox, stacked ? 6 : 1);
+            searchBox.Margin = stacked ? new Thickness(0, 8, 0, 0) : new Thickness(8, 0, 0, 0);
+            searchBox.MaxWidth = stacked ? double.PositiveInfinity : 360;
         }
 
         /// <summary>Opens or closes the compact table-of-contents drawer.</summary>

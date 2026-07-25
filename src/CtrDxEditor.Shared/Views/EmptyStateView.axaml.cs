@@ -43,14 +43,31 @@ namespace CtrDxEditor.Views
         /// <summary>Raised when the Open Level button is pressed.</summary>
         public Action? OpenRequested { get; set; }
 
+        /// <summary>Raised when the Usage Guide button is pressed.</summary>
+        public Action? UsageGuideRequested { get; set; }
+
+        /// <summary>Requests creation of a new level.</summary>
+        /// <param name="sender">Button that raised the event.</param>
+        /// <param name="e">Click event data.</param>
         private void New_Click(object? sender, RoutedEventArgs e)
         {
             NewRequested?.Invoke();
         }
 
+        /// <summary>Requests opening an existing level.</summary>
+        /// <param name="sender">Button that raised the event.</param>
+        /// <param name="e">Click event data.</param>
         private void Open_Click(object? sender, RoutedEventArgs e)
         {
             OpenRequested?.Invoke();
+        }
+
+        /// <summary>Requests opening the Usage Guide.</summary>
+        /// <param name="sender">Button that raised the event.</param>
+        /// <param name="e">Click event data.</param>
+        private void UsageGuide_Click(object? sender, RoutedEventArgs e)
+        {
+            UsageGuideRequested?.Invoke();
         }
     }
 }

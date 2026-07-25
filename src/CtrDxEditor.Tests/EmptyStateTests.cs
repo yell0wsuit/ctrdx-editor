@@ -24,14 +24,52 @@ namespace CtrDxEditor.Tests
             Assert.Contains("EmptyState.DropHint", view, StringComparison.Ordinal);
         }
 
-        /// <summary>Both command labels are centred within their buttons.</summary>
+        /// <summary>The usage guide is a localized third action beneath the New and Open row.</summary>
         [Fact]
-        public void EmptyStateCentersBothButtonLabelsVertically()
+        public void EmptyStateOffersTheUsageGuideBelowDocumentActions()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "EmptyStateView.axaml"));
+            XElement openButton = markup.Descendants().Single(element =>
+                element.Attribute("Click")?.Value == "Open_Click");
+            XElement guideButton = markup.Descendants().Single(element =>
+                element.Attribute("Click")?.Value == "UsageGuide_Click");
+
+            Assert.Same(openButton.Parent, guideButton.Parent);
+            Assert.Same(guideButton, openButton.ElementsAfterSelf().First());
+            Assert.Equal(
+                "{loc:Tr Menu.Help.UsageGuide}",
+                guideButton.Attribute("Content")?.Value);
+        }
+
+        /// <summary>All three actions share one grid so their left and right edges remain aligned.</summary>
+        [Fact]
+        public void EmptyStateActionsShareAlignedGrid()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "EmptyStateView.axaml"));
+            XElement newButton = markup.Descendants().Single(element =>
+                element.Attribute("Click")?.Value == "New_Click");
+            XElement openButton = markup.Descendants().Single(element =>
+                element.Attribute("Click")?.Value == "Open_Click");
+            XElement guideButton = markup.Descendants().Single(element =>
+                element.Attribute("Click")?.Value == "UsageGuide_Click");
+
+            Assert.Same(newButton.Parent, openButton.Parent);
+            Assert.Same(newButton.Parent, guideButton.Parent);
+            Assert.Equal("*,8,*", newButton.Parent?.Attribute("ColumnDefinitions")?.Value);
+            Assert.Equal("3", guideButton.Attributes().Single(attribute =>
+                attribute.Name.LocalName == "Grid.ColumnSpan").Value);
+        }
+
+        /// <summary>All command labels are centred within their buttons.</summary>
+        [Fact]
+        public void EmptyStateCentersButtonLabelsVertically()
         {
             string view = SourceText("EmptyStateView.axaml");
 
             Assert.Equal(
-                2,
+                3,
                 view.Split("VerticalContentAlignment=\"Center\"", StringSplitOptions.None).Length - 1);
         }
 
@@ -78,6 +116,7 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("emptyState.NewRequested", host, StringComparison.Ordinal);
             Assert.Contains("emptyState.OpenRequested", host, StringComparison.Ordinal);
+            Assert.Contains("emptyState.UsageGuideRequested", host, StringComparison.Ordinal);
         }
 
         /// <summary>The control never walks the tree to find MainView.</summary>
