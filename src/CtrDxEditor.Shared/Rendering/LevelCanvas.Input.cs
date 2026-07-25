@@ -250,18 +250,18 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Writes the object's new angle from a dial drag: free (whole degrees) unless <see cref="KeyModifiers.Alt"/>
-        /// is held, which snaps to the spec's step (15°).
+        /// Writes the object's new angle from a dial drag: free (whole degrees) unless rotation snap is
+        /// latched or <see cref="KeyModifiers.Alt"/> is held, which snaps to the target's configured step.
         /// </summary>
         /// <param name="obj">The rotatable object being edited.</param>
         /// <param name="target">Resolved object or hand-segment dial target.</param>
         /// <param name="center">Stable pivot captured when the dial gesture began.</param>
         /// <param name="levelPt">The pointer position in level coordinates.</param>
-        /// <param name="mods">Active keyboard modifiers; Alt enables snapping.</param>
-        private static void ApplyRotation(
+        /// <param name="mods">Active keyboard modifiers; Alt temporarily enables snapping.</param>
+        private void ApplyRotation(
             LevelObject obj, RotationDialTarget target, Vec2 center, Vec2 levelPt, KeyModifiers mods)
         {
-            bool snap = mods.HasFlag(KeyModifiers.Alt);
+            bool snap = RotationSnapEnabled || mods.HasFlag(KeyModifiers.Alt);
             double angle = ObjectRotation.AngleFromPoint(center, levelPt, target.Spec, snap);
             RotationDialTargetResolver.ApplyAngle(obj, target, angle, center);
         }

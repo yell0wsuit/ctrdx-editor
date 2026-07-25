@@ -184,6 +184,13 @@ namespace CtrDxEditor.Views
             // The rail is centred, so it already clears both side notches; only the top inset can overlap
             // it. Padding a side would also shift it off centre, since padding is not symmetric.
             rail.Padding = new Thickness(0, insets.Top, 0, 0);
+            bool narrowRail = Bounds.Width is > 0 and < 360;
+            rail.HorizontalAlignment = narrowRail
+                ? Avalonia.Layout.HorizontalAlignment.Right
+                : Avalonia.Layout.HorizontalAlignment.Center;
+            rail.Margin = narrowRail
+                ? new Thickness(0, 0, Math.Max(4, insets.Right), 0)
+                : new Thickness(0);
             // Horizontal insets belong to the bar. Bottom clearance belongs inside each button so its
             // hover/active surface continues behind the safe-area strip while the label stays above it.
             tabs.Padding = new Thickness(insets.Left, 0, insets.Right, 0);

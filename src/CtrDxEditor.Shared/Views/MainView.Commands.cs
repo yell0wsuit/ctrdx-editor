@@ -89,6 +89,14 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void RotationSnapToggle_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.RotationSnapEnabled = !vm.RotationSnapEnabled;
+            }
+        }
+
         private void ShowHitboxesToggle_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)

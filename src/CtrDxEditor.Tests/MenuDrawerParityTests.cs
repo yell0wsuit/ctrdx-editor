@@ -70,6 +70,29 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>Grid and rotation snapping are editing behaviors, so both live under Edit rather than View.</summary>
+        [Fact]
+        public void SnapTogglesLiveInTheEditMenu()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int editStart = view.IndexOf("<MenuItem Header=\"{loc:Tr Menu.Edit}\">", StringComparison.Ordinal);
+            int viewStart = view.IndexOf("<MenuItem Header=\"{loc:Tr Menu.View}\">", editStart, StringComparison.Ordinal);
+            int menuEnd = view.IndexOf("</Menu>", viewStart, StringComparison.Ordinal);
+
+            Assert.True(editStart >= 0 && viewStart > editStart && menuEnd > viewStart);
+            string editMenu = view[editStart..viewStart];
+            string viewMenu = view[viewStart..menuEnd];
+
+            Assert.Contains("Click=\"SnapToggle_Click\"", editMenu, StringComparison.Ordinal);
+            Assert.Contains("Menu.Edit.SnapToGrid", editMenu, StringComparison.Ordinal);
+            Assert.Contains("Click=\"RotationSnapToggle_Click\"", editMenu, StringComparison.Ordinal);
+            Assert.Contains("Menu.Edit.SnapRotation", editMenu, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding SnapEnabled}\"", editMenu, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding RotationSnapEnabled}\"", editMenu, StringComparison.Ordinal);
+            Assert.DoesNotContain("SnapToggle_Click", viewMenu, StringComparison.Ordinal);
+            Assert.DoesNotContain("SnapToGrid", viewMenu, StringComparison.Ordinal);
+        }
+
         private static HashSet<string> CommandKeys(string markup)
         {
             return Regex.Matches(markup, @"loc:Tr (Menu\.(?:File|Edit|View)\.[A-Za-z]+)")

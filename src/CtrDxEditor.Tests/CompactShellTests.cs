@@ -302,8 +302,8 @@ namespace CtrDxEditor.Tests
             // the menu considers unavailable.
             Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
 
-            // Five buttons: the three always-applicable actions plus the mode pair.
-            Assert.Equal(5, CountOccurrences(rail, "<Button "));
+            // Six buttons: the three always-applicable actions, the mode pair, and rotation snap.
+            Assert.Equal(6, CountOccurrences(rail, "<Button "));
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
@@ -338,7 +338,7 @@ namespace CtrDxEditor.Tests
                     < rail.IndexOf("Click=\"Undo_Click\"", StringComparison.Ordinal));
         }
 
-        /// <summary>Five rail buttons use the tightened padding, so every one must opt in.</summary>
+        /// <summary>Every rail button uses the tightened padding.</summary>
         [Fact]
         public void CompactRailButtonsUseTheTightenedPadding()
         {
@@ -348,6 +348,35 @@ namespace CtrDxEditor.Tests
             string rail = view[railStart..railEnd];
 
             Assert.Equal(CountOccurrences(rail, "<Button "), CountOccurrences(rail, "Classes=\"railAction\""));
+        }
+
+        /// <summary>The rail exposes an independent, visibly latched rotation-snap toggle.</summary>
+        [Fact]
+        public void CompactRailCarriesRotationSnapToggle()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+            string viewModel = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "ViewModels", "EditorViewModel.cs"));
+
+            Assert.Contains("x:Name=\"RotationSnapButton\"", view, StringComparison.Ordinal);
+            Assert.Contains("Click=\"RotationSnapToggle_Click\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.active=\"{Binding RotationSnapEnabled}\"", view, StringComparison.Ordinal);
+            Assert.Contains("RotationSnapEnabled=\"{Binding RotationSnapEnabled}\"", view, StringComparison.Ordinal);
+            string commands = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Commands.cs"));
+            Assert.Contains("vm.RotationSnapEnabled = !vm.RotationSnapEnabled;", commands, StringComparison.Ordinal);
+            Assert.Contains("partial bool RotationSnapEnabled", viewModel, StringComparison.Ordinal);
+            Assert.DoesNotContain("vm.SnapEnabled = !vm.SnapEnabled;", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>Six rail buttons shift right on narrow phones so they do not collide with the menu.</summary>
+        [Fact]
+        public void CompactRailClearsMenuAtNarrowWidths()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("Bounds.Width is > 0 and < 360", layout, StringComparison.Ordinal);
+            Assert.Contains("HorizontalAlignment.Right", layout, StringComparison.Ordinal);
+            Assert.Contains("HorizontalAlignment.Center", layout, StringComparison.Ordinal);
         }
 
         /// <summary>The mode is applied to the canvas and latched on one button in a single place.</summary>

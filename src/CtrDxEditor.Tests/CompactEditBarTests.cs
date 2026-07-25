@@ -54,15 +54,15 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Click=\"Delete_Click\"", view[bar..], StringComparison.Ordinal);
         }
 
-        /// <summary>The rail is down to five buttons, so the hamburger fits beside it at 320px.</summary>
+        /// <summary>The rail carries six actions and its narrow-width alignment keeps them clear of the hamburger.</summary>
         [Fact]
-        public void RailHasFiveActionButtons()
+        public void RailHasSixActionButtons()
         {
             string view = SourceText("MainView.axaml");
             int rail = view.IndexOf("x:Name=\"CompactRail\"", StringComparison.Ordinal);
             int bar = view.IndexOf("x:Name=\"CompactEditBar\"", StringComparison.Ordinal);
 
-            Assert.Equal(5, CountOccurrences(view[rail..bar], "Classes=\"railAction\""));
+            Assert.Equal(6, CountOccurrences(view[rail..bar], "Classes=\"railAction\""));
         }
 
         /// <summary>

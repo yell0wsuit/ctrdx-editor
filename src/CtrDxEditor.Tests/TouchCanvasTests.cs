@@ -73,6 +73,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("ShowHandlesWithoutHover", rendering, StringComparison.Ordinal);
         }
 
+        /// <summary>The touch toggle enables angle snapping independently while Alt remains available on desktop.</summary>
+        [Fact]
+        public void RotationSnapToggleOrAltEnablesAngleSnapping()
+        {
+            string input = ReadInput();
+
+            Assert.Contains(
+                "RotationSnapEnabled || mods.HasFlag(KeyModifiers.Alt)",
+                input,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// The water surface handle is the one handle whose existence is gated on hover, so touch must
         /// force it visible or the water line cannot be dragged on a phone at all.

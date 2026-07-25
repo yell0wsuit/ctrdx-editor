@@ -186,6 +186,32 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
+        <!-- Transparent icon placeholders reserve the icon column; checks align at the right edge. -->
+        <MenuItem Click="SnapToggle_Click" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <Border Width="16" Height="16" Background="Transparent" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <TextBlock Grid.Column="0" Text="{loc:Tr Menu.Edit.SnapToGrid}" VerticalAlignment="Center" />
+              <icons:MaterialIcon Grid.Column="1" Kind="CheckBold" Width="14" Height="14"
+                                  Margin="24,0,0,0" VerticalAlignment="Center" IsVisible="{Binding SnapEnabled}" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Click="RotationSnapToggle_Click" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon>
+            <Border Width="16" Height="16" Background="Transparent" />
+          </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <TextBlock Grid.Column="0" Text="{loc:Tr Menu.Edit.SnapRotation}" VerticalAlignment="Center" />
+              <icons:MaterialIcon Grid.Column="1" Kind="CheckBold" Width="14" Height="14"
+                                  Margin="24,0,0,0" VerticalAlignment="Center" IsVisible="{Binding RotationSnapEnabled}" />
+            </Grid>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator />
         <MenuItem Header="{loc:Tr Menu.Edit.LevelSettings}" Click="LevelSettings_Click"
                   IsEnabled="{Binding Document, Converter={x:Static ObjectConverters.IsNotNull}}">
           <MenuItem.Icon>
@@ -251,18 +277,6 @@
         <Separator />
         <!-- Transparent icon placeholder reserves the icon column so the check lines up with the
              zoom shortcuts above; the check sits at the header's right edge via the same MinWidth. -->
-        <MenuItem Click="SnapToggle_Click" IsEnabled="{Binding HasDocument}">
-          <MenuItem.Icon>
-            <Border Width="16" Height="16" Background="Transparent" />
-          </MenuItem.Icon>
-          <MenuItem.Header>
-            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
-              <TextBlock Grid.Column="0" Text="{loc:Tr Menu.View.SnapToGrid}" VerticalAlignment="Center" />
-              <icons:MaterialIcon Grid.Column="1" Kind="CheckBold" Width="14" Height="14"
-                                  Margin="24,0,0,0" VerticalAlignment="Center" IsVisible="{Binding SnapEnabled}" />
-            </Grid>
-          </MenuItem.Header>
-        </MenuItem>
         <MenuItem Click="ShowHitboxesToggle_Click" IsEnabled="{Binding HasDocument}">
           <MenuItem.Icon>
             <Border Width="16" Height="16" Background="Transparent" />
@@ -315,6 +329,7 @@
                             Sprites="{Binding Sprites}"
                             View="{Binding View, Mode=TwoWay}"
                             SnapEnabled="{Binding SnapEnabled}"
+                            RotationSnapEnabled="{Binding RotationSnapEnabled}"
                             ShowHitboxes="{Binding ShowHitboxes}"
                             ShowForceFields="{Binding ShowForceFields}"
                             ShowMovementPaths="{Binding ShowMovementPaths}"
@@ -688,11 +703,11 @@
       <Border x:Name="CompactRail" IsVisible="False" Grid.Row="0"
               HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <!-- Five buttons: the latched mode pair, then the three actions that always apply to an open
+        <!-- Six buttons: the latched mode pair and rotation snap, then the three actions that always apply to an open
              document. Delete moved to the compact edit bar, which is where the rest of the
              selection-gated group lives; keeping it here made it the only button on the rail whose
-             availability depended on what was selected. Dropping it also frees the width the hamburger
-             needs at 320px. -->
+             availability depended on what was selected. On narrow phones the rail shifts right to clear
+             the hamburger without shrinking these controls further. -->
         <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
           <Button x:Name="EditModeButton" Classes="railAction" Click="CompactEditMode_Click"
                   ToolTip.Tip="{loc:Tr Canvas.Mode.Edit}">
@@ -701,6 +716,12 @@
           <Button x:Name="PanModeButton" Classes="railAction" Click="CompactPanMode_Click"
                   ToolTip.Tip="{loc:Tr Canvas.Mode.Pan}">
             <icons:MaterialIcon Kind="HandBackRight" Width="20" Height="20" />
+          </Button>
+          <Button x:Name="RotationSnapButton" Classes="railAction"
+                  Classes.active="{Binding RotationSnapEnabled}"
+                  Click="RotationSnapToggle_Click"
+                  ToolTip.Tip="{loc:Tr Menu.Edit.SnapRotation}">
+            <icons:MaterialIcon Kind="AngleAcute" Width="20" Height="20" />
           </Button>
           <Border Width="1" Margin="2,4" Background="{DynamicResource EditorBrush.Surface.Divider}" />
           <Button Classes="railAction" Click="Undo_Click" IsEnabled="{Binding CanUndo}"
@@ -869,6 +890,15 @@
                              Text="{loc:Tr Menu.Edit.SelectAll, Plain=True}" />
                 </Grid>
               </Button>
+              <Button Classes="drawerRow" Click="DrawerSnapToggle_Click" IsEnabled="{Binding HasDocument}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.Edit.SnapToGrid, Plain=True}" />
+                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
+                                      VerticalAlignment="Center" IsVisible="{Binding SnapEnabled}" />
+                </Grid>
+              </Button>
               <Button Classes="drawerRow" Click="DrawerLevelSettings_Click" IsEnabled="{Binding HasDocument}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="Cog" Width="20" Height="20"
@@ -904,15 +934,6 @@
                                       VerticalAlignment="Center" />
                   <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
                              Text="{Binding AnimationPreviewMenuText}" />
-                </Grid>
-              </Button>
-              <Button Classes="drawerRow" Click="DrawerSnapToggle_Click" IsEnabled="{Binding HasDocument}">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                  <Border Grid.Column="0" Width="20" Height="20" Background="Transparent" />
-                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
-                             Text="{loc:Tr Menu.View.SnapToGrid, Plain=True}" />
-                  <icons:MaterialIcon Grid.Column="2" Kind="CheckBold" Width="16" Height="16"
-                                      VerticalAlignment="Center" IsVisible="{Binding SnapEnabled}" />
                 </Grid>
               </Button>
               <Button Classes="drawerRow" Click="DrawerShowHitboxes_Click" IsEnabled="{Binding HasDocument}">

@@ -42,6 +42,10 @@ namespace CtrDxEditor.Rendering
         public static readonly StyledProperty<bool> SnapEnabledProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(SnapEnabled));
 
+        /// <summary>Avalonia property backing <see cref="RotationSnapEnabled"/>.</summary>
+        public static readonly StyledProperty<bool> RotationSnapEnabledProperty =
+            AvaloniaProperty.Register<LevelCanvas, bool>(nameof(RotationSnapEnabled));
+
         /// <summary>Avalonia property backing <see cref="IsScrollActive"/>.</summary>
         public static readonly StyledProperty<bool> IsScrollActiveProperty =
             AvaloniaProperty.Register<LevelCanvas, bool>(nameof(IsScrollActive));
@@ -153,6 +157,13 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>Whether object moves and placements snap to the level grid.</summary>
         public bool SnapEnabled { get => GetValue(SnapEnabledProperty); set => SetValue(SnapEnabledProperty, value); }
+
+        /// <summary>Whether rotation-handle drags snap to each object's configured angle step.</summary>
+        public bool RotationSnapEnabled
+        {
+            get => GetValue(RotationSnapEnabledProperty);
+            set => SetValue(RotationSnapEnabledProperty, value);
+        }
 
         /// <summary>True while the view is being panned or zoomed, driving the scrollbar overlay's fade.</summary>
         public bool IsScrollActive { get => GetValue(IsScrollActiveProperty); private set => SetValue(IsScrollActiveProperty, value); }

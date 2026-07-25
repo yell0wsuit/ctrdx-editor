@@ -23,7 +23,7 @@
     <Setter Property="Foreground" Value="{DynamicResource EditorBrush.OnPrimary}" />
   </Style>
 
-  <!-- Compact-rail icon button: tighter than the Fluent default so all five fit across a 320px phone. -->
+  <!-- Compact-rail icon button: tighter than the Fluent default so all six fit across a 320px phone. -->
   <Style Selector="Button.railAction">
     <Setter Property="Padding" Value="8,4" />
     <Setter Property="MinWidth" Value="0" />

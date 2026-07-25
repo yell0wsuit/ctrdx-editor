@@ -154,15 +154,30 @@ namespace CtrDxEditor.Tests
         public void ToggleRowsShowACheck()
         {
             string view = SourceText("MainView.axaml");
+            int editSection = view.IndexOf("x:Name=\"CommandDrawerEditSection\"", StringComparison.Ordinal);
             int viewSection = view.IndexOf("x:Name=\"CommandDrawerViewSection\"", StringComparison.Ordinal);
 
-            Assert.True(viewSection >= 0);
-            string markup = view[viewSection..];
+            Assert.True(editSection >= 0 && viewSection > editSection);
+            string editMarkup = view[editSection..viewSection];
+            string viewMarkup = view[viewSection..];
 
-            Assert.Contains("IsVisible=\"{Binding SnapEnabled}\"", markup, StringComparison.Ordinal);
-            Assert.Contains("IsVisible=\"{Binding ShowHitboxes}\"", markup, StringComparison.Ordinal);
-            Assert.Contains("IsVisible=\"{Binding ShowForceFields}\"", markup, StringComparison.Ordinal);
-            Assert.Contains("IsVisible=\"{Binding ShowMovementPaths}\"", markup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding SnapEnabled}\"", editMarkup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowHitboxes}\"", viewMarkup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowForceFields}\"", viewMarkup, StringComparison.Ordinal);
+            Assert.Contains("IsVisible=\"{Binding ShowMovementPaths}\"", viewMarkup, StringComparison.Ordinal);
+        }
+
+        /// <summary>Grid snap follows its desktop command into the drawer's Edit section.</summary>
+        [Fact]
+        public void GridSnapLivesInDrawerEditSection()
+        {
+            string view = SourceText("MainView.axaml");
+            int editStart = view.IndexOf("x:Name=\"CommandDrawerEditSection\"", StringComparison.Ordinal);
+            int viewStart = view.IndexOf("x:Name=\"CommandDrawerViewSection\"", editStart, StringComparison.Ordinal);
+
+            Assert.True(editStart >= 0 && viewStart > editStart);
+            Assert.Contains("DrawerSnapToggle_Click", view[editStart..viewStart], StringComparison.Ordinal);
+            Assert.DoesNotContain("DrawerSnapToggle_Click", view[viewStart..], StringComparison.Ordinal);
         }
 
         /// <summary>The drawer reserves a header row so the higher-Z hamburger covers no command content.</summary>

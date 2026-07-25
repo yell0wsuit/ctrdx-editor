@@ -24,6 +24,8 @@
     "Menu.Edit.Paste": "_Paste",
     "Menu.Edit.SelectAll": "Select _All",
     "Menu.Edit.Delete": "_Delete",
+    "Menu.Edit.SnapToGrid": "Snap to Grid",
+    "Menu.Edit.SnapRotation": "Snap rotation",
     "Menu.Edit.LevelSettings": "Level _Settings...",
 
     "Menu.View": "_View",
@@ -32,7 +34,6 @@
     "Menu.View.ZoomFit": "Zoom to _Fit",
     "Menu.View.PlayAnimations": "Play Animations",
     "Menu.View.StopAnimations": "Stop Animations",
-    "Menu.View.SnapToGrid": "Snap to Grid",
     "Menu.View.ShowHitboxes": "Show Hitboxes",
     "Menu.View.ShowForceFields": "Show Force Fields",
     "Menu.View.ShowMovementPaths": "Show Movement Paths",

@@ -71,6 +71,7 @@ namespace CtrDxEditor.ViewModels
         [ObservableProperty] public partial ViewTransform View { get; set; } = ViewTransform.Identity;
         [ObservableProperty] public partial LevelObject? LockedObject { get; set; }
         [ObservableProperty] public partial bool SnapEnabled { get; set; }
+        [ObservableProperty] public partial bool RotationSnapEnabled { get; set; }
         [ObservableProperty] public partial bool ShowHitboxes { get; set; } = true;
         [ObservableProperty] public partial bool ShowForceFields { get; set; } = true;
         [ObservableProperty] public partial bool ShowMovementPaths { get; set; } = true;
