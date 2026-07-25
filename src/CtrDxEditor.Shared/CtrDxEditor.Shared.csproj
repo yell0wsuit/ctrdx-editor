@@ -23,5 +23,7 @@
                       Link="Assets\Fonts\%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\..\resources\icon\icon-256.png"
                       Link="Assets\Icon\icon-256.png" />
+    <AvaloniaResource Include="..\..\resources\guide\*.png"
+                      Link="Assets\Guide\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

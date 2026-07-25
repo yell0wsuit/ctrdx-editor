@@ -12,32 +12,32 @@ namespace CtrDxEditor.UsageGuide
         public static IReadOnlyList<GuideArticle> Articles { get; } =
         [
             Article("welcome", "StartHere",
-                [Para("welcome", "Intro"), Heading("welcome", "Route"), List("welcome", "Route"), IllustrationPicture("welcome", "Layout", "guide-welcome-editor-layout.png"), Tip("welcome", "Search")],
+                [Para("welcome", "Intro"), Heading("welcome", "Route"), List("welcome", "Route"), EmbeddedIllustration("welcome", "Layout", "guide-welcome-editor-layout.png"), Tip("welcome", "Search")],
                 ["first-level", "know-the-editor", "object-reference"]),
             Article("first-level", "StartHere",
-                [List("first-level", "Build"), Note("first-level", "Validation"), IllustrationPicture("first-level", "Example", "guide-first-level.png")],
+                [List("first-level", "Build"), Note("first-level", "Validation"), EmbeddedIllustration("first-level", "Example", "guide-first-level.png")],
                 ["add-place-objects", "level-settings", "save-export-playtest"]),
             Article("know-the-editor", "StartHere",
-                [Heading("know-the-editor", "Expanded"), Para("know-the-editor", "Expanded"), Heading("know-the-editor", "Compact"), Para("know-the-editor", "Compact"), IllustrationPicture("know-the-editor", "Layouts", "guide-editor-layouts.png")],
+                [Heading("know-the-editor", "Expanded"), Para("know-the-editor", "Expanded"), Heading("know-the-editor", "Compact"), Para("know-the-editor", "Compact"), EmbeddedIllustration("know-the-editor", "Layouts", "guide-editor-layouts.png")],
                 ["menus-commands", "layers", "edit-properties"]),
 
             Article("add-place-objects", "EditLevel",
-                [List("add-place-objects", "Place"), Note("add-place-objects", "Availability"), IllustrationPicture("add-place-objects", "Drag", "guide-place-object.png")],
+                [List("add-place-objects", "Place"), Note("add-place-objects", "Availability"), EmbeddedIllustration("add-place-objects", "Drag", "guide-place-object.png")],
                 ["select-transform", "object-reference", "snapping"]),
             Article("select-transform", "EditLevel",
-                [Para("select-transform", "Selection"), Para("select-transform", "Handles"), Tip("select-transform", "Duplicate"), Note("select-transform", "RotationSnap"), IllustrationPicture("select-transform", "Handles", "guide-transform-handles.png")],
+                [Para("select-transform", "Selection"), Para("select-transform", "Handles"), Tip("select-transform", "Duplicate"), Note("select-transform", "RotationSnap"), EmbeddedIllustration("select-transform", "Handles", "guide-transform-handles.png")],
                 ["clipboard-lock-hide", "modifier-keys", "snapping"]),
             Article("clipboard-lock-hide", "EditLevel",
                 [Para("clipboard-lock-hide", "Clipboard"), Para("clipboard-lock-hide", "Locking"), Warning("clipboard-lock-hide", "DeleteLayer")],
                 ["layers", "keyboard-shortcuts", "select-transform"]),
             Article("layers", "EditLevel",
-                [Para("layers", "Intro"), List("layers", "Organize"), Note("layers", "InheritedState"), IllustrationPicture("layers", "Panel", "guide-layers-panel.png")],
+                [Para("layers", "Intro"), List("layers", "Organize"), Note("layers", "InheritedState"), EmbeddedIllustration("layers", "Panel", "guide-layers-panel.png")],
                 ["clipboard-lock-hide", "know-the-editor"]),
             Article("edit-properties", "EditLevel",
                 [Para("edit-properties", "Fields"), Para("edit-properties", "Help"), Tip("edit-properties", "Precision")],
                 ["select-transform", "level-settings", "object-reference"]),
             Article("level-settings", "EditLevel",
-                [Para("level-settings", "Mechanics"), Para("level-settings", "Water"), Para("level-settings", "Physics"), Para("level-settings", "Customization"), Note("level-settings", "Palette"), IllustrationPicture("level-settings", "Dialog", "guide-level-settings.png")],
+                [Para("level-settings", "Mechanics"), Para("level-settings", "Water"), Para("level-settings", "Physics"), Para("level-settings", "Customization"), Note("level-settings", "Palette"), EmbeddedIllustration("level-settings", "Dialog", "guide-level-settings.png")],
                 ["objectives", "light-bulbs", "validation-review", "first-level"]),
 
             Article("objectives", "GameObjects",
@@ -47,7 +47,7 @@ namespace CtrDxEditor.UsageGuide
                 [Para("stars", "InGame"), Para("stars", "Editing"), Para("stars", "Properties"), Tip("stars", "Timeout")],
                 ["objectives", "motion", "light-bulbs"]),
             Article("rope-hooks", "GameObjects",
-                [Para("rope-hooks", "InGame"), Para("rope-hooks", "Editing"), Para("rope-hooks", "Binding"), Para("rope-hooks", "Rope"), Para("rope-hooks", "Variants"), Note("rope-hooks", "Bee"), Warning("rope-hooks", "Validation"), IllustrationPicture("rope-hooks", "Handles", "guide-rope-hook-handles.png")],
+                [Para("rope-hooks", "InGame"), Para("rope-hooks", "Editing"), Para("rope-hooks", "Binding"), Para("rope-hooks", "Rope"), Para("rope-hooks", "Variants"), Note("rope-hooks", "Bee"), Warning("rope-hooks", "Validation"), EmbeddedIllustration("rope-hooks", "Handles", "guide-rope-hook-handles.png")],
                 ["objectives", "light-bulbs", "motion", "validation-review"]),
             Article("bubbles", "GameObjects",
                 [Para("bubbles", "InGame"), Para("bubbles", "Editing"), Tip("bubbles", "Hitbox")],
@@ -71,7 +71,7 @@ namespace CtrDxEditor.UsageGuide
                 [Para("ghosts", "InGame"), Para("ghosts", "Editing"), Para("ghosts", "Properties"), Warning("ghosts", "Idle")],
                 ["bubbles", "rope-hooks", "bouncers", "validation-review"]),
             Article("magic-hats", "GameObjects",
-                [Para("magic-hats", "InGame"), Para("magic-hats", "Editing"), Para("magic-hats", "Grouping"), Note("magic-hats", "Mouth"), Tip("magic-hats", "Xmas"), IllustrationPicture("magic-hats", "Pair", "guide-magic-hats.png")],
+                [Para("magic-hats", "InGame"), Para("magic-hats", "Editing"), Para("magic-hats", "Grouping"), Note("magic-hats", "Mouth"), Tip("magic-hats", "Xmas"), EmbeddedIllustration("magic-hats", "Pair", "guide-magic-hats.png")],
                 ["bamboo-tubes", "diagnostic-overlays", "motion"]),
             Article("light-bulbs", "GameObjects",
                 [Para("light-bulbs", "InGame"), Para("light-bulbs", "Editing"), Para("light-bulbs", "Properties"), Warning("light-bulbs", "NightLevel")],
@@ -89,28 +89,28 @@ namespace CtrDxEditor.UsageGuide
                 [Para("snails", "InGame"), Para("snails", "Editing"), Tip("snails", "Weight")],
                 ["mice", "objectives", "mechanical-hands"]),
             Article("conveyors", "GameObjects",
-                [Para("conveyors", "InGame"), Para("conveyors", "Editing"), Para("conveyors", "Properties"), Note("conveyors", "Manual"), IllustrationPicture("conveyors", "Handles", "guide-conveyors.png")],
+                [Para("conveyors", "InGame"), Para("conveyors", "Editing"), Para("conveyors", "Properties"), Note("conveyors", "Manual"), EmbeddedIllustration("conveyors", "Handles", "guide-conveyors.png")],
                 ["ant-conveyors", "select-transform", "snapping"]),
             Article("ant-conveyors", "GameObjects",
                 [Para("ant-conveyors", "InGame"), Para("ant-conveyors", "Editing"), Para("ant-conveyors", "Properties"), Tip("ant-conveyors", "Shape")],
                 ["conveyors", "motion", "object-reference"]),
             Article("bamboo-tubes", "GameObjects",
-                [Para("bamboo-tubes", "InGame"), Para("bamboo-tubes", "Editing"), Note("bamboo-tubes", "Openings"), IllustrationPicture("bamboo-tubes", "Overlay", "guide-tubes.png")],
+                [Para("bamboo-tubes", "InGame"), Para("bamboo-tubes", "Editing"), Note("bamboo-tubes", "Openings"), EmbeddedIllustration("bamboo-tubes", "Overlay", "guide-tubes.png")],
                 ["steam-pipes", "magic-hats", "snapping"]),
             Article("steam-pipes", "GameObjects",
                 [Para("steam-pipes", "InGame"), Para("steam-pipes", "Editing"), Tip("steam-pipes", "ForceField")],
                 ["air-cushions", "bamboo-tubes", "diagnostic-overlays"]),
             Article("rockets", "GameObjects",
-                [Para("rockets", "InGame"), Para("rockets", "Editing"), Para("rockets", "Properties"), Tip("rockets", "Playtest"), IllustrationPicture("rockets", "Selected", "guide-rocket.png")],
+                [Para("rockets", "InGame"), Para("rockets", "Editing"), Para("rockets", "Properties"), Tip("rockets", "Playtest"), EmbeddedIllustration("rockets", "Selected", "guide-rocket.png")],
                 ["edit-properties", "objectives", "save-export-playtest"]),
             Article("mechanical-hands", "GameObjects",
-                [Para("mechanical-hands", "InGame"), Para("mechanical-hands", "Segments"), Para("mechanical-hands", "Split"), Para("mechanical-hands", "Properties"), Note("mechanical-hands", "Dial"), IllustrationPicture("mechanical-hands", "Controls", "guide-mechanical-hand.png")],
+                [Para("mechanical-hands", "InGame"), Para("mechanical-hands", "Segments"), Para("mechanical-hands", "Split"), Para("mechanical-hands", "Properties"), Note("mechanical-hands", "Dial"), EmbeddedIllustration("mechanical-hands", "Controls", "guide-mechanical-hand.png")],
                 ["modifier-keys", "select-transform", "snails"]),
             Article("motion", "GameObjects",
-                [Heading("motion", "Paths"), Para("motion", "Modes"), List("motion", "Edit"), Tip("motion", "Angles"), Note("motion", "Limit"), Heading("motion", "Spin"), Para("motion", "Spin"), IllustrationPicture("motion", "Polyline", "guide-movement-path.png")],
+                [Heading("motion", "Paths"), Para("motion", "Modes"), List("motion", "Edit"), Tip("motion", "Angles"), Note("motion", "Limit"), Heading("motion", "Spin"), Para("motion", "Spin"), EmbeddedIllustration("motion", "Polyline", "guide-movement-path.png")],
                 ["modifier-keys", "diagnostic-overlays", "rope-hooks", "edit-properties"]),
             Article("tutorial-objects", "GameObjects",
-                [Para("tutorial-objects", "InGame"), Para("tutorial-objects", "Icons"), Para("tutorial-objects", "Text"), Para("tutorial-objects", "Editing"), Warning("tutorial-objects", "Language"), IllustrationPicture("tutorial-objects", "Width", "guide-tutorial-objects.png")],
+                [Para("tutorial-objects", "InGame"), Para("tutorial-objects", "Icons"), Para("tutorial-objects", "Text"), Para("tutorial-objects", "Editing"), Warning("tutorial-objects", "Language"), EmbeddedIllustration("tutorial-objects", "Width", "guide-tutorial-objects.png")],
                 ["edit-properties", "level-settings", "keyboard-shortcuts"]),
 
             Article("object-reference", "Reference",
@@ -139,10 +139,10 @@ namespace CtrDxEditor.UsageGuide
                 [Para("animation-preview", "Usage"), Note("animation-preview", "Scope")],
                 ["diagnostic-overlays", "save-export-playtest", "keyboard-shortcuts"]),
             Article("diagnostic-overlays", "PreviewFinish",
-                [Para("diagnostic-overlays", "Hitboxes"), Para("diagnostic-overlays", "ForceFields"), Para("diagnostic-overlays", "Paths"), Tip("diagnostic-overlays", "EditorOnly"), IllustrationPicture("diagnostic-overlays", "Enabled", "guide-diagnostic-overlays.png")],
+                [Para("diagnostic-overlays", "Hitboxes"), Para("diagnostic-overlays", "ForceFields"), Para("diagnostic-overlays", "Paths"), Tip("diagnostic-overlays", "EditorOnly"), EmbeddedIllustration("diagnostic-overlays", "Enabled", "guide-diagnostic-overlays.png")],
                 ["magic-hats", "motion", "air-cushions", "level-settings"]),
             Article("validation-review", "PreviewFinish",
-                [Para("validation-review", "Validation"), List("validation-review", "Checks"), Para("validation-review", "Review"), Note("validation-review", "Warnings"), IllustrationPicture("validation-review", "Dialogs", "guide-validation-review.png")],
+                [Para("validation-review", "Validation"), List("validation-review", "Checks"), Para("validation-review", "Review"), Note("validation-review", "Warnings"), EmbeddedIllustration("validation-review", "Dialogs", "guide-validation-review.png")],
                 ["save-export-playtest", "troubleshooting", "objectives"]),
             Article("save-export-playtest", "PreviewFinish",
                 [Para("save-export-playtest", "Save"), Para("save-export-playtest", "Playtest"), Warning("save-export-playtest", "Browser")],
@@ -229,14 +229,17 @@ namespace CtrDxEditor.UsageGuide
             return new GuideCallout(GuideCalloutKind.Warning, Key(id, $"{name}.Warning"));
         }
 
-        /// <summary>Creates a replaceable, localized screenshot slot.</summary>
+        /// <summary>Creates a localized screenshot block backed by a packaged guide image.</summary>
         /// <param name="id">Article identifier used in the localization-key prefix.</param>
         /// <param name="name">Caption-specific localization-key suffix.</param>
-        /// <param name="suggestedFileName">Filename shown while the screenshot asset is absent.</param>
-        /// <returns>A screenshot block with an empty source and visible placeholder.</returns>
-        private static GuideScreenshot IllustrationPicture(string id, string name, string suggestedFileName)
+        /// <param name="fileName">Filename packaged under the shared guide asset directory.</param>
+        /// <returns>A screenshot block whose source resolves to the packaged Avalonia resource.</returns>
+        private static GuideScreenshot EmbeddedIllustration(string id, string name, string fileName)
         {
-            return new GuideScreenshot(Key(id, $"{name}.Caption"), suggestedFileName);
+            return new GuideScreenshot(
+                Key(id, $"{name}.Caption"),
+                fileName,
+                $"avares://CtrDxEditor.Shared/Assets/Guide/{fileName}");
         }
 
         /// <summary>Creates a localized shortcut table from convention-based row names.</summary>

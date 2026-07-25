@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using CtrDxEditor.Core.Descriptors;
@@ -99,9 +100,9 @@ namespace CtrDxEditor.Tests
             }
         }
 
-        /// <summary>Content authors have named slots that can be filled with screenshots later.</summary>
+        /// <summary>Every guide screenshot retains a stable PNG filename for asset maintenance.</summary>
         [Fact]
-        public void CatalogIncludesReplaceableScreenshotSlots()
+        public void CatalogScreenshotsHaveStablePngNames()
         {
             GuideScreenshot[] screenshots =
             [
@@ -114,7 +115,39 @@ namespace CtrDxEditor.Tests
             Assert.All(
                 screenshots,
                 screenshot => Assert.EndsWith(".png", screenshot.SuggestedFileName, StringComparison.OrdinalIgnoreCase));
-            Assert.Contains(screenshots, screenshot => string.IsNullOrWhiteSpace(screenshot.Source));
+        }
+
+        /// <summary>Imported guide screenshots resolve from the shared Avalonia resource assembly.</summary>
+        [Fact]
+        public void ImportedScreenshotsArePackagedResources()
+        {
+            GuideScreenshot[] screenshots =
+            [
+                .. UsageGuideCatalog.Articles
+                .SelectMany(article => article.Blocks)
+                .OfType<GuideScreenshot>(),
+            ];
+            GuideScreenshot[] imported =
+            [
+                .. screenshots.Where(screenshot => !string.IsNullOrWhiteSpace(screenshot.Source)),
+            ];
+
+            Assert.Equal(17, imported.Length);
+            Assert.DoesNotContain(screenshots, screenshot => string.IsNullOrWhiteSpace(screenshot.Source));
+            Assert.All(
+                imported,
+                screenshot =>
+                {
+                    Assert.Equal(
+                        $"avares://CtrDxEditor.Shared/Assets/Guide/{screenshot.SuggestedFileName}",
+                        screenshot.Source);
+                    Assert.True(
+                        File.Exists(RepositoryPath("resources", "guide", screenshot.SuggestedFileName)),
+                        $"Missing guide screenshot file: {screenshot.SuggestedFileName}");
+                });
+            string project = File.ReadAllText(
+                RepositoryPath("src", "CtrDxEditor.Shared", "CtrDxEditor.Shared.csproj"));
+            Assert.Contains(@"resources\guide\*.png", project, StringComparison.Ordinal);
         }
 
         /// <summary>The tutorial-text article names the canvas shortcut implemented by <c>LevelCanvas</c>.</summary>
@@ -270,6 +303,21 @@ namespace CtrDxEditor.Tests
             Assert.StartsWith("Guide.", key, StringComparison.Ordinal);
             Assert.NotEqual(key, value);
             Assert.False(string.IsNullOrWhiteSpace(value));
+        }
+
+        /// <summary>Locates a file relative to the repository root.</summary>
+        /// <param name="parts">Path components beneath the repository root.</param>
+        /// <returns>Absolute path to the requested repository file.</returns>
+        private static string RepositoryPath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                       ?? throw new InvalidOperationException("Could not locate the repository src directory.");
+            }
+
+            return Path.Combine([Directory.GetParent(path)!.FullName, .. parts]);
         }
     }
 }
