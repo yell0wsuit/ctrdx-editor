@@ -37,6 +37,31 @@ namespace CtrDxEditor.Tests
             Assert.Contains("(_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved", source, StringComparison.Ordinal);
         }
 
+        /// <summary>Hand buttons activate their owning segment, while a real joint drag follows its edited segment.</summary>
+        [Fact]
+        public void HandButtonsSelectTheirStartingSegment()
+        {
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            Assert.Contains(
+                "ActivateHandSegment(HandGeometry.ButtonSegment(pressedHandHit, HandObject.SegmentCount(handObj)));",
+                source,
+                StringComparison.Ordinal);
+            Assert.Contains("ActivateHandSegment(_handJointDrag);", source, StringComparison.Ordinal);
+        }
+
+        /// <summary>Hovering a hand button previews the same owning segment that clicking it activates.</summary>
+        [Fact]
+        public void HandButtonsHoverTheirStartingSegment()
+        {
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            Assert.Contains(
+                "HandGeometry.ButtonSegment(hit, HandObject.SegmentCount(hand))",
+                source,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Movement path visibility is exposed through the View menu and bound into the canvas.</summary>
         [Fact]
         public void ViewMenuWiresMovementPathToggleToCanvas()

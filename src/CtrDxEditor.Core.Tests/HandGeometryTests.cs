@@ -192,6 +192,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(2, claw.Index);
         }
 
+        /// <summary>A visible button selects the segment that starts at it, with the claw joint clamped to the last segment.</summary>
+        [Theory]
+        [InlineData(HandGeometry.HandleKind.Base, 0, 3, 1)]
+        [InlineData(HandGeometry.HandleKind.Joint, 1, 3, 2)]
+        [InlineData(HandGeometry.HandleKind.Joint, 2, 3, 3)]
+        [InlineData(HandGeometry.HandleKind.Joint, 3, 3, 3)]
+        [InlineData(HandGeometry.HandleKind.Bone, 1, 3, 0)]
+        [InlineData(HandGeometry.HandleKind.None, 0, 3, 0)]
+        public void ButtonHitSelectsItsStartingSegment(
+            HandGeometry.HandleKind kind,
+            int index,
+            int segmentCount,
+            int expected)
+        {
+            Assert.Equal(
+                expected,
+                HandGeometry.ButtonSegment(new HandGeometry.Handle(kind, index), segmentCount));
+        }
+
         /// <summary>A point along a bone but away from its joints reports the bone.</summary>
         [Fact]
         public void HitTestFindsBoneBetweenJoints()

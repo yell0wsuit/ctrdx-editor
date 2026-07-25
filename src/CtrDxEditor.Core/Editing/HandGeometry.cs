@@ -95,6 +95,30 @@ namespace CtrDxEditor.Core.Editing
         /// </param>
         public readonly record struct Handle(HandleKind Kind, int Index);
 
+        /// <summary>Maps a base or joint hit to the segment whose visible button starts at that point.</summary>
+        /// <param name="handle">The hit-tested hand handle.</param>
+        /// <param name="segmentCount">The number of live segments in the hand.</param>
+        /// <returns>
+        /// The 1-based owning segment; the base owns segment 1, an intermediate joint owns the following
+        /// segment, and the terminal claw joint remains associated with the final segment. Zero means the
+        /// handle is not a visible segment button.
+        /// </returns>
+        public static int ButtonSegment(Handle handle, int segmentCount)
+        {
+            return segmentCount < 1
+                ? 0
+                : handle.Kind switch
+                {
+                    HandleKind.None => 0,
+                    HandleKind.Base => 1,
+                    HandleKind.Joint when handle.Index is >= 1 && handle.Index <= segmentCount
+                        => Math.Min(handle.Index + 1, segmentCount),
+                    HandleKind.Joint => 0,
+                    HandleKind.Bone => 0,
+                    _ => throw new InvalidOperationException($"Unknown hand handle kind: {handle.Kind}"),
+                };
+        }
+
         /// <summary>Returns whether two-dimensional pointer travel has crossed the screen-space drag threshold.</summary>
         /// <param name="start">Pointer position when the hand gesture began, in level units.</param>
         /// <param name="current">Current pointer position, in level units.</param>

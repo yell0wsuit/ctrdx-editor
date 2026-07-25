@@ -169,8 +169,27 @@ namespace CtrDxEditor.Rendering
             }
 
             _handDragHasMoved = true;
+            if (_handJointDrag > 0 && _handActiveSegment != _handJointDrag)
+            {
+                // A tap selects the segment whose button starts here; once movement begins, the shared
+                // joint edits the preceding segment that terminates here.
+                ActivateHandSegment(_handJointDrag);
+            }
             BeginDocumentEdit?.Invoke();
             return true;
+        }
+
+        /// <summary>Activates one hand segment for its highlight, rotation dial, and property group.</summary>
+        private void ActivateHandSegment(int index)
+        {
+            if (index <= 0)
+            {
+                return;
+            }
+
+            _handActiveSegment = index;
+            HandSegmentActivated?.Invoke(index);
+            InvalidateVisual();
         }
 
         /// <summary>Moves a hand button by pointer delta so grabbing off-centre never makes it jump.</summary>
@@ -382,9 +401,9 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Recomputes the hovered-segment tint from a hover point. Marks the bone under the cursor for a plain
-        /// hover over the selected hand, and clears it while Alt is held (a split, not a selection) or off any
-        /// bone. Repaints on a change.
+        /// Recomputes the hovered-segment tint from a hover point. A bone previews itself and a visible
+        /// button previews the segment that starts there, matching click selection. Alt clears the tint
+        /// because a bone hover then previews a split instead. Repaints on a change.
         /// </summary>
         /// <param name="levelPt">The hover position in level units.</param>
         /// <param name="altHeld">Whether the split modifier is currently down.</param>
@@ -395,10 +414,14 @@ namespace CtrDxEditor.Rendering
             {
                 double tolerance = HitTolerance(9);
                 HandGeometry.Handle hit = HandGeometry.HitTest(hand, levelPt, tolerance, tolerance / 2);
-                if (hit.Kind == HandGeometry.HandleKind.Bone)
+                hovered = hit.Kind switch
                 {
-                    hovered = hit.Index;
-                }
+                    HandGeometry.HandleKind.None => 0,
+                    HandGeometry.HandleKind.Base or HandGeometry.HandleKind.Joint
+                        => HandGeometry.ButtonSegment(hit, HandObject.SegmentCount(hand)),
+                    HandGeometry.HandleKind.Bone => hit.Index,
+                    _ => throw new InvalidOperationException($"Unknown hand handle kind: {hit.Kind}"),
+                };
             }
 
             if (_handHoverSegment != hovered)
@@ -944,15 +967,15 @@ namespace CtrDxEditor.Rendering
                 {
                     case HandGeometry.HandleKind.Joint:
                         _handJointDrag = pressedHandHit.Index;
-                        _handActiveSegment = pressedHandHit.Index;
+                        ActivateHandSegment(HandGeometry.ButtonSegment(pressedHandHit, HandObject.SegmentCount(handObj)));
                         PrepareHandDrag(levelPt, HandGeometry.Joint(handObj, pressedHandHit.Index));
-                        HandSegmentActivated?.Invoke(pressedHandHit.Index);
                         e.Handled = true;
                         e.Pointer.Capture(this);
                         return;
 
                     case HandGeometry.HandleKind.Base:
                         _handBaseDrag = true;
+                        ActivateHandSegment(HandGeometry.ButtonSegment(pressedHandHit, HandObject.SegmentCount(handObj)));
                         PrepareHandDrag(levelPt, new Vec2(handObj.X, handObj.Y));
                         e.Handled = true;
                         e.Pointer.Capture(this);
@@ -966,11 +989,10 @@ namespace CtrDxEditor.Rendering
                             BeginDocumentEdit?.Invoke();
                             _handSplitPreview = null;
                             _handJointDrag = HandGeometry.SplitBone(handObj, pressedHandHit.Index, levelPt);
-                            _handActiveSegment = _handJointDrag;
+                            ActivateHandSegment(_handJointDrag);
                             _handDragStartPointer = levelPt;
                             _handDragStartTarget = HandGeometry.Joint(handObj, _handJointDrag);
                             _handDragHasMoved = true;
-                            HandSegmentActivated?.Invoke(_handActiveSegment);
                             SelectedObjectMoved?.Invoke();
                             InvalidateVisual();
                             e.Handled = true;
@@ -978,9 +1000,7 @@ namespace CtrDxEditor.Rendering
                             return;
                         }
 
-                        _handActiveSegment = pressedHandHit.Index;
-                        HandSegmentActivated?.Invoke(pressedHandHit.Index);
-                        InvalidateVisual();
+                        ActivateHandSegment(pressedHandHit.Index);
                         e.Handled = true;
                         return;
 

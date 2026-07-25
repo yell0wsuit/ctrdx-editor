@@ -31,6 +31,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains("<Color x:Key=\"EditorColor.TutorialPaletteOverlay\">#FFFFFFFF</Color>", theme, StringComparison.Ordinal);
         }
 
+        /// <summary>Hand selection has its own warm theme token instead of reusing cyan object selection.</summary>
+        [Fact]
+        public void HandSegmentSelectionUsesDedicatedThemeColor()
+        {
+            string theme = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Styles", "EditorTheme.axaml"));
+            string palette = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "CanvasPalette.cs"));
+
+            Assert.Contains("<Color x:Key=\"EditorColor.OverlayHandSegmentSelected\">#BB4D00</Color>", theme, StringComparison.Ordinal);
+            Assert.Contains("<Color x:Key=\"EditorColor.OverlayHandSegmentSelected\">#FDC700</Color>", theme, StringComparison.Ordinal);
+            Assert.Contains("\"EditorColor.OverlayHandSegmentSelected\"", palette, StringComparison.Ordinal);
+        }
+
         /// <summary>Lost pointer capture and view detachment cancel palette drag state through shared cleanup.</summary>
         [Fact]
         public void InterruptedPaletteDragUsesSharedCleanup()

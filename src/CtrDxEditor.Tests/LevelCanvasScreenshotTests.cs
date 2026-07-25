@@ -529,6 +529,19 @@ namespace CtrDxEditor.Tests
             Assert.True(pen.Thickness > 1.5);
         }
 
+        /// <summary>The hand segment uses a warm tint so it remains distinct from the cyan rotation dial.</summary>
+        [Fact]
+        public void HandSegmentTintUsesDedicatedAmberColor()
+        {
+            Type paletteType = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.CanvasPalette")!;
+            object palette = Activator.CreateInstance(paletteType, nonPublic: true)!;
+            SolidColorBrush tint = (SolidColorBrush)paletteType.GetProperty("HandSegmentTint")!.GetValue(palette)!;
+            SolidColorBrush mark = (SolidColorBrush)paletteType.GetProperty("HandSegmentMark")!.GetValue(palette)!;
+
+            Assert.Equal(Color.FromArgb(0x70, 0xFF, 0xD7, 0x00), tint.Color);
+            Assert.Equal(Color.FromArgb(0xBF, 0xFF, 0xD7, 0x00), mark.Color);
+        }
+
         /// <summary>The candy hazard-alert crosshair pen is solid red, distinct from the normal solid pen.</summary>
         [Fact]
         public void CandyCrosshairAlertPenIsSolid()
