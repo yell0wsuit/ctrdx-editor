@@ -52,6 +52,17 @@ namespace CtrDxEditor.Tests
             Assert.Contains("About_Click(sender, e)", drawer, StringComparison.Ordinal);
         }
 
+        /// <summary>The desktop guide stays modeless so readers can continue editing beside it.</summary>
+        [Fact]
+        public void DesktopUsageGuideIsModeless()
+        {
+            string commands = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "MainView.HelpCommands.cs"));
+
+            Assert.Contains("new UsageGuideWindow().Show(owner);", commands, StringComparison.Ordinal);
+            Assert.DoesNotContain("new UsageGuideWindow().ShowDialog(owner)", commands, StringComparison.Ordinal);
+        }
+
         /// <summary>Locates a source file relative to the repository's <c>src</c> directory.</summary>
         /// <param name="parts">Path components beneath <c>src</c>.</param>
         /// <returns>Absolute path to the requested source file.</returns>

@@ -11,9 +11,13 @@ namespace CtrDxEditor.Views
         /// <param name="e">Click event data.</param>
         private void UsageGuide_Click(object? sender, RoutedEventArgs e)
         {
-            _ = TopLevel.GetTopLevel(this) is Window owner
-                ? new UsageGuideWindow().ShowDialog(owner)
-                : new UsageGuideDialog().ShowAsync();
+            if (TopLevel.GetTopLevel(this) is Window owner)
+            {
+                new UsageGuideWindow().Show(owner);
+                return;
+            }
+
+            _ = new UsageGuideDialog().ShowAsync();
         }
 
         /// <summary>Opens About in a desktop window or an in-app browser dialog.</summary>

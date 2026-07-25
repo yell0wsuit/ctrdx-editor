@@ -74,7 +74,7 @@ namespace CtrDxEditor.UsageGuide
             A("keyboard-shortcuts", "Reference",
                 [Note("keyboard-shortcuts", "Platform"), ShortcutTable("keyboard-shortcuts",
                     "New", "Open", "Save", "SaveAs", "Screenshot", "Close", "Undo", "Redo",
-                    "Clipboard", "SelectAll", "Delete", "Zoom", "Animation")],
+                    "Clipboard", "SelectAll", "Delete", "Zoom", "Animation", "TutorialText")],
                 ["modifier-keys", "menus-commands", "pointer-gestures"]),
             A("pointer-gestures", "Reference",
                 [P("pointer-gestures", "Mouse"), P("pointer-gestures", "Touch"), P("pointer-gestures", "Context")],

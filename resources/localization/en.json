@@ -168,7 +168,7 @@
     "Guide.Article.tubes.Title": "Bamboo tubes and steam pipes",
     "Guide.Article.tubes.Summary": "Aim transport tubes and configure steam behavior.",
     "Guide.Article.tubes.SearchTerms": "pipe|bamboo tube|steamTube|steam pipe|transport",
-    "Guide.Article.tubes.Bamboo": "Rotate bamboo tubes to define their entrances and exits, then use Properties to pair or configure them as required by the object fields.",
+    "Guide.Article.tubes.Bamboo": "Rotate a bamboo tube to aim its two capture openings. Objects enter through either opening and emerge from the other.",
     "Guide.Article.tubes.Steam": "Steam pipes use their orientation and properties to control the emitted force. Enable force fields to inspect the affected region while arranging nearby objects.",
     "Guide.Article.tubes.Overlay.Caption": "Bamboo and steam tubes with rotation and force overlays.",
 
@@ -220,7 +220,7 @@
 
     "Guide.Article.keyboard-shortcuts.Title": "Keyboard shortcuts",
     "Guide.Article.keyboard-shortcuts.Summary": "Use the editor's global file, editing, preview, and zoom commands.",
-    "Guide.Article.keyboard-shortcuts.SearchTerms": "ctrl shift p|command shift p|hotkeys|keys|space|delete",
+    "Guide.Article.keyboard-shortcuts.SearchTerms": "ctrl shift p|command shift p|hotkeys|keys|space|delete|f2|tutorial text",
     "Guide.Article.keyboard-shortcuts.Platform.Note": "Use Command instead of Ctrl on macOS. Redo is Command-Shift-Z on macOS and Ctrl-Y elsewhere.",
     "Guide.Article.keyboard-shortcuts.Shortcut.New.Action": "New level",
     "Guide.Article.keyboard-shortcuts.Shortcut.New.Keys": "Ctrl/⌘ N",
@@ -248,6 +248,8 @@
     "Guide.Article.keyboard-shortcuts.Shortcut.Zoom.Keys": "Ctrl/⌘ + / - / 0",
     "Guide.Article.keyboard-shortcuts.Shortcut.Animation.Action": "Toggle animation preview",
     "Guide.Article.keyboard-shortcuts.Shortcut.Animation.Keys": "Space",
+    "Guide.Article.keyboard-shortcuts.Shortcut.TutorialText.Action": "Edit selected tutorial text",
+    "Guide.Article.keyboard-shortcuts.Shortcut.TutorialText.Keys": "F2",
 
     "Guide.Article.pointer-gestures.Title": "Pointer, trackpad, and touch gestures",
     "Guide.Article.pointer-gestures.Summary": "Navigate and edit with a mouse, trackpad, touchscreen, or pen.",

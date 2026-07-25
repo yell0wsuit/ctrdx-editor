@@ -131,6 +131,34 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("Double-click tutorial text", copy, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>The shortcut reference includes the tutorial-text editor gesture.</summary>
+        [Fact]
+        public void ShortcutReferenceIncludesTutorialTextF2()
+        {
+            GuideArticle article = Assert.Single(
+                UsageGuideCatalog.Articles,
+                candidate => candidate.Id == "keyboard-shortcuts");
+            GuideShortcutTable shortcuts = Assert.Single(article.Blocks.OfType<GuideShortcutTable>());
+
+            Assert.Contains(shortcuts.Items, shortcut => shortcut.Keys.Contains("F2", StringComparison.Ordinal));
+        }
+
+        /// <summary>The bamboo-tube article describes only behavior exposed by its descriptor and canvas.</summary>
+        [Fact]
+        public void BambooTubeArticleDoesNotInventPairingProperties()
+        {
+            GuideArticle article = Assert.Single(
+                UsageGuideCatalog.Articles,
+                candidate => candidate.Id == "tubes");
+            string copy = string.Join(
+                ' ',
+                article.Blocks.OfType<GuideParagraph>().Select(paragraph => paragraph.Text));
+
+            Assert.Contains("capture openings", copy, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("pair", copy, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("configure", copy, StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>Asserts that a guide key resolves to meaningful localized copy.</summary>
         /// <param name="key">Localization key retained by the guide model.</param>
         /// <param name="value">Display value resolved through <c>Localizer</c>.</param>
