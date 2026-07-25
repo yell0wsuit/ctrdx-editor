@@ -1,14 +1,22 @@
 # Cut the Rope DX: Level Editor
 
+<p align="center">
+  <img alt="Logo of Cut the Rope: DX" src="./resources/icon/icon-256.png"/>
+</p>
+
 ![Screenshot of Cut the Rope DX: Level Editor](./misc/ctrdx-editor.webp)
 
 ## About
 
 _Cut the Rope DX: Level Editor_ is a standalone app for creating and editing levels for _Cut the Rope: DX_.
 
+Try the online version of the editor at <https://yell0wsuit.github.io/ctrdx-editor/> (beta).
+
 Inspired by @adriandrummis's [Cut the Rope Level Editor](https://adriandrummis.github.io/CutTheRopeEditor/), it aims to be portable, lightweight, and streamlined to edit with.
 
 This project is a part of the [_Cut the Rope Home_](https://ctrhome.github.io/fan-projects/) fan project, created by [yell0wsuit](https://github.com/yell0wsuit), with help from [contributors](https://github.com/yell0wsuit/ctrdx-editor/graphs/contributors).
+
+The icon is designed by adriandrummis.
 
 > [!NOTE]
 > This project is not, and will never be affiliated with or endorsed by ZeptoLab. All rights to the original game and its assets belong to ZeptoLab.
