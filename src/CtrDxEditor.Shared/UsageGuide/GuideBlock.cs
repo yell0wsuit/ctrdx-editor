@@ -56,6 +56,15 @@ namespace CtrDxEditor.UsageGuide
 
         /// <summary>Localized callout-kind label.</summary>
         public string Label => Localizer.Get($"Guide.Callout.{Kind}");
+
+        /// <summary>Whether this callout should use the optional-advice palette.</summary>
+        public bool IsTip => Kind == GuideCalloutKind.Tip;
+
+        /// <summary>Whether this callout should use the informational palette.</summary>
+        public bool IsNote => Kind == GuideCalloutKind.Note;
+
+        /// <summary>Whether this callout should use the warning palette.</summary>
+        public bool IsWarning => Kind == GuideCalloutKind.Warning;
     }
 
     /// <summary>One command and its key gesture.</summary>

@@ -52,6 +52,36 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Text=\"{Binding SuggestedFileName}\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>The guide search field stays compact, right-aligned, and vertically centered.</summary>
+        [Fact]
+        public void SearchBoxUsesCompactToolbarLayout()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+
+            Assert.Contains("x:Name=\"GuideSearchBox\" Grid.Column=\"5\"", view, StringComparison.Ordinal);
+            Assert.Contains("Width=\"300\" Height=\"36\"", view, StringComparison.Ordinal);
+            Assert.Contains("HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"", view, StringComparison.Ordinal);
+            Assert.Contains("VerticalContentAlignment=\"Center\" Padding=\"10,0,12,0\"", view, StringComparison.Ordinal);
+            Assert.Contains("Margin=\"0,0,8,0\"", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>Tip, note, and warning callouts use distinct theme-aware semantic palettes.</summary>
+        [Fact]
+        public void CalloutTemplateUsesSemanticStyles()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+
+            Assert.Contains("Classes.tip=\"{Binding IsTip}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.note=\"{Binding IsNote}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Classes.warning=\"{Binding IsWarning}\"", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.SuccessLow", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.SuccessText", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.PrimaryLow", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.Primary", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.WarningLow", view, StringComparison.Ordinal);
+            Assert.Contains("EditorBrush.Warning", view, StringComparison.Ordinal);
+        }
+
         /// <summary>Desktop and browser hosts reuse one guide surface.</summary>
         [Fact]
         public void DesktopAndDialogHostsReuseSharedSurface()

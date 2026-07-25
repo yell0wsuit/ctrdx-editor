@@ -159,6 +159,28 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("configure", copy, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>Each callout exposes exactly one semantic style flag for the view.</summary>
+        /// <param name="kind">Callout kind under test.</param>
+        /// <param name="isTip">Expected tip-style state.</param>
+        /// <param name="isNote">Expected note-style state.</param>
+        /// <param name="isWarning">Expected warning-style state.</param>
+        [Theory]
+        [InlineData(GuideCalloutKind.Tip, true, false, false)]
+        [InlineData(GuideCalloutKind.Note, false, true, false)]
+        [InlineData(GuideCalloutKind.Warning, false, false, true)]
+        public void CalloutKindSelectsOneSemanticStyle(
+            GuideCalloutKind kind,
+            bool isTip,
+            bool isNote,
+            bool isWarning)
+        {
+            GuideCallout callout = new(kind, "Guide.Article.welcome.Search.Tip");
+
+            Assert.Equal(isTip, callout.IsTip);
+            Assert.Equal(isNote, callout.IsNote);
+            Assert.Equal(isWarning, callout.IsWarning);
+        }
+
         /// <summary>Asserts that a guide key resolves to meaningful localized copy.</summary>
         /// <param name="key">Localization key retained by the guide model.</param>
         /// <param name="value">Display value resolved through <c>Localizer</c>.</param>
