@@ -753,12 +753,14 @@
 
       <Border x:Name="CompactTabs" IsVisible="False"
               VerticalAlignment="Bottom" ZIndex="50"
-              Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <UniformGrid Columns="2" Margin="0,4">
-          <Button x:Name="PaletteTab" Click="CompactPaletteTab_Click"
+              Background="{DynamicResource EditorBrush.Surface.Card}"
+              BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+              BorderThickness="0,1,0,0">
+        <UniformGrid Columns="2" Margin="0">
+          <Button x:Name="PaletteTab" Classes="compactTab" Click="CompactPaletteTab_Click"
                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="{loc:Tr Panel.Objects}" />
-          <Button x:Name="LayersTab" Click="CompactLayersTab_Click"
+          <Button x:Name="LayersTab" Classes="compactTab" Click="CompactLayersTab_Click"
                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="{loc:Tr Panel.Layers}" />
         </UniformGrid>

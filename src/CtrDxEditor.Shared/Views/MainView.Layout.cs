@@ -185,7 +185,9 @@ namespace CtrDxEditor.Views
                 || this.FindControl<Border>("CompactTabs") is not { } tabs
                 || this.FindControl<Border>("CompactEditBar") is not { } editBar
                 || this.FindControl<Border>("CompactCommandDrawer") is not { } commandDrawer
-                || this.FindControl<Button>("CompactMenuButton") is not { } menuButton)
+                || this.FindControl<Button>("CompactMenuButton") is not { } menuButton
+                || this.FindControl<Button>("PaletteTab") is not { } paletteTab
+                || this.FindControl<Button>("LayersTab") is not { } layersTab)
             {
                 return;
             }
@@ -194,7 +196,12 @@ namespace CtrDxEditor.Views
             // The rail is centred, so it already clears both side notches; only the top inset can overlap
             // it. Padding a side would also shift it off centre, since padding is not symmetric.
             rail.Padding = new Thickness(0, insets.Top, 0, 0);
-            tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);
+            // Horizontal insets belong to the bar. Bottom clearance belongs inside each button so its
+            // hover/active surface continues behind the safe-area strip while the label stays above it.
+            tabs.Padding = new Thickness(insets.Left, 0, insets.Right, 0);
+            double tabBottomPadding = Math.Max(12, insets.Bottom);
+            ApplyCompactTabBottomPadding(paletteTab, tabBottomPadding);
+            ApplyCompactTabBottomPadding(layersTab, tabBottomPadding);
             // The bar sits directly above the tab bar, which already absorbs the bottom inset.
             editBar.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
             menuButton.Margin = new Thickness(insets.Left, insets.Top, 0, 0);
@@ -205,6 +212,13 @@ namespace CtrDxEditor.Views
             // The sheet sits directly above the tab bar and inside any side notches.
             sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
             sheet.Height = CompactSheetHeight();
+        }
+
+        /// <summary>Extends a tab surface through the bottom inset while keeping a 48px content row.</summary>
+        private static void ApplyCompactTabBottomPadding(Button tab, double bottomPadding)
+        {
+            tab.MinHeight = 48 + bottomPadding;
+            tab.Padding = new Thickness(0, 0, 0, bottomPadding);
         }
 
         /// <summary>

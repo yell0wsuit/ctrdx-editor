@@ -82,6 +82,34 @@
     <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Primary}" />
   </Style>
 
+  <!-- Text-only compact navigation. The presenter is targeted directly because Fluent owns final content
+       alignment and corner geometry inside the button template. -->
+  <Style Selector="Button.compactTab">
+    <Setter Property="MinHeight" Value="48" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0,3,0,0" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Subtle}" />
+  </Style>
+  <Style Selector="Button.compactTab /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="Button.compactTab.active /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource EditorBrush.PrimaryLow}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Primary}" />
+    <Setter Property="BorderThickness" Value="0,3,0,0" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Primary}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
   <!-- Palette row confirming it just placed an object. -->
   <Style Selector="Button.placed /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource EditorBrush.SuccessLow}" />
