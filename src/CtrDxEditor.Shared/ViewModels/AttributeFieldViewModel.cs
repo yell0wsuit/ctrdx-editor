@@ -40,6 +40,7 @@ namespace CtrDxEditor.ViewModels
             AllowsDecimal = type == AttrType.Number;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(localizationName, v))).ToArray();
+            HelpText = ConventionHelp(localizationName);
             _get = () => target.GetAttr(name);
             _set = v => target.SetAttr(name, v ?? string.Empty);
             _onChanging = onChanging ?? (() => { });
@@ -59,6 +60,7 @@ namespace CtrDxEditor.ViewModels
             Label = Localizer.AttributeName(name);
             IsBool = false;
             EnumOptions = options;
+            HelpText = ConventionHelp(name);
             _get = get;
             _set = set;
             _onChanging = onChanging ?? (() => { });
@@ -85,6 +87,7 @@ namespace CtrDxEditor.ViewModels
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
+            HelpText = ConventionHelp(labelName ?? name);
             _get = get;
             _set = set;
             _onChanging = onChanging ?? (() => { });
@@ -94,6 +97,21 @@ namespace CtrDxEditor.ViewModels
             {
                 IsEnabled = isEnabled();
             }
+        }
+
+        /// <summary>
+        /// Resolves the conventional <c>Attr.&lt;name&gt;.Help</c> string for a field, or null when the
+        /// localization file has no entry for it. Constructors seed <see cref="HelpText"/> from this, so a
+        /// field gains its help button by adding the string alone; an explicit object-initializer assignment
+        /// still wins, because initializers run after the constructor.
+        /// </summary>
+        /// <param name="localizationName">The name used to build the field's localization keys.</param>
+        /// <returns>The help text, or null when no entry exists.</returns>
+        private static string? ConventionHelp(string localizationName)
+        {
+            string key = $"Attr.{localizationName}.Help";
+            string value = Localizer.Get(key);
+            return value == key ? null : value;
         }
 
         /// <summary>The raw attribute id / field key (never localized).</summary>

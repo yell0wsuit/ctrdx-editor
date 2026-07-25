@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using CtrDxEditor.Core.Descriptors;
 using CtrDxEditor.UsageGuide;
 
 using Xunit;
@@ -149,7 +150,7 @@ namespace CtrDxEditor.Tests
         {
             GuideArticle article = Assert.Single(
                 UsageGuideCatalog.Articles,
-                candidate => candidate.Id == "tubes");
+                candidate => candidate.Id == "bamboo-tubes");
             string copy = string.Join(
                 ' ',
                 article.Blocks.OfType<GuideParagraph>().Select(paragraph => paragraph.Text));
@@ -157,6 +158,86 @@ namespace CtrDxEditor.Tests
             Assert.Contains("capture openings", copy, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("pair", copy, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("configure", copy, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Maps every editable object element to the Objects-section article that documents it. Adding a
+        /// descriptor without an article, or an article for an element that no longer exists, fails
+        /// <see cref="EveryEditableObjectHasAnArticle"/> below.
+        /// </summary>
+        private static readonly Dictionary<string, string> ArticleByElement = new(StringComparer.Ordinal)
+        {
+            ["target"] = "objectives",
+            ["candy"] = "objectives",
+            ["candyL"] = "objectives",
+            ["candyR"] = "objectives",
+            ["star"] = "stars",
+            ["grab"] = "rope-hooks",
+            ["bubble"] = "bubbles",
+            ["pump"] = "air-cushions",
+            ["gravitySwitch"] = "gravity-buttons",
+            ["bouncer1"] = "bouncers",
+            ["bouncer2"] = "bouncers",
+            ["spike1"] = "spikes",
+            ["spike2"] = "spikes",
+            ["spike3"] = "spikes",
+            ["spike4"] = "spikes",
+            ["electro"] = "electric-sparks",
+            ["ghost"] = "ghosts",
+            ["sock"] = "magic-hats",
+            ["lightBulb"] = "light-bulbs",
+            ["lantern"] = "lanterns",
+            ["rotatedCircle"] = "vinyl",
+            ["gap"] = "mice",
+            ["load"] = "snails",
+            ["transporter"] = "conveyors",
+            ["ants"] = "ant-conveyors",
+            ["pipe"] = "bamboo-tubes",
+            ["steamTube"] = "steam-pipes",
+            ["rocket"] = "rockets",
+            ["hand"] = "mechanical-hands",
+            ["tutorialText"] = "tutorial-objects",
+            ["tutorial01"] = "tutorial-objects",
+            ["tutorial02"] = "tutorial-objects",
+            ["tutorial03"] = "tutorial-objects",
+            ["tutorial04"] = "tutorial-objects",
+            ["tutorial05"] = "tutorial-objects",
+            ["tutorial06"] = "tutorial-objects",
+            ["tutorial07"] = "tutorial-objects",
+            ["tutorial08"] = "tutorial-objects",
+            ["tutorial09"] = "tutorial-objects",
+            ["tutorial10"] = "tutorial-objects",
+            ["tutorial11"] = "tutorial-objects",
+        };
+
+        /// <summary>
+        /// Every object the palette can place is documented, and every documented element still exists.
+        /// This is the guard against the guide drifting away from <see cref="DescriptorTable"/>: adding an
+        /// object to the descriptor table without writing its article fails here.
+        /// </summary>
+        [Fact]
+        public void EveryEditableObjectHasAnArticle()
+        {
+            HashSet<string> elements = [.. DescriptorTable.CtrObjects.ByElement.Keys];
+            HashSet<string> articleIds = UsageGuideCatalog.Articles
+                .Select(article => article.Id)
+                .ToHashSet(StringComparer.Ordinal);
+
+            Assert.Empty(elements.Except(ArticleByElement.Keys, StringComparer.Ordinal));
+            Assert.Empty(ArticleByElement.Keys.Except(elements, StringComparer.Ordinal));
+            Assert.All(ArticleByElement.Values.Distinct(StringComparer.Ordinal), id => Assert.Contains(id, articleIds));
+        }
+
+        /// <summary>Every object article lives in the Objects section, so the table of contents stays coherent.</summary>
+        [Fact]
+        public void ObjectArticlesShareTheObjectsSection()
+        {
+            HashSet<string> objectArticleIds = [.. ArticleByElement.Values];
+
+            foreach (GuideArticle article in UsageGuideCatalog.Articles.Where(a => objectArticleIds.Contains(a.Id)))
+            {
+                Assert.Equal("Guide.Section.GameObjects", article.SectionKey);
+            }
         }
 
         /// <summary>Each callout exposes exactly one semantic style flag for the view.</summary>

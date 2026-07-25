@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Descriptors;
@@ -16,18 +17,30 @@ namespace CtrDxEditor.Tests
             return new(new XElement("rocket"));
         }
 
-        /// <summary>Help text is opt-in, so a field left without it reports no help rather than an empty tooltip.</summary>
+        /// <summary>An attribute with no <c>Attr.&lt;name&gt;.Help</c> string reports no help rather than an empty tooltip.</summary>
         [Fact]
         public void FieldWithoutHelpTextHasNoHelp()
         {
-            AttributeFieldViewModel field = new(Obj(), "impulse", AttrType.Number, null, () => { });
+            AttributeFieldViewModel field = new(Obj(), "angle", AttrType.Number, null, () => { });
             Assert.False(field.HasHelp);
             Assert.Null(field.HelpText);
         }
 
-        /// <summary>Setting help text flips <see cref="AttributeFieldViewModel.HasHelp"/>, which is what shows the hint icon in the panel.</summary>
+        /// <summary>
+        /// A field picks up its help from the conventional <c>Attr.&lt;name&gt;.Help</c> string, so adding
+        /// the localization entry alone is enough to give the panel its hint icon.
+        /// </summary>
         [Fact]
-        public void FieldWithHelpTextReportsHasHelp()
+        public void FieldResolvesHelpTextByConvention()
+        {
+            AttributeFieldViewModel field = new(Obj(), "impulse", AttrType.Number, null, () => { });
+            Assert.True(field.HasHelp);
+            Assert.StartsWith("Thrust strength", field.HelpText, StringComparison.Ordinal);
+        }
+
+        /// <summary>An explicit assignment still wins, because object initializers run after the constructor.</summary>
+        [Fact]
+        public void ExplicitHelpTextOverridesTheConvention()
         {
             AttributeFieldViewModel field = new(Obj(), "impulse", AttrType.Number, null, () => { })
             {
