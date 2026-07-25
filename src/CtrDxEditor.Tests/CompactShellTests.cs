@@ -125,8 +125,8 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// Panels are moved between the expanded grid and the drawer, never duplicated: two controls named
-        /// LayersTree in one name scope is a XAML load error and would break every handler that finds it.
+        /// Panels are moved between the expanded inspector and the drawer, never duplicated: duplicate
+        /// controls in one name scope would be a XAML load error and break name-based handlers.
         /// </summary>
         [Fact]
         public void PanelsAreReparentedNotDuplicated()
@@ -136,9 +136,26 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("Children.Remove", layout, StringComparison.Ordinal);
             Assert.Contains("ShowPanelInDrawer", layout, StringComparison.Ordinal);
-            // One palette and one layers panel in the markup.
+            // One instance of each independently hosted panel in the markup.
             Assert.Equal(1, CountOccurrences(view, "<views:PaletteView"));
+            Assert.Equal(1, CountOccurrences(view, "x:Name=\"InspectorPanel\""));
             Assert.Equal(1, CountOccurrences(view, "x:Name=\"LayersPanel\""));
+            Assert.Equal(1, CountOccurrences(view, "x:Name=\"PropertiesPanel\""));
+            Assert.Contains("RestoreToInspector(inspector, layers, properties);", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>The Layers tab opens only layer controls, leaving Properties to the contextual gear.</summary>
+        [Fact]
+        public void LayersTabHostsOnlyLayersPanel()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+            int handler = layout.IndexOf("private void CompactLayersTab_Click", StringComparison.Ordinal);
+            int nextHandler = layout.IndexOf("private void CompactProperties_Click", handler, StringComparison.Ordinal);
+
+            Assert.True(handler >= 0 && nextHandler > handler);
+            string block = layout[handler..nextHandler];
+            Assert.Contains("FindControl<Grid>(\"LayersPanel\")", block, StringComparison.Ordinal);
+            Assert.DoesNotContain("PropertiesPanel", block, StringComparison.Ordinal);
         }
 
         /// <summary>Compact chrome is padded by the safe area so controls clear the notch and home indicator.</summary>

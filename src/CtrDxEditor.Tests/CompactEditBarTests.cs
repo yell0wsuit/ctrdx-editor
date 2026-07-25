@@ -21,6 +21,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Click=\"CompactProperties_Click\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>The gear opens the standalone Properties panel rather than the combined Layers panel.</summary>
+        [Fact]
+        public void GearHostsOnlyPropertiesPanel()
+        {
+            string layout = SourceText("MainView.Layout.cs");
+            int handler = layout.IndexOf("private void CompactProperties_Click", StringComparison.Ordinal);
+            int nextHandler = layout.IndexOf("private Control? HostedDrawerPanel", handler, StringComparison.Ordinal);
+
+            Assert.True(handler >= 0 && nextHandler > handler);
+            string block = layout[handler..nextHandler];
+            Assert.Contains("FindControl<PropertyPanel>(\"PropertiesPanel\")", block, StringComparison.Ordinal);
+            Assert.DoesNotContain("LayersPanel", block, StringComparison.Ordinal);
+            Assert.Contains("ShowPanelInDrawer(properties);", block, StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// Delete lives on the edit bar, not the rail: it is selection-gated like the rest of that
         /// group, and freeing its slot is what makes room for the hamburger.

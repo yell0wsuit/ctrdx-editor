@@ -74,10 +74,12 @@ namespace CtrDxEditor.Views
             if (this.FindControl<Border>("CompactSheet") is not { } sheet
                 || this.FindControl<Panel>("DrawerHost") is not { } drawerHost
                 || this.FindControl<Grid>("ExpandedColumns") is not { } columns
+                || this.FindControl<Grid>("InspectorPanel") is not { } inspector
                 || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactTabs") is not { } tabs
                 || this.FindControl<PaletteView>("Palette") is not { } palette
-                || this.FindControl<Grid>("LayersPanel") is not { } layers)
+                || this.FindControl<Grid>("LayersPanel") is not { } layers
+                || this.FindControl<PropertyPanel>("PropertiesPanel") is not { } properties)
             {
                 return;
             }
@@ -87,10 +89,10 @@ namespace CtrDxEditor.Views
 
             if (compact)
             {
-                // Pull both panels out of the columns so the canvas spans the full width, and let the canvas
-                // column absorb the freed space.
+                // Pull every drawer panel out of its expanded parent so each can be hosted independently.
                 MoveOutOfColumns(columns, palette);
-                MoveOutOfColumns(columns, layers);
+                MoveOutOfInspector(inspector, layers);
+                MoveOutOfInspector(inspector, properties);
                 columns.ColumnDefinitions = ColumnDefinitions.Parse("0,0,*,0,0");
 
                 ApplyCompactSafeAreaPadding();
@@ -108,7 +110,7 @@ namespace CtrDxEditor.Views
                 drawerHost.Children.Clear();
 
                 RestoreToColumn(columns, palette, 0);
-                RestoreToColumn(columns, layers, 4);
+                RestoreToInspector(inspector, layers, properties);
                 columns.ColumnDefinitions = ColumnDefinitions.Parse("200,1,*,1,280");
 
                 sheet.Margin = new Thickness(0);
@@ -227,6 +229,15 @@ namespace CtrDxEditor.Views
             }
         }
 
+        /// <summary>Detaches one compact-sheet panel from the expanded inspector.</summary>
+        private static void MoveOutOfInspector(Grid inspector, Control panel)
+        {
+            if (inspector.Children.Contains(panel))
+            {
+                _ = inspector.Children.Remove(panel);
+            }
+        }
+
         /// <summary>Returns a panel to its column in the expanded grid.</summary>
         /// <param name="columns">The three-column grid.</param>
         /// <param name="panel">The panel to restore.</param>
@@ -242,6 +253,27 @@ namespace CtrDxEditor.Views
             {
                 Grid.SetColumn(panel, column);
                 columns.Children.Add(panel);
+            }
+        }
+
+        /// <summary>Restores Layers and Properties to their expanded inspector rows.</summary>
+        private static void RestoreToInspector(Grid inspector, Control layers, Control properties)
+        {
+            RestoreToInspectorRow(inspector, layers, 0);
+            RestoreToInspectorRow(inspector, properties, 2);
+        }
+
+        private static void RestoreToInspectorRow(Grid inspector, Control panel, int row)
+        {
+            if (panel.Parent is Panel current && !ReferenceEquals(current, inspector))
+            {
+                _ = current.Children.Remove(panel);
+            }
+
+            if (!inspector.Children.Contains(panel))
+            {
+                Grid.SetRow(panel, row);
+                inspector.Children.Add(panel);
             }
         }
 
@@ -350,24 +382,19 @@ namespace CtrDxEditor.Views
             }
         }
 
-        /// <summary>Raises the layers panel so the selected object's properties are reachable.</summary>
-        /// <remarks>
-        /// <c>PropertyPanel</c> is the <c>3*</c> row of <c>LayersPanel</c>, so it is already visible once
-        /// that panel is in the sheet. The problem this solves is naming: the only route there today is a
-        /// tab labelled "Layers", which does not advertise that it holds the properties.
-        /// </remarks>
+        /// <summary>Raises the selected object's standalone Properties panel.</summary>
         private void CompactProperties_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (this.FindControl<Grid>("LayersPanel") is not { } layers
+            if (this.FindControl<PropertyPanel>("PropertiesPanel") is not { } properties
                 || this.FindControl<Border>("CompactSheet") is not { } sheet)
             {
                 return;
             }
 
             // ShowPanelInDrawer toggles when the panel is already hosted; Properties must always open.
-            if (!sheet.IsVisible || !ReferenceEquals(HostedDrawerPanel(), layers))
+            if (!sheet.IsVisible || !ReferenceEquals(HostedDrawerPanel(), properties))
             {
-                ShowPanelInDrawer(layers);
+                ShowPanelInDrawer(properties);
             }
         }
 

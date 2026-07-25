@@ -368,9 +368,12 @@
         </Grid>
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
-      <!-- Named so compact-mode style selectors can reposition the panel without extracting it into its own
-           control; the extraction happens later, alongside this panel's touch rework. -->
-      <Grid x:Name="LayersPanel" Grid.Column="4" Background="{DynamicResource EditorBrush.Surface.Panel}" RowDefinitions="Auto,2*,Auto,Auto,3*">
+      <!-- Layers and Properties remain one visual inspector in expanded mode, but are sibling controls so
+           compact mode can host either one independently in the bottom sheet. -->
+      <Grid x:Name="InspectorPanel" Grid.Column="4"
+            Background="{DynamicResource EditorBrush.Surface.Panel}"
+            RowDefinitions="2*,Auto,3*">
+      <Grid x:Name="LayersPanel" Grid.Row="0" RowDefinitions="Auto,*,Auto">
         <TextBlock Grid.Row="0" Text="{loc:Tr Panel.Layers}" FontWeight="Bold"
                    VerticalAlignment="Center" Margin="8,8,8,4" />
         <TreeView Grid.Row="1" Margin="4,0,4,4" x:Name="LayersTree"
@@ -659,8 +662,9 @@
                     MinWidth="96" Height="24" Padding="6,0"
                     ToolTip.Tip="{loc:Tr Panel.Language}" />
         </Grid>
-        <Border Grid.Row="3" Height="1" Background="{DynamicResource EditorBrush.Surface.Divider}" Margin="4,0" />
-        <views:PropertyPanel Grid.Row="4" />
+      </Grid>
+        <Border Grid.Row="1" Height="1" Background="{DynamicResource EditorBrush.Surface.Divider}" Margin="4,0" />
+        <views:PropertyPanel x:Name="PropertiesPanel" Grid.Row="2" />
       </Grid>
       </Grid>
 
