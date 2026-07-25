@@ -13,12 +13,4 @@
   <ItemGroup>
     <ProjectReference Include="..\CtrDxEditor.Shared\CtrDxEditor.Shared.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Content
-      Include="..\..\distribution\icons\CtrDxEditorIcon.ico"
-      Link="wwwroot\favicon.ico"
-      CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="PreserveNewest"
-    />
-  </ItemGroup>
 </Project>
