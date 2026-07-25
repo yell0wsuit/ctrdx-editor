@@ -30,18 +30,6 @@ namespace CtrDxEditor.Views
                 }
             };
 
-            if (this.FindControl<Border>("CompactTabs") is { } tabs)
-            {
-                tabs.PropertyChanged += (_, e) =>
-                {
-                    if (e.Property == BoundsProperty && _layoutMode == LayoutMode.Compact)
-                    {
-                        // Padding changes the tab bar's measured height; keep drawer content above it.
-                        ApplyCompactSafeAreaPadding();
-                    }
-                };
-            }
-
             UpdateLayoutMode();
         }
 
@@ -202,15 +190,15 @@ namespace CtrDxEditor.Views
             double tabBottomPadding = Math.Max(12, insets.Bottom);
             ApplyCompactTabBottomPadding(paletteTab, tabBottomPadding);
             ApplyCompactTabBottomPadding(layersTab, tabBottomPadding);
-            // The bar sits directly above the tab bar, which already absorbs the bottom inset.
-            editBar.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
+            // Its dedicated layout row keeps it above both the canvas and the tab bar.
+            editBar.Margin = new Thickness(insets.Left, 0, insets.Right, 0);
             menuButton.Margin = new Thickness(insets.Left, insets.Top, 0, 0);
             commandDrawer.Padding = new Thickness(insets.Left, insets.Top, 0, insets.Bottom);
             // Narrower than a typical nav drawer on purpose: toggles leave it open, and their effect is
             // on the canvas behind it. 260 caps it on tablets; 70% keeps ~96px of canvas at 320.
             commandDrawer.Width = Bounds.Width > 0 ? Math.Min(260, Bounds.Width * 0.70) : 260;
-            // The sheet sits directly above the tab bar and inside any side notches.
-            sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);
+            // The sheet occupies the canvas row, above the reserved compact chrome rows.
+            sheet.Margin = new Thickness(insets.Left, 0, insets.Right, 0);
             sheet.Height = CompactSheetHeight();
         }
 

@@ -301,8 +301,8 @@
         </MenuItem>
       </MenuItem>
     </Menu>
-    <Grid>
-      <Grid x:Name="ExpandedColumns" ColumnDefinitions="200,1,*,1,280"
+    <Grid x:Name="EditorSurface" RowDefinitions="*,Auto,Auto">
+      <Grid x:Name="ExpandedColumns" Grid.Row="0" ColumnDefinitions="200,1,*,1,280"
             IsVisible="{Binding HasDocument}">
       <views:PaletteView x:Name="Palette" Grid.Column="0" />
       <Border Grid.Column="1" Background="{DynamicResource EditorBrush.Surface.Divider}" />
@@ -670,13 +670,13 @@
 
       <!-- Mutually exclusive with the editor columns so inactive palette, canvas and property controls do
            not frame the start surface. Kept in this grid so later compact chrome remains above it. -->
-      <views:EmptyStateView x:Name="EmptyState" IsVisible="{Binding !HasDocument}" />
+      <views:EmptyStateView x:Name="EmptyState" Grid.Row="0" IsVisible="{Binding !HasDocument}" />
 
       <!-- Compact bottom sheet. A plain overlay rather than a DrawerPage: that control is a page-level
            navigation shell whose template carries its own title bars and pane toggles, which this shell
            does not want and cannot reliably suppress from outside. Height is set in code from the
            available space. -->
-      <Border x:Name="CompactSheet" IsVisible="False"
+      <Border x:Name="CompactSheet" IsVisible="False" Grid.Row="0"
               VerticalAlignment="Bottom" ZIndex="40"
               Background="{DynamicResource EditorBrush.Surface.Panel}"
               BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
@@ -685,7 +685,7 @@
         <Panel x:Name="DrawerHost" />
       </Border>
 
-      <Border x:Name="CompactRail" IsVisible="False"
+      <Border x:Name="CompactRail" IsVisible="False" Grid.Row="0"
               HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Panel}">
         <!-- Five buttons: the latched mode pair, then the three actions that always apply to an open
@@ -718,10 +718,8 @@
         </StackPanel>
       </Border>
 
-      <!-- Contextual edit bar. Docked above the tab bar rather than floating beside the selection: a
-           fixed position needs no repositioning maths, stays in thumb reach, and can never occlude the
-           object that was just tapped. -->
-      <Border x:Name="CompactEditBar" IsVisible="False"
+      <!-- Contextual edit bar. Its reserved row stays in thumb reach without covering the canvas. -->
+      <Border x:Name="CompactEditBar" IsVisible="False" Grid.Row="1"
               VerticalAlignment="Bottom" ZIndex="45"
               Background="{DynamicResource EditorBrush.Surface.Panel}"
               BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
@@ -751,7 +749,7 @@
         </UniformGrid>
       </Border>
 
-      <Border x:Name="CompactTabs" IsVisible="False"
+      <Border x:Name="CompactTabs" IsVisible="False" Grid.Row="2"
               VerticalAlignment="Bottom" ZIndex="50"
               Background="{DynamicResource EditorBrush.Surface.Card}"
               BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
@@ -768,11 +766,11 @@
 
       <!-- Command drawer. The scrim is lighter than a standard modal because toggles deliberately leave
            the drawer open, and their effect is on the canvas behind it. -->
-      <Border x:Name="CompactCommandScrim" IsVisible="False" ZIndex="60"
+      <Border x:Name="CompactCommandScrim" IsVisible="False" Grid.RowSpan="3" ZIndex="60"
               Background="#66000000"
               PointerPressed="CompactCommandScrim_PointerPressed" />
 
-      <Border x:Name="CompactCommandDrawer" IsVisible="False" ZIndex="61"
+      <Border x:Name="CompactCommandDrawer" IsVisible="False" Grid.RowSpan="3" ZIndex="61"
               HorizontalAlignment="Left" VerticalAlignment="Stretch"
               Background="{DynamicResource EditorBrush.Surface.Panel}"
               BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"

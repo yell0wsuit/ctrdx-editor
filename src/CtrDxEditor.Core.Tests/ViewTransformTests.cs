@@ -230,6 +230,45 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(-936, clamped.PanY);
         }
 
+        /// <summary>Resizing keeps the same level point at viewport center without changing zoom.</summary>
+        [Fact]
+        public void ResizeViewportPreservesLevelCenterAndZoom()
+        {
+            ViewTransform view = new(Zoom: 2.0, PanX: -300, PanY: -200);
+            Vec2 centerBefore = view.ScreenToLevel(new Vec2(400, 300));
+
+            ViewTransform resized = ViewNavigation.ResizeViewport(
+                view,
+                levelWidth: 1000,
+                levelHeight: 1000,
+                oldViewportWidth: 800,
+                oldViewportHeight: 600,
+                newViewportWidth: 600,
+                newViewportHeight: 400);
+
+            Vec2 centerAfter = resized.ScreenToLevel(new Vec2(300, 200));
+            Assert.Equal(view.Zoom, resized.Zoom);
+            Assert.Equal(centerBefore.X, centerAfter.X, precision: 9);
+            Assert.Equal(centerBefore.Y, centerAfter.Y, precision: 9);
+        }
+
+        /// <summary>Resizing recenters content that fits the new viewport.</summary>
+        [Fact]
+        public void ResizeViewportRecentersContentThatFits()
+        {
+            ViewTransform resized = ViewNavigation.ResizeViewport(
+                new ViewTransform(Zoom: 1.0, PanX: 0, PanY: 0),
+                levelWidth: 200,
+                levelHeight: 100,
+                oldViewportWidth: 300,
+                oldViewportHeight: 200,
+                newViewportWidth: 500,
+                newViewportHeight: 400);
+
+            Assert.Equal(150, resized.PanX);
+            Assert.Equal(150, resized.PanY);
+        }
+
         /// <summary>Verifies that pointer-centered zoom preserves the level point under the pointer.</summary>
         [Fact]
         public void ZoomByKeepsAnchorLevelPointUnderPointer()

@@ -562,46 +562,97 @@ namespace CtrDxEditor.Rendering
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
             base.OnPropertyChanged(change);
+
             if (change.Property == DocumentProperty)
             {
-                // Auto-fit only when the level's dimensions change (a fresh load, a new level, or a
-                // resolution change). An undo/redo restore swaps in a re-parsed same-sized document,
-                // and refitting it would throw away the user's current zoom and pan.
-                LevelDocument? oldDoc = change.GetOldValue<LevelDocument?>();
-                LevelDocument? newDoc = change.GetNewValue<LevelDocument?>();
-                if (newDoc is not null
-                    && (oldDoc is null || oldDoc.Width != newDoc.Width || oldDoc.Height != newDoc.Height))
-                {
-                    _pendingFit = true;
-                    TryFit(); // fits immediately if already laid out (later loads); else waits for Bounds.
-                }
-                UpdateScrollState();
+                HandleDocumentChanged(change);
+                return;
             }
-            else if (change.Property == BoundsProperty && _pendingFit)
+
+            if (change.Property == BoundsProperty)
             {
-                TryFit();
+                HandleBoundsChanged(change);
+                return;
             }
-            else if (change.Property == BoundsProperty || change.Property == ViewProperty)
+
+            if (change.Property == ViewProperty)
             {
                 UpdateScrollState();
+                return;
             }
-            else if ((change.Property == HorizontalScrollValueProperty || change.Property == VerticalScrollValueProperty)
-                     && !_syncingScroll)
+
+            bool scrollValueChanged = change.Property == HorizontalScrollValueProperty
+                || change.Property == VerticalScrollValueProperty;
+            if (scrollValueChanged && !_syncingScroll)
             {
                 ScrollTo(HorizontalScrollValue, VerticalScrollValue);
+                return;
             }
-            else if (change.Property == SelectedObjectProperty)
+
+            if (change.Property == SelectedObjectProperty)
             {
-                _ghostPreview.Clear();
-                _ghostIconHits.Clear();
-                _polylinePointDrag = -1;
-                _handActiveSegment = 0;
-                _handHoverJoint = 0;
-                _handHoverSegment = 0;
-                _handSplitPreview = null;
-                ResetPolylineHover();
-                InvalidateVisual();
+                HandleSelectionChanged();
             }
+        }
+
+        /// <summary>Queues or performs the initial fit and refreshes scroll state for a document change.</summary>
+        private void HandleDocumentChanged(AvaloniaPropertyChangedEventArgs change)
+        {
+            // Auto-fit only when the level's dimensions change (a fresh load, a new level, or a
+            // resolution change). An undo/redo restore swaps in a re-parsed same-sized document,
+            // and refitting it would throw away the user's current zoom and pan.
+            LevelDocument? oldDoc = change.GetOldValue<LevelDocument?>();
+            LevelDocument? newDoc = change.GetNewValue<LevelDocument?>();
+            if (newDoc is not null
+                && (oldDoc is null || oldDoc.Width != newDoc.Width || oldDoc.Height != newDoc.Height))
+            {
+                _pendingFit = true;
+                TryFit(); // fits immediately if already laid out (later loads); else waits for Bounds.
+            }
+            UpdateScrollState();
+        }
+
+        /// <summary>Fits a pending document or preserves the current viewport center across a resize.</summary>
+        private void HandleBoundsChanged(AvaloniaPropertyChangedEventArgs change)
+        {
+            if (_pendingFit)
+            {
+                TryFit();
+                return;
+            }
+
+            Rect oldBounds = change.GetOldValue<Rect>();
+            Rect newBounds = change.GetNewValue<Rect>();
+            if (Document is { } doc
+                && oldBounds.Width > 0
+                && oldBounds.Height > 0
+                && newBounds.Width > 0
+                && newBounds.Height > 0)
+            {
+                View = ViewNavigation.ResizeViewport(
+                    View,
+                    doc.Width,
+                    doc.Height,
+                    oldBounds.Width,
+                    oldBounds.Height,
+                    newBounds.Width,
+                    newBounds.Height);
+            }
+            UpdateScrollState();
+        }
+
+        /// <summary>Clears selection-specific gesture and hover state after the selected object changes.</summary>
+        private void HandleSelectionChanged()
+        {
+            _ghostPreview.Clear();
+            _ghostIconHits.Clear();
+            _polylinePointDrag = -1;
+            _handActiveSegment = 0;
+            _handHoverJoint = 0;
+            _handHoverSegment = 0;
+            _handSplitPreview = null;
+            ResetPolylineHover();
+            InvalidateVisual();
         }
 
         /// <summary>Clears selected-polyline hover chrome and repaints when it was visible.</summary>

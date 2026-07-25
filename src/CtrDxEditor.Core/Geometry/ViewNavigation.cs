@@ -83,6 +83,35 @@ namespace CtrDxEditor.Core.Geometry
                 ClampPanAxis(contentHeight, viewportHeight, view.PanY));
         }
 
+        /// <summary>Reframes a view after its viewport changes size, preserving zoom and the level point at center.</summary>
+        /// <param name="view">The view before the resize.</param>
+        /// <param name="levelWidth">The level width in level units.</param>
+        /// <param name="levelHeight">The level height in level units.</param>
+        /// <param name="oldViewportWidth">The previous viewport width in screen pixels.</param>
+        /// <param name="oldViewportHeight">The previous viewport height in screen pixels.</param>
+        /// <param name="newViewportWidth">The new viewport width in screen pixels.</param>
+        /// <param name="newViewportHeight">The new viewport height in screen pixels.</param>
+        /// <returns>
+        /// A transform at the same zoom with the former center level point under the new viewport center,
+        /// clamped to recenter content that fits and retain the normal overscroll limits otherwise.
+        /// </returns>
+        public static ViewTransform ResizeViewport(
+            ViewTransform view,
+            double levelWidth,
+            double levelHeight,
+            double oldViewportWidth,
+            double oldViewportHeight,
+            double newViewportWidth,
+            double newViewportHeight)
+        {
+            Vec2 levelCenter = view.ScreenToLevel(new Vec2(oldViewportWidth / 2, oldViewportHeight / 2));
+            ViewTransform reframed = new(
+                view.Zoom,
+                (newViewportWidth / 2) - (levelCenter.X * view.Zoom),
+                (newViewportHeight / 2) - (levelCenter.Y * view.Zoom));
+            return ClampPan(reframed, levelWidth, levelHeight, newViewportWidth, newViewportHeight);
+        }
+
         /// <summary>Returns the scrollbar range and position for one axis at the given pan.</summary>
         /// <param name="contentSize">The zoomed content size in screen pixels.</param>
         /// <param name="viewportSize">The viewport size in screen pixels.</param>

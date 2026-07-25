@@ -89,39 +89,61 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
-        /// <summary>The tab bar stays above the drawer so an open sheet cannot block panel switching.</summary>
+        /// <summary>Compact bottom chrome occupies layout rows so it cannot cover the canvas.</summary>
         [Fact]
-        public void CompactTabsOverlayTheDrawer()
+        public void CompactBottomChromeReservesCanvasSpace()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
 
-            int sheet = view.IndexOf("x:Name=\"CompactSheet\"", StringComparison.Ordinal);
-            int tabs = view.IndexOf("x:Name=\"CompactTabs\"", StringComparison.Ordinal);
-
-            // Later siblings paint on top, so the tab bar must be declared after the sheet.
-            Assert.True(sheet >= 0 && tabs > sheet);
+            Assert.Contains(
+                "<Grid x:Name=\"EditorSurface\" RowDefinitions=\"*,Auto,Auto\">",
+                view,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "<Border x:Name=\"CompactEditBar\" IsVisible=\"False\" Grid.Row=\"1\"",
+                view,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "<Border x:Name=\"CompactTabs\" IsVisible=\"False\" Grid.Row=\"2\"",
+                view,
+                StringComparison.Ordinal);
         }
 
-        /// <summary>Drawer content reserves the overlaid tab bar and horizontal safe areas.</summary>
+        /// <summary>The compact drawer stays in the canvas row and respects horizontal safe areas.</summary>
         [Fact]
-        public void CompactDrawerContentClearsTheTabBar()
+        public void CompactDrawerUsesCanvasRow()
         {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains(
-                "sheet.Margin = new Thickness(insets.Left, 0, insets.Right, tabs.Bounds.Height);",
+                "<Border x:Name=\"CompactSheet\" IsVisible=\"False\" Grid.Row=\"0\"",
+                view,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "sheet.Margin = new Thickness(insets.Left, 0, insets.Right, 0);",
                 layout,
                 StringComparison.Ordinal);
         }
 
-        /// <summary>A tab-height change refreshes drawer clearance after safe-area padding is laid out.</summary>
+        /// <summary>Reserved rows remove any dependency on the tab bar's measured height.</summary>
         [Fact]
-        public void CompactTabBoundsChangesRefreshDrawerClearance()
+        public void CompactRowsDoNotDependOnMeasuredTabHeight()
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
-            Assert.Contains("tabs.PropertyChanged +=", layout, StringComparison.Ordinal);
-            Assert.Contains("if (e.Property == BoundsProperty && _layoutMode == LayoutMode.Compact)", layout, StringComparison.Ordinal);
+            Assert.DoesNotContain("tabs.Bounds.Height", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>A laid-out canvas preserves its center when its bounds change.</summary>
+        [Fact]
+        public void CanvasBoundsChangesResizeTheViewport()
+        {
+            string canvas = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.cs"));
+
+            Assert.Contains("ViewNavigation.ResizeViewport(", canvas, StringComparison.Ordinal);
+            Assert.Contains("change.GetOldValue<Rect>()", canvas, StringComparison.Ordinal);
+            Assert.Contains("change.GetNewValue<Rect>()", canvas, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -182,7 +204,11 @@ namespace CtrDxEditor.Tests
                 layout,
                 StringComparison.Ordinal);
             Assert.Contains(
-                "tabs.Padding = new Thickness(insets.Left, 0, insets.Right, insets.Bottom);",
+                "tabs.Padding = new Thickness(insets.Left, 0, insets.Right, 0);",
+                layout,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "double tabBottomPadding = Math.Max(12, insets.Bottom);",
                 layout,
                 StringComparison.Ordinal);
         }
