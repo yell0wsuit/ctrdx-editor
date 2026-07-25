@@ -116,6 +116,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains(screenshots, screenshot => string.IsNullOrWhiteSpace(screenshot.Source));
         }
 
+        /// <summary>The tutorial-text article names the canvas shortcut implemented by <c>LevelCanvas</c>.</summary>
+        [Fact]
+        public void TutorialTextArticleDocumentsF2Shortcut()
+        {
+            GuideArticle article = Assert.Single(
+                UsageGuideCatalog.Articles,
+                candidate => candidate.Id == "tutorial-objects");
+            string copy = string.Join(
+                ' ',
+                article.Blocks.OfType<GuideParagraph>().Select(paragraph => paragraph.Text));
+
+            Assert.Contains("F2", copy, StringComparison.Ordinal);
+            Assert.DoesNotContain("Double-click tutorial text", copy, StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>Asserts that a guide key resolves to meaningful localized copy.</summary>
         /// <param name="key">Localization key retained by the guide model.</param>
         /// <param name="value">Display value resolved through <c>Localizer</c>.</param>

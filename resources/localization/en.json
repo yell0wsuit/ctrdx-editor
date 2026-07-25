@@ -191,7 +191,7 @@
     "Guide.Article.tutorial-objects.Summary": "Author instructional prompts and localized tutorial text.",
     "Guide.Article.tutorial-objects.SearchTerms": "tutorial|tutorialText|prompt|localized text|language",
     "Guide.Article.tutorial-objects.Text": "Tutorial icons display familiar gesture prompts. Tutorial text supports authored text and wrapping; drag its width handle to change the wrap width while height follows the content.",
-    "Guide.Article.tutorial-objects.Editing": "Double-click tutorial text to edit it on the canvas. Enter accepts a single-line edit; Shift-Enter inserts a line break when the editor is active.",
+    "Guide.Article.tutorial-objects.Editing": "Select tutorial text and press F2 to edit it on the canvas. Enter accepts the edit; Shift-Enter inserts a line break.",
     "Guide.Article.tutorial-objects.Language": "Use the tutorial language picker to inspect one localized text variant at a time.",
     "Guide.Article.tutorial-objects.Width.Caption": "Tutorial icon and editable tutorial text width.",
 
