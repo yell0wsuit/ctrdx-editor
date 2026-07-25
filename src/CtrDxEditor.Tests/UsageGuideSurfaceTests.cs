@@ -46,7 +46,7 @@ namespace CtrDxEditor.Tests
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
 
-            Assert.Contains("Source=\"{Binding Source}\"", view, StringComparison.Ordinal);
+            Assert.Contains("Source=\"{Binding Image}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsVisible=\"{Binding ShowImage}\"", view, StringComparison.Ordinal);
             Assert.Contains("IsVisible=\"{Binding ShowPlaceholder}\"", view, StringComparison.Ordinal);
             Assert.Contains("Text=\"{Binding SuggestedFileName}\"", view, StringComparison.Ordinal);

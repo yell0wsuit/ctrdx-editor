@@ -82,7 +82,7 @@
     </DataTemplate>
     <DataTemplate DataType="guide:GuideScreenshot">
       <StackPanel Spacing="8" Margin="0,8">
-        <Image Source="{Binding Source}" IsVisible="{Binding ShowImage}"
+        <Image Source="{Binding Image}" IsVisible="{Binding ShowImage}"
                MaxHeight="420" Stretch="Uniform" />
         <Border IsVisible="{Binding ShowPlaceholder}"
                 MinHeight="190" BorderThickness="1" BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"

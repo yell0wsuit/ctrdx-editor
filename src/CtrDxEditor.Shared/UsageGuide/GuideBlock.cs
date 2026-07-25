@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 using CtrDxEditor.Localization;
 
@@ -95,8 +100,30 @@ namespace CtrDxEditor.UsageGuide
         string SuggestedFileName,
         string? Source = null) : GuideBlock
     {
+        /// <summary>Decoded image retained for subsequent bindings during this process.</summary>
+        private IImage? CachedImage { get; set; }
+
         /// <summary>Localized illustration caption.</summary>
         public string Caption => Localizer.Get(CaptionKey);
+
+        /// <summary>
+        /// Lazily decoded embedded image. Avalonia image bindings require an <see cref="IImage"/> value;
+        /// a bound resource-URI string does not receive the XAML literal type conversion.
+        /// </summary>
+        public IImage? Image
+        {
+            get
+            {
+                if (CachedImage is not null || string.IsNullOrWhiteSpace(Source))
+                {
+                    return CachedImage;
+                }
+
+                using Stream stream = AssetLoader.Open(new Uri(Source));
+                CachedImage = new Bitmap(stream);
+                return CachedImage;
+            }
+        }
 
         /// <summary>Whether an embedded screenshot source should be rendered.</summary>
         public bool ShowImage => GuideScreenshotState.From(Source).ShowImage;
