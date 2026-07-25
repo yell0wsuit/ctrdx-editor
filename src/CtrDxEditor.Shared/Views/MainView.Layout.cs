@@ -122,7 +122,8 @@ namespace CtrDxEditor.Views
             if (this.FindControl<Border>("CompactTabs") is not { } tabs
                 || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactSheet") is not { } sheet
-                || this.FindControl<Panel>("DrawerHost") is not { } drawerHost)
+                || this.FindControl<Panel>("DrawerHost") is not { } drawerHost
+                || this.FindControl<SplitView>("CompactCommandDrawer") is not { } commandDrawer)
             {
                 return;
             }
@@ -145,6 +146,7 @@ namespace CtrDxEditor.Views
             }
 
             bool compact = _layoutMode == LayoutMode.Compact;
+            commandDrawer.IsVisible = compact;
             if (this.FindControl<Menu>("DesktopMenu") is { } desktopMenu)
             {
                 // Docked, so hiding it gives the row back to the canvas rather than leaving a gap.
@@ -172,7 +174,8 @@ namespace CtrDxEditor.Views
                 || this.FindControl<Border>("CompactRail") is not { } rail
                 || this.FindControl<Border>("CompactTabs") is not { } tabs
                 || this.FindControl<Border>("CompactEditBar") is not { } editBar
-                || this.FindControl<Border>("CompactCommandDrawer") is not { } commandDrawer
+                || this.FindControl<SplitView>("CompactCommandDrawer") is not { } commandDrawer
+                || this.FindControl<Border>("CompactCommandDrawerPane") is not { } commandDrawerPane
                 || this.FindControl<Button>("CompactMenuButton") is not { } menuButton
                 || this.FindControl<Button>("PaletteTab") is not { } paletteTab
                 || this.FindControl<Button>("LayersTab") is not { } layersTab)
@@ -200,10 +203,10 @@ namespace CtrDxEditor.Views
             // Its dedicated layout row keeps it above both the canvas and the tab bar.
             editBar.Margin = new Thickness(insets.Left, 0, insets.Right, 0);
             menuButton.Margin = new Thickness(insets.Left, insets.Top, 0, 0);
-            commandDrawer.Padding = new Thickness(insets.Left, insets.Top, 0, insets.Bottom);
+            commandDrawerPane.Padding = new Thickness(insets.Left, insets.Top, 0, insets.Bottom);
             // Narrower than a typical nav drawer on purpose: toggles leave it open, and their effect is
             // on the canvas behind it. 260 caps it on tablets; 70% keeps ~96px of canvas at 320.
-            commandDrawer.Width = Bounds.Width > 0 ? Math.Min(260, Bounds.Width * 0.70) : 260;
+            commandDrawer.OpenPaneLength = Bounds.Width > 0 ? Math.Min(260, Bounds.Width * 0.70) : 260;
             // The sheet occupies the canvas row, above the reserved compact chrome rows.
             sheet.Margin = new Thickness(insets.Left, 0, insets.Right, 0);
             sheet.Height = CompactSheetHeight();

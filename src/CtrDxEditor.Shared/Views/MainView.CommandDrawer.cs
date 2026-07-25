@@ -11,21 +11,23 @@ using CtrDxEditor.Localization;
 
 namespace CtrDxEditor.Views
 {
-    /// <summary>The compact command drawer: one open/close path and the inputs that drive it.</summary>
+    /// <summary>The compact command drawer: native SplitView state and the inputs that drive it.</summary>
     public partial class MainView : UserControl
     {
+        private bool _restoreCommandDrawerFocusOnClose = true;
+
         /// <summary>Whether the command drawer is currently showing.</summary>
         private bool IsCommandDrawerOpen =>
-            this.FindControl<Border>("CompactCommandDrawer") is { IsVisible: true };
+            this.FindControl<SplitView>("CompactCommandDrawer") is { IsPaneOpen: true };
 
         /// <summary>
-        /// The single authority over drawer visibility.
+        /// The single authority over programmatic drawer visibility.
         /// </summary>
         /// <param name="open">Whether the drawer should be showing.</param>
         /// <param name="restoreFocus">Whether closing returns focus to the hamburger.</param>
         /// <remarks>
-        /// Every dismissal path routes here rather than setting visibility itself, so the drawer, the
-        /// scrim and the hamburger's automation name cannot end up in three different states. Opening is
+        /// Programmatic dismissal paths route here rather than setting pane state themselves. Native
+        /// light-dismiss is synchronized by <see cref="CompactCommandDrawer_PaneClosed"/>. Opening is
         /// refused outside compact mode: a stale open flag surviving a resize would leave the drawer
         /// covering the expanded three-column layout.
         /// </remarks>
@@ -36,15 +38,15 @@ namespace CtrDxEditor.Views
                 open = false;
             }
 
-            if (this.FindControl<Border>("CompactCommandDrawer") is not { } drawer
-                || this.FindControl<Border>("CompactCommandScrim") is not { } scrim
+            if (this.FindControl<SplitView>("CompactCommandDrawer") is not { } drawer
                 || this.FindControl<Button>("CompactMenuButton") is not { } button)
             {
                 return;
             }
 
-            drawer.IsVisible = open;
-            scrim.IsVisible = open;
+            _restoreCommandDrawerFocusOnClose = restoreFocus;
+            drawer.IsHitTestVisible = open;
+            drawer.IsPaneOpen = open;
             Avalonia.Automation.AutomationProperties.SetName(
                 button,
                 Localizer.Get(open ? "CommandDrawer.Close" : "CommandDrawer.Open"));
@@ -64,7 +66,7 @@ namespace CtrDxEditor.Views
         /// <summary>Moves focus to the first row a keyboard user can actually reach.</summary>
         private void FocusFirstCommandRow()
         {
-            if (this.FindControl<Border>("CompactCommandDrawer") is not { IsVisible: true } drawer)
+            if (this.FindControl<SplitView>("CompactCommandDrawer") is not { IsPaneOpen: true } drawer)
             {
                 return;
             }
@@ -81,11 +83,23 @@ namespace CtrDxEditor.Views
             SetCommandDrawerOpen(!IsCommandDrawerOpen);
         }
 
-        /// <summary>Closes the drawer when the scrim is pressed.</summary>
-        private void CompactCommandScrim_PointerPressed(object? sender, PointerPressedEventArgs e)
+        /// <summary>Synchronizes editor chrome after SplitView's native light-dismiss closes the pane.</summary>
+        private void CompactCommandDrawer_PaneClosed(object? sender, RoutedEventArgs e)
         {
-            SetCommandDrawerOpen(false);
-            e.Handled = true;
+            if (sender is SplitView drawer
+                && this.FindControl<Button>("CompactMenuButton") is { } button)
+            {
+                drawer.IsHitTestVisible = false;
+                Avalonia.Automation.AutomationProperties.SetName(
+                    button,
+                    Localizer.Get("CommandDrawer.Open"));
+                if (_restoreCommandDrawerFocusOnClose)
+                {
+                    _ = button.Focus();
+                }
+
+                UpdateCompactEditBarVisibility();
+            }
         }
 
         /// <summary>

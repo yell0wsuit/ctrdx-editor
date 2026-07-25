@@ -8,15 +8,22 @@ namespace CtrDxEditor.Tests
     /// <summary>Tests the compact command drawer's markup, sizing and dismissal wiring.</summary>
     public class CompactCommandDrawerTests
     {
-        /// <summary>The hamburger, scrim and drawer all exist and start hidden.</summary>
+        /// <summary>The hamburger and native Fluent drawer exist, with no standalone scrim to pop in and out.</summary>
         [Fact]
-        public void DrawerChromeExistsAndStartsHidden()
+        public void DrawerUsesNativeFluentSplitView()
         {
             string view = SourceText("MainView.axaml");
+            int drawer = view.IndexOf("<SplitView x:Name=\"CompactCommandDrawer\"", StringComparison.Ordinal);
+            int drawerTagEnd = view.IndexOf('>', drawer);
 
             Assert.Contains("x:Name=\"CompactMenuButton\"", view, StringComparison.Ordinal);
-            Assert.Contains("x:Name=\"CompactCommandScrim\"", view, StringComparison.Ordinal);
-            Assert.Contains("x:Name=\"CompactCommandDrawer\"", view, StringComparison.Ordinal);
+            Assert.True(drawer >= 0 && drawerTagEnd > drawer);
+            ReadOnlySpan<char> drawerTag = view.AsSpan(drawer, drawerTagEnd - drawer);
+            Assert.Contains("DisplayMode=\"Overlay\"", drawerTag, StringComparison.Ordinal);
+            Assert.Contains("PanePlacement=\"Left\"", drawerTag, StringComparison.Ordinal);
+            Assert.Contains("UseLightDismissOverlayMode=\"True\"", drawerTag, StringComparison.Ordinal);
+            Assert.Contains("IsHitTestVisible=\"False\"", drawerTag, StringComparison.Ordinal);
+            Assert.DoesNotContain("x:Name=\"CompactCommandScrim\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"CommandDrawerFileSection\"", view, StringComparison.Ordinal);
         }
 
@@ -49,6 +56,21 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Math.Min(260, Bounds.Width * 0.70)", layout, StringComparison.Ordinal);
         }
 
+        /// <summary>The drawer surface fills the native pane instead of leaving a strip on its right.</summary>
+        [Fact]
+        public void DrawerSurfaceStretchesToTheNativePaneWidth()
+        {
+            string view = SourceText("MainView.axaml");
+            int pane = view.IndexOf("<Border x:Name=\"CompactCommandDrawerPane\"", StringComparison.Ordinal);
+            int paneTagEnd = view.IndexOf('>', pane);
+
+            Assert.True(pane >= 0 && paneTagEnd > pane);
+            Assert.Contains(
+                "HorizontalAlignment=\"Stretch\"",
+                view.AsSpan(pane, paneTagEnd - pane),
+                StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// Android's back button in a browser is a history popstate, not a key event, and iOS has no
         /// back key at all. Wiring them produces tests that pass and behaviour that never fires.
@@ -75,14 +97,15 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("Swipe", drawer, StringComparison.Ordinal);
         }
 
-        /// <summary>Every dismissal path funnels through one method, so states cannot drift.</summary>
+        /// <summary>Every programmatic dismissal path funnels through one method, so states cannot drift.</summary>
         [Fact]
-        public void AllDismissalPathsUseOneMethod()
+        public void ProgrammaticDismissalPathsUseOneMethod()
         {
             string drawer = SourceText("MainView.CommandDrawer.cs");
 
             Assert.Contains("private void SetCommandDrawerOpen(bool open, bool restoreFocus = true)", drawer, StringComparison.Ordinal);
-            Assert.Equal(1, CountOccurrences(drawer, "scrim.IsVisible ="));
+            Assert.DoesNotContain("scrim.IsVisible =", drawer, StringComparison.Ordinal);
+            Assert.Contains("drawer.IsPaneOpen = open;", drawer, StringComparison.Ordinal);
         }
 
         /// <summary>A canvas press closes the command drawer before it considers the bottom sheet.</summary>
@@ -219,19 +242,6 @@ namespace CtrDxEditor.Tests
             string branch = layout[expanded..end];
             Assert.Contains("bool focusCanvas = IsCommandDrawerOpen;", branch, StringComparison.Ordinal);
             Assert.Contains("_ = _canvas.Focus();", branch, StringComparison.Ordinal);
-        }
-
-        private static int CountOccurrences(string haystack, string needle)
-        {
-            int count = 0;
-            int index = haystack.IndexOf(needle, StringComparison.Ordinal);
-            while (index >= 0)
-            {
-                count++;
-                index = haystack.IndexOf(needle, index + needle.Length, StringComparison.Ordinal);
-            }
-
-            return count;
         }
 
         private static string SourceText(string file)

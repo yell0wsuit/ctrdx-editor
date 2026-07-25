@@ -785,19 +785,22 @@
         </UniformGrid>
       </Border>
 
-      <!-- Command drawer. The scrim is lighter than a standard modal because toggles deliberately leave
-           the drawer open, and their effect is on the canvas behind it. -->
-      <Border x:Name="CompactCommandScrim" IsVisible="False" Grid.RowSpan="3" ZIndex="60"
-              Background="#66000000"
-              PointerPressed="CompactCommandScrim_PointerPressed" />
-
-      <Border x:Name="CompactCommandDrawer" IsVisible="False" Grid.RowSpan="3" ZIndex="61"
-              HorizontalAlignment="Left" VerticalAlignment="Stretch"
-              Background="{DynamicResource EditorBrush.Surface.Panel}"
-              BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
-              BorderThickness="0,0,1,0"
-              KeyboardNavigation.TabNavigation="Cycle"
-              KeyDown="CompactCommandDrawer_KeyDown">
+      <!-- Native Fluent SplitView supplies the overlay pane, light-dismiss layer and open/close motion.
+           It remains a compact-shell overlay rather than becoming the page-level navigation root. -->
+      <SplitView x:Name="CompactCommandDrawer" IsVisible="False" IsPaneOpen="False"
+                 IsHitTestVisible="False"
+                 Grid.RowSpan="3" ZIndex="61"
+                 DisplayMode="Overlay" PanePlacement="Left"
+                 UseLightDismissOverlayMode="True"
+                 PaneBackground="{DynamicResource EditorBrush.Surface.Panel}"
+                 PaneClosed="CompactCommandDrawer_PaneClosed">
+        <SplitView.Pane>
+          <Border x:Name="CompactCommandDrawerPane"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                  BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+                  BorderThickness="0,0,1,0"
+                  KeyboardNavigation.TabNavigation="Cycle"
+                  KeyDown="CompactCommandDrawer_KeyDown">
         <Grid RowDefinitions="48,*">
         <ScrollViewer Grid.Row="1"
                       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -967,7 +970,9 @@
           </StackPanel>
         </ScrollViewer>
         </Grid>
-      </Border>
+          </Border>
+        </SplitView.Pane>
+      </SplitView>
 
       <Button x:Name="CompactMenuButton" IsVisible="False" ZIndex="62"
               HorizontalAlignment="Left" VerticalAlignment="Top"
