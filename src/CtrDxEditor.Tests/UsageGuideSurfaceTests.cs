@@ -25,6 +25,7 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>Every structured guide block has an explicit rendering template.</summary>
+        /// <param name="blockType">Guide block type name expected in a typed data template.</param>
         [Theory]
         [InlineData("GuideParagraph")]
         [InlineData("GuideHeading")]

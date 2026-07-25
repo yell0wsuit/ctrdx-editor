@@ -26,6 +26,7 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>Help labels resolve through the shared localization catalog.</summary>
+        /// <param name="key">Help-related localization key expected to resolve.</param>
         [Theory]
         [InlineData("Menu.Help")]
         [InlineData("Menu.Help.UsageGuide")]
