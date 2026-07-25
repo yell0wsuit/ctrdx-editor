@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -78,6 +80,30 @@ namespace CtrDxEditor.Tests
             Assert.Null(canvas.LockedObject);
         }
 
+        /// <summary>A pinned object captures its drag origin so pointer movement can update its position.</summary>
+        [Fact]
+        public void PinnedObjectDragCapturesOrigin()
+        {
+            string input = File.ReadAllText(SourcePath(
+                "CtrDxEditor.Shared",
+                "Rendering",
+                "LevelCanvas.Input.cs"));
+            int lockedBranch = input.IndexOf(
+                "if (LockedObject is { } locked)",
+                StringComparison.Ordinal);
+            int normalBranch = input.IndexOf(
+                "int after = _lastHitIndex",
+                lockedBranch,
+                StringComparison.Ordinal);
+
+            Assert.True(lockedBranch >= 0);
+            Assert.True(normalBranch > lockedBranch);
+            Assert.Contains(
+                "CaptureGroupDragOrigins(locked);",
+                input[lockedBranch..normalBranch],
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Specialized rail handles are disabled while more than one object is selected.</summary>
         [Fact]
         public void RailHandlesAreSuppressedWhenMultipleObjectsSelected()
@@ -98,6 +124,18 @@ namespace CtrDxEditor.Tests
             GrabRail.Handle hit = (GrabRail.Handle)method.Invoke(canvas, [new Vec2(100, 100)])!;
 
             Assert.Equal(GrabRail.Handle.None, hit);
+        }
+
+        private static string SourcePath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                       ?? throw new InvalidOperationException("Could not locate src directory.");
+            }
+
+            return Path.Combine([path, .. parts]);
         }
     }
 }

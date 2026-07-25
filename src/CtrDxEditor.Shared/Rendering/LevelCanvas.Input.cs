@@ -179,18 +179,20 @@ namespace CtrDxEditor.Rendering
             return _handDragStartTarget + (levelPt - _handDragStartPointer);
         }
 
-        /// <summary>Captures stable object and primary origins for a group move.</summary>
-        private void CaptureGroupDragOrigins()
+        /// <summary>Captures stable object and primary origins for a selection or one exclusive object.</summary>
+        private void CaptureGroupDragOrigins(LevelObject? exclusive = null)
         {
             _groupDragOrigins.Clear();
-            IEnumerable<LevelObject> group = SelectedObjects.Count > 0
+            IEnumerable<LevelObject> group = exclusive is not null
+                ? [exclusive]
+                : SelectedObjects.Count > 0
                 ? SelectedObjects
                 : PrimaryObject is { } fallback ? [fallback] : [];
             foreach (LevelObject selected in group)
             {
                 _groupDragOrigins.Add((selected, selected.X, selected.Y));
             }
-            if (PrimaryObject is { } primary)
+            if ((exclusive ?? PrimaryObject) is { } primary)
             {
                 _primaryOriginX = primary.X;
                 _primaryOriginY = primary.Y;
@@ -1014,6 +1016,7 @@ namespace CtrDxEditor.Rendering
                 if (li >= 0 && HitBoundContains(locked, bounds[li], levelPt))
                 {
                     SelectedObject = locked;
+                    CaptureGroupDragOrigins(locked);
                     _dragOffset = levelPt - new Vec2(locked.X, locked.Y);
                     _dragging = true;
                     _handObjectDrag = HandObject.IsHand(locked.Type);
