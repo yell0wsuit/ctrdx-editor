@@ -3,7 +3,8 @@
         xmlns:icons="using:Material.Icons.Avalonia"
         xmlns:loc="using:CtrDxEditor.Localization"
         x:Class="CtrDxEditor.Views.EmptyStateView"
-        x:Name="Root">
+        x:Name="Root"
+        Background="{DynamicResource EditorBrush.Surface.Panel}">
   <!-- Not hit-test transparent: with no document there is nothing on the canvas to reach past it, and
        swallowing presses here keeps a stray tap from starting a canvas interaction on an empty level. -->
   <StackPanel Orientation="Vertical" Spacing="10"
