@@ -721,7 +721,8 @@
              Delete moved to the compact edit bar, which is where the rest of the
              selection-gated group lives; keeping it here made it the only button on the rail whose
              availability depended on what was selected. On narrow phones the rail shifts right to clear
-             the hamburger without shrinking these controls further. -->
+             the hamburger without shrinking these controls further. Snap and Help carry x:Name so the
+             expanded touch rail can drop them; see ApplyRailActionSet. -->
         <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
           <Button x:Name="EditModeButton" Classes="railAction" Click="CompactEditMode_Click"
                   ToolTip.Tip="{loc:Tr Canvas.Mode.Edit}">
@@ -752,7 +753,7 @@
           </Button>
           <Border x:Name="RailHelpDivider" Width="1" Margin="2,4"
                   Background="{DynamicResource EditorBrush.Surface.Divider}" />
-          <Button Classes="railAction" Click="UsageGuide_Click"
+          <Button x:Name="RailHelpButton" Classes="railAction" Click="UsageGuide_Click"
                   ToolTip.Tip="{loc:Tr Menu.Help.UsageGuide}">
             <icons:MaterialIcon Kind="HelpCircleOutline" Width="20" Height="20" />
           </Button>

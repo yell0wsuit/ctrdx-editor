@@ -2,6 +2,8 @@ using System;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.ViewModels;
@@ -12,6 +14,8 @@ namespace CtrDxEditor.Views
     public partial class MainView : UserControl
     {
         private LayoutMode _layoutMode = LayoutMode.Expanded;
+
+        private bool _touchSeen;
 
         /// <summary>
         /// Starts tracking the view's width and applying the matching layout mode.
@@ -30,7 +34,31 @@ namespace CtrDxEditor.Views
                 }
             };
 
+            // Tunnelled so the first touch is seen even though the control under the finger goes on to
+            // handle the press itself.
+            AddHandler(PointerPressedEvent, Shell_PointerPressed, RoutingStrategies.Tunnel);
+
             UpdateLayoutMode();
+        }
+
+        /// <summary>Latches the session as touch-driven the first time a finger lands anywhere in the shell.</summary>
+        /// <param name="sender">The shell (unused).</param>
+        /// <param name="e">Pointer data, read for the contact type.</param>
+        /// <remarks>
+        /// Latched rather than tracked per pointer: an iPad in a keyboard case mixes touch with a trackpad,
+        /// and a rail that appeared and vanished between contacts would be worse than either state. Width
+        /// cannot stand in for this - a landscape iPad and a small desktop window report the same bounds -
+        /// and neither can the platform, since a browser session may be either.
+        /// </remarks>
+        private void Shell_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (_touchSeen || e.Pointer.Type != PointerType.Touch)
+            {
+                return;
+            }
+
+            _touchSeen = true;
+            UpdateCompactChromeVisibility();
         }
 
         /// <summary>Recomputes the mode from the current width and applies it if it changed.</summary>
@@ -102,7 +130,12 @@ namespace CtrDxEditor.Views
                 columns.ColumnDefinitions = ColumnDefinitions.Parse("200,1,*,1,280");
 
                 sheet.Margin = new Thickness(0);
+                // Insets and the narrow-phone nudge belong to the compact shell; the expanded rail sits
+                // under the menu bar, clear of both. Reset explicitly because the rail can survive the
+                // switch on touch, and would otherwise keep the placement of the width it left behind.
                 rail.Padding = new Thickness(0);
+                rail.Margin = new Thickness(0);
+                rail.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
                 tabs.Padding = new Thickness(0);
             }
         }
@@ -128,10 +161,17 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            bool show = _layoutMode == LayoutMode.Compact
-                && DataContext is EditorViewModel { HasDocument: true };
+            bool compact = _layoutMode == LayoutMode.Compact;
+            bool hasDocument = DataContext is EditorViewModel { HasDocument: true };
+            bool show = compact && hasDocument;
+            // The rail outlives the compact shell on touch. Every iPad crosses the width breakpoint when
+            // rotated to landscape - 1133 on a mini, 1180 on an Air - and lands in the expanded layout,
+            // whose menu bar and keyboard shortcuts a bare tablet does not have. Gated on touch rather
+            // than on width so a mouse-driven window of the same size stays uncluttered.
+            bool showRail = hasDocument && (compact || _touchSeen);
             tabs.IsVisible = show;
-            rail.IsVisible = show;
+            rail.IsVisible = showRail;
+            ApplyRailActionSet(compact);
             // The hamburger is not document-gated like the rail and tabs: New and Open live in the
             // drawer, so it has to be reachable from the start screen.
             if (this.FindControl<Button>("CompactMenuButton") is { } menuButton)
@@ -147,7 +187,6 @@ namespace CtrDxEditor.Views
                 emptyState.ShowDropHint = !OperatingSystem.IsBrowser();
             }
 
-            bool compact = _layoutMode == LayoutMode.Compact;
             commandDrawer.IsVisible = compact;
             if (this.FindControl<Menu>("DesktopMenu") is { } desktopMenu)
             {
@@ -159,14 +198,45 @@ namespace CtrDxEditor.Views
             {
                 sheet.IsVisible = false;
                 drawerHost.Children.Clear();
-                // The rail is the only way out of pan mode, so a latched mode must not outlive it. This one
-                // site covers both ways the rail disappears: widening to the expanded layout, and closing
-                // the document.
+            }
+
+            // The rail is the only way out of pan mode, so a latched mode must not outlive it. Keyed on the
+            // rail itself rather than on the compact shell: a tablet rotated into the expanded layout keeps
+            // both, and resetting there would drop the user back into Edit for turning the device.
+            if (!showRail)
+            {
                 SetInteractionMode(CanvasInteractionMode.Edit);
             }
 
             UpdateCompactTabState();
             UpdateCompactEditBarVisibility();
+        }
+
+        /// <summary>Trims the rail to the actions worth a permanent button in the expanded layout.</summary>
+        /// <param name="full">True for the compact shell's whole rail; false for the expanded touch rail.</param>
+        /// <remarks>
+        /// The expanded layout has a menu bar, so the rail only has to carry what a menu round-trip makes
+        /// awkward: the latched mode pair, Undo and Redo - the commands a level edit leans on - and Zoom to
+        /// Fit, which is the way back from a pinch that threw the level off-screen and so is exactly as
+        /// touch-critical there as it is on a phone. Rotation snap and the usage guide are set-and-forget,
+        /// and stay in the Edit and Help menus rather than occluding canvas for a landscape tablet.
+        /// </remarks>
+        private void ApplyRailActionSet(bool full)
+        {
+            if (this.FindControl<Button>("RotationSnapButton") is { } snap)
+            {
+                snap.IsVisible = full;
+            }
+
+            if (this.FindControl<Border>("RailHelpDivider") is { } helpDivider)
+            {
+                helpDivider.IsVisible = full;
+            }
+
+            if (this.FindControl<Button>("RailHelpButton") is { } help)
+            {
+                help.IsVisible = full;
+            }
         }
 
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>

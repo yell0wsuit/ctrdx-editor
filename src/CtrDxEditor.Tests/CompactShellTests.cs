@@ -240,11 +240,15 @@ namespace CtrDxEditor.Tests
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
-            Assert.Contains("bool show = _layoutMode == LayoutMode.Compact", layout, StringComparison.Ordinal);
+            Assert.Contains("bool show = compact && hasDocument;", layout, StringComparison.Ordinal);
             Assert.Contains("EditorViewModel { HasDocument: true }", layout, StringComparison.Ordinal);
             Assert.Contains("tabs.IsVisible = show;", layout, StringComparison.Ordinal);
-            Assert.Contains("rail.IsVisible = show;", layout, StringComparison.Ordinal);
-            // The rail must be gated through the same predicate, not left on for the whole compact mode.
+            // The rail may outlive the compact shell on touch, but never the document it acts on.
+            Assert.Contains(
+                "bool showRail = hasDocument && (compact || _touchSeen);",
+                layout,
+                StringComparison.Ordinal);
+            Assert.Contains("rail.IsVisible = showRail;", layout, StringComparison.Ordinal);
             Assert.DoesNotContain("rail.IsVisible = compact;", layout, StringComparison.Ordinal);
             // Closing a document must take the open sheet down with the tabs that raised it.
             int gate = layout.IndexOf("tabs.IsVisible = show;", StringComparison.Ordinal);
@@ -323,6 +327,56 @@ namespace CtrDxEditor.Tests
             Assert.True(zoomFit >= 0 && divider > zoomFit && usageGuide > divider);
             Assert.Contains("ToolTip.Tip=\"{loc:Tr Menu.Help.UsageGuide}\"", rail, StringComparison.Ordinal);
             Assert.Contains("Kind=\"HelpCircleOutline\"", rail, StringComparison.Ordinal);
+        }
+
+        /// <summary>A touch session keeps the rail after the layout widens past the breakpoint.</summary>
+        /// <remarks>
+        /// Every iPad crosses the 1024 breakpoint when rotated to landscape - 1133 on a mini, 1180 on an
+        /// Air - and lands in the expanded shell, which assumes a menu bar and shortcuts a bare tablet has
+        /// no way to reach. Latched on the first touch contact rather than measured per pointer, so a
+        /// tablet in a keyboard case does not flicker the rail between a finger and its trackpad.
+        /// </remarks>
+        [Fact]
+        public void ExpandedModeKeepsTheRailForATouchSession()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("private bool _touchSeen;", layout, StringComparison.Ordinal);
+            Assert.Contains("e.Pointer.Type != PointerType.Touch", layout, StringComparison.Ordinal);
+            // Tunnelled: the control under the finger handles the press itself.
+            Assert.Contains(
+                "AddHandler(PointerPressedEvent, Shell_PointerPressed, RoutingStrategies.Tunnel);",
+                layout,
+                StringComparison.Ordinal);
+            // Latched, so it is never cleared once set.
+            Assert.Equal(1, CountOccurrences(layout, "_touchSeen = true;"));
+            Assert.DoesNotContain("_touchSeen = false;", layout, StringComparison.Ordinal);
+        }
+
+        /// <summary>The expanded rail drops the actions a menu round-trip handles well enough.</summary>
+        /// <remarks>
+        /// Rotation snap and the usage guide are set-and-forget, so they stay in the Edit and Help menus
+        /// rather than occluding canvas. Zoom to Fit is kept: it is the way back from a pinch that threw
+        /// the level off-screen, which a landscape tablet can do exactly as easily as a phone.
+        /// </remarks>
+        [Fact]
+        public void ExpandedRailDropsTheMenuFriendlyActions()
+        {
+            string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
+
+            Assert.Contains("ApplyRailActionSet(compact);", layout, StringComparison.Ordinal);
+            int trim = layout.IndexOf("private void ApplyRailActionSet(bool full)", StringComparison.Ordinal);
+            Assert.True(trim >= 0);
+            int trimEnd = layout.IndexOf("\n        /// <summary>", trim, StringComparison.Ordinal);
+            Assert.True(trimEnd > trim);
+            string body = layout[trim..trimEnd];
+
+            Assert.Contains("\"RotationSnapButton\"", body, StringComparison.Ordinal);
+            Assert.Contains("\"RailHelpDivider\"", body, StringComparison.Ordinal);
+            Assert.Contains("\"RailHelpButton\"", body, StringComparison.Ordinal);
+            // The mode pair, Undo, Redo and Zoom to Fit are never trimmed.
+            Assert.DoesNotContain("\"EditModeButton\"", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("\"PanModeButton\"", body, StringComparison.Ordinal);
         }
 
         /// <summary>Expanded mode keeps the three-column grid and hides all compact chrome.</summary>
@@ -414,16 +468,21 @@ namespace CtrDxEditor.Tests
         /// Hiding the rail resets the mode, so pan mode can never outlive its only exit.
         /// </summary>
         /// <remarks>
-        /// The same predicate covers both ways the rail disappears — widening to the expanded layout and
-        /// closing the document — so there is one reset site rather than two that can drift apart.
+        /// One reset site, keyed on the rail's own predicate rather than on the compact shell, so it covers
+        /// every way the rail disappears — closing the document, and a mouse session widening past the
+        /// breakpoint — without firing for the touch session that widens and keeps it.
         /// </remarks>
         [Fact]
         public void HidingTheRailResetsInteractionMode()
         {
             string layout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
-            int gate = layout.IndexOf("rail.IsVisible = show;", StringComparison.Ordinal);
+            int gate = layout.IndexOf("rail.IsVisible = showRail;", StringComparison.Ordinal);
 
             Assert.True(gate >= 0);
+            Assert.Contains(
+                "if (!showRail)",
+                layout.AsSpan(gate),
+                StringComparison.Ordinal);
             Assert.Contains(
                 "SetInteractionMode(CanvasInteractionMode.Edit);",
                 layout.AsSpan(gate),
