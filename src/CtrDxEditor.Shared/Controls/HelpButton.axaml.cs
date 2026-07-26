@@ -40,7 +40,7 @@ namespace CtrDxEditor.Controls
             set => SetValue(MessageProperty, value);
         }
 
-        private void Help_Click(object? sender, RoutedEventArgs e)
+        private async void Help_Click(object? sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(Message))
             {
@@ -52,7 +52,18 @@ namespace CtrDxEditor.Controls
                 Header = Header,
                 Message = Message,
             };
-            _ = DialogHost.Show(dialog);
+
+            DialogSession? parentSession = DialogHost.GetDialogSession(null);
+            DialogBackdrop? backdrop = DialogBackdrop.InsertAfter(parentSession?.Host);
+
+            try
+            {
+                _ = await DialogHost.Show(dialog);
+            }
+            finally
+            {
+                backdrop?.Detach();
+            }
         }
     }
 }
