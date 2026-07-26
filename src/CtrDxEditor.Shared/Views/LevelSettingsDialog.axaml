@@ -84,7 +84,12 @@
       <StackPanel Spacing="12">
 
         <StackPanel Spacing="4">
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.Resolution}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.Resolution}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Resolution}"
+                             Message="{loc:Tr Dialog.LevelSettings.ResolutionDescription}" />
+          </StackPanel>
 
           <ComboBox ItemsSource="{Binding Presets}"
                     SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
@@ -142,7 +147,12 @@
         </StackPanel>
 
         <StackPanel Spacing="4">
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}"
+                             Message="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeedDescription}" />
+          </StackPanel>
 
           <!-- Negatives are permitted (DX parses them without clamping), though only positive speeds are meaningful. -->
           <ctrl:NumericTextBox Minimum="-100"
@@ -158,13 +168,16 @@
         </StackPanel>
 
         <StackPanel Spacing="4">
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
-                     ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Special}"
+                             Message="{loc:Tr Dialog.LevelSettings.SpecialDescription}" />
+          </StackPanel>
 
           <ComboBox ItemsSource="{Binding SpecialOptions}"
                     SelectedItem="{Binding SelectedSpecial, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch"
-                    ToolTip.Tip="{loc:Tr Dialog.LevelSettings.SpecialTooltip}">
+                    HorizontalAlignment="Stretch">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:SpecialOption">
                 <TextBlock Text="{Binding Label}" />
@@ -188,42 +201,38 @@
         </StackPanel>
 
         <StackPanel Spacing="4">
-          <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
-                    IsChecked="{Binding TwoParts, Mode=TwoWay}"
-                    IsEnabled="{Binding FlagsEditable}">
-            <ToolTip.Tip>
-              <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.HalfCandyDescription}"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-            </ToolTip.Tip>
-          </CheckBox>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
+                      IsChecked="{Binding TwoParts, Mode=TwoWay}"
+                      IsEnabled="{Binding FlagsEditable}" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.HalfCandy}"
+                             Message="{loc:Tr Dialog.LevelSettings.HalfCandyDescription}" />
+          </StackPanel>
 
-          <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
-                    IsChecked="{Binding NightLevel, Mode=TwoWay}"
-                    IsEnabled="{Binding FlagsEditable}">
-            <ToolTip.Tip>
-              <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.NightLevelDescription}"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-            </ToolTip.Tip>
-          </CheckBox>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <CheckBox Content="{loc:Tr Dialog.LevelSettings.NightLevel}"
+                      IsChecked="{Binding NightLevel, Mode=TwoWay}"
+                      IsEnabled="{Binding FlagsEditable}" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.NightLevel}"
+                             Message="{loc:Tr Dialog.LevelSettings.NightLevelDescription}" />
+          </StackPanel>
 
-          <CheckBox Content="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
-                    IsChecked="{Binding UseMobilePhysics, Mode=TwoWay}"
-                    IsEnabled="{Binding FlagsEditable}">
-            <ToolTip.Tip>
-              <StackPanel MaxWidth="260">
-                <TextBlock Text="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-            </ToolTip.Tip>
-          </CheckBox>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <CheckBox Content="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
+                      IsChecked="{Binding UseMobilePhysics, Mode=TwoWay}"
+                      IsEnabled="{Binding FlagsEditable}" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
+                             Message="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}" />
+          </StackPanel>
         </StackPanel>
 
         <StackPanel Spacing="4">
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.Water}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.Water}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Water}"
+                             Message="{loc:Tr Dialog.LevelSettings.WaterDescription}" />
+          </StackPanel>
           <ctrl:NumericTextBox Minimum="0"
                                Maximum="10000"
                                AcceptDecimal="True"
@@ -235,11 +244,12 @@
                      FontSize="12"
                      IsVisible="{Binding HasWaterError}" />
 
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterDescription}"
-                     TextWrapping="Wrap"
-                     Opacity="0.7" />
-
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeed}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeed}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.WaterSpeed}"
+                             Message="{loc:Tr Dialog.LevelSettings.WaterSpeedDescription}" />
+          </StackPanel>
           <ctrl:NumericTextBox Minimum="0"
                                Maximum="10000"
                                AcceptDecimal="True"
@@ -251,9 +261,6 @@
                      FontSize="12"
                      IsVisible="{Binding HasWaterSpeedError}" />
 
-          <TextBlock Text="{loc:Tr Dialog.LevelSettings.WaterSpeedDescription}"
-                     TextWrapping="Wrap"
-                     Opacity="0.7" />
           <TextBlock Text="{Binding WaterDrainHint}"
                      TextWrapping="Wrap"
                      Opacity="0.7"

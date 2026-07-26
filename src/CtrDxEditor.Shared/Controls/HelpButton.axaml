@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="using:CtrDxEditor.Controls"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="CtrDxEditor.Controls.HelpButton"
+             x:Name="Root"
+             x:DataType="ctrl:HelpButton"
+             Width="24"
+             Height="24">
+  <Button Width="24"
+          Height="24"
+          MinWidth="0"
+          MinHeight="0"
+          Padding="0"
+          Background="Transparent"
+          BorderThickness="0"
+          Cursor="Hand"
+          Click="Help_Click">
+    <icons:MaterialIcon Kind="HelpCircleOutline" Width="16" Height="16"
+                        Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+  </Button>
+</UserControl>
