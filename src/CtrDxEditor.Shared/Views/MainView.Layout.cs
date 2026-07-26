@@ -220,6 +220,8 @@ namespace CtrDxEditor.Views
         /// Fit, which is the way back from a pinch that threw the level off-screen and so is exactly as
         /// touch-critical there as it is on a phone. Rotation snap and the usage guide are set-and-forget,
         /// and stay in the Edit and Help menus rather than occluding canvas for a landscape tablet.
+        /// Delete goes the other way: the compact rail leaves it to the edit bar, which the expanded layout
+        /// does not have, so on a landscape tablet the rail is the only place it can go.
         /// </remarks>
         private void ApplyRailActionSet(bool full)
         {
@@ -228,15 +230,18 @@ namespace CtrDxEditor.Views
                 snap.IsVisible = full;
             }
 
-            if (this.FindControl<Border>("RailHelpDivider") is { } helpDivider)
-            {
-                helpDivider.IsVisible = full;
-            }
-
             if (this.FindControl<Button>("RailHelpButton") is { } help)
             {
                 help.IsVisible = full;
             }
+
+            if (this.FindControl<Button>("RailDeleteButton") is { } delete)
+            {
+                delete.IsVisible = !full;
+            }
+
+            // Exactly one of Help and Delete is up in either mode, so the divider that separates the
+            // trailing button from the document actions is wanted in both.
         }
 
         /// <summary>Refreshes compact chrome padding from the platform's current safe-area insets.</summary>

@@ -137,6 +137,11 @@ namespace CtrDxEditor.Views
             CloseDrawerThen(() => SelectAll_Click(sender, e));
         }
 
+        private void DrawerClearClipboard_Click(object? sender, RoutedEventArgs e)
+        {
+            CloseDrawerThen(() => ClearClipboard_Click(sender, e));
+        }
+
         private void DrawerLevelSettings_Click(object? sender, RoutedEventArgs e)
         {
             CloseDrawerThen(() => LevelSettings_Click(sender, e));

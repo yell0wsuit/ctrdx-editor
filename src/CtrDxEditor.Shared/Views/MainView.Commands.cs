@@ -72,6 +72,11 @@ namespace CtrDxEditor.Views
             }
         }
 
+        private void ClearClipboard_Click(object? sender, RoutedEventArgs e)
+        {
+            (DataContext as EditorViewModel)?.ClearClipboard();
+        }
+
         private void SelectAll_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is EditorViewModel vm)

@@ -89,6 +89,32 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>The rail is centred on the canvas, not on the window.</summary>
+        /// <remarks>
+        /// It hangs off the canvas column rather than the shell row, so "centred" follows the canvas in
+        /// both modes: the column widens to the full width in compact, and in expanded it excludes the
+        /// palette and inspector, which are not the same width - hosting the rail a level up left it 40px
+        /// off-centre on a landscape tablet.
+        /// </remarks>
+        [Fact]
+        public void RailIsCentredOnTheCanvasColumn()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml"));
+            int canvas = view.IndexOf("<render:LevelCanvas x:Name=\"Canvas\"", StringComparison.Ordinal);
+            int columnEnd = view.IndexOf("<Border Grid.Column=\"3\"", StringComparison.Ordinal);
+            int rail = view.IndexOf("<Border x:Name=\"CompactRail\"", StringComparison.Ordinal);
+
+            Assert.True(canvas >= 0 && columnEnd > canvas);
+            // Inside the canvas column, and after the canvas so it draws and hit-tests above it.
+            Assert.True(rail > canvas && rail < columnEnd);
+            // A row assignment would put it back on the shell grid, off-centre again.
+            int railEnd = view.IndexOf('>', rail);
+            Assert.DoesNotContain(
+                "Grid.Row=",
+                view.AsSpan(rail, railEnd - rail),
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Compact bottom chrome occupies layout rows so it cannot cover the canvas.</summary>
         [Fact]
         public void CompactBottomChromeReservesCanvasSpace()
@@ -299,15 +325,16 @@ namespace CtrDxEditor.Tests
 
             Assert.Contains("Click=\"Undo_Click\"", rail, StringComparison.Ordinal);
             Assert.Contains("Click=\"Redo_Click\"", rail, StringComparison.Ordinal);
-            Assert.DoesNotContain("Click=\"Delete_Click\"", rail, StringComparison.Ordinal);
             Assert.Contains("Click=\"ZoomFit_Click\"", rail, StringComparison.Ordinal);
 
             // Each action is gated on the capability its menu item uses, so the rail cannot invoke a command
             // the menu considers unavailable.
             Assert.Contains("IsEnabled=\"{Binding HasDocument}\"", rail, StringComparison.Ordinal);
+            Assert.Contains("IsEnabled=\"{Binding CanDeleteSelection}\"", rail, StringComparison.Ordinal);
 
-            // Seven buttons: the three document actions, Help, the mode pair, and rotation snap.
-            Assert.Equal(7, CountOccurrences(rail, "<Button "));
+            // Eight declared, seven up at a time: the three document actions, the mode pair, rotation snap,
+            // and either Help or Delete depending on the layout.
+            Assert.Equal(8, CountOccurrences(rail, "<Button "));
         }
 
         /// <summary>The usage guide follows Zoom to Fit in its own divided rail group.</summary>
@@ -353,11 +380,12 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("_touchSeen = false;", layout, StringComparison.Ordinal);
         }
 
-        /// <summary>The expanded rail drops the actions a menu round-trip handles well enough.</summary>
+        /// <summary>The expanded rail trades the menu-friendly actions for Delete.</summary>
         /// <remarks>
         /// Rotation snap and the usage guide are set-and-forget, so they stay in the Edit and Help menus
         /// rather than occluding canvas. Zoom to Fit is kept: it is the way back from a pinch that threw
-        /// the level off-screen, which a landscape tablet can do exactly as easily as a phone.
+        /// the level off-screen, which a landscape tablet can do exactly as easily as a phone. Delete moves
+        /// the other way - the expanded layout has no edit bar, so the rail is its only touch home.
         /// </remarks>
         [Fact]
         public void ExpandedRailDropsTheMenuFriendlyActions()
@@ -371,9 +399,9 @@ namespace CtrDxEditor.Tests
             Assert.True(trimEnd > trim);
             string body = layout[trim..trimEnd];
 
-            Assert.Contains("\"RotationSnapButton\"", body, StringComparison.Ordinal);
-            Assert.Contains("\"RailHelpDivider\"", body, StringComparison.Ordinal);
-            Assert.Contains("\"RailHelpButton\"", body, StringComparison.Ordinal);
+            Assert.Contains("snap.IsVisible = full;", body, StringComparison.Ordinal);
+            Assert.Contains("help.IsVisible = full;", body, StringComparison.Ordinal);
+            Assert.Contains("delete.IsVisible = !full;", body, StringComparison.Ordinal);
             // The mode pair, Undo, Redo and Zoom to Fit are never trimmed.
             Assert.DoesNotContain("\"EditModeButton\"", body, StringComparison.Ordinal);
             Assert.DoesNotContain("\"PanModeButton\"", body, StringComparison.Ordinal);

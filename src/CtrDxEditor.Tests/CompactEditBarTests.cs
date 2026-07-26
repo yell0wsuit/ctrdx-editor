@@ -37,32 +37,47 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// Delete lives on the edit bar, not the rail: it is selection-gated like the rest of that
-        /// group, and freeing its slot is what makes room for the hamburger.
+        /// Delete belongs to the edit bar wherever there is one: it is selection-gated like the rest of
+        /// that group, and freeing its rail slot is what makes room for the hamburger.
         /// </summary>
+        /// <remarks>
+        /// The button is declared on the rail because the expanded layout has no edit bar to carry it, but
+        /// the compact rail must still hide it - hence the check on the trim rather than on the markup.
+        /// </remarks>
         [Fact]
         public void DeleteMovedFromRailToEditBar()
         {
             string view = SourceText("MainView.axaml");
-            int rail = view.IndexOf("x:Name=\"CompactRail\"", StringComparison.Ordinal);
             int bar = view.IndexOf("x:Name=\"CompactEditBar\"", StringComparison.Ordinal);
 
-            Assert.True(rail >= 0 && bar > rail);
-            string railMarkup = view[rail..bar];
-
-            Assert.DoesNotContain("Click=\"Delete_Click\"", railMarkup, StringComparison.Ordinal);
+            Assert.True(bar >= 0);
             Assert.Contains("Click=\"Delete_Click\"", view[bar..], StringComparison.Ordinal);
+
+            string layout = SourceText("MainView.Layout.cs");
+            int trim = layout.IndexOf("private void ApplyRailActionSet(bool full)", StringComparison.Ordinal);
+            Assert.True(trim >= 0);
+            int delete = layout.IndexOf("\"RailDeleteButton\"", trim, StringComparison.Ordinal);
+            Assert.True(delete > trim);
+            // Visible only when the rail is not the full compact one, i.e. only where no edit bar exists.
+            Assert.Contains(
+                "delete.IsVisible = !full;",
+                layout.AsSpan(delete),
+                StringComparison.Ordinal);
         }
 
-        /// <summary>The rail carries seven actions and its narrow-width alignment keeps them clear of the hamburger.</summary>
+        /// <summary>The rail declares eight actions and its narrow-width alignment keeps them clear of the hamburger.</summary>
+        /// <remarks>
+        /// Seven are up at a time: Help and Delete are mutually exclusive, one per layout mode.
+        /// </remarks>
         [Fact]
-        public void RailHasSevenActionButtons()
+        public void RailHasEightActionButtons()
         {
             string view = SourceText("MainView.axaml");
             int rail = view.IndexOf("x:Name=\"CompactRail\"", StringComparison.Ordinal);
-            int bar = view.IndexOf("x:Name=\"CompactEditBar\"", StringComparison.Ordinal);
+            int railEnd = view.IndexOf("x:Name=\"CompactEditBar\"", StringComparison.Ordinal);
 
-            Assert.Equal(7, CountOccurrences(view[rail..bar], "Classes=\"railAction\""));
+            Assert.True(rail >= 0 && railEnd > rail);
+            Assert.Equal(8, CountOccurrences(view[rail..railEnd], "Classes=\"railAction\""));
         }
 
         /// <summary>

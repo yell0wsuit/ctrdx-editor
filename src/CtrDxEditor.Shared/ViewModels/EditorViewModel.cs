@@ -599,6 +599,25 @@ namespace CtrDxEditor.ViewModels
             NotifyEditCommandCapabilities();
         }
 
+        /// <summary>Empties the object clipboard.</summary>
+        /// <remarks>
+        /// The clipboard is same-window and holds detached XML snapshots for the life of the session, so
+        /// nothing else ever empties it: a copy made to move one object leaves Paste live indefinitely, and
+        /// on touch that is a live target sitting next to Copy. Guarded on the count so an already-empty
+        /// clipboard does not raise a change no binding needs.
+        /// </remarks>
+        public void ClearClipboard()
+        {
+            if (_clipboard.Count == 0)
+            {
+                return;
+            }
+
+            _clipboard.Clear();
+            OnPropertyChanged(nameof(HasClipboard));
+            NotifyEditCommandCapabilities();
+        }
+
         /// <summary>Copies the current selection, then deletes the originals.</summary>
         public void CutSelection()
         {

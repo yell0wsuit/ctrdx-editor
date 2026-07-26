@@ -22,6 +22,7 @@
     "Menu.Edit.Cut": "Cu_t",
     "Menu.Edit.Copy": "_Copy",
     "Menu.Edit.Paste": "_Paste",
+    "Menu.Edit.ClearClipboard": "Clear Clip_board",
     "Menu.Edit.SelectAll": "Select _All",
     "Menu.Edit.Delete": "_Delete",
     "Menu.Edit.SnapToGrid": "Snap to Grid",

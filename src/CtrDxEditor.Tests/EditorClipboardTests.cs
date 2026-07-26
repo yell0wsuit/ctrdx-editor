@@ -128,5 +128,47 @@ namespace CtrDxEditor.Tests
             Assert.Contains(nameof(EditorViewModel.CanPaste), changed);
             Assert.Contains(nameof(EditorViewModel.CanDeleteSelection), changed);
         }
+
+        /// <summary>Clearing the clipboard empties it and stands Paste down with it.</summary>
+        /// <remarks>
+        /// Nothing else ever empties the buffer - it survives closing the level, as the test above pins -
+        /// so this is the only way back to a clean Paste state.
+        /// </remarks>
+        [Fact]
+        public void ClearClipboardEmptiesTheBufferAndDisablesPaste()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            vm.CopySelection();
+            Assert.True(vm.HasClipboard);
+            Assert.True(vm.CanPaste);
+
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+            vm.ClearClipboard();
+
+            Assert.False(vm.HasClipboard);
+            Assert.False(vm.CanPaste);
+            Assert.Contains(nameof(EditorViewModel.HasClipboard), changed);
+            Assert.Contains(nameof(EditorViewModel.CanPaste), changed);
+
+            // The buffer is genuinely gone, not just reported empty.
+            vm.PasteAt(100, 200);
+            Assert.Single(vm.Document.AllObjects);
+        }
+
+        /// <summary>Clearing an already-empty clipboard raises nothing.</summary>
+        [Fact]
+        public void ClearClipboardOnAnEmptyBufferIsSilent()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            vm.ClearClipboard();
+
+            Assert.False(vm.HasClipboard);
+            Assert.Empty(changed);
+        }
     }
 }

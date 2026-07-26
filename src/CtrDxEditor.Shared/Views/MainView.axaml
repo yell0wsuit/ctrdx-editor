@@ -163,6 +163,15 @@
             </Grid>
           </MenuItem.Header>
         </MenuItem>
+        <!-- The clipboard outlives the selection it was filled from and nothing else empties it, so a copy
+             made to move one object leaves Paste live for the rest of the session. No shortcut: it is a
+             deliberate, occasional act, not something to reach for mid-edit. -->
+        <MenuItem Header="{loc:Tr Menu.Edit.ClearClipboard}" Click="ClearClipboard_Click"
+                  IsEnabled="{Binding HasClipboard}">
+          <MenuItem.Icon>
+            <icons:MaterialIcon Kind="ClipboardRemoveOutline" />
+          </MenuItem.Icon>
+        </MenuItem>
         <MenuItem Click="SelectAll_Click" IsEnabled="{Binding CanSelectAllObjects}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="SelectAll" />
@@ -395,6 +404,63 @@
                      SmallChange="48"
                      LargeChange="{Binding #Canvas.HorizontalScrollViewport}" />
         </Grid>
+
+        <!-- Parented to the canvas column rather than the shell row so "centred" means centred on the
+             canvas. In compact the column widens to the full width, which centres it there too; hosting it
+             a level up left it centred on the window and so 40px off-centre in the expanded layout, where
+             the palette and inspector columns are not the same width. Declared last in the column so it
+             draws over the canvas and takes presses ahead of it. -->
+        <Border x:Name="CompactRail" IsVisible="False"
+                HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
+                Background="{DynamicResource EditorBrush.Surface.Panel}">
+          <!-- Eight buttons, of which one trailing pair is always mutually exclusive: the latched mode
+               pair and rotation snap, three document actions, then Help on the compact rail or Delete on
+               the expanded one. Delete lives here only in the expanded layout, where there is no edit bar
+               to carry it; on the compact rail it would be the one button whose availability depended on
+               what was selected. Snap, Help and Delete carry x:Name so ApplyRailActionSet can pick the
+               set for the mode. On narrow phones the rail shifts right to clear the hamburger without
+               shrinking these controls further. -->
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
+            <Button x:Name="EditModeButton" Classes="railAction" Click="CompactEditMode_Click"
+                    ToolTip.Tip="{loc:Tr Canvas.Mode.Edit}">
+              <icons:MaterialIcon Kind="Pencil" Width="20" Height="20" />
+            </Button>
+            <Button x:Name="PanModeButton" Classes="railAction" Click="CompactPanMode_Click"
+                    ToolTip.Tip="{loc:Tr Canvas.Mode.Pan}">
+              <icons:MaterialIcon Kind="HandBackRight" Width="20" Height="20" />
+            </Button>
+            <Button x:Name="RotationSnapButton" Classes="railAction"
+                    Classes.active="{Binding RotationSnapEnabled}"
+                    Click="RotationSnapToggle_Click"
+                    ToolTip.Tip="{loc:Tr Menu.Edit.SnapRotation}">
+              <icons:MaterialIcon Kind="AngleAcute" Width="20" Height="20" />
+            </Button>
+            <Border Width="1" Margin="2,4" Background="{DynamicResource EditorBrush.Surface.Divider}" />
+            <Button Classes="railAction" Click="Undo_Click" IsEnabled="{Binding CanUndo}"
+                    ToolTip.Tip="{loc:Tr Menu.Edit.Undo}">
+              <icons:MaterialIcon Kind="Undo" Width="20" Height="20" />
+            </Button>
+            <Button Classes="railAction" Click="Redo_Click" IsEnabled="{Binding CanRedo}"
+                    ToolTip.Tip="{loc:Tr Menu.Edit.Redo}">
+              <icons:MaterialIcon Kind="Redo" Width="20" Height="20" />
+            </Button>
+            <Button Classes="railAction" Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}"
+                    ToolTip.Tip="{loc:Tr Menu.View.ZoomFit}">
+              <icons:MaterialIcon Kind="FitToScreen" Width="20" Height="20" />
+            </Button>
+            <Border x:Name="RailHelpDivider" Width="1" Margin="2,4"
+                    Background="{DynamicResource EditorBrush.Surface.Divider}" />
+            <Button x:Name="RailHelpButton" Classes="railAction" Click="UsageGuide_Click"
+                    ToolTip.Tip="{loc:Tr Menu.Help.UsageGuide}">
+              <icons:MaterialIcon Kind="HelpCircleOutline" Width="20" Height="20" />
+            </Button>
+            <Button x:Name="RailDeleteButton" Classes="railAction" Click="Delete_Click"
+                    IsEnabled="{Binding CanDeleteSelection}"
+                    ToolTip.Tip="{loc:Tr Menu.Edit.Delete}">
+              <icons:MaterialIcon Kind="DeleteOutline" Width="20" Height="20" />
+            </Button>
+          </StackPanel>
+        </Border>
       </Grid>
       <Border Grid.Column="3" Background="{DynamicResource EditorBrush.Surface.Divider}" />
       <!-- Layers and Properties remain one visual inspector in expanded mode, but are sibling controls so
@@ -714,52 +780,6 @@
         <Panel x:Name="DrawerHost" />
       </Border>
 
-      <Border x:Name="CompactRail" IsVisible="False" Grid.Row="0"
-              HorizontalAlignment="Center" VerticalAlignment="Top" ZIndex="50"
-              Background="{DynamicResource EditorBrush.Surface.Panel}">
-        <!-- Seven buttons: the latched mode pair and rotation snap, three document actions, and Help.
-             Delete moved to the compact edit bar, which is where the rest of the
-             selection-gated group lives; keeping it here made it the only button on the rail whose
-             availability depended on what was selected. On narrow phones the rail shifts right to clear
-             the hamburger without shrinking these controls further. Snap and Help carry x:Name so the
-             expanded touch rail can drop them; see ApplyRailActionSet. -->
-        <StackPanel Orientation="Horizontal" Spacing="4" Margin="8,6">
-          <Button x:Name="EditModeButton" Classes="railAction" Click="CompactEditMode_Click"
-                  ToolTip.Tip="{loc:Tr Canvas.Mode.Edit}">
-            <icons:MaterialIcon Kind="Pencil" Width="20" Height="20" />
-          </Button>
-          <Button x:Name="PanModeButton" Classes="railAction" Click="CompactPanMode_Click"
-                  ToolTip.Tip="{loc:Tr Canvas.Mode.Pan}">
-            <icons:MaterialIcon Kind="HandBackRight" Width="20" Height="20" />
-          </Button>
-          <Button x:Name="RotationSnapButton" Classes="railAction"
-                  Classes.active="{Binding RotationSnapEnabled}"
-                  Click="RotationSnapToggle_Click"
-                  ToolTip.Tip="{loc:Tr Menu.Edit.SnapRotation}">
-            <icons:MaterialIcon Kind="AngleAcute" Width="20" Height="20" />
-          </Button>
-          <Border Width="1" Margin="2,4" Background="{DynamicResource EditorBrush.Surface.Divider}" />
-          <Button Classes="railAction" Click="Undo_Click" IsEnabled="{Binding CanUndo}"
-                  ToolTip.Tip="{loc:Tr Menu.Edit.Undo}">
-            <icons:MaterialIcon Kind="Undo" Width="20" Height="20" />
-          </Button>
-          <Button Classes="railAction" Click="Redo_Click" IsEnabled="{Binding CanRedo}"
-                  ToolTip.Tip="{loc:Tr Menu.Edit.Redo}">
-            <icons:MaterialIcon Kind="Redo" Width="20" Height="20" />
-          </Button>
-          <Button Classes="railAction" Click="ZoomFit_Click" IsEnabled="{Binding HasDocument}"
-                  ToolTip.Tip="{loc:Tr Menu.View.ZoomFit}">
-            <icons:MaterialIcon Kind="FitToScreen" Width="20" Height="20" />
-          </Button>
-          <Border x:Name="RailHelpDivider" Width="1" Margin="2,4"
-                  Background="{DynamicResource EditorBrush.Surface.Divider}" />
-          <Button x:Name="RailHelpButton" Classes="railAction" Click="UsageGuide_Click"
-                  ToolTip.Tip="{loc:Tr Menu.Help.UsageGuide}">
-            <icons:MaterialIcon Kind="HelpCircleOutline" Width="20" Height="20" />
-          </Button>
-        </StackPanel>
-      </Border>
-
       <!-- Contextual edit bar. Its reserved row stays in thumb reach without covering the canvas. -->
       <Border x:Name="CompactEditBar" IsVisible="False" Grid.Row="1"
               VerticalAlignment="Bottom" ZIndex="45"
@@ -912,6 +932,14 @@
                                       VerticalAlignment="Center" />
                   <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
                              Text="{loc:Tr Menu.Edit.SelectAll, Plain=True}" />
+                </Grid>
+              </Button>
+              <Button Classes="drawerRow" Click="DrawerClearClipboard_Click" IsEnabled="{Binding HasClipboard}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <icons:MaterialIcon Grid.Column="0" Kind="ClipboardRemoveOutline" Width="20" Height="20"
+                                      VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
+                             Text="{loc:Tr Menu.Edit.ClearClipboard, Plain=True}" />
                 </Grid>
               </Button>
               <Button Classes="drawerRow" Click="DrawerSnapToggle_Click" IsEnabled="{Binding HasDocument}">
