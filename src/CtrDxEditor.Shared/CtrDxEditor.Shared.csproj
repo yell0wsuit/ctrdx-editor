@@ -8,7 +8,6 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Skia" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
-    <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="AvaloniaDialogs" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Material.Icons.Avalonia" />
@@ -21,6 +20,8 @@
                       Link="Localization\%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\..\resources\fonts\RobotoMono-*.ttf"
                       Link="Assets\Fonts\%(Filename)%(Extension)" />
+    <AvaloniaResource Include="..\..\resources\fonts\Inter-*.ttf"
+                      Link="Assets\Fonts\Inter\%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\..\resources\icon\icon-256.png"
                       Link="Assets\Icon\icon-256.png" />
     <AvaloniaResource Include="..\..\resources\guide\*.png"

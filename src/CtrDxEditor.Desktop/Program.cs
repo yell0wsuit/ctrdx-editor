@@ -48,7 +48,7 @@ namespace CtrDxEditor.Desktop
             };
             return AppBuilder.Configure(() => new App(startup))
                 .UsePlatformDetect()
-                .WithInterFont()
+                .WithBundledInterFont()
                 .LogToTrace();
         }
     }

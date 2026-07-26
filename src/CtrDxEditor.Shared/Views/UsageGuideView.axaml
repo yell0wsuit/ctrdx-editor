@@ -3,6 +3,7 @@
              xmlns:vm="using:CtrDxEditor.ViewModels"
              xmlns:guide="using:CtrDxEditor.UsageGuide"
              xmlns:loc="using:CtrDxEditor.Localization"
+             xmlns:controls="using:CtrDxEditor.Controls"
              xmlns:icons="using:Material.Icons.Avalonia"
              x:Class="CtrDxEditor.Views.UsageGuideView"
              x:CompileBindings="True"
@@ -29,7 +30,8 @@
   </UserControl.Styles>
   <UserControl.DataTemplates>
     <DataTemplate DataType="guide:GuideParagraph">
-      <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="15" LineHeight="23" />
+      <controls:GuideTextBlock Markup="{Binding Text}" TextWrapping="Wrap"
+                               FontSize="15" LineHeight="23" />
     </DataTemplate>
     <DataTemplate DataType="guide:GuideHeading">
       <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
@@ -45,8 +47,8 @@
                 <TextBlock Text="•" HorizontalAlignment="Center" VerticalAlignment="Center"
                            FontWeight="Bold" />
               </Border>
-              <TextBlock Grid.Column="1" Text="{Binding .}" TextWrapping="Wrap"
-                         FontSize="15" LineHeight="23" Margin="12,0,0,0" />
+              <controls:GuideTextBlock Grid.Column="1" Markup="{Binding .}" TextWrapping="Wrap"
+                                       FontSize="15" LineHeight="23" Margin="12,0,0,0" />
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -59,7 +61,7 @@
               Classes.warning="{Binding IsWarning}">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
-          <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="21" />
+          <controls:GuideTextBlock Markup="{Binding Text}" TextWrapping="Wrap" LineHeight="21" />
         </StackPanel>
       </Border>
     </DataTemplate>
@@ -98,8 +100,8 @@
                        FontSize="12" HorizontalAlignment="Center" />
           </StackPanel>
         </Border>
-        <TextBlock Text="{Binding Caption}" TextWrapping="Wrap" TextAlignment="Center"
-                   FontStyle="Italic" Opacity="0.7" />
+        <controls:GuideTextBlock Markup="{Binding Caption}" TextWrapping="Wrap"
+                                 TextAlignment="Center" FontStyle="Italic" Opacity="0.7" />
       </StackPanel>
     </DataTemplate>
   </UserControl.DataTemplates>

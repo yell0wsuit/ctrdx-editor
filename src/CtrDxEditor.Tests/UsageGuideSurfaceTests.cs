@@ -42,6 +42,47 @@ namespace CtrDxEditor.Tests
             Assert.Contains($"DataType=\"guide:{blockType}\"", view, StringComparison.Ordinal);
         }
 
+        /// <summary>Only article body-copy templates opt into inline emphasis rendering.</summary>
+        /// <param name="blockType">Guide block whose body copy may contain emphasis markers.</param>
+        /// <param name="binding">Markup binding expected on the rich text control.</param>
+        [Theory]
+        [InlineData("GuideParagraph", "{Binding Text}")]
+        [InlineData("GuideSteps", "{Binding .}")]
+        [InlineData("GuideCallout", "{Binding Text}")]
+        [InlineData("GuideScreenshot", "{Binding Caption}")]
+        public void BodyTextTemplatesRenderInlineEmphasis(string blockType, string binding)
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement template = markup.Descendants().Single(element =>
+                element.Name.LocalName == "DataTemplate"
+                && element.Attribute("DataType")?.Value == $"guide:{blockType}");
+
+            Assert.Contains(
+                template.Descendants(),
+                element => element.Name.LocalName == "GuideTextBlock"
+                           && element.Attribute("Markup")?.Value == binding);
+        }
+
+        /// <summary>The renderer uses the bundled Inter family so italic runs resolve to real italic faces.</summary>
+        [Fact]
+        public void BodyTextRendererUsesBundledInterFamily()
+        {
+            string control = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Controls", "GuideTextBlock.cs"));
+            string project = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "CtrDxEditor.Shared.csproj"));
+
+            Assert.Contains(
+                "avares://CtrDxEditor.Shared/Assets/Fonts/Inter/#Inter",
+                control,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                @"resources\fonts\Inter-*.ttf",
+                project,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Screenshot blocks bind both the future image and the named fallback placeholder.</summary>
         [Fact]
         public void ScreenshotTemplateSupportsImageAndPlaceholder()

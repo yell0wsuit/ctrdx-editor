@@ -87,8 +87,9 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        /// <summary>Embedded default UI font (Inter, from <c>WithInterFont</c>), loadable on every backend.</summary>
-        private static readonly Uri InterFontUri = new("avares://Avalonia.Fonts.Inter/Assets/Inter-Regular.ttf");
+        /// <summary>App-owned Inter regular face, embedded in the shared assembly for every backend.</summary>
+        private static readonly Uri InterFontUri =
+            new("avares://CtrDxEditor.Shared/Assets/Fonts/Inter/Inter-Regular.ttf");
 
         /// <summary>
         /// Resolves Inter as an <see cref="SKTypeface"/> for when gooddog is absent, so fallback text
@@ -108,7 +109,7 @@ namespace CtrDxEditor.Rendering
             stream.CopyTo(buffer);
             using SKData data = SKData.CreateCopy(buffer.ToArray());
             return SKTypeface.FromData(data)
-                ?? throw new InvalidOperationException("Could not decode Avalonia's packaged Inter font.");
+                ?? throw new InvalidOperationException("Could not decode the editor's bundled Inter font.");
         }
 
         /// <summary>
