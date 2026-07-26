@@ -96,7 +96,7 @@ namespace CtrDxEditor.UsageGuide
                 [Para("magic-hats", "InGame"), Para("magic-hats", "Editing"), Para("magic-hats", "Grouping"), Note("magic-hats", "Mouth"), Tip("magic-hats", "Xmas"), EmbeddedIllustration("magic-hats", "Pair", "guide-magic-hats.png")],
                 ["bamboo-tubes", "diagnostic-overlays", "motion"]),
             Article("light-bulbs", "GameObjects",
-                [Para("light-bulbs", "InGame"), Para("light-bulbs", "Editing"), Para("light-bulbs", "Properties"), Warning("light-bulbs", "NightLevel")],
+                [Para("light-bulbs", "InGame"), Para("light-bulbs", "InGame2"), Para("light-bulbs", "Editing"), Para("light-bulbs", "Properties"), Warning("light-bulbs", "NightLevel")],
                 ["lanterns", "rope-hooks", "level-settings", "stars"]),
             Article("lanterns", "GameObjects",
                 [Para("lanterns", "InGame"), Para("lanterns", "Editing"), Para("lanterns", "Properties"), Note("lanterns", "NoCandy")],
