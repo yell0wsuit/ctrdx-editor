@@ -242,7 +242,7 @@
     "Guide.Article.lanterns.SearchTerms": "lantern|capture|release|hold candy|candyCaptured",
     "Guide.Article.lanterns.InGame": "A lantern catches the candy and holds it until the player taps the lantern to release it. Lanterns share their captured candy, so a level can pass the candy from one lantern to the next and the player controls when each hand-off happens.",
     "Guide.Article.lanterns.Editing": "Drag a lantern from the palette. Place lanterns where the candy will actually arrive, since a lantern the candy never reaches does nothing.",
-    "Guide.Article.lanterns.Properties": "Capture candy makes the level start with the candy already held in this lantern instead of loose on the stage.",
+    "Guide.Article.lanterns.Properties": "Starts captured makes the level start with the candy already held in this lantern instead of loose on the stage.",
     "Guide.Article.lanterns.NoCandy.Note": "A level whose candy starts inside a lantern may legitimately contain no candy object, and validation accepts that. Without a lantern set to capture, a level with no candy is reported.",
 
     "Guide.Article.vinyl.Title": "Vinyl discs",
@@ -819,7 +819,7 @@
     "Attr.autoCatch": "Auto rope",
     "Attr.movable": "Movable rail",
     "Attr.litRadius": "Lit radius",
-    "Attr.candyCaptured": "Capture candy",
+    "Attr.candyCaptured": "Starts captured",
     "Attr.bulbNumber": "Bulb number",
     "Attr.candyNumber": "Candy number",
     "Attr.attachTo": "Attach to",
