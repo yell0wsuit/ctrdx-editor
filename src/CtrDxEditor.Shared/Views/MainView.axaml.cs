@@ -444,9 +444,7 @@ namespace CtrDxEditor.Views
                 _notifications = new WindowNotificationManager(top)
                 {
                     Position = NotificationPosition.BottomRight,
-                    // One at a time: showing the terminal toast evicts the sticky "Saving…" one, so the
-                    // screenshot save reads as a single toast that updates in place.
-                    MaxItems = 1,
+                    MaxItems = 3,
                 };
             }
             return _notifications;

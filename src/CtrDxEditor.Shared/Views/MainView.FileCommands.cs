@@ -301,13 +301,15 @@ namespace CtrDxEditor.Views
 
             WindowNotificationManager? toasts = Notifications();
 
-            // Show a sticky "Saving…" toast up front (Expiration.Zero = stays until replaced). The manager's
-            // MaxItems is 1, so the terminal "Saved"/"Failed" toast below evicts this one in place.
-            toasts?.Show(new Notification(
+            // Show a sticky "Saving…" toast up front (Expiration.Zero = stays until closed). Held in a
+            // local because every exit below has to close it explicitly: it never expires on its own, so
+            // an unclosed one is a toast that sits on the canvas for the rest of the session.
+            Notification saving = new(
                 Localizer.Get("Notification.Screenshot.Saving"),
                 string.Empty,
                 NotificationType.Information,
-                expiration: TimeSpan.Zero));
+                expiration: TimeSpan.Zero);
+            toasts?.Show(saving);
 
             // Yield below the render priority so the toast actually paints before the UI-thread render and
             // the encode hog the thread - otherwise a fast save could finish before "Saving…" ever showed.
@@ -335,7 +337,8 @@ namespace CtrDxEditor.Views
             catch (Exception ex)
             {
                 // Backgrounding the save means an encode/IO failure would otherwise go unobserved on this
-                // async void handler; surface it as a toast (which also clears the sticky "Saving…" one).
+                // async void handler; surface it as a toast.
+                toasts?.Close(saving);
                 toasts?.Show(new Notification(
                     Localizer.Get("Notification.Screenshot.Failed"),
                     ex.Message,
@@ -345,6 +348,7 @@ namespace CtrDxEditor.Views
 
             // Confirm the save with a toast showing where it landed (a full local path on desktop, the
             // download name in the browser where paths are not exposed).
+            toasts?.Close(saving);
             string location = file.TryGetLocalPath() ?? file.Name;
             toasts?.Show(new Notification(
                 Localizer.Get("Notification.Screenshot.Title"),
