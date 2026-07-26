@@ -115,6 +115,32 @@ namespace CtrDxEditor.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>Toasts move out of the compact chrome's way.</summary>
+        /// <remarks>
+        /// Compact spends its bottom edge on the tab bar and edit bar, its top-left on the hamburger, and
+        /// its top centre on the rail, so the top-right is the only corner not already claimed. Expanded
+        /// has nothing but canvas in the bottom-right and keeps it. Applied on every call rather than at
+        /// construction: the host is created lazily and may predate the first layout pass.
+        /// </remarks>
+        [Fact]
+        public void ToastsAvoidTheCompactChrome()
+        {
+            string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.axaml.cs"));
+            int host = view.IndexOf("private WindowNotificationManager? Notifications()", StringComparison.Ordinal);
+
+            Assert.True(host >= 0);
+            string body = view[host..];
+
+            Assert.Contains("NotificationPosition.TopRight", body, StringComparison.Ordinal);
+            Assert.Contains("NotificationPosition.BottomRight", body, StringComparison.Ordinal);
+            Assert.Contains("_layoutMode == LayoutMode.Compact", body, StringComparison.Ordinal);
+            // Not baked into the constructor, where the mode is not known yet.
+            Assert.DoesNotContain(
+                "Position = NotificationPosition.BottomRight,",
+                view,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Compact bottom chrome occupies layout rows so it cannot cover the canvas.</summary>
         [Fact]
         public void CompactBottomChromeReservesCanvasSpace()

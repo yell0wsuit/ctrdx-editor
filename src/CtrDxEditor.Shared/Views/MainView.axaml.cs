@@ -15,6 +15,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
 
@@ -456,12 +457,21 @@ namespace CtrDxEditor.Views
         {
             if (_notifications is null && TopLevel.GetTopLevel(this) is { } top)
             {
-                _notifications = new WindowNotificationManager(top)
-                {
-                    Position = NotificationPosition.BottomRight,
-                    MaxItems = 3,
-                };
+                _notifications = new WindowNotificationManager(top) { MaxItems = 3 };
             }
+
+            // Set per toast rather than once at construction: the host is created lazily, possibly before
+            // the first layout pass has chosen a mode, and the free corner moves with the mode. Compact
+            // spends its bottom edge on the tab bar and edit bar and its top-left on the hamburger, and the
+            // rail takes the top centre, which leaves one corner unclaimed. Expanded has nothing but canvas
+            // down there, so it keeps the conventional corner.
+            if (_notifications is { } host)
+            {
+                host.Position = _layoutMode == LayoutMode.Compact
+                    ? NotificationPosition.TopRight
+                    : NotificationPosition.BottomRight;
+            }
+
             return _notifications;
         }
 
