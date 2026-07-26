@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -36,6 +37,11 @@ namespace CtrDxEditor.ViewModels
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
         private readonly List<XElement> _clipboard = [];
+        // The exact text we last put on the system clipboard, and whether Clear Clipboard has since
+        // disowned it. Paste ignores system text equal to a disowned string, which is what stops Clear
+        // Clipboard looking broken while leaving the user's actual OS clipboard alone.
+        private string? _ownClipboardText;
+        private bool _ownClipboardTextDisowned;
         private HistoryState? _pendingUndoTransaction;
         private bool _syncingSelectedTreeItem;
 
@@ -587,6 +593,12 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when the same-window object clipboard contains at least one object.</summary>
         public bool HasClipboard => _clipboard.Count > 0;
 
+        /// <summary>Places text on the system clipboard. Set by the view; null when unavailable.</summary>
+        public Func<string, Task>? WriteClipboardText { get; set; }
+
+        /// <summary>Reads the system clipboard's text. Set by the view; null when unavailable.</summary>
+        public Func<Task<string?>>? ReadClipboardText { get; set; }
+
         /// <summary>Copies detached XML snapshots of the current selection into the object clipboard.</summary>
         public void CopySelection()
         {
@@ -597,6 +609,48 @@ namespace CtrDxEditor.ViewModels
             }
             OnPropertyChanged(nameof(HasClipboard));
             NotifyEditCommandCapabilities();
+        }
+
+        /// <summary>Copies the selection into the object clipboard and onto the system clipboard.</summary>
+        /// <remarks>
+        /// Both stores are written together on purpose. Written independently, Paste could not tell which
+        /// was fresher: copy XML from a chat window, then copy an object here, and preferring the system
+        /// clipboard would paste the chat content.
+        /// </remarks>
+        public async Task CopySelectionAsync()
+        {
+            CopySelection();
+            await PublishClipboardTextAsync();
+        }
+
+        /// <summary>Copies the selection to both clipboards, then deletes the originals.</summary>
+        public async Task CutSelectionAsync()
+        {
+            await CopySelectionAsync();
+            DeleteSelected();
+        }
+
+        /// <summary>Pushes the object clipboard's text to the system clipboard.</summary>
+        private async Task PublishClipboardTextAsync()
+        {
+            _ownClipboardText = ObjectClipboardXml.Write(_clipboard);
+            _ownClipboardTextDisowned = false;
+
+            if (WriteClipboardText is not { } write)
+            {
+                return;
+            }
+
+            try
+            {
+                await write(_ownClipboardText);
+            }
+            // A clipboard the platform refuses - a denied browser permission, most likely - must not take
+            // the copy down with it: the internal buffer is already filled and Paste still works.
+            catch (Exception)
+            {
+                // Intentionally ignored.
+            }
         }
 
         /// <summary>Empties the object clipboard.</summary>
@@ -614,6 +668,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             _clipboard.Clear();
+            _ownClipboardTextDisowned = true;
             OnPropertyChanged(nameof(HasClipboard));
             NotifyEditCommandCapabilities();
         }
@@ -631,12 +686,21 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public void PasteAt(int levelX, int levelY)
         {
-            if (Document is null || ActiveLayer?.Layer is not { } target || _clipboard.Count == 0)
+            PasteElements(_clipboard, levelX, levelY);
+        }
+
+        /// <summary>Places detached object elements at the target point, centroid preserved.</summary>
+        /// <param name="elements">Objects to place; each is cloned, so the caller keeps its copies.</param>
+        /// <param name="levelX">Target x in level space.</param>
+        /// <param name="levelY">Target y in level space.</param>
+        private void PasteElements(IReadOnlyList<XElement> elements, int levelX, int levelY)
+        {
+            if (Document is null || ActiveLayer?.Layer is not { } target || elements.Count == 0)
             {
                 return;
             }
 
-            List<LevelObject> buffered = [.. _clipboard.Select(element => new LevelObject(new XElement(element)))];
+            List<LevelObject> buffered = [.. elements.Select(element => new LevelObject(new XElement(element)))];
             int centerX = (int)buffered.Average(obj => obj.X);
             int centerY = (int)buffered.Average(obj => obj.Y);
 
@@ -655,6 +719,60 @@ namespace CtrDxEditor.ViewModels
                 Selection.SetRange(clones, clones[^1]);
                 RaiseSelectedObjectChanged();
             }
+        }
+
+        /// <summary>Pastes from the system clipboard when it holds objects, otherwise from the buffer.</summary>
+        /// <param name="levelX">Target x in level space.</param>
+        /// <param name="levelY">Target y in level space.</param>
+        /// <returns>What happened, so the view can report a refused paste.</returns>
+        public async Task<PasteOutcome> PasteFromClipboardAsync(int levelX, int levelY)
+        {
+            ClipboardXmlResult external = await ReadExternalClipboardAsync();
+            if (external.Outcome == ClipboardXmlOutcome.Parsed)
+            {
+                PasteElements(external.Elements, levelX, levelY);
+                return PasteOutcome.Pasted;
+            }
+
+            // Deliberately no fallback: pasting the buffer after refusing the user's XML would look like
+            // Paste produced the wrong objects, with nothing to say the XML was the problem.
+            if (external.Outcome == ClipboardXmlOutcome.Rejected)
+            {
+                return PasteOutcome.InvalidXml;
+            }
+
+            if (_clipboard.Count == 0)
+            {
+                return PasteOutcome.NothingToPaste;
+            }
+
+            PasteAt(levelX, levelY);
+            return PasteOutcome.Pasted;
+        }
+
+        /// <summary>Reads and parses the system clipboard, treating every failure as "not ours".</summary>
+        private async Task<ClipboardXmlResult> ReadExternalClipboardAsync()
+        {
+            if (ReadClipboardText is not { } read)
+            {
+                return new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, []);
+            }
+
+            string? text;
+            try
+            {
+                text = await read();
+            }
+            // A refused or unavailable clipboard is not a failed paste; the buffer still answers.
+            catch (Exception)
+            {
+                return new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, []);
+            }
+
+            // Our own disowned text reads as an empty clipboard, so Clear Clipboard actually clears.
+            return _ownClipboardTextDisowned && text == _ownClipboardText
+                ? new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, [])
+                : ObjectClipboardXml.Read(text, _descriptors);
         }
 
         /// <summary>Refreshes bindings and property-panel state after a direct selection mutation.</summary>
@@ -2113,5 +2231,18 @@ namespace CtrDxEditor.ViewModels
             ObjectRef? LockedRef,
             ObjectRef[] AutoWidthRefs,
             ObjectRef[] HiddenRefs);
+    }
+
+    /// <summary>What a paste from the system clipboard did.</summary>
+    public enum PasteOutcome
+    {
+        /// <summary>Objects were added.</summary>
+        Pasted,
+
+        /// <summary>Neither store held anything to paste.</summary>
+        NothingToPaste,
+
+        /// <summary>The clipboard named an object but could not be used; the user should be told.</summary>
+        InvalidXml,
     }
 }

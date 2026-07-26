@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
@@ -154,7 +156,7 @@ namespace CtrDxEditor.Tests
 
             // The buffer is genuinely gone, not just reported empty.
             vm.PasteAt(100, 200);
-            Assert.Single(vm.Document.AllObjects);
+            _ = Assert.Single(vm.Document.AllObjects);
         }
 
         /// <summary>Clearing an already-empty clipboard raises nothing.</summary>
@@ -169,6 +171,143 @@ namespace CtrDxEditor.Tests
 
             Assert.False(vm.HasClipboard);
             Assert.Empty(changed);
+        }
+
+        /// <summary>Copy fills both stores, so the two can never disagree about which is fresher.</summary>
+        [Fact]
+        public async Task CopyWritesTheSelectionToTheSystemClipboard()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            string? written = null;
+            vm.WriteClipboardText = text => { written = text; return Task.CompletedTask; };
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+
+            await vm.CopySelectionAsync();
+
+            Assert.True(vm.HasClipboard);
+            Assert.Contains("<bubble", written);
+            Assert.Contains("x=\"10\"", written);
+        }
+
+        /// <summary>XML pasted from elsewhere becomes objects.</summary>
+        [Fact]
+        public async Task PasteUsesSystemClipboardXmlWhenItParses()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\" />");
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.Pasted, outcome);
+            Assert.Equal(2, vm.Document!.AllObjects.Count);
+            Assert.Equal("star", vm.Selection.Primary!.Type);
+            Assert.Equal("100", vm.Selection.Primary.GetAttr("x"));
+        }
+
+        /// <summary>Unrelated clipboard text leaves the internal buffer in charge.</summary>
+        [Fact]
+        public async Task PasteFallsBackToTheInternalBufferForUnrelatedText()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            vm.CopySelection();
+            vm.ReadClipboardText = () => Task.FromResult<string?>("a shopping list");
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.Pasted, outcome);
+            Assert.Equal(2, vm.Document.AllObjects.Count);
+            Assert.Equal("bubble", vm.Selection.Primary!.Type);
+        }
+
+        /// <summary>
+        /// A rejected paste reports itself instead of silently pasting the internal buffer.
+        /// </summary>
+        /// <remarks>
+        /// Falling back here is the bug the design exists to avoid: from the user's side, Paste would have
+        /// produced the wrong objects with no hint their XML was refused.
+        /// </remarks>
+        [Fact]
+        public async Task PasteReportsRejectedXmlAndPastesNothing()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            vm.CopySelection();
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\"");
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.InvalidXml, outcome);
+            _ = Assert.Single(vm.Document!.AllObjects);
+        }
+
+        /// <summary>With both stores empty there is nothing to report and nothing to do.</summary>
+        [Fact]
+        public async Task PasteWithNothingAnywhereReportsNothingToPaste()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>(null);
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.NothingToPaste, outcome);
+            _ = Assert.Single(vm.Document!.AllObjects);
+        }
+
+        /// <summary>
+        /// Clear Clipboard stops Paste, even though our text is still on the system clipboard.
+        /// </summary>
+        /// <remarks>
+        /// The OS clipboard is never modified - clearing someone's system clipboard from a level editor is
+        /// out of scope - so the text we wrote is suppressed by value instead.
+        /// </remarks>
+        [Fact]
+        public async Task ClearClipboardSuppressesTheTextWeWrote()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            string? written = null;
+            vm.WriteClipboardText = text => { written = text; return Task.CompletedTask; };
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            await vm.CopySelectionAsync();
+            vm.ReadClipboardText = () => Task.FromResult(written);
+
+            vm.ClearClipboard();
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.NothingToPaste, outcome);
+            _ = Assert.Single(vm.Document.AllObjects);
+        }
+
+        /// <summary>Copying elsewhere after a clear revives the external path.</summary>
+        [Fact]
+        public async Task ClearClipboardOnlySuppressesOurOwnText()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.WriteClipboardText = _ => Task.CompletedTask;
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            await vm.CopySelectionAsync();
+            vm.ClearClipboard();
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\" />");
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.Pasted, outcome);
+            Assert.Equal("star", vm.Selection.Primary!.Type);
+        }
+
+        /// <summary>A clipboard the platform will not hand over is not an error.</summary>
+        [Fact]
+        public async Task PasteSurvivesAClipboardThatThrows()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.Selection.Replace(vm.Document!.AllObjects[0]);
+            vm.CopySelection();
+            vm.ReadClipboardText = () => throw new InvalidOperationException("denied");
+
+            PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
+
+            Assert.Equal(PasteOutcome.Pasted, outcome);
+            Assert.Equal("bubble", vm.Selection.Primary!.Type);
         }
     }
 }
