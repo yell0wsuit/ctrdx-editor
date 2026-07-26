@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -138,6 +139,20 @@ namespace CtrDxEditor.Views
                 _mutatedSubscription.LevelLoaded += FocusCanvasAfterLevelLoaded;
                 _mutatedSubscription.PropertyChanged += ViewModel_PropertyChanged;
                 SubscribeToSelection(_mutatedSubscription.Selection);
+                // The platform clipboard stays at the view boundary: the view model takes callbacks so it
+                // stays testable without a window. In Avalonia 12 the text accessors are extension methods
+                // on IClipboard (Avalonia.Input.Platform), not members.
+                _mutatedSubscription.WriteClipboardText = async text =>
+                {
+                    if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+                    {
+                        await clipboard.SetTextAsync(text);
+                    }
+                };
+                _mutatedSubscription.ReadClipboardText = async () =>
+                    TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard
+                        ? await clipboard.TryGetTextAsync()
+                        : null;
             }
 
             SyncAnimationPreviewTimer();

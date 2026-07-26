@@ -108,7 +108,7 @@
     "Guide.Article.clipboard-lock-hide.Title": "Copy, paste, lock, hide, and delete",
     "Guide.Article.clipboard-lock-hide.Summary": "Reuse objects and protect parts of a level from accidental edits.",
     "Guide.Article.clipboard-lock-hide.SearchTerms": "copy|cut|paste|duplicate|delete|lock|visibility|hide",
-    "Guide.Article.clipboard-lock-hide.Clipboard": "Use **Edit > Cut**, **Copy**, **Paste**, **Select All**, and **Delete**, or their keyboard shortcuts. **Select All** targets the active layer rather than the whole level. **Ctrl-drag** or **Command-drag** is a faster way to duplicate objects in place.",
+    "Guide.Article.clipboard-lock-hide.Clipboard": "Use **Edit > Cut**, **Copy**, **Paste**, **Select All**, and **Delete**, or their keyboard shortcuts. **Select All** targets the active layer rather than the whole level. **Ctrl-drag** or **Command-drag** is a faster way to duplicate objects in place. **Copy** also places the objects' XML on the system clipboard, so a selection can be pasted into another editor window, a chat message, or a text file; **Paste** accepts object XML copied from anywhere, including a chunk taken straight out of a level file. **Clear Clipboard** empties the editor's copy without touching the system clipboard.",
     "Guide.Article.clipboard-lock-hide.Locking": "The **Layers** tree has a visibility and a lock button on every layer and object row. Double-clicking an object on the canvas locks or unlocks it too. A *locked* object takes every canvas click until it is unlocked, which is what makes it useful as a background you cannot disturb.",
     "Guide.Article.clipboard-lock-hide.DeleteLayer.Warning": "Deleting a layer also removes every object inside it. The confirmation explains the scope, and the operation can be undone.",
 
@@ -519,6 +519,7 @@
     "Notification.Screenshot.Title": "Screenshot saved",
     "Notification.Screenshot.Failed": "Screenshot failed to save",
     "Notification.Open.Failed": "Level could not be opened",
+    "Notification.Paste.InvalidXml": "That XML could not be pasted",
     "Drop.Level.Hint": "Drop level XML here to open",
 
     "Dialog.Playtest.Locate.Header": "Locate Cut the Rope: DX",
