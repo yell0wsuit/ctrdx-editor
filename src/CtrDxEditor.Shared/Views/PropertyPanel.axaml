@@ -13,8 +13,18 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Text.Disabled}" />
     </Style>
 
+    <Style Selector="Button.property-help">
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
     <!-- Flat collapsible header for grouped fields (mechanical hand segments): reads as part of the panel
-         rather than a stock expander box, so the section title and its fields line up with the bare fields. -->
+    rather than a stock expander box, so the section title and its fields line up with the bare fields. -->
     <Style Selector="ToggleButton.segment-header">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
@@ -49,11 +59,14 @@
                     VerticalAlignment="Center" Margin="0,0,8,0" Spacing="4">
           <TextBlock Classes="field-label" Text="{Binding Label}"
                      IsEnabled="{Binding IsEnabled}" VerticalAlignment="Center" />
-          <icons:MaterialIcon Kind="HelpCircleOutline" Width="14" Height="14"
-                              VerticalAlignment="Center"
-                              IsVisible="{Binding HasHelp}"
-                              Foreground="{DynamicResource EditorBrush.Text.Subtle}"
-                              ToolTip.Tip="{Binding HelpText}" />
+          <Button Classes="property-help"
+                  VerticalAlignment="Center"
+                  IsVisible="{Binding HasHelp}"
+                  Cursor="Hand"
+                  Click="PropertyHelp_Click">
+            <icons:MaterialIcon Kind="HelpCircleOutline" Width="16" Height="16"
+                                Foreground="{DynamicResource EditorBrush.Text.Subtle}" />
+          </Button>
         </StackPanel>
         <ComboBox Grid.Column="1" IsVisible="{Binding EnumOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
                   IsEnabled="{Binding IsEnabled}"
@@ -72,18 +85,18 @@
                   Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                   IsChecked="{Binding BoolValue, Mode=TwoWay}" />
         <ctl:NumericTextBox Grid.Column="1" IsVisible="{Binding IsPlainNumeric}"
-                 IsEnabled="{Binding IsEnabled}"
-                 Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
-                 Minimum="{Binding NumericMinimum}"
-                 AcceptDecimal="{Binding AllowsDecimal}"
-                 Text="{Binding Value, Mode=TwoWay}" />
+                            IsEnabled="{Binding IsEnabled}"
+                            Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                            Minimum="{Binding NumericMinimum}"
+                            AcceptDecimal="{Binding AllowsDecimal}"
+                            Text="{Binding Value, Mode=TwoWay}" />
         <NumericUpDown Grid.Column="1" IsVisible="{Binding IsStepper}"
-                 IsEnabled="{Binding IsEnabled}"
-                 Minimum="{Binding NumericMinimum}"
-                 Increment="1"
-                 FormatString="0"
-                 HorizontalAlignment="Stretch"
-                 Value="{Binding NumericValue, Mode=TwoWay}" />
+                       IsEnabled="{Binding IsEnabled}"
+                       Minimum="{Binding NumericMinimum}"
+                       Increment="1"
+                       FormatString="0"
+                       HorizontalAlignment="Stretch"
+                       Value="{Binding NumericValue, Mode=TwoWay}" />
         <TextBox Grid.Column="1" IsVisible="{Binding IsText}"
                  IsEnabled="{Binding IsEnabled}"
                  AcceptsReturn="True"
@@ -109,7 +122,7 @@
                             ItemTemplate="{StaticResource FieldTemplate}"
                             IsVisible="{Binding !HasHeader}" />
               <!-- Grouped fields (mechanical hand segments): a flat collapsible section whose fields line up
-                   with the bare fields above, instead of a stock expander that indents and boxes them. -->
+              with the bare fields above, instead of a stock expander that indents and boxes them. -->
               <StackPanel IsVisible="{Binding HasHeader}" Margin="0,6,0,0">
                 <ToggleButton Classes="segment-header" IsChecked="{Binding IsExpanded, Mode=TwoWay}">
                   <StackPanel Orientation="Horizontal" Spacing="6">
