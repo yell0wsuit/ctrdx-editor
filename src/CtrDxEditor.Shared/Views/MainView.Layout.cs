@@ -454,7 +454,7 @@ namespace CtrDxEditor.Views
         }
 
         /// <summary>Raises the palette in the compact drawer.</summary>
-        private void CompactPaletteTab_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CompactPaletteTab_Click(object? sender, RoutedEventArgs e)
         {
             if (this.FindControl<PaletteView>("Palette") is { } palette)
             {
@@ -463,7 +463,7 @@ namespace CtrDxEditor.Views
         }
 
         /// <summary>Raises the layers panel in the compact drawer.</summary>
-        private void CompactLayersTab_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CompactLayersTab_Click(object? sender, RoutedEventArgs e)
         {
             if (this.FindControl<Grid>("LayersPanel") is { } layers)
             {
@@ -472,7 +472,7 @@ namespace CtrDxEditor.Views
         }
 
         /// <summary>Raises the selected object's standalone Properties panel.</summary>
-        private void CompactProperties_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CompactProperties_Click(object? sender, RoutedEventArgs e)
         {
             if (this.FindControl<PropertyPanel>("PropertiesPanel") is not { } properties
                 || this.FindControl<Border>("CompactSheet") is not { } sheet)
@@ -496,12 +496,11 @@ namespace CtrDxEditor.Views
                 : null;
         }
 
-        /// <summary>Shows the edit bar while there is a selection to act on or a clipboard to paste.</summary>
+        /// <summary>Shows the edit bar while the open document can accept edit actions.</summary>
         /// <remarks>
-        /// The predicate is deliberately wider than "something is selected": <c>CanPaste</c> is gated on
-        /// the clipboard, not the selection, so a selection-only bar would hide Paste at exactly the
-        /// moment it is wanted - copy an object, tap empty canvas to deselect, paste. The bar also stands
-        /// down while either overlay is up, since both cover the strip it occupies.
+        /// The predicate is deliberately wider than "something is selected": system clipboard availability
+        /// cannot be queried synchronously, so <c>CanPaste</c> keeps Paste reachable whenever a level is
+        /// open. The bar stands down while either overlay is up, since both cover the strip it occupies.
         /// </remarks>
         private void UpdateCompactEditBarVisibility()
         {
@@ -519,7 +518,7 @@ namespace CtrDxEditor.Views
         /// <summary>Switches the canvas to edit mode from the compact rail.</summary>
         /// <param name="sender">The rail button (unused).</param>
         /// <param name="e">Routed event data (unused).</param>
-        private void CompactEditMode_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CompactEditMode_Click(object? sender, RoutedEventArgs e)
         {
             SetInteractionMode(CanvasInteractionMode.Edit);
         }
@@ -527,7 +526,7 @@ namespace CtrDxEditor.Views
         /// <summary>Switches the canvas to pan mode from the compact rail.</summary>
         /// <param name="sender">The rail button (unused).</param>
         /// <param name="e">Routed event data (unused).</param>
-        private void CompactPanMode_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CompactPanMode_Click(object? sender, RoutedEventArgs e)
         {
             SetInteractionMode(CanvasInteractionMode.Pan);
         }

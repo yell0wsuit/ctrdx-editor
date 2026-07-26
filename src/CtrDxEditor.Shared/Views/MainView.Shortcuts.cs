@@ -98,14 +98,13 @@ namespace CtrDxEditor.Views
                     selectVm.SelectAllObjects();
                     return true;
                 case EditorShortcut.Copy when DataContext is EditorViewModel { CanCopySelection: true } copyVm:
-                    copyVm.CopySelection();
+                    Copy_Click(copyVm, new RoutedEventArgs());
                     return true;
                 case EditorShortcut.Cut when DataContext is EditorViewModel { CanCutSelection: true } cutVm:
-                    cutVm.CutSelection();
+                    Cut_Click(cutVm, new RoutedEventArgs());
                     return true;
                 case EditorShortcut.Paste when DataContext is EditorViewModel { CanPaste: true } pasteVm:
-                    (int pasteX, int pasteY) = _canvas.PasteTargetLevelPoint();
-                    pasteVm.PasteAt(pasteX, pasteY);
+                    Paste_Click(pasteVm, new RoutedEventArgs());
                     return true;
                 case EditorShortcut.ZoomIn when DataContext is EditorViewModel { HasDocument: true }:
                     this.FindControl<LevelCanvas>("Canvas")!.ZoomBy(1.2);

@@ -81,9 +81,8 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The bar shows when there is something to act on OR something to paste. Selection alone is the
-        /// wrong predicate: CanPaste is gated on the clipboard, so a selection-only bar would hide Paste
-        /// exactly when the canvas has just been deselected.
+        /// The bar shows when there is something to act on or when the open document can accept a paste.
+        /// System clipboard availability cannot be queried synchronously, so CanPaste keeps Paste reachable.
         /// </summary>
         [Fact]
         public void EditBarVisibilityCoversClipboardWithoutSelection()

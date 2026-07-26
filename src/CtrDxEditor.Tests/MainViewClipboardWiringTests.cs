@@ -35,6 +35,20 @@ namespace CtrDxEditor.Tests
             Assert.Contains("PasteFromClipboardAsync(", commands, StringComparison.Ordinal);
         }
 
+        /// <summary>Keyboard shortcuts share the same clipboard-aware command handlers as menu clicks.</summary>
+        [Fact]
+        public void ClipboardShortcutsUseTheClipboardAwareHandlers()
+        {
+            string shortcuts = SourceText("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs");
+
+            Assert.Contains("Copy_Click(", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("Cut_Click(", shortcuts, StringComparison.Ordinal);
+            Assert.Contains("Paste_Click(", shortcuts, StringComparison.Ordinal);
+            Assert.DoesNotContain("copyVm.CopySelection()", shortcuts, StringComparison.Ordinal);
+            Assert.DoesNotContain("cutVm.CutSelection()", shortcuts, StringComparison.Ordinal);
+            Assert.DoesNotContain("pasteVm.PasteAt(", shortcuts, StringComparison.Ordinal);
+        }
+
         /// <summary>A refused paste raises a toast rather than silently doing nothing.</summary>
         [Fact]
         public void RejectedPasteRaisesAWarningToast()

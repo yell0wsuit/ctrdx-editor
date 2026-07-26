@@ -131,13 +131,13 @@ namespace CtrDxEditor.Tests
             Assert.Contains(nameof(EditorViewModel.CanDeleteSelection), changed);
         }
 
-        /// <summary>Clearing the clipboard empties it and stands Paste down with it.</summary>
+        /// <summary>Clearing the internal clipboard leaves Paste available for system clipboard XML.</summary>
         /// <remarks>
         /// Nothing else ever empties the buffer - it survives closing the level, as the test above pins -
         /// so this is the only way back to a clean Paste state.
         /// </remarks>
         [Fact]
-        public void ClearClipboardEmptiesTheBufferAndDisablesPaste()
+        public void ClearClipboardEmptiesTheBufferAndKeepsExternalPasteAvailable()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
             vm.Selection.Replace(vm.Document!.AllObjects[0]);
@@ -150,7 +150,7 @@ namespace CtrDxEditor.Tests
             vm.ClearClipboard();
 
             Assert.False(vm.HasClipboard);
-            Assert.False(vm.CanPaste);
+            Assert.True(vm.CanPaste);
             Assert.Contains(nameof(EditorViewModel.HasClipboard), changed);
             Assert.Contains(nameof(EditorViewModel.CanPaste), changed);
 
@@ -254,6 +254,16 @@ namespace CtrDxEditor.Tests
             _ = Assert.Single(vm.Document!.AllObjects);
         }
 
+        /// <summary>An open document keeps Paste available because the system clipboard cannot be queried synchronously.</summary>
+        [Fact]
+        public void PasteIsAvailableWithAnEmptyInternalClipboard()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+
+            Assert.False(vm.HasClipboard);
+            Assert.True(vm.CanPaste);
+        }
+
         /// <summary>
         /// Clear Clipboard stops Paste, even though our text is still on the system clipboard.
         /// </summary>
@@ -308,6 +318,26 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(PasteOutcome.Pasted, outcome);
             Assert.Equal("bubble", vm.Selection.Primary!.Type);
+        }
+
+        /// <summary>Cut deletes the selection it copied even when publishing to the platform clipboard is delayed.</summary>
+        [Fact]
+        public async Task CutDeletesTheCopiedSelectionWhenSelectionChangesDuringClipboardWrite()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/><star x=\"30\" y=\"40\"/>");
+            TaskCompletionSource published = new();
+            vm.WriteClipboardText = _ => published.Task;
+            LevelObject bubble = vm.Document!.AllObjects[0];
+            LevelObject star = vm.Document.AllObjects[1];
+            vm.Selection.Replace(bubble);
+
+            Task cut = vm.CutSelectionAsync();
+            vm.Selection.Replace(star);
+            published.SetResult();
+            await cut;
+
+            Assert.DoesNotContain(bubble, vm.Document.AllObjects);
+            Assert.Contains(star, vm.Document.AllObjects);
         }
     }
 }

@@ -197,8 +197,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when the selected objects can be copied from an open level.</summary>
         public bool CanCopySelection => HasDocument && SelectedObject is not null;
 
-        /// <summary>True when clipboard objects can be pasted into an open level.</summary>
-        public bool CanPaste => HasDocument && HasClipboard;
+        /// <summary>True when an open level can accept either internal or system clipboard objects.</summary>
+        /// <remarks>The system clipboard cannot be queried synchronously, so Paste stays available while a level is open.</remarks>
+        public bool CanPaste => HasDocument;
 
         /// <summary>True when the selected objects can be deleted from an open level.</summary>
         public bool CanDeleteSelection => HasDocument && SelectedObject is not null;
@@ -626,8 +627,11 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Copies the selection to both clipboards, then deletes the originals.</summary>
         public async Task CutSelectionAsync()
         {
-            await CopySelectionAsync();
+            // Delete before the first await so a slow clipboard permission prompt cannot let a later
+            // selection replace the objects that were copied and are meant to be cut.
+            CopySelection();
             DeleteSelected();
+            await PublishClipboardTextAsync();
         }
 
         /// <summary>Pushes the object clipboard's text to the system clipboard.</summary>
