@@ -12,7 +12,8 @@
         x:Class="CtrDxEditor.Views.MainView"
         x:DataType="vm:EditorViewModel"
         TopLevel.AutoSafeAreaPadding="False">
-  <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False">
+  <dialogs:ReactiveDialogHost x:Name="DialogHost" CloseOnClickAway="False"
+                              IsMultipleDialogsEnabled="True">
     <Grid>
       <DockPanel>
     <Menu x:Name="DesktopMenu" DockPanel.Dock="Top">

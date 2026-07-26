@@ -5,6 +5,8 @@ using Avalonia.Markup.Xaml;
 
 using CtrDxEditor.Views;
 
+using DialogHostAvalonia;
+
 namespace CtrDxEditor.Controls
 {
     /// <summary>A standard contextual-help button that opens a touch-friendly modal dialog.</summary>
@@ -50,7 +52,7 @@ namespace CtrDxEditor.Controls
                 Header = Header,
                 Message = Message,
             };
-            _ = dialog.ShowAsync();
+            _ = DialogHost.Show(dialog);
         }
     }
 }

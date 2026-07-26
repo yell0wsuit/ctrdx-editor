@@ -21,7 +21,18 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("ToolTip.Tip", markup, StringComparison.Ordinal);
             Assert.Contains("Header = Header", codeBehind, StringComparison.Ordinal);
             Assert.Contains("Message = Message", codeBehind, StringComparison.Ordinal);
-            Assert.Contains("_ = dialog.ShowAsync();", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>Help uses DialogHost's official multi-dialog stack instead of replacing its parent session.</summary>
+        [Fact]
+        public void SharedHelpButtonUsesOfficialDialogStack()
+        {
+            string mainView = ReadSource("CtrDxEditor.Shared", "Views", "MainView.axaml");
+            string codeBehind = ReadSource("CtrDxEditor.Shared", "Controls", "HelpButton.axaml.cs");
+
+            Assert.Contains("IsMultipleDialogsEnabled=\"True\"", mainView, StringComparison.Ordinal);
+            Assert.Contains("_ = DialogHost.Show(dialog);", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("dialog.ShowAsync()", codeBehind, StringComparison.Ordinal);
         }
 
         /// <summary>Property fields reuse the shared control instead of maintaining their own handler.</summary>
