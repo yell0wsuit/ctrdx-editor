@@ -27,9 +27,8 @@ namespace CtrDxEditor.Views
 
         /// <summary>Whether the drag-and-drop hint is shown.</summary>
         /// <remarks>
-        /// Set by the host from the layout mode: dropping needs a file to drag from, which a phone does
-        /// not have. Gated on layout rather than a platform capability because layout already governs
-        /// every other touch affordance, and one line of hint text does not justify new plumbing.
+        /// Set by the host from the platform: dropping needs a local file to drag from, which the desktop
+        /// heads have and the browser head's phones and tablets do not.
         /// </remarks>
         public bool ShowDropHint
         {

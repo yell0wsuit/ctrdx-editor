@@ -130,22 +130,22 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The drop hint is hidden in compact mode.
+        /// The drop hint is shown on the desktop heads only.
         /// </summary>
         /// <remarks>
-        /// Drag-and-drop is wired on the TopLevel, so it works on desktop and in a desktop browser but is
-        /// meaningless on a phone, which has nothing to drag from. Gated on layout mode rather than a
-        /// platform capability: layout already governs every other touch affordance. The accepted cost is
-        /// that a narrow desktop window loses the hint despite supporting the gesture.
+        /// Drag-and-drop needs a local file to drag from, which macOS, Windows and Linux have and the
+        /// browser head's phones and tablets do not. Gated on the platform rather than layout mode so a
+        /// narrow desktop window keeps the hint for a gesture it still supports; the accepted cost is that
+        /// a desktop browser loses it despite the TopLevel handlers working there.
         /// </remarks>
         [Fact]
-        public void DropHintIsHiddenInCompactMode()
+        public void DropHintIsShownOnDesktopOnly()
         {
             string layout = File.ReadAllText(
                 SourcePath("CtrDxEditor.Shared", "Views", "MainView.Layout.cs"));
 
             Assert.Contains(
-                "emptyState.ShowDropHint = _layoutMode != LayoutMode.Compact;",
+                "emptyState.ShowDropHint = !OperatingSystem.IsBrowser();",
                 layout,
                 StringComparison.Ordinal);
         }

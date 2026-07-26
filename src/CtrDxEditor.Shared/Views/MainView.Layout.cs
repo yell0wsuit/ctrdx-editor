@@ -139,10 +139,12 @@ namespace CtrDxEditor.Views
                 menuButton.IsVisible = _layoutMode == LayoutMode.Compact;
             }
 
-            // Dropping needs a file to drag from, which a phone does not have.
+            // Dropping needs a local file to drag from, so the hint is for the desktop heads only
+            // (macOS, Windows, Linux). The browser head also serves phones and tablets, which have
+            // nothing to drag.
             if (this.FindControl<EmptyStateView>("EmptyState") is { } emptyState)
             {
-                emptyState.ShowDropHint = _layoutMode != LayoutMode.Compact;
+                emptyState.ShowDropHint = !OperatingSystem.IsBrowser();
             }
 
             bool compact = _layoutMode == LayoutMode.Compact;
