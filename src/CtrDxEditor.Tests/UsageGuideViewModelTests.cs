@@ -25,12 +25,26 @@ namespace CtrDxEditor.Tests
                 SearchText = query,
             };
 
-            Assert.Contains(vm.FilteredArticles, article => article.Id == expectedId);
+            Assert.Contains(vm.SearchResults, article => article.Id == expectedId);
         }
 
-        /// <summary>Clearing search returns the complete table of contents.</summary>
+        /// <summary>Search results are independent from the complete table of contents.</summary>
         [Fact]
-        public void BlankSearchRestoresEveryArticle()
+        public void SearchDoesNotFilterArticles()
+        {
+            UsageGuideViewModel vm = new(UsageGuideCatalog.Articles, UsageGuideCatalog.HomeArticleId)
+            {
+                SearchText = "rocket",
+            };
+
+            Assert.True(vm.IsSearchActive);
+            Assert.Equal(UsageGuideCatalog.Articles.Count, vm.Articles.Count);
+            Assert.True(vm.SearchResults.Count < vm.Articles.Count);
+        }
+
+        /// <summary>Whitespace-only search displays the current article rather than a results page.</summary>
+        [Fact]
+        public void BlankSearchIsInactive()
         {
             UsageGuideViewModel vm = new(UsageGuideCatalog.Articles, UsageGuideCatalog.HomeArticleId)
             {
@@ -39,7 +53,24 @@ namespace CtrDxEditor.Tests
 
             vm.SearchText = "  ";
 
-            Assert.Equal(UsageGuideCatalog.Articles.Count, vm.FilteredArticles.Count);
+            Assert.False(vm.IsSearchActive);
+            Assert.True(vm.IsArticleVisible);
+            Assert.Empty(vm.SearchResults);
+        }
+
+        /// <summary>Selecting a result leaves search and opens that article.</summary>
+        [Fact]
+        public void OpenSearchResultClearsSearchAndNavigates()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.SearchText = "second";
+
+            vm.OpenSearchResult("second");
+
+            Assert.Equal(string.Empty, vm.SearchText);
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("second", vm.SelectedArticle.Id);
+            Assert.True(vm.CanGoBack);
         }
 
         /// <summary>Back and forward behave like browser article history.</summary>

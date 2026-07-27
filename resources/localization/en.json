@@ -50,6 +50,8 @@
     "Guide.Navigation.Forward": "Forward",
     "Guide.Navigation.Home": "Home",
     "Guide.Search.Placeholder": "Search the guide",
+    "Guide.Search.Results": "Search results",
+    "Guide.Search.ResultCount": "Topics found: {0}",
     "Guide.Search.NoResults": "No topics found",
     "Guide.Article.Related": "Related topics",
     "Guide.Callout.Tip": "Tip",

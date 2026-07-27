@@ -38,7 +38,6 @@ namespace CtrDxEditor.ViewModels
 
             _homeArticleId = homeArticleId;
             SelectedArticle = home;
-            FilteredArticles = [.. articles];
         }
 
         /// <summary>Raised when presentation state changes.</summary>
@@ -47,8 +46,8 @@ namespace CtrDxEditor.ViewModels
         /// <summary>The complete table of contents.</summary>
         public IReadOnlyList<GuideArticle> Articles { get; }
 
-        /// <summary>Articles matching <see cref="SearchText"/>.</summary>
-        public ObservableCollection<GuideArticle> FilteredArticles { get; }
+        /// <summary>Article cards matching the active <see cref="SearchText"/>.</summary>
+        public ObservableCollection<GuideSearchResult> SearchResults { get; } = [];
 
         /// <summary>Previously visited articles, nearest destination on top.</summary>
         private Stack<GuideArticle> Back { get; } = [];
@@ -74,7 +73,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        /// <summary>Text used to filter the table of contents.</summary>
+        /// <summary>Text used to populate the dedicated search-results page.</summary>
         public string SearchText
         {
             get;
@@ -89,8 +88,22 @@ namespace CtrDxEditor.ViewModels
                 field = value;
                 OnPropertyChanged();
                 ApplySearch();
+                OnPropertyChanged(nameof(IsSearchActive));
+                OnPropertyChanged(nameof(IsArticleVisible));
             }
         } = string.Empty;
+
+        /// <summary>Whether the dedicated search-results page is visible.</summary>
+        public bool IsSearchActive => SearchText.Trim().Length > 0;
+
+        /// <summary>Whether the selected article is visible instead of search results.</summary>
+        public bool IsArticleVisible => !IsSearchActive;
+
+        /// <summary>Whether the active search has at least one result.</summary>
+        public bool HasSearchResults => SearchResults.Count > 0;
+
+        /// <summary>Whether the active search has no results.</summary>
+        public bool HasNoSearchResults => IsSearchActive && !HasSearchResults;
 
         /// <summary>Whether a previously visited article is available.</summary>
         public bool CanGoBack => Back.Count > 0;
@@ -151,33 +164,45 @@ namespace CtrDxEditor.ViewModels
             NavigateTo(_homeArticleId);
         }
 
+        /// <summary>Leaves search and opens one of its article results.</summary>
+        /// <param name="articleId">Stable identifier carried by the selected result.</param>
+        public void OpenSearchResult(string articleId)
+        {
+            SearchText = string.Empty;
+            NavigateTo(articleId);
+        }
+
         /// <summary>
-        /// Rebuilds <see cref="FilteredArticles"/> from the trimmed query and every localized searchable
+        /// Rebuilds <see cref="SearchResults"/> from the trimmed query and every localized searchable
         /// article field.
         /// </summary>
         private void ApplySearch()
         {
             string query = SearchText.Trim();
-            IEnumerable<GuideArticle> matches = Articles;
-            if (query.Length > 0)
+            SearchResults.Clear();
+            if (query.Length == 0)
             {
-                matches = Articles.Where(article =>
-                    Contains(article.Title, query)
-                    || Contains(article.Section, query)
-                    || Contains(article.Summary, query)
-                    || article.SearchTerms.Any(term => Contains(term, query))
-                    || article.Blocks.OfType<GuideParagraph>().Any(block => Contains(block.Text, query))
-                    || article.Blocks.OfType<GuideHeading>().Any(block => Contains(block.Text, query))
-                    || article.Blocks.OfType<GuideShortcutTable>().Any(
-                        table => table.Items.Any(
-                            shortcut => Contains(shortcut.Action, query) || Contains(shortcut.Keys, query))));
+                RaiseSearchResultsChanged();
+                return;
             }
 
-            FilteredArticles.Clear();
+            IEnumerable<GuideArticle> matches = Articles.Where(article =>
+                Contains(article.Title, query)
+                || Contains(article.Section, query)
+                || Contains(article.Summary, query)
+                || article.SearchTerms.Any(term => Contains(term, query))
+                || article.Blocks.OfType<GuideParagraph>().Any(block => Contains(block.Text, query))
+                || article.Blocks.OfType<GuideHeading>().Any(block => Contains(block.Text, query))
+                || article.Blocks.OfType<GuideShortcutTable>().Any(
+                    table => table.Items.Any(
+                        shortcut => Contains(shortcut.Action, query) || Contains(shortcut.Keys, query))));
+
             foreach (GuideArticle article in matches)
             {
-                FilteredArticles.Add(article);
+                SearchResults.Add(new GuideSearchResult(article, query));
             }
+
+            RaiseSearchResultsChanged();
         }
 
         /// <summary>Tests a localized value for an ordinal, case-insensitive query match.</summary>
@@ -187,6 +212,13 @@ namespace CtrDxEditor.ViewModels
         private static bool Contains(string value, string query)
         {
             return value.Contains(query, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>Notifies bindings derived from the current results collection.</summary>
+        private void RaiseSearchResultsChanged()
+        {
+            OnPropertyChanged(nameof(HasSearchResults));
+            OnPropertyChanged(nameof(HasNoSearchResults));
         }
 
         /// <summary>Notifies bindings that both history-derived availability flags may have changed.</summary>
@@ -204,5 +236,23 @@ namespace CtrDxEditor.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+    }
+
+    /// <summary>One article card displayed on the dedicated Usage Guide search page.</summary>
+    /// <param name="Article">Matching article opened when the card is selected.</param>
+    /// <param name="Query">Trimmed query highlighted in the card's visible metadata.</param>
+    public sealed record GuideSearchResult(GuideArticle Article, string Query)
+    {
+        /// <summary>Stable article identifier used by navigation.</summary>
+        public string Id => Article.Id;
+
+        /// <summary>Localized table-of-contents section.</summary>
+        public string Section => Article.Section;
+
+        /// <summary>Localized article title.</summary>
+        public string Title => Article.Title;
+
+        /// <summary>Localized article summary.</summary>
+        public string Summary => Article.Summary;
     }
 }

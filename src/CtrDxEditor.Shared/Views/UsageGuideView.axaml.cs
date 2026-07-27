@@ -134,6 +134,17 @@ namespace CtrDxEditor.Views
             }
         }
 
+        /// <summary>Leaves search and opens the selected result article.</summary>
+        /// <param name="sender">Dedicated search-results list whose selection changed.</param>
+        /// <param name="e">Added and removed result selections.</param>
+        private void SearchResults_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox { SelectedItem: GuideSearchResult result })
+            {
+                _viewModel.OpenSearchResult(result.Id);
+            }
+        }
+
         /// <summary>Navigates to an article selected from the current article's related topics.</summary>
         /// <param name="sender">Related-topic button carrying a stable article identifier.</param>
         /// <param name="e">Click event data.</param>
@@ -174,6 +185,11 @@ namespace CtrDxEditor.Views
             if (this.FindControl<ScrollViewer>("ArticleScroll") is { } scroll)
             {
                 scroll.Offset = default;
+            }
+
+            if (this.FindControl<ScrollViewer>("SearchResultsScroll") is { } results)
+            {
+                results.Offset = default;
             }
         }
     }

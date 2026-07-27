@@ -160,7 +160,7 @@
           <TextBlock Grid.Row="0" Text="{loc:Tr Guide.Navigation.Contents}"
                      FontSize="20" FontWeight="SemiBold" Margin="18,18,18,10" />
           <ListBox x:Name="TableOfContents" Grid.Row="1"
-                   ItemsSource="{Binding FilteredArticles}"
+                   ItemsSource="{Binding Articles}"
                    SelectedItem="{Binding SelectedArticle, Mode=OneWay}"
                    SelectionChanged="TableOfContents_SelectionChanged"
                    Background="Transparent" BorderThickness="0"
@@ -179,43 +179,91 @@
         </Grid>
       </SplitView.Pane>
 
-      <ScrollViewer x:Name="ArticleScroll"
-                    HorizontalScrollBarVisibility="Disabled"
-                    VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="780" HorizontalAlignment="Center"
-                    Margin="40,34,40,70" Spacing="12">
-          <TextBlock Text="{Binding SelectedArticle.Section}" FontSize="13"
-                     Foreground="{DynamicResource EditorBrush.Primary}" FontWeight="SemiBold" />
-          <TextBlock Text="{Binding SelectedArticle.Title}" FontSize="34"
-                     FontWeight="SemiBold" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding SelectedArticle.Summary}" FontSize="17"
-                     Opacity="0.72" TextWrapping="Wrap" LineHeight="25" Margin="0,0,0,12" />
-          <ItemsControl ItemsSource="{Binding SelectedArticle.Blocks}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Spacing="11" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-          <StackPanel Spacing="8" Margin="0,22,0,0"
-                      IsVisible="{Binding HasRelatedArticles}">
-            <TextBlock Text="{loc:Tr Guide.Article.Related}" FontSize="20" FontWeight="SemiBold" />
-            <ItemsControl ItemsSource="{Binding RelatedArticles}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="guide:GuideArticle">
-                  <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                          Tag="{Binding Id}" Click="RelatedTopic_Click" Margin="0,2">
-                    <StackPanel>
-                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding Summary}" Opacity="0.68" TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Button>
+      <Grid>
+        <ScrollViewer x:Name="SearchResultsScroll"
+                      IsVisible="{Binding IsSearchActive}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+          <StackPanel MaxWidth="780" HorizontalAlignment="Center"
+                      Margin="40,34,40,70" Spacing="12">
+            <TextBlock Text="{loc:Tr Guide.Search.Results}" FontSize="34"
+                       FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SearchResults.Count, StringFormat={loc:Tr Guide.Search.ResultCount}}"
+                       FontSize="15" Opacity="0.68" Margin="0,0,0,8" />
+            <ListBox x:Name="SearchResults"
+                     ItemsSource="{Binding SearchResults}"
+                     SelectionChanged="SearchResults_SelectionChanged"
+                     IsVisible="{Binding HasSearchResults}"
+                     Background="Transparent" BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:GuideSearchResult">
+                  <StackPanel Spacing="5" Margin="12,10">
+                    <controls:SearchHighlightTextBlock
+                        SourceText="{Binding Section}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="12" Foreground="{DynamicResource EditorBrush.Primary}"
+                        FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <controls:SearchHighlightTextBlock
+                        SourceText="{Binding Title}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <controls:SearchHighlightTextBlock
+                        SourceText="{Binding Summary}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="14" Opacity="0.72" TextWrapping="Wrap" LineHeight="21" />
+                  </StackPanel>
                 </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel IsVisible="{Binding HasNoSearchResults}"
+                        HorizontalAlignment="Center" Margin="24,52" Spacing="10">
+              <icons:MaterialIcon Kind="MagnifyClose" Width="36" Height="36"
+                                  HorizontalAlignment="Center" Opacity="0.5" />
+              <TextBlock Text="{loc:Tr Guide.Search.NoResults}" FontSize="18"
+                         FontWeight="SemiBold" HorizontalAlignment="Center" />
+            </StackPanel>
           </StackPanel>
-        </StackPanel>
-      </ScrollViewer>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ArticleScroll"
+                      IsVisible="{Binding IsArticleVisible}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+          <StackPanel MaxWidth="780" HorizontalAlignment="Center"
+                      Margin="40,34,40,70" Spacing="12">
+            <TextBlock Text="{Binding SelectedArticle.Section}" FontSize="13"
+                       Foreground="{DynamicResource EditorBrush.Primary}" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding SelectedArticle.Title}" FontSize="34"
+                       FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SelectedArticle.Summary}" FontSize="17"
+                       Opacity="0.72" TextWrapping="Wrap" LineHeight="25" Margin="0,0,0,12" />
+            <ItemsControl ItemsSource="{Binding SelectedArticle.Blocks}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Spacing="11" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <StackPanel Spacing="8" Margin="0,22,0,0"
+                        IsVisible="{Binding HasRelatedArticles}">
+              <TextBlock Text="{loc:Tr Guide.Article.Related}" FontSize="20" FontWeight="SemiBold" />
+              <ItemsControl ItemsSource="{Binding RelatedArticles}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="guide:GuideArticle">
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            Tag="{Binding Id}" Click="RelatedTopic_Click" Margin="0,2">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Summary}" Opacity="0.68" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
     </SplitView>
   </Grid>
 </UserControl>

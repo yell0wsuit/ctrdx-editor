@@ -12,7 +12,7 @@ namespace CtrDxEditor.Tests
     {
         /// <summary>The guide exposes the approved navigation and discovery controls.</summary>
         [Fact]
-        public void SharedSurfaceHasNavigationSearchAndContentsDrawer()
+        public void SharedSurfaceHasNavigationSearchContentsAndResults()
         {
             string view = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
 
@@ -23,7 +23,40 @@ namespace CtrDxEditor.Tests
             Assert.Contains("x:Name=\"HomeButton\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"GuideSearchBox\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"TableOfContents\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"SearchResultsScroll\"", view, StringComparison.Ordinal);
+            Assert.Contains("x:Name=\"SearchResults\"", view, StringComparison.Ordinal);
             Assert.Contains("x:Name=\"ArticleScroll\"", view, StringComparison.Ordinal);
+        }
+
+        /// <summary>Search has a dedicated page and never filters the table of contents.</summary>
+        [Fact]
+        public void SearchResultsAreIndependentFromTableOfContents()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement contents = NamedElement(markup, "TableOfContents");
+            XElement results = NamedElement(markup, "SearchResults");
+
+            Assert.Equal("{Binding Articles}", contents.Attribute("ItemsSource")?.Value);
+            Assert.Equal("{Binding SearchResults}", results.Attribute("ItemsSource")?.Value);
+            Assert.Equal(
+                "SearchResults_SelectionChanged",
+                results.Attribute("SelectionChanged")?.Value);
+        }
+
+        /// <summary>Matched-term rendering is confined to the dedicated result template.</summary>
+        [Fact]
+        public void MatchHighlightingAppearsOnlyInSearchResults()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement results = NamedElement(markup, "SearchResults");
+
+            Assert.Equal(3, results.Descendants().Count(element =>
+                element.Name.LocalName == "SearchHighlightTextBlock"));
+            Assert.DoesNotContain(
+                markup.Descendants().Where(element => !results.DescendantsAndSelf().Contains(element)),
+                element => element.Name.LocalName == "SearchHighlightTextBlock");
         }
 
         /// <summary>Every structured guide block has an explicit rendering template.</summary>
