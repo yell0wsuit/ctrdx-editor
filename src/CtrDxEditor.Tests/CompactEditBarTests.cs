@@ -81,8 +81,7 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The bar shows when there is something to act on or when the open document can accept a paste.
-        /// System clipboard availability cannot be queried synchronously, so CanPaste keeps Paste reachable.
+        /// The bar shows when there is something to act on or a cached internal/system paste candidate.
         /// </summary>
         [Fact]
         public void EditBarVisibilityCoversClipboardWithoutSelection()

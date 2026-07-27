@@ -31,6 +31,7 @@ namespace CtrDxEditor.Views
         private readonly Action _invalidateCanvas;
         private readonly PaletteDragController _paletteDrag;
         private WindowNotificationManager? _notifications;
+        private Window? _clipboardActivationWindow;
         private readonly LevelCanvas _canvas;
         private readonly TextBox _textEditor;
         private readonly Image _rowDragPreview;
@@ -154,6 +155,14 @@ namespace CtrDxEditor.Views
                     TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard
                         ? await clipboard.TryGetTextAsync()
                         : null;
+
+                // Desktop startup attaches the view before asynchronous content loading supplies its view
+                // model. Refresh here as well as on attachment so a pre-existing XML clipboard is not
+                // stranded until the user deactivates and reactivates the window.
+                if (VisualRoot is not null)
+                {
+                    RefreshClipboardState();
+                }
             }
 
             SyncAnimationPreviewTimer();
@@ -432,6 +441,17 @@ namespace CtrDxEditor.Views
             _ = Notifications();
             RegisterGlobalShortcuts();
             RegisterLevelDrop();
+
+            // Activation is when the clipboard can have changed without the editor seeing it: the user
+            // left, copied somewhere else, and came back. Refreshed once here too, so Paste is right
+            // before the window is ever activated.
+            _clipboardActivationWindow = TopLevel.GetTopLevel(this) as Window;
+            if (_clipboardActivationWindow is { } clipboardWindow)
+            {
+                clipboardWindow.Activated += Window_Activated;
+            }
+
+            RefreshClipboardState();
         }
 
         /// <inheritdoc />
@@ -441,6 +461,11 @@ namespace CtrDxEditor.Views
             UnregisterLevelDrop();
             _paletteDrag.Cancel();
             _animationPreviewTimer.Stop();
+            if (_clipboardActivationWindow is { } clipboardWindow)
+            {
+                clipboardWindow.Activated -= Window_Activated;
+                _clipboardActivationWindow = null;
+            }
             if (_mutatedSubscription is not null)
             {
                 _mutatedSubscription.ObjectMutated -= _invalidateCanvas;
@@ -449,6 +474,21 @@ namespace CtrDxEditor.Views
                 _mutatedSubscription = null;
             }
             base.OnDetachedFromVisualTree(e);
+        }
+
+        private void Window_Activated(object? sender, EventArgs e)
+        {
+            RefreshClipboardState();
+        }
+
+        // Fire-and-forget on purpose: activation must not block the UI on a clipboard round trip. The view
+        // model no-ops in the browser, where reading would prompt.
+        private void RefreshClipboardState()
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                _ = vm.RefreshSystemClipboardStateAsync();
+            }
         }
 
         // The toast host, created against the current TopLevel and reused. Null only before the view is

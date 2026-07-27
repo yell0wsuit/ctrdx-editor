@@ -63,18 +63,44 @@ namespace CtrDxEditor.Tests
             Assert.Contains("\"Notification.Paste.InvalidXml\"", strings, StringComparison.Ordinal);
         }
 
-        /// <summary>The guide tells the user Copy and Paste reach the system clipboard.</summary>
+        /// <summary>Paste's enabled state refreshes on attachment and window activation only.</summary>
+        /// <remarks>
+        /// Activation covers leaving to copy elsewhere and coming back. Reading again whenever Edit opens
+        /// adds lifecycle and async churn without making the inherently cached answer exact.
+        /// </remarks>
         [Fact]
-        public void GuideDocumentsTheSystemClipboard()
+        public void PasteStateRefreshesOnAttachmentAndActivation()
         {
-            string strings = File.ReadAllText(LocalizationPath());
-            int key = strings.IndexOf(
-                "\"Guide.Article.clipboard-lock-hide.Clipboard\"",
-                StringComparison.Ordinal);
+            string view = SourceText("CtrDxEditor.Shared", "Views", "MainView.axaml.cs");
 
-            Assert.True(key >= 0);
-            int end = strings.IndexOf('\n', key);
-            Assert.Contains("XML", strings[key..end], StringComparison.Ordinal);
+            Assert.Contains("clipboardWindow.Activated += Window_Activated;", view, StringComparison.Ordinal);
+            Assert.Contains("clipboardWindow.Activated -= Window_Activated;", view, StringComparison.Ordinal);
+            Assert.Contains("RefreshSystemClipboardStateAsync()", view, StringComparison.Ordinal);
+            Assert.DoesNotContain("EditMenu_SubmenuOpened", view, StringComparison.Ordinal);
+
+            int wire = view.IndexOf("private void WireObjectMutated()", StringComparison.Ordinal);
+            int propertyHandler = view.IndexOf("private void ViewModel_PropertyChanged", wire, StringComparison.Ordinal);
+            Assert.True(wire >= 0 && propertyHandler > wire);
+            ReadOnlySpan<char> wiring = view.AsSpan(wire, propertyHandler - wire);
+            Assert.Contains("if (VisualRoot is not null)", wiring, StringComparison.Ordinal);
+            Assert.Contains("RefreshClipboardState();", wiring, StringComparison.Ordinal);
+
+            string markup = SourceText("CtrDxEditor.Shared", "Views", "MainView.axaml");
+            Assert.DoesNotContain("SubmenuOpened=\"EditMenu_SubmenuOpened\"", markup, StringComparison.Ordinal);
+
+            string commands = SourceText("CtrDxEditor.Shared", "Views", "MainView.Commands.cs");
+            Assert.DoesNotContain("RefreshClipboardState();", commands, StringComparison.Ordinal);
+
+            // The browser must never take the read, since it is permission-gated there.
+            string viewModel = SourceText("CtrDxEditor.Shared", "ViewModels", "EditorViewModel.cs");
+            int refresh = viewModel.IndexOf(
+                "public async Task RefreshSystemClipboardStateAsync()",
+                StringComparison.Ordinal);
+            Assert.True(refresh >= 0);
+            Assert.Contains(
+                "OperatingSystem.IsBrowser()",
+                viewModel.AsSpan(refresh, 300),
+                StringComparison.Ordinal);
         }
 
         private static string SourceText(params string[] parts)

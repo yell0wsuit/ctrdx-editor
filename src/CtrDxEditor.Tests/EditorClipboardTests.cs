@@ -131,15 +131,18 @@ namespace CtrDxEditor.Tests
             Assert.Contains(nameof(EditorViewModel.CanDeleteSelection), changed);
         }
 
-        /// <summary>Clearing the internal clipboard leaves Paste available for system clipboard XML.</summary>
+        /// <summary>Clearing the internal clipboard does not hide XML already observed outside the editor.</summary>
         /// <remarks>
-        /// Nothing else ever empties the buffer - it survives closing the level, as the test above pins -
-        /// so this is the only way back to a clean Paste state.
+        /// The cache cannot prove whether the OS clipboard still holds our disowned text or was replaced
+        /// with someone else's valid XML. Keeping Paste reachable is safer; a later activation or paste
+        /// probe settles the approximation.
         /// </remarks>
         [Fact]
-        public void ClearClipboardEmptiesTheBufferAndKeepsExternalPasteAvailable()
+        public async Task ClearClipboardKeepsObservedExternalXmlReachable()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\" />");
+            await vm.RefreshSystemClipboardStateAsync();
             vm.Selection.Replace(vm.Document!.AllObjects[0]);
             vm.CopySelection();
             Assert.True(vm.HasClipboard);
@@ -254,13 +257,82 @@ namespace CtrDxEditor.Tests
             _ = Assert.Single(vm.Document!.AllObjects);
         }
 
-        /// <summary>An open document keeps Paste available because the system clipboard cannot be queried synchronously.</summary>
+        /// <summary>Paste stands down when neither clipboard has anything for it.</summary>
+        /// <remarks>
+        /// The system half is a cached observation, so on the desktop heads it starts false and Paste greys
+        /// out until a refresh finds something. The browser starts it true instead and never narrows it,
+        /// because reading there would prompt - these tests run on a desktop head, so they see the observed
+        /// behaviour.
+        /// </remarks>
         [Fact]
-        public void PasteIsAvailableWithAnEmptyInternalClipboard()
+        public void PasteIsUnavailableWhenNeitherClipboardHasObjects()
         {
             EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
 
             Assert.False(vm.HasClipboard);
+            Assert.False(vm.CanPaste);
+        }
+
+        /// <summary>A refresh that finds objects on the system clipboard offers Paste with an empty buffer.</summary>
+        [Fact]
+        public async Task RefreshOffersPasteForSystemClipboardObjects()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\" />");
+            Assert.False(vm.CanPaste);
+
+            await vm.RefreshSystemClipboardStateAsync();
+
+            Assert.False(vm.HasClipboard);
+            Assert.True(vm.CanPaste);
+        }
+
+        /// <summary>Object-like XML stays actionable when malformed so Paste can explain the rejection.</summary>
+        [Fact]
+        public async Task RefreshOffersPasteForRejectedObjectXml()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\"");
+
+            await vm.RefreshSystemClipboardStateAsync();
+
+            Assert.True(vm.CanPaste);
+        }
+
+        /// <summary>A refresh that finds unrelated text takes Paste away again.</summary>
+        [Fact]
+        public async Task RefreshWithdrawsPasteWhenTheClipboardMovesOn()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            vm.ReadClipboardText = () => Task.FromResult<string?>("<star x=\"1\" y=\"2\" />");
+            await vm.RefreshSystemClipboardStateAsync();
+            Assert.True(vm.CanPaste);
+
+            vm.ReadClipboardText = () => Task.FromResult<string?>("a shopping list");
+            await vm.RefreshSystemClipboardStateAsync();
+
+            Assert.False(vm.CanPaste);
+        }
+
+        /// <summary>An older clipboard read cannot overwrite the result of a newer observation.</summary>
+        [Fact]
+        public async Task RefreshIgnoresAnOlderReadThatCompletesLast()
+        {
+            EditorViewModel vm = Load("<bubble x=\"10\" y=\"20\"/>");
+            TaskCompletionSource<string?> older = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource<string?> newer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            int reads = 0;
+            vm.ReadClipboardText = () => ++reads == 1 ? older.Task : newer.Task;
+
+            Task olderRefresh = vm.RefreshSystemClipboardStateAsync();
+            Task newerRefresh = vm.RefreshSystemClipboardStateAsync();
+            newer.SetResult("<star x=\"1\" y=\"2\" />");
+            await newerRefresh;
+            Assert.True(vm.CanPaste);
+
+            older.SetResult("a shopping list");
+            await olderRefresh;
+
             Assert.True(vm.CanPaste);
         }
 
@@ -282,9 +354,11 @@ namespace CtrDxEditor.Tests
             vm.ReadClipboardText = () => Task.FromResult(written);
 
             vm.ClearClipboard();
+            Assert.True(vm.CanPaste);
             PasteOutcome outcome = await vm.PasteFromClipboardAsync(100, 200);
 
             Assert.Equal(PasteOutcome.NothingToPaste, outcome);
+            Assert.False(vm.CanPaste);
             _ = Assert.Single(vm.Document.AllObjects);
         }
 

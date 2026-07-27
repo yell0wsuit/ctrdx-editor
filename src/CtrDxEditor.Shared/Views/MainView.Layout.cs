@@ -496,11 +496,11 @@ namespace CtrDxEditor.Views
                 : null;
         }
 
-        /// <summary>Shows the edit bar while the open document can accept edit actions.</summary>
+        /// <summary>Shows the edit bar while the open document has an available edit action.</summary>
         /// <remarks>
-        /// The predicate is deliberately wider than "something is selected": system clipboard availability
-        /// cannot be queried synchronously, so <c>CanPaste</c> keeps Paste reachable whenever a level is
-        /// open. The bar stands down while either overlay is up, since both cover the strip it occupies.
+        /// The predicate is deliberately wider than "something is selected": <c>CanPaste</c> also reflects
+        /// the internal buffer and the last desktop observation of the system clipboard. The bar stands down
+        /// while either overlay is up, since both cover the strip it occupies.
         /// </remarks>
         private void UpdateCompactEditBarVisibility()
         {
