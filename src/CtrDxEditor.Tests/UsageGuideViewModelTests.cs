@@ -73,6 +73,141 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.CanGoBack);
         }
 
+        /// <summary>The contents highlight is dropped while the search page covers the article.</summary>
+        [Fact]
+        public void ActiveSearchClearsTheTableOfContentsSelection()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+
+            vm.SearchText = "third";
+
+            Assert.Equal("second", vm.SelectedArticle.Id);
+            Assert.Null(vm.SelectedTocArticle);
+
+            vm.SearchText = string.Empty;
+
+            Assert.Same(vm.SelectedArticle, vm.SelectedTocArticle);
+        }
+
+        /// <summary>Starting and ending a search both notify the contents highlight.</summary>
+        [Fact]
+        public void TableOfContentsSelectionNotifiesWhenSearchTogglesAndOnNavigation()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            List<string?> changed = [];
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            vm.SearchText = "second";
+            Assert.Contains(nameof(UsageGuideViewModel.SelectedTocArticle), changed);
+
+            changed.Clear();
+            vm.SearchText = string.Empty;
+            Assert.Contains(nameof(UsageGuideViewModel.SelectedTocArticle), changed);
+
+            changed.Clear();
+            vm.NavigateTo("third");
+            Assert.Contains(nameof(UsageGuideViewModel.SelectedTocArticle), changed);
+        }
+
+        /// <summary>
+        /// Re-selecting the article already being read leaves search without disturbing history.
+        /// </summary>
+        [Fact]
+        public void ReselectingTheReadArticleLeavesSearchWithoutRecordingHistory()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+            vm.SearchText = "third";
+
+            vm.SelectedTocArticle = vm.SelectedArticle;
+
+            Assert.False(vm.IsSearchActive);
+            Assert.True(vm.IsArticleVisible);
+            Assert.Equal("second", vm.SelectedArticle.Id);
+            Assert.False(vm.CanGoForward);
+            Assert.Empty(vm.SearchResults);
+        }
+
+        /// <summary>Choosing a different article from the contents also leaves the search page.</summary>
+        [Fact]
+        public void SelectingAnotherArticleFromContentsLeavesSearch()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.SearchText = "second";
+
+            vm.SelectedTocArticle = vm.Articles[2];
+
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("third", vm.SelectedArticle.Id);
+            Assert.True(vm.CanGoBack);
+        }
+
+        /// <summary>The cleared selection echoed back by the contents list is not navigation.</summary>
+        [Fact]
+        public void ClearedContentsSelectionIsIgnored()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.SearchText = "second";
+
+            vm.SelectedTocArticle = null;
+
+            Assert.True(vm.IsSearchActive);
+            Assert.Equal("home", vm.SelectedArticle.Id);
+            Assert.False(vm.CanGoBack);
+        }
+
+        /// <summary>Back, forward, and home all produce a visible change during a search.</summary>
+        [Fact]
+        public void HistoryNavigationLeavesTheSearchPage()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+
+            vm.SearchText = "third";
+            vm.GoBack();
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("home", vm.SelectedArticle.Id);
+
+            vm.SearchText = "third";
+            vm.GoForward();
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("second", vm.SelectedArticle.Id);
+
+            vm.SearchText = "third";
+            vm.GoHome();
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("home", vm.SelectedArticle.Id);
+        }
+
+        /// <summary>Home dismisses the search page even when the home article is already open.</summary>
+        [Fact]
+        public void HomeLeavesSearchWhenAlreadyOnTheHomeArticle()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.SearchText = "second";
+
+            vm.GoHome();
+
+            Assert.False(vm.IsSearchActive);
+            Assert.Equal("home", vm.SelectedArticle.Id);
+            Assert.False(vm.CanGoBack);
+        }
+
+        /// <summary>An ignored navigation has no side effect on the active search.</summary>
+        [Fact]
+        public void UnknownArticleIdLeavesTheSearchPageIntact()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.SearchText = "second";
+
+            vm.NavigateTo("missing");
+
+            Assert.True(vm.IsSearchActive);
+            Assert.Equal("second", vm.SearchText);
+            Assert.NotEmpty(vm.SearchResults);
+        }
+
         /// <summary>Back and forward behave like browser article history.</summary>
         [Fact]
         public void NavigationMaintainsBackAndForwardHistory()

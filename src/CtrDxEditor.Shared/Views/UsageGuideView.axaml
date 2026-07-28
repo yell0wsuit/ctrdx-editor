@@ -114,8 +114,7 @@
             ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*"
             Margin="10,7">
         <Button x:Name="SidebarButton" Grid.Column="0" Width="40" Height="40" Padding="0"
-                Click="SidebarButton_Click"
-                ToolTip.Tip="{loc:Tr Guide.Navigation.ShowContents}">
+                Click="SidebarButton_Click">
           <icons:MaterialIcon Kind="Menu" Width="20" Height="20" />
         </Button>
         <Button x:Name="BackButton" Grid.Column="1" Width="40" Height="40" Padding="0"
@@ -137,6 +136,7 @@
                    FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0" />
         <TextBox x:Name="GuideSearchBox" Grid.Column="5"
                  Text="{Binding SearchText, Mode=TwoWay}"
+                 KeyDown="GuideSearchBox_KeyDown"
                  MaxWidth="360" Height="36" Margin="8,0,0,0"
                  HorizontalAlignment="Stretch" VerticalAlignment="Center"
                  VerticalContentAlignment="Center" Padding="0,0,12,0"
@@ -154,6 +154,7 @@
                IsPaneOpen="True" OpenPaneLength="300"
                UseLightDismissOverlayMode="True"
                PaneBackground="{DynamicResource EditorBrush.Surface.Panel}"
+               PaneOpened="GuideSplitView_PaneOpened"
                PaneClosed="GuideSplitView_PaneClosed">
       <SplitView.Pane>
         <Grid RowDefinitions="Auto,*" Width="300">
@@ -161,8 +162,8 @@
                      FontSize="20" FontWeight="SemiBold" Margin="18,18,18,10" />
           <ListBox x:Name="TableOfContents" Grid.Row="1"
                    ItemsSource="{Binding Articles}"
-                   SelectedItem="{Binding SelectedArticle, Mode=OneWay}"
-                   SelectionChanged="TableOfContents_SelectionChanged"
+                   SelectedItem="{Binding SelectedTocArticle, Mode=TwoWay}"
+                   PointerReleased="TableOfContents_PointerReleased"
                    Background="Transparent" BorderThickness="0"
                    Margin="8,0,8,12">
             <ListBox.ItemTemplate>
@@ -190,31 +191,33 @@
                        FontWeight="SemiBold" TextWrapping="Wrap" />
             <TextBlock Text="{Binding SearchResults.Count, StringFormat={loc:Tr Guide.Search.ResultCount}}"
                        FontSize="15" Opacity="0.68" Margin="0,0,0,8" />
-            <ListBox x:Name="SearchResults"
-                     ItemsSource="{Binding SearchResults}"
-                     SelectionChanged="SearchResults_SelectionChanged"
-                     IsVisible="{Binding HasSearchResults}"
-                     Background="Transparent" BorderThickness="0">
-              <ListBox.ItemTemplate>
+            <ItemsControl x:Name="SearchResults"
+                          ItemsSource="{Binding SearchResults}"
+                          IsVisible="{Binding HasSearchResults}">
+              <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:GuideSearchResult">
-                  <StackPanel Spacing="5" Margin="12,10">
-                    <controls:SearchHighlightTextBlock
-                        SourceText="{Binding Section}" Query="{Binding Query}"
-                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                        FontSize="12" Foreground="{DynamicResource EditorBrush.Primary}"
-                        FontWeight="SemiBold" TextWrapping="Wrap" />
-                    <controls:SearchHighlightTextBlock
-                        SourceText="{Binding Title}" Query="{Binding Query}"
-                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                        FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    <controls:SearchHighlightTextBlock
-                        SourceText="{Binding Summary}" Query="{Binding Query}"
-                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                        FontSize="14" Opacity="0.72" TextWrapping="Wrap" LineHeight="21" />
-                  </StackPanel>
+                  <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                          Tag="{Binding Id}" Click="SearchResult_Click"
+                          Margin="0,3" Padding="14,11">
+                    <StackPanel Spacing="5">
+                      <controls:SearchHighlightTextBlock
+                          SourceText="{Binding Section}" Query="{Binding Query}"
+                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                          FontSize="12" Foreground="{DynamicResource EditorBrush.Primary}"
+                          FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <controls:SearchHighlightTextBlock
+                          SourceText="{Binding Title}" Query="{Binding Query}"
+                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                          FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <controls:SearchHighlightTextBlock
+                          SourceText="{Binding Summary}" Query="{Binding Query}"
+                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                          FontSize="14" Opacity="0.72" TextWrapping="Wrap" LineHeight="21" />
+                    </StackPanel>
+                  </Button>
                 </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <StackPanel IsVisible="{Binding HasNoSearchResults}"
                         HorizontalAlignment="Center" Margin="24,52" Spacing="10">
               <icons:MaterialIcon Kind="MagnifyClose" Width="36" Height="36"

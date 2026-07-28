@@ -2,8 +2,10 @@ using System.ComponentModel;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 
 using CtrDxEditor.Localization;
 using CtrDxEditor.UsageGuide;
@@ -41,15 +43,20 @@ namespace CtrDxEditor.Views
             }
         }
 
-        /// <summary>Synchronizes article selection and scroll position after navigation.</summary>
+        /// <summary>Returns the visible pane to its start whenever the guide shows something new.</summary>
         /// <param name="sender">Guide view model raising the notification.</param>
         /// <param name="e">Name of the changed view-model property.</param>
+        /// <remarks>
+        /// Table-of-contents selection is not touched here: it is bound to
+        /// <see cref="UsageGuideViewModel.SelectedTocArticle"/>, and a second writer is exactly what
+        /// let the highlight drift out of step with the visible pane.
+        /// </remarks>
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(UsageGuideViewModel.SelectedArticle))
+            if (e.PropertyName is nameof(UsageGuideViewModel.SelectedArticle)
+                or nameof(UsageGuideViewModel.SearchText))
             {
-                this.FindControl<ListBox>("TableOfContents")!.SelectedItem = _viewModel.SelectedArticle;
-                ScrollArticleToTop();
+                ScrollVisiblePaneToTop();
             }
         }
 
@@ -68,10 +75,28 @@ namespace CtrDxEditor.Views
             splitView.DisplayMode = persistent ? SplitViewDisplayMode.Inline : SplitViewDisplayMode.Overlay;
             splitView.IsPaneOpen = persistent;
             sidebarButton.IsVisible = !persistent;
-            Avalonia.Automation.AutomationProperties.SetName(
-                sidebarButton,
-                Localizer.Get("Guide.Navigation.ShowContents"));
+            ApplySidebarButtonLabel(splitView.IsPaneOpen);
             ApplyToolbarLayout(searchBox);
+        }
+
+        /// <summary>Describes the hamburger by the action it will perform next.</summary>
+        /// <param name="paneOpen">Whether the table-of-contents pane is currently open.</param>
+        /// <remarks>
+        /// Tooltip and accessible name are written together here so the two cannot describe
+        /// different actions, and both follow <see cref="SplitView.IsPaneOpen"/> rather than being
+        /// pinned to the opening half of the toggle.
+        /// </remarks>
+        private void ApplySidebarButtonLabel(bool paneOpen)
+        {
+            if (this.FindControl<Button>("SidebarButton") is not { } sidebarButton)
+            {
+                return;
+            }
+
+            string label = Localizer.Get(
+                paneOpen ? "Guide.Navigation.HideContents" : "Guide.Navigation.ShowContents");
+            Avalonia.Automation.AutomationProperties.SetName(sidebarButton, label);
+            ToolTip.SetTip(sidebarButton, label);
         }
 
         /// <summary>Places search beside navigation or on a full-width second toolbar row.</summary>
@@ -122,26 +147,49 @@ namespace CtrDxEditor.Views
             _viewModel.GoHome();
         }
 
-        /// <summary>Navigates to the selected table-of-contents article.</summary>
-        /// <param name="sender">Table-of-contents list whose selection changed.</param>
-        /// <param name="e">Added and removed list selections.</param>
-        private void TableOfContents_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        /// <summary>Closes the compact drawer after a table-of-contents row is tapped.</summary>
+        /// <param name="sender">Table-of-contents list that received the pointer.</param>
+        /// <param name="e">Pointer release data used to locate the tapped row.</param>
+        /// <remarks>
+        /// Navigation itself travels through the two-way
+        /// <see cref="UsageGuideViewModel.SelectedTocArticle"/> binding. Only the drawer is handled
+        /// here, and it listens to the pointer rather than to selection so that re-tapping the row
+        /// already being read still dismisses the drawer.
+        /// </remarks>
+        private void TableOfContents_PointerReleased(object? sender, PointerReleasedEventArgs e)
         {
-            if (sender is ListBox { SelectedItem: GuideArticle article })
+            if ((e.Source as Visual)?.FindAncestorOfType<ListBoxItem>(includeSelf: true) is not null)
             {
-                _viewModel.NavigateTo(article.Id);
                 CloseCompactSidebar();
             }
         }
 
-        /// <summary>Leaves search and opens the selected result article.</summary>
-        /// <param name="sender">Dedicated search-results list whose selection changed.</param>
-        /// <param name="e">Added and removed result selections.</param>
-        private void SearchResults_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        /// <summary>Dismisses the search page when the reader presses Escape in the search box.</summary>
+        /// <param name="sender">Guide search box that received the key.</param>
+        /// <param name="e">Pressed key data.</param>
+        private void GuideSearchBox_KeyDown(object? sender, KeyEventArgs e)
         {
-            if (sender is ListBox { SelectedItem: GuideSearchResult result })
+            if (e.Key == Key.Escape)
             {
-                _viewModel.OpenSearchResult(result.Id);
+                _viewModel.ClearSearch();
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>Leaves search and opens the chosen result article.</summary>
+        /// <param name="sender">Result card carrying a stable article identifier.</param>
+        /// <param name="e">Click event data.</param>
+        /// <remarks>
+        /// Results are activated rather than selected. A result card is a one-shot action — picking
+        /// one destroys the page it lives on — so the list holds no selection that could go stale,
+        /// re-entrant navigation through a rebuild is impossible, and the cards stay reachable by
+        /// keyboard without an arrow key doubling as an open command.
+        /// </remarks>
+        private void SearchResult_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: string articleId })
+            {
+                _viewModel.OpenSearchResult(articleId);
             }
         }
 
@@ -156,17 +204,20 @@ namespace CtrDxEditor.Views
             }
         }
 
-        /// <summary>Synchronizes the hamburger label after native light-dismiss closes the drawer.</summary>
+        /// <summary>Synchronizes the hamburger label when the drawer opens.</summary>
+        /// <param name="sender">Split view whose pane opened.</param>
+        /// <param name="e">Pane-opened event data.</param>
+        private void GuideSplitView_PaneOpened(object? sender, RoutedEventArgs e)
+        {
+            ApplySidebarButtonLabel(paneOpen: true);
+        }
+
+        /// <summary>Synchronizes the hamburger label after any close, including native light-dismiss.</summary>
         /// <param name="sender">Split view whose pane closed.</param>
         /// <param name="e">Pane-closed event data.</param>
         private void GuideSplitView_PaneClosed(object? sender, RoutedEventArgs e)
         {
-            if (this.FindControl<Button>("SidebarButton") is { } button)
-            {
-                Avalonia.Automation.AutomationProperties.SetName(
-                    button,
-                    Localizer.Get("Guide.Navigation.ShowContents"));
-            }
+            ApplySidebarButtonLabel(paneOpen: false);
         }
 
         /// <summary>Closes the table of contents after compact navigation.</summary>
@@ -179,8 +230,8 @@ namespace CtrDxEditor.Views
             }
         }
 
-        /// <summary>Returns the reading pane to the start of the newly selected article.</summary>
-        private void ScrollArticleToTop()
+        /// <summary>Returns both panes to their start so no stale scroll offset survives a change.</summary>
+        private void ScrollVisiblePaneToTop()
         {
             if (this.FindControl<ScrollViewer>("ArticleScroll") is { } scroll)
             {

@@ -10,10 +10,21 @@ using CtrDxEditor.UsageGuide;
 namespace CtrDxEditor.ViewModels
 {
     /// <summary>Search and browser-like navigation state for the built-in Usage Guide.</summary>
+    /// <remarks>
+    /// Four fields hold every piece of guide state: the selected article, the raw search text, and
+    /// the two history stacks. Everything a binding can see is computed from them on demand, and
+    /// all mutations funnel through <see cref="Mutate"/>, which diffs a snapshot taken before and
+    /// after the change and raises exactly the notifications that diff justifies. No presentation
+    /// value is cached, so none can survive the state that produced it.
+    /// </remarks>
     public sealed class UsageGuideViewModel : INotifyPropertyChanged
     {
         private readonly Dictionary<string, GuideArticle> _byId;
         private readonly string _homeArticleId;
+        private readonly Stack<GuideArticle> _back = [];
+        private readonly Stack<GuideArticle> _forward = [];
+
+        private string _searchText = string.Empty;
 
         /// <summary>Creates guide state over an article catalog.</summary>
         /// <param name="articles">Complete ordered article catalog.</param>
@@ -49,52 +60,45 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Article cards matching the active <see cref="SearchText"/>.</summary>
         public ObservableCollection<GuideSearchResult> SearchResults { get; } = [];
 
-        /// <summary>Previously visited articles, nearest destination on top.</summary>
-        private Stack<GuideArticle> Back { get; } = [];
-
-        /// <summary>Articles left by backward navigation, nearest destination on top.</summary>
-        private Stack<GuideArticle> Forward { get; } = [];
-
         /// <summary>The article shown in the reading pane.</summary>
-        public GuideArticle SelectedArticle
-        {
-            get;
-            private set
-            {
-                if (ReferenceEquals(field, value))
-                {
-                    return;
-                }
+        /// <remarks>
+        /// The setter is deliberately notification-free: <see cref="Publish"/> owns every change
+        /// notification so that a mutation touching several fields reports them as one coherent step.
+        /// </remarks>
+        public GuideArticle SelectedArticle { get; private set; }
 
-                field = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(RelatedArticles));
-                OnPropertyChanged(nameof(HasRelatedArticles));
+        /// <summary>
+        /// The table-of-contents row the reader is actually looking at, or <see langword="null"/>
+        /// while the search page covers the reading pane.
+        /// </summary>
+        /// <remarks>
+        /// This is the sole binding target for the contents list. Reporting <see langword="null"/>
+        /// during search keeps the highlight honest and, because no row is selected, guarantees
+        /// that clicking the previously active row is a real selection change rather than a dead
+        /// click. Writes of <see langword="null"/> are the list echoing that cleared state back and
+        /// are ignored.
+        /// </remarks>
+        public GuideArticle? SelectedTocArticle
+        {
+            get => IsSearchActive ? null : SelectedArticle;
+            set
+            {
+                if (value is not null)
+                {
+                    NavigateTo(value.Id);
+                }
             }
         }
 
         /// <summary>Text used to populate the dedicated search-results page.</summary>
         public string SearchText
         {
-            get;
-            set
-            {
-                value ??= string.Empty;
-                if (field == value)
-                {
-                    return;
-                }
-
-                field = value;
-                OnPropertyChanged();
-                ApplySearch();
-                OnPropertyChanged(nameof(IsSearchActive));
-                OnPropertyChanged(nameof(IsArticleVisible));
-            }
-        } = string.Empty;
+            get => _searchText;
+            set => Mutate(() => _searchText = value ?? string.Empty);
+        }
 
         /// <summary>Whether the dedicated search-results page is visible.</summary>
-        public bool IsSearchActive => SearchText.Trim().Length > 0;
+        public bool IsSearchActive => Query.Length > 0;
 
         /// <summary>Whether the selected article is visible instead of search results.</summary>
         public bool IsArticleVisible => !IsSearchActive;
@@ -106,10 +110,10 @@ namespace CtrDxEditor.ViewModels
         public bool HasNoSearchResults => IsSearchActive && !HasSearchResults;
 
         /// <summary>Whether a previously visited article is available.</summary>
-        public bool CanGoBack => Back.Count > 0;
+        public bool CanGoBack => _back.Count > 0;
 
         /// <summary>Whether an article left by going back is available.</summary>
-        public bool CanGoForward => Forward.Count > 0;
+        public bool CanGoForward => _forward.Count > 0;
 
         /// <summary>Resolved articles offered as related topics for <see cref="SelectedArticle"/>.</summary>
         public IReadOnlyList<GuideArticle> RelatedArticles =>
@@ -120,45 +124,45 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the selected article has at least one valid related-topic destination.</summary>
         public bool HasRelatedArticles => RelatedArticles.Count > 0;
 
-        /// <summary>Navigates to an article by stable identifier.</summary>
-        /// <param name="articleId">Destination identifier; unknown or current identifiers are ignored.</param>
+        /// <summary>The trimmed query driving <see cref="SearchResults"/> and search visibility.</summary>
+        private string Query => _searchText.Trim();
+
+        /// <summary>Navigates to an article by stable identifier, leaving the search page.</summary>
+        /// <param name="articleId">Destination identifier; unknown identifiers are ignored entirely.</param>
         public void NavigateTo(string articleId)
         {
-            if (!_byId.TryGetValue(articleId, out GuideArticle? destination)
-                || ReferenceEquals(destination, SelectedArticle))
-            {
-                return;
-            }
-
-            Back.Push(SelectedArticle);
-            Forward.Clear();
-            SelectedArticle = destination;
-            RaiseHistoryChanged();
+            Mutate(() => Open(articleId));
         }
 
-        /// <summary>Returns to the previous article.</summary>
+        /// <summary>Returns to the previous article, leaving the search page.</summary>
         public void GoBack()
         {
-            if (Back.TryPop(out GuideArticle? destination))
+            Mutate(() =>
             {
-                Forward.Push(SelectedArticle);
-                SelectedArticle = destination;
-                RaiseHistoryChanged();
-            }
+                if (_back.TryPop(out GuideArticle? destination))
+                {
+                    _searchText = string.Empty;
+                    _forward.Push(SelectedArticle);
+                    SelectedArticle = destination;
+                }
+            });
         }
 
-        /// <summary>Revisits the article most recently left by going back.</summary>
+        /// <summary>Revisits the article most recently left by going back, leaving the search page.</summary>
         public void GoForward()
         {
-            if (Forward.TryPop(out GuideArticle? destination))
+            Mutate(() =>
             {
-                Back.Push(SelectedArticle);
-                SelectedArticle = destination;
-                RaiseHistoryChanged();
-            }
+                if (_forward.TryPop(out GuideArticle? destination))
+                {
+                    _searchText = string.Empty;
+                    _back.Push(SelectedArticle);
+                    SelectedArticle = destination;
+                }
+            });
         }
 
-        /// <summary>Navigates to the configured welcome article.</summary>
+        /// <summary>Navigates to the configured welcome article, leaving the search page.</summary>
         public void GoHome()
         {
             NavigateTo(_homeArticleId);
@@ -168,26 +172,144 @@ namespace CtrDxEditor.ViewModels
         /// <param name="articleId">Stable identifier carried by the selected result.</param>
         public void OpenSearchResult(string articleId)
         {
-            SearchText = string.Empty;
             NavigateTo(articleId);
         }
 
-        /// <summary>
-        /// Rebuilds <see cref="SearchResults"/> from the trimmed query and every localized searchable
-        /// article field.
-        /// </summary>
-        private void ApplySearch()
+        /// <summary>Dismisses the search page and restores the article underneath it.</summary>
+        public void ClearSearch()
         {
-            string query = SearchText.Trim();
-            SearchResults.Clear();
-            if (query.Length == 0)
+            Mutate(() => _searchText = string.Empty);
+        }
+
+        /// <summary>
+        /// Applies a state change, refreshes results when the query moved, and notifies every
+        /// binding whose value the change could have altered.
+        /// </summary>
+        /// <param name="apply">Mutation acting directly on the backing state fields.</param>
+        private void Mutate(Action apply)
+        {
+            GuideState before = Capture();
+            apply();
+            if (!string.Equals(Query, before.Query, StringComparison.Ordinal))
             {
-                RaiseSearchResultsChanged();
+                RebuildSearchResults();
+            }
+
+            Publish(before, Capture());
+        }
+
+        /// <summary>
+        /// Selects an article and leaves search, without recording history for an unknown
+        /// destination or for the article already being read.
+        /// </summary>
+        /// <param name="articleId">Destination identifier.</param>
+        private void Open(string articleId)
+        {
+            if (!_byId.TryGetValue(articleId, out GuideArticle? destination))
+            {
                 return;
             }
 
-            IEnumerable<GuideArticle> matches = Articles.Where(article =>
-                Contains(article.Title, query)
+            // Reaching the current article still counts as leaving search: the reader asked to see
+            // that article, and it is behind the results page.
+            _searchText = string.Empty;
+            if (ReferenceEquals(destination, SelectedArticle))
+            {
+                return;
+            }
+
+            _back.Push(SelectedArticle);
+            _forward.Clear();
+            SelectedArticle = destination;
+        }
+
+        /// <summary>
+        /// Repopulates <see cref="SearchResults"/> from the trimmed query across every localized
+        /// searchable article field.
+        /// </summary>
+        private void RebuildSearchResults()
+        {
+            SearchResults.Clear();
+            string query = Query;
+            if (query.Length == 0)
+            {
+                return;
+            }
+
+            foreach (GuideArticle article in Articles.Where(article => Matches(article, query)))
+            {
+                SearchResults.Add(new GuideSearchResult(article, query));
+            }
+        }
+
+        /// <summary>Records the state every derived presentation value is computed from.</summary>
+        /// <returns>A snapshot comparable against a later one to detect observable change.</returns>
+        private GuideState Capture()
+        {
+            return new GuideState(
+                SelectedArticle,
+                _searchText,
+                Query,
+                SearchResults.Count,
+                _back.Count,
+                _forward.Count);
+        }
+
+        /// <summary>Raises change notifications for every derived value the mutation moved.</summary>
+        /// <param name="before">State captured before the mutation.</param>
+        /// <param name="after">State captured after the mutation and any result rebuild.</param>
+        private void Publish(in GuideState before, in GuideState after)
+        {
+            bool articleChanged = !ReferenceEquals(before.Article, after.Article);
+            bool searchActiveChanged = (before.Query.Length > 0) != (after.Query.Length > 0);
+
+            if (articleChanged)
+            {
+                OnPropertyChanged(nameof(SelectedArticle));
+                OnPropertyChanged(nameof(RelatedArticles));
+                OnPropertyChanged(nameof(HasRelatedArticles));
+            }
+
+            if (!string.Equals(before.SearchText, after.SearchText, StringComparison.Ordinal))
+            {
+                OnPropertyChanged(nameof(SearchText));
+            }
+
+            if (searchActiveChanged)
+            {
+                OnPropertyChanged(nameof(IsSearchActive));
+                OnPropertyChanged(nameof(IsArticleVisible));
+            }
+
+            if (articleChanged || searchActiveChanged)
+            {
+                OnPropertyChanged(nameof(SelectedTocArticle));
+            }
+
+            if (before.ResultCount != after.ResultCount || searchActiveChanged)
+            {
+                OnPropertyChanged(nameof(HasSearchResults));
+                OnPropertyChanged(nameof(HasNoSearchResults));
+            }
+
+            if (before.BackCount != after.BackCount)
+            {
+                OnPropertyChanged(nameof(CanGoBack));
+            }
+
+            if (before.ForwardCount != after.ForwardCount)
+            {
+                OnPropertyChanged(nameof(CanGoForward));
+            }
+        }
+
+        /// <summary>Tests one article against the query across all of its searchable text.</summary>
+        /// <param name="article">Catalog article to inspect.</param>
+        /// <param name="query">Non-empty trimmed search query.</param>
+        /// <returns><see langword="true"/> when any searchable field contains the query.</returns>
+        private static bool Matches(GuideArticle article, string query)
+        {
+            return Contains(article.Title, query)
                 || Contains(article.Section, query)
                 || Contains(article.Summary, query)
                 || article.SearchTerms.Any(term => Contains(term, query))
@@ -195,14 +317,7 @@ namespace CtrDxEditor.ViewModels
                 || article.Blocks.OfType<GuideHeading>().Any(block => Contains(block.Text, query))
                 || article.Blocks.OfType<GuideShortcutTable>().Any(
                     table => table.Items.Any(
-                        shortcut => Contains(shortcut.Action, query) || Contains(shortcut.Keys, query))));
-
-            foreach (GuideArticle article in matches)
-            {
-                SearchResults.Add(new GuideSearchResult(article, query));
-            }
-
-            RaiseSearchResultsChanged();
+                        shortcut => Contains(shortcut.Action, query) || Contains(shortcut.Keys, query)));
         }
 
         /// <summary>Tests a localized value for an ordinal, case-insensitive query match.</summary>
@@ -214,20 +329,6 @@ namespace CtrDxEditor.ViewModels
             return value.Contains(query, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>Notifies bindings derived from the current results collection.</summary>
-        private void RaiseSearchResultsChanged()
-        {
-            OnPropertyChanged(nameof(HasSearchResults));
-            OnPropertyChanged(nameof(HasNoSearchResults));
-        }
-
-        /// <summary>Notifies bindings that both history-derived availability flags may have changed.</summary>
-        private void RaiseHistoryChanged()
-        {
-            OnPropertyChanged(nameof(CanGoBack));
-            OnPropertyChanged(nameof(CanGoForward));
-        }
-
         /// <summary>Raises <see cref="PropertyChanged"/> for a changed presentation property.</summary>
         /// <param name="propertyName">
         /// Changed property name, supplied automatically by the compiler when omitted.
@@ -236,6 +337,21 @@ namespace CtrDxEditor.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        /// <summary>An immutable reading of the state behind every derived guide property.</summary>
+        /// <param name="Article">Article shown in the reading pane.</param>
+        /// <param name="SearchText">Raw search-box text, including untrimmed whitespace.</param>
+        /// <param name="Query">Trimmed query driving results and search visibility.</param>
+        /// <param name="ResultCount">Number of populated search-result cards.</param>
+        /// <param name="BackCount">Depth of the backward history stack.</param>
+        /// <param name="ForwardCount">Depth of the forward history stack.</param>
+        private readonly record struct GuideState(
+            GuideArticle Article,
+            string SearchText,
+            string Query,
+            int ResultCount,
+            int BackCount,
+            int ForwardCount);
     }
 
     /// <summary>One article card displayed on the dedicated Usage Guide search page.</summary>

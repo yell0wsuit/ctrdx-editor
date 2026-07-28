@@ -39,9 +39,62 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("{Binding Articles}", contents.Attribute("ItemsSource")?.Value);
             Assert.Equal("{Binding SearchResults}", results.Attribute("ItemsSource")?.Value);
+        }
+
+        /// <summary>
+        /// Result cards are activated, not selected, so the results list carries no selection state
+        /// that could disagree with the page or swallow a repeat click.
+        /// </summary>
+        [Fact]
+        public void SearchResultsActivateByClickRatherThanSelection()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement results = NamedElement(markup, "SearchResults");
+
+            Assert.Equal("ItemsControl", results.Name.LocalName);
+            Assert.Null(results.Attribute("SelectionChanged"));
+
+            XElement card = Assert.Single(
+                results.Descendants(),
+                element => element.Name.LocalName == "Button");
+            Assert.Equal("SearchResult_Click", card.Attribute("Click")?.Value);
+            Assert.Equal("{Binding Id}", card.Attribute("Tag")?.Value);
+        }
+
+        /// <summary>
+        /// The contents highlight has exactly one writer, so it cannot disagree with the visible pane.
+        /// </summary>
+        [Fact]
+        public void TableOfContentsSelectionIsDrivenSolelyByTheBoundProperty()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement contents = NamedElement(markup, "TableOfContents");
+            string codeBehind = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml.cs"));
+
             Assert.Equal(
-                "SearchResults_SelectionChanged",
-                results.Attribute("SelectionChanged")?.Value);
+                "{Binding SelectedTocArticle, Mode=TwoWay}",
+                contents.Attribute("SelectedItem")?.Value);
+            Assert.Null(contents.Attribute("SelectionChanged"));
+            Assert.DoesNotContain("TableOfContents\")!.SelectedItem", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>The drawer toggle describes both of its states through the native pane events.</summary>
+        [Fact]
+        public void SidebarToggleLabelFollowsBothPaneStates()
+        {
+            XDocument markup = XDocument.Load(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+            XElement splitView = NamedElement(markup, "GuideSplitView");
+            string codeBehind = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml.cs"));
+
+            Assert.Equal("GuideSplitView_PaneOpened", splitView.Attribute("PaneOpened")?.Value);
+            Assert.Equal("GuideSplitView_PaneClosed", splitView.Attribute("PaneClosed")?.Value);
+            Assert.Contains("Guide.Navigation.HideContents", codeBehind, StringComparison.Ordinal);
+            Assert.Contains("Guide.Navigation.ShowContents", codeBehind, StringComparison.Ordinal);
         }
 
         /// <summary>Matched-term rendering is confined to the dedicated result template.</summary>
