@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Localization;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -37,6 +38,62 @@ namespace CtrDxEditor.Tests
             Assert.True(vm.AllowQuit);
             Assert.True(vm.AllowManualDownload);
             Assert.True(vm.AllowDownload);
+        }
+
+        /// <summary>First-run setup is the default, and keeps the original wording.</summary>
+        [Fact]
+        public void DefaultsToFirstRunSetupWording()
+        {
+            ContentSetupViewModel vm = new(new FakeInstaller(), () => Task.CompletedTask);
+
+            Assert.False(vm.IsUpdate);
+            Assert.Equal(Localizer.Get("Dialog.ContentSetup.Title"), vm.Title);
+            Assert.Equal(Localizer.Get("Dialog.ContentSetup.Description"), vm.Description);
+        }
+
+        /// <summary>
+        /// A re-download explains itself as an out-of-date bundle rather than as first-run setup, since
+        /// the same dialog serves both.
+        /// </summary>
+        [Fact]
+        public void UsesOutOfDateWordingForAReDownload()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask, isUpdate: true);
+
+            Assert.True(vm.IsUpdate);
+            Assert.Equal(Localizer.Get("Dialog.AssetUpdate.Header"), vm.Title);
+            Assert.Equal(Localizer.Get("Dialog.AssetUpdate.Body"), vm.Description);
+            // Both wordings must actually exist; a missing key would echo the key back.
+            Assert.DoesNotContain("Dialog.", vm.Title, StringComparison.Ordinal);
+            Assert.DoesNotContain("Dialog.", vm.Description, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Dismissal normally tracks the Quit button, but a re-download needs them apart: the editor
+        /// behind the dialog already works, so backing out must be possible without offering to quit.
+        /// </summary>
+        [Fact]
+        public void AllowsDismissalWithoutQuitForAReDownload()
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask,
+                allowQuit: false, canDismiss: true, isUpdate: true);
+
+            Assert.False(vm.AllowQuit);
+            Assert.True(vm.CanDismiss);
+        }
+
+        /// <summary>Without an explicit override, dismissal still follows the Quit button.</summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void DismissalFollowsQuitByDefault(bool allowQuit)
+        {
+            ContentSetupViewModel vm = new(
+                new FakeInstaller(), () => Task.CompletedTask, allowQuit: allowQuit);
+
+            Assert.Equal(allowQuit, vm.CanDismiss);
         }
 
         /// <summary>Verifies the button-visibility flags can each be disabled independently.</summary>

@@ -676,8 +676,7 @@
     "Dialog.Update.Later": "Later",
 
     "Dialog.AssetUpdate.Header": "Your assets are out of date",
-    "Dialog.AssetUpdate.Body": "This version of the editor includes objects your installed assets don't have art for, so those objects are hidden. Download the latest assets now?",
-    "Dialog.AssetUpdate.Download": "Download",
+    "Dialog.AssetUpdate.Body": "This version of the editor includes objects your installed assets don't have art for, so those objects are hidden from the palette. Download the latest assets to use them.",
 
     "Layer.Add": "Add new layer",
     "Layer.Delete": "Delete active layer",

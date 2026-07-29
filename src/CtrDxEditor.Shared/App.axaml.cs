@@ -177,8 +177,13 @@ namespace CtrDxEditor
                     allowDownload: _startup.AllowDirectDownload,
                     downloadSizeLabel: _startup.DownloadSizeLabel,
                     manualDownloadUrl: _startup.ManualDownloadUrl,
-                    canDismiss: true);
-                await AssetUpdatePrompt.ShowAsync(vm);
+                    canDismiss: true,
+                    isUpdate: true);
+                // The same dialog first-run setup uses, re-labelled: one Download button, one consent,
+                // and the whole install surface (manual download, zip upload, progress, verification,
+                // error reporting) already behaves correctly for a re-download.
+                ContentSetupDialog dialog = new() { DataContext = vm };
+                _ = await dialog.ShowAsync();
             }
             catch (Exception ex)
             {

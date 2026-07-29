@@ -6,18 +6,17 @@
              x:Class="CtrDxEditor.Views.ContentSetupDialog"
              x:DataType="vm:ContentSetupViewModel">
   <!-- Clamped MaxHeight + Auto scrollbar: a long invalid-files list (see ErrorMessage below) can
-       otherwise grow the dialog taller than the window/viewport, cutting off the buttons beneath it.
-       Clamping to the top level rather than a fixed 500 also covers a landscape phone, which is
-       shorter than 500 to begin with. -->
+  otherwise grow the dialog taller than the window/viewport, cutting off the buttons beneath it.
+  Clamping to the top level rather than a fixed 500 also covers a landscape phone, which is
+  shorter than 500 to begin with. -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                 MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
-                            Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
+                Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
     <StackPanel Margin="24" Spacing="16"
                 Width="{Binding $parent[TopLevel].Bounds.Width,
-                        Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
-      <!-- Title reflects the current phase. -->
+                Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=500}">
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
-                 Text="{loc:Tr Dialog.ContentSetup.Title}" />
+                 TextWrapping="Wrap" Text="{Binding Title}" />
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsDownloading}"
                  Text="{loc:Tr Dialog.ContentSetup.TitleDownloading}" />
       <TextBlock FontSize="18" FontWeight="SemiBold" IsVisible="{Binding IsVerifying}"
@@ -27,7 +26,7 @@
 
       <!-- Idle: describe the choice. -->
       <TextBlock TextWrapping="Wrap" IsVisible="{Binding !IsBusy}"
-                 Text="{loc:Tr Dialog.ContentSetup.Description}" />
+                 Text="{Binding Description}" />
       <TextBlock TextWrapping="Wrap" Opacity="0.7" IsVisible="{Binding ShowDownloadSizeLabel}"
                  Text="{Binding DownloadSizeLabel, StringFormat={loc:Tr Dialog.ContentSetup.DownloadSize}}" />
 
@@ -39,23 +38,23 @@
       </StackPanel>
 
       <!-- Verifying a finished download: extraction + hash check has no byte-level progress and is
-           past the cancellable point, so an indeterminate bar with no Cancel button. -->
+      past the cancellable point, so an indeterminate bar with no Cancel button. -->
       <StackPanel Spacing="8" IsVisible="{Binding IsVerifying}">
         <TextBlock Text="{loc:Tr Dialog.ContentSetup.Verifying}" />
         <ProgressBar IsIndeterminate="True" />
       </StackPanel>
 
       <!-- Installing a picked zip: no byte-level progress signal and nothing cancellable, so an
-           indeterminate spinner with no Cancel button (a determinate bar or a live Cancel button
-           would both be misleading here). -->
+      indeterminate spinner with no Cancel button (a determinate bar or a live Cancel button
+      would both be misleading here). -->
       <StackPanel Spacing="8" IsVisible="{Binding IsInstallingZip}">
         <TextBlock Text="{loc:Tr Dialog.ContentSetup.InstallingZip}" />
         <ProgressBar IsIndeterminate="True" />
       </StackPanel>
 
       <!-- Wraps rather than a horizontal StackPanel: up to four buttons with long labels ("Manual
-           download", "Browse zip…") overflow a phone-width dialog, and a row that cannot wrap forces the
-           ScrollViewer into a horizontal scrollbar. -->
+      download", "Browse zip…") overflow a phone-width dialog, and a row that cannot wrap forces the
+      ScrollViewer into a horizontal scrollbar. -->
       <WrapPanel ItemSpacing="8" LineSpacing="8" HorizontalAlignment="Right"
                  IsVisible="{Binding !IsBusy}">
         <Button Content="{loc:Tr Dialog.ContentSetup.Download}" Classes="accent" Command="{Binding DownloadCommand}"
@@ -64,6 +63,9 @@
                 IsVisible="{Binding AllowManualDownload}" />
         <Button Content="{loc:Tr Dialog.ContentSetup.PickZip}" Click="PickZip_Click" IsEnabled="{Binding !IsBusy}" />
         <Button Content="{loc:Tr Dialog.Common.Quit}" Click="Quit_Click" IsVisible="{Binding AllowQuit}" />
+        <!-- Only the update case can be walked away from, and it needs a visible way out: first-run
+             setup has Quit, but a re-download must not offer quitting the app as its exit. -->
+        <Button Content="{loc:Tr Dialog.Update.Later}" Click="Later_Click" IsVisible="{Binding IsUpdate}" />
       </WrapPanel>
     </StackPanel>
   </ScrollViewer>

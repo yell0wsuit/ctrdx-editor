@@ -140,5 +140,17 @@ namespace CtrDxEditor.Views
         {
             Close();
         }
+
+        /// <summary>Dismisses an offered re-download, leaving the installed content as it is.</summary>
+        /// <param name="sender">Later button that raised the event.</param>
+        /// <param name="e">Click event data.</param>
+        /// <remarks>
+        /// Distinct from <see cref="Quit_Click"/>: the editor behind this dialog is already running on
+        /// content that works, so declining an optional download must not be phrased as quitting.
+        /// </remarks>
+        private void Later_Click(object? sender, RoutedEventArgs e)
+        {
+            Close("");
+        }
     }
 }

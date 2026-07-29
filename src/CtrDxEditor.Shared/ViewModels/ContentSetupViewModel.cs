@@ -40,6 +40,22 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether the Quit button is shown (desktop can quit the app; the browser never does).</summary>
         public bool AllowQuit { get; }
 
+        /// <summary>
+        /// Whether this is a re-download of outdated content rather than first-run setup.
+        /// </summary>
+        /// <remarks>
+        /// The two share every mechanism - download, manual download, zip upload, progress, verification,
+        /// error reporting - and differ only in why the user is here and whether they may walk away. Two
+        /// dialogs would mean asking twice for one download.
+        /// </remarks>
+        public bool IsUpdate { get; }
+
+        /// <summary>Heading shown while idle, naming the reason the dialog is open.</summary>
+        public string Title => Localizer.Get(IsUpdate ? "Dialog.AssetUpdate.Header" : "Dialog.ContentSetup.Title");
+
+        /// <summary>Body shown while idle, describing the choice.</summary>
+        public string Description => Localizer.Get(IsUpdate ? "Dialog.AssetUpdate.Body" : "Dialog.ContentSetup.Description");
+
         /// <summary>Whether the setup dialog may be dismissed: immediately on desktop, or after browser setup completes.</summary>
         public bool CanDismiss { get; private set; }
 
@@ -69,11 +85,12 @@ namespace CtrDxEditor.ViewModels
             IContentInstaller installer, Func<Task> onInstalled,
             bool allowQuit = true, bool allowManualDownload = true, bool allowDownload = true,
             string downloadSizeLabel = "", string manualDownloadUrl = ContentDownloader.AssetsUrl,
-            bool? canDismiss = null)
+            bool? canDismiss = null, bool isUpdate = false)
         {
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
+            IsUpdate = isUpdate;
             // Dismissal normally tracks the Quit button: first-run setup on the browser can offer
             // neither, because the editor cannot run without content. Re-downloading an outdated bundle
             // is the case that needs them apart - the editor is already running and the user must be
