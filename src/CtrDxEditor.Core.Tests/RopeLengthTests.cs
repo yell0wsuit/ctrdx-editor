@@ -93,5 +93,52 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0, RopeLength.ReadLength(noLength));
             Assert.Equal(0, RopeLength.ReadLength(Grab(0, 0, "not-a-number")));
         }
+
+        /// <summary>The knob is its own target, and it wins over the cord it sits on.</summary>
+        [Fact]
+        public void KnobWinsOverTheCordBeneathIt()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(100, 0));
+
+            (RopeLength.Handle handle, _) = RopeLength.HitTest(g, g.Knob, knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(RopeLength.Handle.Knob, handle);
+        }
+
+        /// <summary>The cord is grabbable away from the knob, and empty space is not.</summary>
+        [Fact]
+        public void CordIsGrabbableAndEmptySpaceIsNot()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(100, 0));
+            Vec2 onCord = RopeStripBuilder.CalcPathBezier(
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length), 0.25);
+
+            (RopeLength.Handle onCordHandle, _) = RopeLength.HitTest(g, onCord, knobTolerance: 9, cordTolerance: 6);
+            (RopeLength.Handle awayHandle, _) = RopeLength.HitTest(
+                g, new Vec2(50, -400), knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(RopeLength.Handle.Cord, onCordHandle);
+            Assert.Equal(RopeLength.Handle.None, awayHandle);
+        }
+
+        /// <summary>The parameter is the point's projection along the chord, clamped away from the ends.</summary>
+        [Fact]
+        public void ParameterProjectsOntoTheChordAndClamps()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(100, 0));
+
+            Assert.Equal(0.4, RopeLength.Parameter(g, new Vec2(40, 999)), 6);
+            Assert.Equal(RopeLength.MinParameter, RopeLength.Parameter(g, new Vec2(-50, 0)), 6);
+            Assert.Equal(RopeLength.MaxParameter, RopeLength.Parameter(g, new Vec2(150, 0)), 6);
+        }
+
+        /// <summary>A hook sitting on its target has no usable chord, so the parameter degenerates safely.</summary>
+        [Fact]
+        public void DegenerateChordParameterIsTheMidpoint()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(0, 0));
+
+            Assert.Equal(0.5, RopeLength.Parameter(g, new Vec2(0, 60)), 6);
+        }
     }
 }
