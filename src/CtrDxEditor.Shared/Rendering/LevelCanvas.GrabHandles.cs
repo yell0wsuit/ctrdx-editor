@@ -86,5 +86,57 @@ namespace CtrDxEditor.Rendering
                 _ => Cursor.Default,
             };
         }
+
+        /// <summary>
+        /// The selected grab's editable rope geometry, or null when there is nothing to edit: not a single
+        /// grab selection, locked out, no authored rope, or a rope whose bound object is hidden (the cord
+        /// is not drawn then, so a handle floating in space would be misleading).
+        /// </summary>
+        /// <returns>The rope geometry, or null.</returns>
+        private RopeLength.Geometry? SelectedRopeGeometry()
+        {
+            if (!IsSingleSelection
+                || SelectedObject is not { Type: "grab" } grab
+                || IsLockedOut(grab)
+                || View.Zoom <= 0
+                || Document is not { } doc)
+            {
+                return null;
+            }
+
+            RopeTarget target = RopeResolver.Resolve(grab, doc.AllObjects, doc.TwoParts);
+            return target.Target is { } bound && IsHidden(bound) ? null : RopeLength.Of(grab, target);
+        }
+
+        /// <summary>What part of the selected grab's rope a level point is over, plus the drag parameter.</summary>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>The rope handle under the point and the parameter a drag from it should use.</returns>
+        private (RopeLength.Handle Handle, double Parameter) HitRope(Vec2 levelPt)
+        {
+            return SelectedRopeGeometry() is { } g
+                ? RopeLength.HitTest(g, levelPt, knobTolerance: HitTolerance(9), cordTolerance: HitTolerance(6))
+                : (RopeLength.Handle.None, 0);
+        }
+
+        /// <summary>
+        /// Writes the rope's new rest length from the active drag. Alt switches to the below-taut mapping,
+        /// which is the only way to reach lengths the canvas cannot draw differently; without it the drag
+        /// floors at taut. Alt is read live, so it can be pressed or released part-way through a drag.
+        /// </summary>
+        /// <param name="grab">The grab being edited.</param>
+        /// <param name="levelPt">The pointer position in level coordinates.</param>
+        /// <param name="mods">The keyboard modifiers currently held.</param>
+        private void ApplyRopeDrag(LevelObject grab, Vec2 levelPt, KeyModifiers mods)
+        {
+            if (SelectedRopeGeometry() is not { } g)
+            {
+                return;
+            }
+
+            double length = mods.HasFlag(KeyModifiers.Alt)
+                ? RopeLength.SolveTaut(g, levelPt)
+                : RopeLength.Solve(g, _ropeDragParameter, levelPt);
+            grab.SetAttr("length", Whole(length));
+        }
     }
 }

@@ -409,6 +409,20 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private GrabRail.Handle _railDrag;
 
+        /// <summary>
+        /// Which rope handle the current drag is manipulating, or <see cref="RopeLength.Handle.None"/> when
+        /// no rope drag is in progress. Both handles write the same <c>length</c> attribute; the distinction
+        /// only matters for where each is allowed to win a press.
+        /// </summary>
+        private RopeLength.Handle _ropeDrag;
+
+        /// <summary>The chord parameter the active rope drag is anchored to, fixed when the drag began so
+        /// the gesture does not slide along the rope as the cursor moves.</summary>
+        private double _ropeDragParameter;
+
+        /// <summary>Whether the cursor is over the selected grab's rope, so the knob shows its hover ring.</summary>
+        private bool _ropeHovered;
+
         /// <summary>Which selected spike end is being dragged to choose a new spike size.</summary>
         private SpikeResize.Handle _stripResizeDrag;
 
