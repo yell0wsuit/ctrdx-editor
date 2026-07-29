@@ -62,7 +62,7 @@
     <DataTemplate DataType="guide:GuideSteps">
       <ItemsControl ItemsSource="{Binding Items}" Margin="0,4,0,0">
         <ItemsControl.ItemTemplate>
-          <DataTemplate x:CompileBindings="False">
+          <DataTemplate x:DataType="x:String">
             <Grid ColumnDefinitions="Auto,*" Margin="0,5">
               <Border Grid.Column="0" Width="24" Height="24" CornerRadius="12"
                       Background="{DynamicResource EditorBrush.PrimaryLow}">
