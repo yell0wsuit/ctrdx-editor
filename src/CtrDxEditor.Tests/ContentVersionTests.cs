@@ -38,7 +38,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void ParsesADeclaredVersion()
         {
-            Assert.Equal(3, ContentManifest.ParseVersion("""{"version": 3, "files": {}}"""));
+            Assert.Equal(3, ContentManifest.ParseVersion(/*lang=json,strict*/ """{"version": 3, "files": {}}"""));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void TreatsAnAbsentVersionAsTheOriginalRevision()
         {
-            Assert.Equal(0, ContentManifest.ParseVersion("""{"files": {}}"""));
+            Assert.Equal(0, ContentManifest.ParseVersion(/*lang=json,strict*/ """{"files": {}}"""));
         }
 
         /// <summary>
@@ -56,9 +56,9 @@ namespace CtrDxEditor.Tests
         /// cannot be mistaken for a bundle that merely predates the field.
         /// </summary>
         [Theory]
-        [InlineData("""{"version": "1", "files": {}}""")]
-        [InlineData("""{"version": 1.5, "files": {}}""")]
-        [InlineData("""{"version": null}""")]
+        [InlineData(/*lang=json,strict*/ """{"version": "1", "files": {}}""")]
+        [InlineData(/*lang=json,strict*/ """{"version": 1.5, "files": {}}""")]
+        [InlineData(/*lang=json,strict*/ """{"version": null}""")]
         [InlineData("not json at all")]
         [InlineData("")]
         public void ReportsAnUnusableManifestAsUnknown(string json)
@@ -70,7 +70,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void KeepsParsingFilesAlongsideAVersion()
         {
-            const string json = """{"version": 1, "files": {"images/a.png": "abc"}}""";
+            const string json = /*lang=json,strict*/ """{"version": 1, "files": {"images/a.png": "abc"}}""";
 
             Assert.Equal(1, ContentManifest.ParseVersion(json));
             Assert.Equal("abc", ContentManifest.ParseFiles(json)["images/a.png"]);
@@ -105,7 +105,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public async Task ReportsAPreVersionBundleAsOutdated()
         {
-            ManifestStore legacy = new("""{"files": {}}""");
+            ManifestStore legacy = new(/*lang=json,strict*/ """{"files": {}}""");
 
             Assert.True(await ContentVersion.IsOutdatedAsync(legacy));
         }

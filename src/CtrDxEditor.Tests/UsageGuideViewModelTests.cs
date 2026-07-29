@@ -172,7 +172,7 @@ namespace CtrDxEditor.Tests
 
             vm.NavigateTo("second");
 
-            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+            Assert.Equal("second", Assert.Single(vm.TocRows, row => row.IsActive).Id);
         }
 
         /// <summary>No row is active while the search page covers the article.</summary>
@@ -186,7 +186,7 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(vm.TocRows, row => row.IsActive);
 
             vm.ClearSearch();
-            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+            Assert.Equal("second", Assert.Single(vm.TocRows, row => row.IsActive).Id);
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace CtrDxEditor.Tests
 
             vm.OpenSearchResult("third");
 
-            Assert.Equal("third", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+            Assert.Equal("third", Assert.Single(vm.TocRows, row => row.IsActive).Id);
             Assert.Equal(["third"], notified);
         }
 
@@ -227,7 +227,7 @@ namespace CtrDxEditor.Tests
 
             vm.OpenSearchResult("second");
 
-            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+            Assert.Equal("second", Assert.Single(vm.TocRows, row => row.IsActive).Id);
         }
 
         /// <summary>Back, forward, and home all produce a visible change during a search.</summary>
