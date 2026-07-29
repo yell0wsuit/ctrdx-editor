@@ -675,6 +675,10 @@
     "Dialog.Update.Body": "There's a new version of the editor available. Would you like to check on GitHub Releases now?",
     "Dialog.Update.Later": "Later",
 
+    "Dialog.AssetUpdate.Header": "Your assets are out of date",
+    "Dialog.AssetUpdate.Body": "This version of the editor includes objects your installed assets don't have art for, so those objects are hidden. Download the latest assets now?",
+    "Dialog.AssetUpdate.Download": "Download",
+
     "Layer.Add": "Add new layer",
     "Layer.Delete": "Delete active layer",
     "Layer.MoveUp": "Move active layer up",

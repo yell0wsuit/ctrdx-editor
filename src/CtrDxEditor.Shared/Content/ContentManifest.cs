@@ -29,6 +29,43 @@ namespace CtrDxEditor.Content
             return result;
         }
 
+        /// <summary>
+        /// Parses the manifest's optional <c>"version"</c> field: the bundle's content revision.
+        /// </summary>
+        /// <param name="json">Manifest JSON text.</param>
+        /// <returns>
+        /// The declared revision; <c>0</c> for a readable manifest that declares none; or
+        /// <see langword="null"/> when the manifest cannot be understood at all.
+        /// </returns>
+        /// <remarks>
+        /// The distinction between <c>0</c> and <see langword="null"/> is the point. A readable manifest
+        /// with no <c>version</c> is a bundle from before the field existed - precisely the baseline the
+        /// field was introduced to describe, and worth offering a re-download for. Unparseable JSON, or a
+        /// <c>version</c> that is not an integer, means the editor simply does not know, and a guess must
+        /// not be allowed to nag the user into re-downloading hundreds of megabytes.
+        /// </remarks>
+        public static int? ParseVersion(string json)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("version", out JsonElement version))
+                {
+                    return 0;
+                }
+
+                // ValueKind is checked first because TryGetInt32 throws, rather than returning false,
+                // when the element is not a number at all.
+                return version.ValueKind == JsonValueKind.Number && version.TryGetInt32(out int value)
+                    ? value
+                    : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
         /// <summary>Parses the manifest's { "files": { "relative/path": "sha256", ... } } section into a rel-path -> hash map.</summary>
         public static IReadOnlyDictionary<string, string> Read(string manifestPath)
         {

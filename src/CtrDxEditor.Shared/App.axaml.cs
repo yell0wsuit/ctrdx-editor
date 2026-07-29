@@ -121,10 +121,60 @@ namespace CtrDxEditor
                 while (root.DataContext is null);
             }
 
-            // Deliberately not awaited: the editor is already usable, and the check makes a network
-            // request whose result nothing here depends on. Reached only once the editor is up, so the
-            // prompt can never stack on top of the content setup dialog the user must complete first.
-            _ = CheckForUpdateAsync(root);
+            // Deliberately not awaited: the editor is already usable, and neither check blocks it.
+            // Reached only once the editor is up, so these can never stack on top of the content setup
+            // dialog the user must complete first.
+            _ = PromptForStaleThingsAsync(root);
+        }
+
+        /// <summary>
+        /// Runs the startup "you are behind" checks in sequence: outdated assets first, then a newer
+        /// editor release.
+        /// </summary>
+        /// <param name="root">Attached control that hosts the dialogs and owns the URI launcher.</param>
+        /// <remarks>
+        /// Sequential and awaited so the two prompts cannot appear at once. Assets come first because
+        /// they are the ones actively costing the user objects in the palette right now.
+        /// </remarks>
+        private async Task PromptForStaleThingsAsync(Control root)
+        {
+            await CheckForStaleAssetsAsync(root);
+            await CheckForUpdateAsync(root);
+        }
+
+        /// <summary>Offers to re-download the asset bundle when the installed one is out of date.</summary>
+        /// <param name="root">Attached control whose data context is replaced if content is reinstalled.</param>
+        /// <remarks>
+        /// Swallows its own failures: an editor that is already running must not be taken down by a
+        /// check about content it is currently managing without.
+        /// </remarks>
+        private async Task CheckForStaleAssetsAsync(Control root)
+        {
+            try
+            {
+                if (await _startup.ResolveInstalled() is not { } installed
+                    || !await ContentVersion.IsOutdatedAsync(installed))
+                {
+                    return;
+                }
+
+                ContentSetupViewModel vm = new(
+                    _startup.Installer,
+                    async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
+                    // Optional download: never offer to quit, but always allow backing out - unlike
+                    // first-run setup, the editor behind this dialog already works.
+                    allowQuit: false,
+                    allowManualDownload: true,
+                    allowDownload: _startup.AllowDirectDownload,
+                    downloadSizeLabel: _startup.DownloadSizeLabel,
+                    manualDownloadUrl: _startup.ManualDownloadUrl,
+                    canDismiss: true);
+                await AssetUpdatePrompt.ShowAsync(vm);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CtrDx] Asset update prompt failed; continuing without it.\n{ex}");
+            }
         }
 
         /// <summary>Offers the release page when GitHub has published a build newer than this one.</summary>

@@ -20,6 +20,12 @@ import zipfile
 
 from PIL import Image
 
+# Content revision recorded in the manifest. The editor compares it against its own
+# ContentVersion.CurrentAssetVersion and offers a re-download when a bundle is behind, so bump this
+# whenever a rebuild adds or changes art that a new editor build depends on - and bump the editor's
+# constant in the same change that publishes the result, never before.
+CONTENT_VERSION = 1
+
 
 def parse_args() -> argparse.Namespace:
     """Parses the script's command-line arguments."""
@@ -129,7 +135,11 @@ def build_zip(images_dir: Path, zip_path: Path) -> tuple[int, int, int, int]:
                 zf.write(file, archive_name(file, images_dir))
         zf.writestr(
             "file_manifest.json",
-            json.dumps({"files": manifest}, indent=2, sort_keys=True),
+            json.dumps(
+                {"version": CONTENT_VERSION, "files": manifest},
+                indent=2,
+                sort_keys=False,
+            ),
         )
 
     with zipfile.ZipFile(zip_path) as zf:

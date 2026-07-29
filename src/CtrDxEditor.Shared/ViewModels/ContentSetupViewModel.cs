@@ -68,12 +68,17 @@ namespace CtrDxEditor.ViewModels
         public ContentSetupViewModel(
             IContentInstaller installer, Func<Task> onInstalled,
             bool allowQuit = true, bool allowManualDownload = true, bool allowDownload = true,
-            string downloadSizeLabel = "", string manualDownloadUrl = ContentDownloader.AssetsUrl)
+            string downloadSizeLabel = "", string manualDownloadUrl = ContentDownloader.AssetsUrl,
+            bool? canDismiss = null)
         {
             _installer = installer;
             _onInstalled = onInstalled;
             AllowQuit = allowQuit;
-            CanDismiss = allowQuit;
+            // Dismissal normally tracks the Quit button: first-run setup on the browser can offer
+            // neither, because the editor cannot run without content. Re-downloading an outdated bundle
+            // is the case that needs them apart - the editor is already running and the user must be
+            // able to back out, but quitting is not the way out of an optional download.
+            CanDismiss = canDismiss ?? allowQuit;
             AllowManualDownload = allowManualDownload;
             AllowDownload = allowDownload;
             DownloadSizeLabel = downloadSizeLabel;
