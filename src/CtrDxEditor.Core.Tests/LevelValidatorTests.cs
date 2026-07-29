@@ -243,5 +243,56 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.CandyOnMouth");
         }
+        /// <summary>A hook sitting exactly above its candy makes a vertical rope, which the game mishandles.</summary>
+        [Fact]
+        public void GrabVerticallyAlignedWithItsCandyWarns()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"240\" y=\"400\" /><grab x=\"240\" y=\"100\" length=\"200\" /><target x=\"300\" y=\"300\" />");
+
+            Assert.Contains(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabVerticallyAligned");
+        }
+
+        /// <summary>One unit of offset is enough; the warning is about the exactly-degenerate case only.</summary>
+        [Fact]
+        public void GrabOffsetFromItsCandyDoesNotWarn()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"241\" y=\"400\" /><grab x=\"240\" y=\"100\" length=\"200\" /><target x=\"300\" y=\"300\" />");
+
+            Assert.DoesNotContain(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabVerticallyAligned");
+        }
+
+        /// <summary>Hooks that bind during play have no authored rope, so alignment cannot bite them.</summary>
+        [Theory]
+        [InlineData("gun=\"true\"")]
+        [InlineData("radius=\"120\"")]
+        public void GrabsWithoutAnAuthoredRopeDoNotWarnOnAlignment(string extra)
+        {
+            LevelDocument doc = Doc("",
+                $"<candy x=\"240\" y=\"400\" /><grab x=\"240\" y=\"100\" length=\"200\" {extra} /><target x=\"300\" y=\"300\" />");
+
+            Assert.DoesNotContain(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabVerticallyAligned");
+        }
+
+        /// <summary>A rope bound to a light bulb is checked against the bulb it actually binds to.</summary>
+        [Fact]
+        public void GrabVerticallyAlignedWithItsBulbWarns()
+        {
+            LevelDocument doc = Doc("",
+                "<candy x=\"10\" y=\"400\" /><lightBulb x=\"240\" y=\"400\" bulbNumber=\"0\" />"
+                + "<grab x=\"240\" y=\"100\" length=\"200\" bindBulb=\"true\" bulbNumber=\"0\" />"
+                + "<target x=\"300\" y=\"300\" />");
+
+            Assert.Contains(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.GrabVerticallyAligned");
+        }
     }
 }

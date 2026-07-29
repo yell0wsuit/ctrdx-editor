@@ -97,6 +97,18 @@ namespace CtrDxEditor.Core.Editing
                     warnings.Add(new LevelWarning("Validation.GrabUnmatchedCandyNumber", candyNumber));
                 }
 
+                // A hook exactly above or below what its rope binds to starts the bungee as a perfectly
+                // straight vertical line, and the game's solver has no basis for choosing a swing
+                // direction, so it picks an arbitrary diagonal that fights gravity. A single pixel of
+                // offset settles it - the shipped 1_1.xml puts the candy at 158 and the hook at 159.
+                // Only authored ropes can hit this: RopeResolver already returns no target for gun and
+                // auto-catch hooks, which take hold of the candy during play instead.
+                RopeTarget rope = RopeResolver.Resolve(grab, objects, document.TwoParts);
+                if (rope.Target is { } bound && grab.X == bound.X)
+                {
+                    warnings.Add(new LevelWarning("Validation.GrabVerticallyAligned", grab.X));
+                }
+
                 if (IsTrueAttr(grab, "bindBulb"))
                 {
                     string? bulbNumber = grab.GetAttr("bulbNumber");
