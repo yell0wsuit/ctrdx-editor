@@ -280,7 +280,13 @@ namespace CtrDxEditor.Views
             // Its dedicated layout row keeps it above both the canvas and the tab bar.
             editBar.Margin = new Thickness(insets.Left, 0, insets.Right, 0);
             menuButton.Margin = new Thickness(insets.Left, insets.Top, 0, 0);
-            commandDrawerPane.Padding = new Thickness(insets.Left, insets.Top, 0, insets.Bottom);
+            // The last row would otherwise sit flush against the screen edge on any phone that reports no
+            // bottom inset, which reads as clipped and is awkward to tap.
+            commandDrawerPane.Padding = new Thickness(
+                insets.Left,
+                insets.Top,
+                0,
+                Math.Max(12, insets.Bottom));
             // Narrower than a typical nav drawer on purpose: toggles leave it open, and their effect is
             // on the canvas behind it. 260 caps it on tablets; 70% keeps ~96px of canvas at 320.
             commandDrawer.OpenPaneLength = Bounds.Width > 0 ? Math.Min(260, Bounds.Width * 0.70) : 260;

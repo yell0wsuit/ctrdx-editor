@@ -982,8 +982,15 @@
               <Button Classes="drawerRow" Click="DrawerAnimationPreview_Click"
                       IsEnabled="{Binding CanToggleAnimationPreview}">
                 <Grid ColumnDefinitions="Auto,*">
-                  <icons:MaterialIcon Grid.Column="0" Kind="PlayArrow" Width="20" Height="20"
-                                      VerticalAlignment="Center" />
+                  <Panel Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="PlayArrow" Width="20" Height="20">
+                      <icons:MaterialIcon.IsVisible>
+                        <Binding Path="IsAnimationPreviewActive" Converter="{x:Static BoolConverters.Not}" />
+                      </icons:MaterialIcon.IsVisible>
+                    </icons:MaterialIcon>
+                    <icons:MaterialIcon Kind="Stop" Width="20" Height="20"
+                                        IsVisible="{Binding IsAnimationPreviewActive}" />
+                  </Panel>
                   <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"
                              Text="{Binding AnimationPreviewMenuText}" />
                 </Grid>
