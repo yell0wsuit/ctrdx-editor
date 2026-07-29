@@ -56,7 +56,7 @@ namespace CtrDxEditor.UsageGuide
                 [Para("pointer-gestures", "Mouse"), Para("pointer-gestures", "Touch"), Para("pointer-gestures", "Context"), Note("pointer-gestures", "Locked")],
                 ["modifier-keys", "select-transform", "motion"]),
             Article("modifier-keys", "Reference",
-                [ShortcutTable("modifier-keys", "Select", "Duplicate", "PathAngle", "HorizontalScroll", "Zoom", "Rotation", "SplitHand", "LineBreak"), Note("modifier-keys", "Option")],
+                [ShortcutTable("modifier-keys", "Select", "Duplicate", "PathAngle", "HorizontalScroll", "Zoom", "Rotation", "SplitHand", "RopeTension", "LineBreak"), Note("modifier-keys", "Option")],
                 ["keyboard-shortcuts", "mechanical-hands", "motion", "snapping"]),
             Article("snapping", "Reference",
                 [Para("snapping", "Toggles"), Para("snapping", "Temporary"), Tip("snapping", "Properties")],
