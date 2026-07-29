@@ -677,6 +677,7 @@ namespace CtrDxEditor.Rendering
             _handHoverSegment = 0;
             _handSplitPreview = null;
             ResetPolylineHover();
+            SetRopeHovered(false);
             InvalidateVisual();
         }
 

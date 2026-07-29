@@ -1244,12 +1244,7 @@ namespace CtrDxEditor.Rendering
                 // light up the hook when it's hovered.
                 GrabRail.Handle handle = HitRail(levelPt);
                 (RopeLength.Handle ropeHover, _) = HitRope(levelPt);
-                bool ropeIsHovered = ropeHover != RopeLength.Handle.None;
-                if (ropeIsHovered != _ropeHovered)
-                {
-                    _ropeHovered = ropeIsHovered;
-                    InvalidateVisual();
-                }
+                SetRopeHovered(ropeHover != RopeLength.Handle.None);
                 SetHookHovered(handle == GrabRail.Handle.SlideHook);
                 ObjectRotation.Handle dial = HitRotationDial(levelPt);
                 SpikeResize.Handle stripHandle = HitStripResize(levelPt);
@@ -1422,6 +1417,7 @@ namespace CtrDxEditor.Rendering
                 CompleteDocumentEdit?.Invoke();
             }
             // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
+            SetRopeHovered(false);
             SetHookHovered(false);
         }
 
@@ -1430,6 +1426,7 @@ namespace CtrDxEditor.Rendering
         {
             base.OnPointerExited(e);
             SetHookHovered(false); // don't leave the hook lit when the cursor leaves the canvas
+            SetRopeHovered(false); // nor the rope knob ring
             SetDialKnobHovered(false); // nor the rotation knob
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();

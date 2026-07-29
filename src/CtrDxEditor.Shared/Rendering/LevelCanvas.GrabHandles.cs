@@ -118,6 +118,19 @@ namespace CtrDxEditor.Rendering
                 : (RopeLength.Handle.None, 0);
         }
 
+        /// <summary>Updates the rope hover ring and repaints when its visibility changes.</summary>
+        /// <param name="hovered">Whether the pointer is over the selected rope.</param>
+        private void SetRopeHovered(bool hovered)
+        {
+            if (_ropeHovered == hovered)
+            {
+                return;
+            }
+
+            _ropeHovered = hovered;
+            InvalidateVisual();
+        }
+
         /// <summary>
         /// Writes the rope's new rest length from the active drag. Alt switches to the below-taut mapping,
         /// which is the only way to reach lengths the canvas cannot draw differently; without it the drag
@@ -134,7 +147,7 @@ namespace CtrDxEditor.Rendering
             }
 
             double length = mods.HasFlag(KeyModifiers.Alt)
-                ? RopeLength.SolveTaut(g, levelPt)
+                ? RopeLength.SolveTaut(g, _ropeDragParameter, levelPt)
                 : RopeLength.Solve(g, _ropeDragParameter, levelPt);
             grab.SetAttr("length", Whole(length));
         }

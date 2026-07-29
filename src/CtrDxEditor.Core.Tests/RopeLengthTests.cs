@@ -193,12 +193,12 @@ namespace CtrDxEditor.Core.Tests
         {
             RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
 
-            Assert.Equal(75, RopeLength.SolveTaut(g, new Vec2(75, 0)), 6);
-            Assert.Equal(200, RopeLength.SolveTaut(g, new Vec2(900, 0)), 6);
-            Assert.Equal(RopeLength.MinLength, RopeLength.SolveTaut(g, new Vec2(0, 0)), 6);
+            Assert.Equal(75, RopeLength.SolveTaut(g, 0.5, new Vec2(37.5, 0)), 6);
+            Assert.Equal(200, RopeLength.SolveTaut(g, 0.5, new Vec2(900, 0)), 6);
+            Assert.Equal(RopeLength.MinLength, RopeLength.SolveTaut(g, 0.5, new Vec2(0, 0)), 6);
         }
 
-        /// <summary>Both mappings agree at the taut boundary, so releasing Alt mid-drag never jumps.</summary>
+        /// <summary>Both mappings agree at the same taut-boundary point, so toggling Alt never jumps.</summary>
         [Fact]
         public void MappingsMeetAtTheTautBoundary()
         {
@@ -206,7 +206,7 @@ namespace CtrDxEditor.Core.Tests
             Vec2 onChord = new(100, 0);
 
             Assert.Equal(200, RopeLength.Solve(g, 0.5, onChord), 3);
-            Assert.Equal(200, RopeLength.SolveTaut(g, new Vec2(300, 0)), 3);
+            Assert.Equal(200, RopeLength.SolveTaut(g, 0.5, onChord), 3);
         }
 
         /// <summary>A hook on its target has no chord to solve against, so the drag falls back to distance.</summary>

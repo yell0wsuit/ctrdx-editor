@@ -204,16 +204,20 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The rest length for a below-taut drag: plain distance from the hook, clamped into
-        /// [<see cref="MinLength"/>, the chord distance]. Every length in that range draws as the same
-        /// straight cord, so the number is the only feedback and the canvas shows it beside the cursor.
+        /// The rest length for a below-taut drag: distance from the hook normalized by the drag's fixed
+        /// chord parameter, then clamped into [<see cref="MinLength"/>, the chord distance]. Normalizing
+        /// makes this mapping meet <see cref="Solve"/> at the same point on the taut chord, so toggling Alt
+        /// does not jump. Every length in that range draws as the same straight cord, so the number is the
+        /// only feedback and the canvas shows it beside the cursor.
         /// </summary>
         /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
+        /// <param name="t">The fixed chord parameter recorded when the drag began.</param>
         /// <param name="point">The drag position, in level units.</param>
         /// <returns>The new rest length in level units.</returns>
-        public static double SolveTaut(Geometry g, Vec2 point)
+        public static double SolveTaut(Geometry g, double t, Vec2 point)
         {
-            return Math.Clamp(Distance(point, g.Hook), MinLength, Math.Max(MinLength, g.Chord));
+            double parameter = Math.Clamp(t, MinParameter, MaxParameter);
+            return Math.Clamp(Distance(point, g.Hook) / parameter, MinLength, Math.Max(MinLength, g.Chord));
         }
 
         // The knob sits where the drawn cord hangs furthest below its chord. Sampling beats solving: the

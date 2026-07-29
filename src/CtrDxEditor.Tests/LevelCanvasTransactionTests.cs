@@ -24,6 +24,26 @@ namespace CtrDxEditor.Tests
             Assert.Contains("CompleteDocumentEdit?.Invoke();", source, StringComparison.Ordinal);
         }
 
+        /// <summary>Rope hover chrome clears when its gesture, pointer presence, or selected rope ends.</summary>
+        [Fact]
+        public void RopeHoverClearsAcrossCanvasLifecycleChanges()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            string canvas = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.cs"));
+
+            int gesture = input.IndexOf("private void EndPointerGesture()", StringComparison.Ordinal);
+            int pointerExit = input.IndexOf("protected override void OnPointerExited", gesture, StringComparison.Ordinal);
+            int keyDown = input.IndexOf("protected override void OnKeyDown", pointerExit, StringComparison.Ordinal);
+            int selection = canvas.IndexOf("private void HandleSelectionChanged()", StringComparison.Ordinal);
+            int resetPolyline = canvas.IndexOf("private void ResetPolylineHover()", selection, StringComparison.Ordinal);
+
+            Assert.True(gesture >= 0 && pointerExit > gesture && keyDown > pointerExit);
+            Assert.True(selection >= 0 && resetPolyline > selection);
+            Assert.Contains("SetRopeHovered(false);", input.AsSpan(gesture, pointerExit - gesture), StringComparison.Ordinal);
+            Assert.Contains("SetRopeHovered(false);", input.AsSpan(pointerExit, keyDown - pointerExit), StringComparison.Ordinal);
+            Assert.Contains("SetRopeHovered(false);", canvas.AsSpan(selection, resetPolyline - selection), StringComparison.Ordinal);
+        }
+
         /// <summary>Hand body and button presses remain selection-only until deliberate pointer travel.</summary>
         [Fact]
         public void HandDragsWaitForThresholdBeforeEditing()
