@@ -40,6 +40,18 @@ namespace CtrDxEditor.Desktop
                 ManualDownloadUrl = ContentDownloader.AssetsUrl,
                 Playtest = new ProcessPlaytestLauncher(),
                 CheckForUpdate = () => GitHubUpdateChecker.IsUpdateAvailableAsync(AppVersion.Display),
+                RepointContentLocation = async () =>
+                {
+                    // The installer always writes to DefaultContentDir, but resolution prefers a
+                    // configured path. Without this, a hand-set path holding older-but-valid content
+                    // keeps winning, so the install just made is never loaded.
+                    EditorSettings saved = await settings.LoadAsync();
+                    if (ContentLocation.ShouldRepoint(saved.ContentPath, ContentRoot.DefaultContentDir))
+                    {
+                        saved.ContentPath = ContentRoot.DefaultContentDir;
+                        await settings.SaveAsync(saved);
+                    }
+                },
                 ResolveInstalled = async () =>
                 {
                     string? resolved = ContentLocation.Resolve(

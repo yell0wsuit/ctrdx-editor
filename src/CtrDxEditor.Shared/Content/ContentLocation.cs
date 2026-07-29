@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -66,6 +67,29 @@ namespace CtrDxEditor.Content
                 }
             }
             return invalid;
+        }
+
+        /// <summary>
+        /// Whether a configured content path should be repointed at a directory content was just
+        /// installed into.
+        /// </summary>
+        /// <param name="configuredPath">The currently configured content path. May be null or empty.</param>
+        /// <param name="installedDir">The directory the installer wrote to.</param>
+        /// <returns><see langword="true"/> when the configured path needs updating.</returns>
+        /// <remarks>
+        /// Exists because <see cref="Resolve(IReadOnlyList{string}, string?)"/> prefers the configured
+        /// path over everything else, while the installer always writes to its own fixed directory. A
+        /// configured path holding valid-but-superseded content therefore keeps winning, so the fresh
+        /// install is never loaded and the out-of-date prompt returns every launch. An unset path needs
+        /// nothing: it already falls through to the directory the installer writes to.
+        /// </remarks>
+        public static bool ShouldRepoint(string? configuredPath, string installedDir)
+        {
+            return !string.IsNullOrEmpty(configuredPath)
+                && !string.Equals(
+                    Path.TrimEndingDirectorySeparator(Path.GetFullPath(configuredPath)),
+                    Path.TrimEndingDirectorySeparator(Path.GetFullPath(installedDir)),
+                    StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

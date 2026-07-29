@@ -160,7 +160,16 @@ namespace CtrDxEditor
 
                 ContentSetupViewModel vm = new(
                     _startup.Installer,
-                    async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
+                    async () =>
+                    {
+                        // Before loading it: resolution prefers a configured content path, so a stale
+                        // one would keep winning and re-prompt on every launch despite the download.
+                        if (_startup.RepointContentLocation is { } repoint)
+                        {
+                            await repoint();
+                        }
+                        _ = await TryShowEditorAsync(root, _startup.InstalledStore());
+                    },
                     // Optional download: never offer to quit, but always allow backing out - unlike
                     // first-run setup, the editor behind this dialog already works.
                     allowQuit: false,

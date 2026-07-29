@@ -46,6 +46,12 @@ namespace CtrDxEditor.Startup
         public Func<Task<bool>>? CheckForUpdate { get; init; }
 
         /// <summary>
+        /// Points the saved content location at wherever content was just installed. Null where content
+        /// has no configurable location (the browser, whose bundle always lives at one IndexedDB key).
+        /// </summary>
+        public Func<Task>? RepointContentLocation { get; init; }
+
+        /// <summary>
         /// Reads platform safe-area insets, when this head can do so more reliably than Avalonia's
         /// <c>InsetsManager</c>. Null on heads that have nothing better (desktop), where the manager is used.
         /// </summary>

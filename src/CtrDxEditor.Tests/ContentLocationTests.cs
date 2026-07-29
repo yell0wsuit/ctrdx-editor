@@ -178,5 +178,50 @@ namespace CtrDxEditor.Tests
             }
             finally { Directory.Delete(root, recursive: true); }
         }
+
+        /// <summary>
+        /// A configured path pointing somewhere other than the install directory must be repointed;
+        /// resolution prefers it, so leaving it would keep loading the superseded content and
+        /// re-prompt on every launch.
+        /// </summary>
+        [Fact]
+        public void ShouldRepointAConfiguredPathAwayFromTheInstallDirectory()
+        {
+            Assert.True(ContentLocation.ShouldRepoint(
+                Path.Combine("/somewhere", "else", "content"),
+                Path.Combine("/data", "content")));
+        }
+
+        /// <summary>An unset path already falls through to the install directory, so it is left alone.</summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void DoesNotRepointAnUnsetPath(string? configured)
+        {
+            Assert.False(ContentLocation.ShouldRepoint(configured, Path.Combine("/data", "content")));
+        }
+
+        /// <summary>A path already naming the install directory needs no write.</summary>
+        [Fact]
+        public void DoesNotRepointAPathAlreadyAtTheInstallDirectory()
+        {
+            string installed = Path.Combine(Path.GetTempPath(), "ctrdx-content");
+
+            Assert.False(ContentLocation.ShouldRepoint(installed, installed));
+        }
+
+        /// <summary>
+        /// The same directory written differently is still the same directory, so a trailing separator
+        /// or a relative segment must not trigger a pointless rewrite.
+        /// </summary>
+        [Fact]
+        public void DoesNotRepointTheSameDirectoryWrittenDifferently()
+        {
+            string installed = Path.Combine(Path.GetTempPath(), "ctrdx-content");
+
+            Assert.False(ContentLocation.ShouldRepoint(installed + Path.DirectorySeparatorChar, installed));
+            Assert.False(ContentLocation.ShouldRepoint(
+                Path.Combine(installed, "..", "ctrdx-content"), installed));
+        }
     }
 }
