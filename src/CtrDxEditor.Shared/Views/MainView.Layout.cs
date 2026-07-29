@@ -498,9 +498,9 @@ namespace CtrDxEditor.Views
 
         /// <summary>Shows the edit bar while the open document has an available edit action.</summary>
         /// <remarks>
-        /// The predicate is deliberately wider than "something is selected": <c>CanPaste</c> also reflects
-        /// the internal buffer and the last desktop observation of the system clipboard. The bar stands down
-        /// while either overlay is up, since both cover the strip it occupies.
+        /// The predicate is deliberately wider than "something is selected": <c>CanPaste</c> keeps the bar
+        /// up for a copied selection with nothing selected. The bar stands down while either overlay is up,
+        /// since both cover the strip it occupies.
         /// </remarks>
         private void UpdateCompactEditBarVisibility()
         {

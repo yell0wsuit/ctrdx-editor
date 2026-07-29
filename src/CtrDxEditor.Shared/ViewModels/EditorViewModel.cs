@@ -37,18 +37,6 @@ namespace CtrDxEditor.ViewModels
         private readonly List<HistoryState> _undoStack = [];
         private readonly List<HistoryState> _redoStack = [];
         private readonly List<XElement> _clipboard = [];
-        // The exact text we last put on the system clipboard, and whether Clear Clipboard has since
-        // disowned it. Paste ignores system text equal to a disowned string, which is what stops Clear
-        // Clipboard looking broken while leaving the user's actual OS clipboard alone.
-        private string? _ownClipboardText;
-        private bool _ownClipboardTextDisowned;
-
-        // Whether the system clipboard is believed to hold recognized objects or object-like XML that
-        // deserves a rejection warning. This is a cached observation on desktop because the clipboard
-        // cannot be read synchronously. In the browser it is a permissive default that is never narrowed:
-        // pre-reading there can raise Safari's paste prompt, which is worse than an occasional no-op.
-        private bool _systemClipboardHasPasteCandidate = OperatingSystem.IsBrowser();
-        private int _systemClipboardObservationVersion;
         private HistoryState? _pendingUndoTransaction;
         private bool _syncingSelectedTreeItem;
 
@@ -204,13 +192,13 @@ namespace CtrDxEditor.ViewModels
         /// <summary>True when the selected objects can be copied from an open level.</summary>
         public bool CanCopySelection => HasDocument && SelectedObject is not null;
 
-        /// <summary>True when an open level can accept either internal or system clipboard objects.</summary>
+        /// <summary>True when an open level has copied objects waiting to be pasted into it.</summary>
         /// <remarks>
-        /// The system half is a cached observation, not a live query - the clipboard cannot be read in time
-        /// to decide a menu item's enabled state. See <see cref="RefreshSystemClipboardStateAsync"/> for
-        /// when it is taken, and why the browser keeps a permissive default instead.
+        /// Answers to the in-app buffer alone. The system clipboard is written but never read, so this is a
+        /// fact rather than a guess - which is what the browser needs, since reading there is permission
+        /// gated and cannot be done in time to decide a menu item's enabled state anyway.
         /// </remarks>
-        public bool CanPaste => HasDocument && (HasClipboard || _systemClipboardHasPasteCandidate);
+        public bool CanPaste => HasDocument && HasClipboard;
 
         /// <summary>True when the selected objects can be deleted from an open level.</summary>
         public bool CanDeleteSelection => HasDocument && SelectedObject is not null;
@@ -608,9 +596,6 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Places text on the system clipboard. Set by the view; null when unavailable.</summary>
         public Func<string, Task>? WriteClipboardText { get; set; }
 
-        /// <summary>Reads the system clipboard's text. Set by the view; null when unavailable.</summary>
-        public Func<Task<string?>>? ReadClipboardText { get; set; }
-
         /// <summary>Copies detached XML snapshots of the current selection into the object clipboard.</summary>
         public void CopySelection()
         {
@@ -625,9 +610,8 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Copies the selection into the object clipboard and onto the system clipboard.</summary>
         /// <remarks>
-        /// Both stores are written together on purpose. Written independently, Paste could not tell which
-        /// was fresher: copy XML from a chat window, then copy an object here, and preferring the system
-        /// clipboard would paste the chat content.
+        /// The system copy exists so a selection can be pasted into a level file, a chat or another tool.
+        /// It is never read back: Paste always works from the buffer filled here.
         /// </remarks>
         public async Task CopySelectionAsync()
         {
@@ -648,9 +632,6 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Pushes the object clipboard's text to the system clipboard.</summary>
         private async Task PublishClipboardTextAsync()
         {
-            _ownClipboardText = ObjectClipboardXml.Write(_clipboard);
-            _ownClipboardTextDisowned = false;
-
             if (WriteClipboardText is not { } write)
             {
                 return;
@@ -658,9 +639,7 @@ namespace CtrDxEditor.ViewModels
 
             try
             {
-                await write(_ownClipboardText);
-                // We put it there, so no read is needed to know what is on it.
-                RecordSystemClipboardHasPasteCandidate(_clipboard.Count > 0);
+                await write(ObjectClipboardXml.Write(_clipboard));
             }
             // A clipboard the platform refuses - a denied browser permission, most likely - must not take
             // the copy down with it: the internal buffer is already filled and Paste still works.
@@ -670,12 +649,13 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        /// <summary>Empties the object clipboard.</summary>
+        /// <summary>Empties the object clipboard, which also takes Paste down with it.</summary>
         /// <remarks>
-        /// The clipboard is same-window and holds detached XML snapshots for the life of the session, so
-        /// nothing else ever empties it: a copy made to move one object leaves Paste live indefinitely, and
-        /// on touch that is a live target sitting next to Copy. Guarded on the count so an already-empty
-        /// clipboard does not raise a change no binding needs.
+        /// The clipboard is same-session and holds detached XML snapshots, so nothing else ever empties it:
+        /// a copy made to move one object leaves Paste live indefinitely, and on touch that is a live target
+        /// sitting next to Copy. The system clipboard is deliberately left alone - emptying someone's OS
+        /// clipboard from a level editor is out of scope. Guarded on the count so an already-empty clipboard
+        /// does not raise a change no binding needs.
         /// </remarks>
         public void ClearClipboard()
         {
@@ -685,7 +665,6 @@ namespace CtrDxEditor.ViewModels
             }
 
             _clipboard.Clear();
-            _ownClipboardTextDisowned = true;
             OnPropertyChanged(nameof(HasClipboard));
             NotifyEditCommandCapabilities();
         }
@@ -701,23 +680,17 @@ namespace CtrDxEditor.ViewModels
         /// Pastes clipboard objects into the active layer with their centroid at the target point, preserving
         /// relative layout, then selects the surviving clones.
         /// </summary>
-        public void PasteAt(int levelX, int levelY)
-        {
-            PasteElements(_clipboard, levelX, levelY);
-        }
-
-        /// <summary>Places detached object elements at the target point, centroid preserved.</summary>
-        /// <param name="elements">Objects to place; each is cloned, so the caller keeps its copies.</param>
         /// <param name="levelX">Target x in level space.</param>
         /// <param name="levelY">Target y in level space.</param>
-        private void PasteElements(IReadOnlyList<XElement> elements, int levelX, int levelY)
+        public void PasteAt(int levelX, int levelY)
         {
-            if (Document is null || ActiveLayer?.Layer is not { } target || elements.Count == 0)
+            if (Document is null || ActiveLayer?.Layer is not { } target || _clipboard.Count == 0)
             {
                 return;
             }
 
-            List<LevelObject> buffered = [.. elements.Select(element => new LevelObject(new XElement(element)))];
+            // Cloned on the way in, so the buffer keeps its own copies and can be pasted again.
+            List<LevelObject> buffered = [.. _clipboard.Select(element => new LevelObject(new XElement(element)))];
             int centerX = (int)buffered.Average(obj => obj.X);
             int centerY = (int)buffered.Average(obj => obj.Y);
 
@@ -736,125 +709,6 @@ namespace CtrDxEditor.ViewModels
                 Selection.SetRange(clones, clones[^1]);
                 RaiseSelectedObjectChanged();
             }
-        }
-
-        /// <summary>Pastes from the system clipboard when it holds objects, otherwise from the buffer.</summary>
-        /// <param name="levelX">Target x in level space.</param>
-        /// <param name="levelY">Target y in level space.</param>
-        /// <returns>What happened, so the view can report a refused paste.</returns>
-        public async Task<PasteOutcome> PasteFromClipboardAsync(int levelX, int levelY)
-        {
-            int observation = BeginSystemClipboardObservation();
-            ClipboardXmlResult external = await ReadExternalClipboardAsync();
-            // The read just happened, so take the observation for free rather than waiting for the next
-            // activation to notice the clipboard has moved on.
-            CompleteSystemClipboardObservation(
-                observation,
-                external.Outcome != ClipboardXmlOutcome.NotOurs);
-
-            if (external.Outcome == ClipboardXmlOutcome.Parsed)
-            {
-                PasteElements(external.Elements, levelX, levelY);
-                return PasteOutcome.Pasted;
-            }
-
-            // Deliberately no fallback: pasting the buffer after refusing the user's XML would look like
-            // Paste produced the wrong objects, with nothing to say the XML was the problem.
-            if (external.Outcome == ClipboardXmlOutcome.Rejected)
-            {
-                return PasteOutcome.InvalidXml;
-            }
-
-            if (_clipboard.Count == 0)
-            {
-                return PasteOutcome.NothingToPaste;
-            }
-
-            PasteAt(levelX, levelY);
-            return PasteOutcome.Pasted;
-        }
-
-        /// <summary>Re-reads the system clipboard to decide whether Paste has anything to offer.</summary>
-        /// <remarks>
-        /// Called from the view on attachment and window activation, when the answer can have changed
-        /// without the editor noticing. Skipped entirely in the browser, where the read is permission-gated
-        /// and would prompt; Paste stays enabled there and unrelated content falls back or does nothing.
-        /// </remarks>
-        public async Task RefreshSystemClipboardStateAsync()
-        {
-            if (OperatingSystem.IsBrowser())
-            {
-                return;
-            }
-
-            int observation = BeginSystemClipboardObservation();
-            ClipboardXmlResult external = await ReadExternalClipboardAsync();
-            CompleteSystemClipboardObservation(
-                observation,
-                external.Outcome != ClipboardXmlOutcome.NotOurs);
-        }
-
-        /// <summary>Starts an asynchronous system-clipboard observation.</summary>
-        /// <returns>A version that only remains current until a newer observation or known write occurs.</returns>
-        private int BeginSystemClipboardObservation()
-        {
-            return ++_systemClipboardObservationVersion;
-        }
-
-        /// <summary>Applies an asynchronous observation only when nothing newer has superseded it.</summary>
-        private void CompleteSystemClipboardObservation(int version, bool hasCandidate)
-        {
-            if (version == _systemClipboardObservationVersion)
-            {
-                SetSystemClipboardHasPasteCandidate(hasCandidate);
-            }
-        }
-
-        /// <summary>Records a known clipboard state and supersedes every read already in flight.</summary>
-        private void RecordSystemClipboardHasPasteCandidate(bool hasCandidate)
-        {
-            _systemClipboardObservationVersion++;
-            SetSystemClipboardHasPasteCandidate(hasCandidate);
-        }
-
-        /// <summary>Records whether the system clipboard was last seen to hold an actionable candidate.</summary>
-        /// <param name="hasCandidate">Whether Paste can add objects or report rejected object-like XML.</param>
-        private void SetSystemClipboardHasPasteCandidate(bool hasCandidate)
-        {
-            // Never narrowed in the browser: there the field is a standing assumption, not an observation,
-            // and clearing it would disable Paste for XML we were never allowed to look at.
-            if (OperatingSystem.IsBrowser() || _systemClipboardHasPasteCandidate == hasCandidate)
-            {
-                return;
-            }
-
-            _systemClipboardHasPasteCandidate = hasCandidate;
-            OnPropertyChanged(nameof(CanPaste));
-        }
-
-        /// <summary>Reads and parses the system clipboard, treating every failure as "not ours".</summary>
-        private async Task<ClipboardXmlResult> ReadExternalClipboardAsync()
-        {
-            if (ReadClipboardText is not { } read)
-            {
-                return new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, []);
-            }
-
-            string? text;
-            try
-            {
-                text = await read();
-            }
-            // A refused or unavailable clipboard is not a failed paste; the buffer still answers.
-            catch (Exception)
-            {
-                return new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, []);
-            }
-
-            // Our own disowned text reads as an empty clipboard, so Clear Clipboard actually clears.
-            return _ownClipboardTextDisowned && text == _ownClipboardText
-                ? new ClipboardXmlResult(ClipboardXmlOutcome.NotOurs, [])
-                : ObjectClipboardXml.Read(text, _descriptors);
         }
 
         /// <summary>Refreshes bindings and property-panel state after a direct selection mutation.</summary>
@@ -2313,18 +2167,5 @@ namespace CtrDxEditor.ViewModels
             ObjectRef? LockedRef,
             ObjectRef[] AutoWidthRefs,
             ObjectRef[] HiddenRefs);
-    }
-
-    /// <summary>What a paste from the system clipboard did.</summary>
-    public enum PasteOutcome
-    {
-        /// <summary>Objects were added.</summary>
-        Pasted,
-
-        /// <summary>Neither store held anything to paste.</summary>
-        NothingToPaste,
-
-        /// <summary>The clipboard named an object but could not be used; the user should be told.</summary>
-        InvalidXml,
     }
 }

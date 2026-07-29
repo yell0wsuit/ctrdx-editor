@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -66,7 +65,7 @@ namespace CtrDxEditor.Views
             }
         }
 
-        private async void Paste_Click(object? sender, RoutedEventArgs e)
+        private void Paste_Click(object? sender, RoutedEventArgs e)
         {
             if (DataContext is not EditorViewModel vm)
             {
@@ -74,19 +73,7 @@ namespace CtrDxEditor.Views
             }
 
             (int pasteX, int pasteY) = _canvas.PasteTargetLevelPoint();
-            PasteOutcome outcome = await vm.PasteFromClipboardAsync(pasteX, pasteY);
-
-            // Only a paste that named an object and still failed is worth a toast. Unrelated clipboard
-            // text is the common case and must stay silent.
-            if (outcome == PasteOutcome.InvalidXml)
-            {
-                Notifications()?.Show(new Notification(
-                    Localizer.Get("Notification.Paste.InvalidXml"),
-                    string.Empty,
-                    NotificationType.Warning));
-                return;
-            }
-
+            vm.PasteAt(pasteX, pasteY);
             this.FindControl<LevelCanvas>("Canvas")!.InvalidateVisual();
         }
 
