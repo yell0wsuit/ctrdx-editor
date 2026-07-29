@@ -41,6 +41,41 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, mid.Y, 9); // quadratic: 0.25*0 + 0.5*100 + 0.25*0
         }
 
+        /// <summary>The control chain grows one link per rest-length unit, with a floor of three.</summary>
+        [Theory]
+        [InlineData(0, 3)]
+        [InlineData(100, 4)]
+        [InlineData(210, 8)]
+        public void ControlPointCountFollowsTheRestLengthChain(double length, int expected)
+        {
+            Assert.Equal(expected, RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length).Length);
+        }
+
+        /// <summary>A taut rope's controls lie on the straight chord.</summary>
+        [Fact]
+        public void TautControlPointsLieOnTheChord()
+        {
+            Vec2[] pts = RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length: 80);
+
+            Assert.Equal(new Vec2(0, 0), pts[0]);
+            Assert.Equal(new Vec2(100, 0), pts[^1]);
+            foreach (Vec2 p in pts)
+            {
+                Assert.Equal(0, p.Y, 6);
+            }
+        }
+
+        /// <summary>A slack rope's interior controls hang below the chord (+Y is down).</summary>
+        [Fact]
+        public void SlackControlPointsSagBelowTheChord()
+        {
+            Vec2[] pts = RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length: 200);
+
+            Assert.Equal(new Vec2(0, 0), pts[0]);
+            Assert.Equal(new Vec2(100, 0), pts[^1]);
+            Assert.True(pts[pts.Length / 2].Y > 0);
+        }
+
         /// <summary>A taut rope (length &lt; distance) is straight: strip centerlines stay on the chord.</summary>
         [Fact]
         public void BuildTautRopeIsStraight()

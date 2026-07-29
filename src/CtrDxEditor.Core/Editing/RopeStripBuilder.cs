@@ -77,16 +77,18 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// Builds the triangle strips for a rope from <paramref name="a"/> (the grab) to
-        /// <paramref name="b"/> (the target) with rest length <paramref name="length"/>.
-        /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
-        /// past their rest length pick up the game's red stretch tint.
+        /// The rope's bezier control points: the physics chain the game would build for this rest length,
+        /// hanging on the catenary when slack and running straight when taut. Feed these to
+        /// <see cref="CalcPathBezier"/> to evaluate the cord that is actually drawn.
         /// </summary>
-        public static RopeVisual Build(Vec2 a, Vec2 b, double length, int skin = 0)
+        /// <param name="a">First endpoint (the grab), in level units.</param>
+        /// <param name="b">Second endpoint (the target), in level units.</param>
+        /// <param name="length">Rope rest length, in level units.</param>
+        /// <returns>The control points, ordered from <paramref name="a"/> to <paramref name="b"/>.</returns>
+        public static Vec2[] ControlPoints(Vec2 a, Vec2 b, double length)
         {
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
-            RopeDrawColors palette = RopePalette.GetDrawColors(skin, distance, length);
 
             // The physics chain has 2 + floor(len/restLen) parts; the game's draw loop needs >= 3.
             int count = Math.Max(3, 2 + (int)(length / RestLength));
@@ -108,7 +110,20 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
-            return BuildStrips(pts, palette);
+            return pts;
+        }
+
+        /// <summary>
+        /// Builds the triangle strips for a rope from <paramref name="a"/> (the grab) to
+        /// <paramref name="b"/> (the target) with rest length <paramref name="length"/>.
+        /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
+        /// past their rest length pick up the game's red stretch tint.
+        /// </summary>
+        public static RopeVisual Build(Vec2 a, Vec2 b, double length, int skin = 0)
+        {
+            Vec2 chord = b - a;
+            double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
+            return BuildStrips(ControlPoints(a, b, length), RopePalette.GetDrawColors(skin, distance, length));
         }
 
         /// <summary>
