@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 using CtrDxEditor.UsageGuide;
 using CtrDxEditor.ViewModels;
@@ -120,7 +121,7 @@ namespace CtrDxEditor.Tests
             vm.NavigateTo("second");
             vm.SearchText = "third";
 
-            vm.SelectedTocArticle = vm.SelectedArticle;
+            vm.NavigateTo(vm.SelectedArticle.Id);
 
             Assert.False(vm.IsSearchActive);
             Assert.True(vm.IsArticleVisible);
@@ -136,25 +137,97 @@ namespace CtrDxEditor.Tests
             UsageGuideViewModel vm = CreateSmallViewModel();
             vm.SearchText = "second";
 
-            vm.SelectedTocArticle = vm.Articles[2];
+            vm.NavigateTo(vm.Articles[2].Id);
 
             Assert.False(vm.IsSearchActive);
             Assert.Equal("third", vm.SelectedArticle.Id);
             Assert.True(vm.CanGoBack);
         }
 
-        /// <summary>The cleared selection echoed back by the contents list is not navigation.</summary>
+        /// <summary>Contents rows cover the catalog in order and outlive every navigation.</summary>
+        /// <remarks>
+        /// Stable row instances are the point: the highlight rides on each row's own
+        /// <see cref="GuideTocRow.IsActive"/>, so rebuilding the collection would throw away the
+        /// drawer's scroll position and the containers the highlight is painted on.
+        /// </remarks>
         [Fact]
-        public void ClearedContentsSelectionIsIgnored()
+        public void ContentsRowsMirrorTheCatalogAndSurviveNavigation()
         {
             UsageGuideViewModel vm = CreateSmallViewModel();
+            GuideTocRow[] before = [.. vm.TocRows];
+
+            vm.NavigateTo("third");
             vm.SearchText = "second";
+            vm.ClearSearch();
 
-            vm.SelectedTocArticle = null;
+            Assert.Equal(vm.Articles.Select(article => article.Id), vm.TocRows.Select(row => row.Id));
+            Assert.Equal(before, vm.TocRows);
+        }
 
-            Assert.True(vm.IsSearchActive);
-            Assert.Equal("home", vm.SelectedArticle.Id);
-            Assert.False(vm.CanGoBack);
+        /// <summary>Exactly one row is active, and it is the article in the reading pane.</summary>
+        [Fact]
+        public void OneContentsRowIsActiveForTheArticleBeingRead()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+
+            vm.NavigateTo("second");
+
+            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+        }
+
+        /// <summary>No row is active while the search page covers the article.</summary>
+        [Fact]
+        public void NoContentsRowIsActiveWhileSearching()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+
+            vm.SearchText = "third";
+            Assert.DoesNotContain(vm.TocRows, row => row.IsActive);
+
+            vm.ClearSearch();
+            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+        }
+
+        /// <summary>
+        /// Jumping from a search result moves the highlight to the article that opened.
+        /// </summary>
+        /// <remarks>
+        /// The row that switches off notifies as well as the row that switches on, which is what makes
+        /// the drawer repaint correctly even though it was closed while all of this happened.
+        /// </remarks>
+        [Fact]
+        public void JumpingFromASearchResultMovesTheActiveRow()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+            vm.SearchText = "third";
+            List<string> notified = [];
+            foreach (GuideTocRow row in vm.TocRows)
+            {
+                row.PropertyChanged += (sender, _) => notified.Add(((GuideTocRow)sender!).Id);
+            }
+
+            vm.OpenSearchResult("third");
+
+            Assert.Equal("third", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
+            Assert.Equal(["third"], notified);
+        }
+
+        /// <summary>
+        /// Re-opening the article already being read still restores its highlight after search.
+        /// </summary>
+        [Fact]
+        public void JumpingToTheArticleAlreadyOpenRestoresItsActiveRow()
+        {
+            UsageGuideViewModel vm = CreateSmallViewModel();
+            vm.NavigateTo("second");
+            vm.SearchText = "second";
+            Assert.DoesNotContain(vm.TocRows, row => row.IsActive);
+
+            vm.OpenSearchResult("second");
+
+            Assert.Equal("second", Assert.Single(vm.TocRows.Where(row => row.IsActive)).Id);
         }
 
         /// <summary>Back, forward, and home all produce a visible change during a search.</summary>

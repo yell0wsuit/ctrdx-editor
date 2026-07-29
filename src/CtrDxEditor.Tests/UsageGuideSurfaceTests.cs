@@ -37,7 +37,7 @@ namespace CtrDxEditor.Tests
             XElement contents = NamedElement(markup, "TableOfContents");
             XElement results = NamedElement(markup, "SearchResults");
 
-            Assert.Equal("{Binding Articles}", contents.Attribute("ItemsSource")?.Value);
+            Assert.Equal("{Binding TocRows}", contents.Attribute("ItemsSource")?.Value);
             Assert.Equal("{Binding SearchResults}", results.Attribute("ItemsSource")?.Value);
         }
 
@@ -63,10 +63,15 @@ namespace CtrDxEditor.Tests
         }
 
         /// <summary>
-        /// The contents highlight has exactly one writer, so it cannot disagree with the visible pane.
+        /// Contents rows are activated and highlighted from data, with no selection state of their own.
         /// </summary>
+        /// <remarks>
+        /// A selection model is a second copy of "where am I" living in the control, and it only tracks
+        /// the view model while the containers holding it are realized - which a closed drawer's rows are
+        /// not. Binding the highlight to each row's own flag leaves nothing to fall out of step.
+        /// </remarks>
         [Fact]
-        public void TableOfContentsSelectionIsDrivenSolelyByTheBoundProperty()
+        public void TableOfContentsHighlightIsBoundPerRowRatherThanSelected()
         {
             XDocument markup = XDocument.Load(
                 SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
@@ -74,11 +79,82 @@ namespace CtrDxEditor.Tests
             string codeBehind = File.ReadAllText(
                 SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml.cs"));
 
-            Assert.Equal(
-                "{Binding SelectedTocArticle, Mode=TwoWay}",
-                contents.Attribute("SelectedItem")?.Value);
+            Assert.Equal("ItemsControl", contents.Name.LocalName);
+            Assert.Null(contents.Attribute("SelectedItem"));
             Assert.Null(contents.Attribute("SelectionChanged"));
-            Assert.DoesNotContain("TableOfContents\")!.SelectedItem", codeBehind, StringComparison.Ordinal);
+
+            XElement row = Assert.Single(
+                contents.Descendants(),
+                element => element.Name.LocalName == "Button");
+            Assert.Equal("TableOfContentsRow_Click", row.Attribute("Click")?.Value);
+            Assert.Equal("{Binding Id}", row.Attribute("Tag")?.Value);
+            Assert.Equal("{Binding IsActive}", row.Attribute("Classes.reading")?.Value);
+
+            Assert.DoesNotContain("SelectedItem", codeBehind, StringComparison.Ordinal);
+            Assert.DoesNotContain("SelectedTocArticle", codeBehind, StringComparison.Ordinal);
+        }
+
+        /// <summary>Starting a search stands the compact drawer down.</summary>
+        /// <remarks>
+        /// The drawer overlays the results page rather than displacing it, so leaving it open would put
+        /// the pane on top of the cards a reader is trying to tap.
+        /// </remarks>
+        [Fact]
+        public void StartingASearchClosesTheCompactDrawer()
+        {
+            string codeBehind = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml.cs"));
+
+            int handler = codeBehind.IndexOf(
+                "private void ViewModel_PropertyChanged",
+                StringComparison.Ordinal);
+            int nextMember = codeBehind.IndexOf(
+                "private void ApplyAdaptiveLayout",
+                handler,
+                StringComparison.Ordinal);
+            Assert.True(handler >= 0 && nextMember > handler);
+
+            ReadOnlySpan<char> body = codeBehind.AsSpan(handler, nextMember - handler);
+            Assert.Contains("IsSearchActive", body, StringComparison.Ordinal);
+            Assert.Contains("CloseCompactSidebar();", body, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The row being read is marked without filling behind its text, and stays off the shared
+        /// latched class.
+        /// </summary>
+        /// <remarks>
+        /// Every line keeps the panel's own foreground, so no contrast pairing has to be maintained
+        /// for the marker. Filling the row and writing over it is what produced blue on blue at 3.8:1,
+        /// and <c>Button.active</c> - the latched idiom for a single short label - writes exactly that
+        /// accent foreground, so the contents row must not carry it.
+        /// </remarks>
+        [Fact]
+        public void ReadRowIsMarkedWithoutFillingBehindItsText()
+        {
+            string markup = File.ReadAllText(
+                SourcePath("CtrDxEditor.Shared", "Views", "UsageGuideView.axaml"));
+
+            Assert.DoesNotContain("Classes.active", markup, StringComparison.Ordinal);
+
+            int style = markup.IndexOf(
+                "Button.tocRow.reading /template/ ContentPresenter#PART_ContentPresenter",
+                StringComparison.Ordinal);
+            int nextStyle = markup.IndexOf("</Style>", style, StringComparison.Ordinal);
+            Assert.True(style >= 0 && nextStyle > style);
+
+            // A Background setter here would put the text back on a coloured fill.
+            ReadOnlySpan<char> body = markup.AsSpan(style, nextStyle - style);
+            Assert.Contains("BorderBrush", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("Background", body, StringComparison.Ordinal);
+
+            // The rail rides the border every row already reserves, so marking one shifts no layout.
+            int baseStyle = markup.IndexOf("<Style Selector=\"Button.tocRow\">", StringComparison.Ordinal);
+            int baseEnd = markup.IndexOf("</Style>", baseStyle, StringComparison.Ordinal);
+            Assert.Contains(
+                "BorderThickness\" Value=\"3,0,0,0\"",
+                markup.AsSpan(baseStyle, baseEnd - baseStyle),
+                StringComparison.Ordinal);
         }
 
         /// <summary>The drawer toggle describes both of its states through the native pane events.</summary>

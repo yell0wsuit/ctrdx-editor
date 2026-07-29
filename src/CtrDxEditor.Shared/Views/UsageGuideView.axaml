@@ -9,6 +9,28 @@
              x:CompileBindings="True"
              x:DataType="vm:UsageGuideViewModel">
   <UserControl.Styles>
+    <Style Selector="Button.tocRow">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="3,0,0,0" />
+      <Setter Property="CornerRadius" Value="0,4,4,0" />
+      <Setter Property="Padding" Value="8,5" />
+      <Setter Property="Margin" Value="0,1" />
+    </Style>
+    <Style Selector="Button.tocRow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardHover}" />
+    </Style>
+    <Style Selector="Button.tocRow:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource EditorBrush.Surface.CardPressed}" />
+    </Style>
+    <!-- The rail is carried by the border every row already reserves, so marking one costs no layout
+    shift; hover keeps changing the fill, which is what keeps the two states apart. -->
+    <Style Selector="Button.tocRow.reading /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource EditorBrush.Primary}" />
+    </Style>
+    <Style Selector="Button.tocRow.reading TextBlock.tocTitle">
+      <Setter Property="Foreground" Value="{DynamicResource EditorBrush.Primary}" />
+    </Style>
     <Style Selector="Border.guideCallout">
       <Setter Property="BorderThickness" Value="3,0,0,0" />
       <Setter Property="CornerRadius" Value="6" />
@@ -160,23 +182,26 @@
         <Grid RowDefinitions="Auto,*" Width="300">
           <TextBlock Grid.Row="0" Text="{loc:Tr Guide.Navigation.Contents}"
                      FontSize="20" FontWeight="SemiBold" Margin="18,18,18,10" />
-          <ListBox x:Name="TableOfContents" Grid.Row="1"
-                   ItemsSource="{Binding Articles}"
-                   SelectedItem="{Binding SelectedTocArticle, Mode=TwoWay}"
-                   PointerReleased="TableOfContents_PointerReleased"
-                   Background="Transparent" BorderThickness="0"
-                   Margin="8,0,8,12">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="guide:GuideArticle">
-                <StackPanel Spacing="2" Margin="8,5">
-                  <TextBlock Text="{Binding Section}" FontSize="11" Opacity="0.58" />
-                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                  <TextBlock Text="{Binding Summary}" FontSize="12" Opacity="0.68"
-                             TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto" Margin="8,0,8,12">
+            <ItemsControl x:Name="TableOfContents" ItemsSource="{Binding TocRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:GuideTocRow">
+                  <Button Classes="tocRow" Classes.reading="{Binding IsActive}"
+                          Tag="{Binding Id}" Click="TableOfContentsRow_Click"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Section}" FontSize="11" Opacity="0.58" />
+                      <TextBlock Classes="tocTitle" Text="{Binding Title}"
+                                 FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Summary}" FontSize="12" Opacity="0.68"
+                                 TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
         </Grid>
       </SplitView.Pane>
 
@@ -201,18 +226,18 @@
                           Margin="0,3" Padding="14,11">
                     <StackPanel Spacing="5">
                       <controls:SearchHighlightTextBlock
-                          SourceText="{Binding Section}" Query="{Binding Query}"
-                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                          FontSize="12" Foreground="{DynamicResource EditorBrush.Primary}"
-                          FontWeight="SemiBold" TextWrapping="Wrap" />
+                        SourceText="{Binding Section}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="12" Foreground="{DynamicResource EditorBrush.Primary}"
+                        FontWeight="SemiBold" TextWrapping="Wrap" />
                       <controls:SearchHighlightTextBlock
-                          SourceText="{Binding Title}" Query="{Binding Query}"
-                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                          FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        SourceText="{Binding Title}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
                       <controls:SearchHighlightTextBlock
-                          SourceText="{Binding Summary}" Query="{Binding Query}"
-                          HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
-                          FontSize="14" Opacity="0.72" TextWrapping="Wrap" LineHeight="21" />
+                        SourceText="{Binding Summary}" Query="{Binding Query}"
+                        HighlightBrush="{DynamicResource EditorBrush.WarningLow}"
+                        FontSize="14" Opacity="0.72" TextWrapping="Wrap" LineHeight="21" />
                     </StackPanel>
                   </Button>
                 </DataTemplate>

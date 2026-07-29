@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Avalonia.VisualTree;
 
 using CtrDxEditor.Localization;
 using CtrDxEditor.UsageGuide;
@@ -47,9 +46,8 @@ namespace CtrDxEditor.Views
         /// <param name="sender">Guide view model raising the notification.</param>
         /// <param name="e">Name of the changed view-model property.</param>
         /// <remarks>
-        /// Table-of-contents selection is not touched here: it is bound to
-        /// <see cref="UsageGuideViewModel.SelectedTocArticle"/>, and a second writer is exactly what
-        /// let the highlight drift out of step with the visible pane.
+        /// The contents highlight is not touched here. It lives on the view model's row flags, and a
+        /// second writer in the view is exactly what let it drift out of step with the visible pane.
         /// </remarks>
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
@@ -57,6 +55,16 @@ namespace CtrDxEditor.Views
                 or nameof(UsageGuideViewModel.SearchText))
             {
                 ScrollVisiblePaneToTop();
+            }
+
+            // The search box sits above the split view, so a search can start with the drawer open -
+            // and at compact widths the open pane covers most of every result card, leaving a tap
+            // meant for a result to hit the light-dismiss overlay or a contents row underneath.
+            // Results are a full-page destination, so the drawer stands down for them.
+            if (e.PropertyName == nameof(UsageGuideViewModel.IsSearchActive)
+                && _viewModel.IsSearchActive)
+            {
+                CloseCompactSidebar();
             }
         }
 
@@ -147,19 +155,20 @@ namespace CtrDxEditor.Views
             _viewModel.GoHome();
         }
 
-        /// <summary>Closes the compact drawer after a table-of-contents row is tapped.</summary>
-        /// <param name="sender">Table-of-contents list that received the pointer.</param>
-        /// <param name="e">Pointer release data used to locate the tapped row.</param>
+        /// <summary>Opens a table-of-contents row and dismisses the compact drawer.</summary>
+        /// <param name="sender">Contents row carrying a stable article identifier.</param>
+        /// <param name="e">Click event data.</param>
         /// <remarks>
-        /// Navigation itself travels through the two-way
-        /// <see cref="UsageGuideViewModel.SelectedTocArticle"/> binding. Only the drawer is handled
-        /// here, and it listens to the pointer rather than to selection so that re-tapping the row
-        /// already being read still dismisses the drawer.
+        /// Rows are activated rather than selected, like result cards and related topics. The drawer
+        /// closes on every click, so re-tapping the row already being read still dismisses it, and the
+        /// highlight comes back from the view model's row flags rather than from list selection state
+        /// that only tracks whichever rows happen to be realized.
         /// </remarks>
-        private void TableOfContents_PointerReleased(object? sender, PointerReleasedEventArgs e)
+        private void TableOfContentsRow_Click(object? sender, RoutedEventArgs e)
         {
-            if ((e.Source as Visual)?.FindAncestorOfType<ListBoxItem>(includeSelf: true) is not null)
+            if (sender is Button { Tag: string articleId })
             {
+                _viewModel.NavigateTo(articleId);
                 CloseCompactSidebar();
             }
         }

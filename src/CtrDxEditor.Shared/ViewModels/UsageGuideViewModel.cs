@@ -49,6 +49,8 @@ namespace CtrDxEditor.ViewModels
 
             _homeArticleId = homeArticleId;
             SelectedArticle = home;
+            TocRows = [.. articles.Select(article => new GuideTocRow(article))];
+            SyncTocRows();
         }
 
         /// <summary>Raised when presentation state changes.</summary>
@@ -56,6 +58,14 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>The complete table of contents.</summary>
         public IReadOnlyList<GuideArticle> Articles { get; }
+
+        /// <summary>The contents rows the drawer displays, one per article, in catalog order.</summary>
+        /// <remarks>
+        /// Created once and never replaced. Each row owns the highlight for its article, so the drawer
+        /// keeps its scroll position across navigation and the highlight is a property of the data rather
+        /// than of whichever rows a list happens to have realized.
+        /// </remarks>
+        public IReadOnlyList<GuideTocRow> TocRows { get; }
 
         /// <summary>Article cards matching the active <see cref="SearchText"/>.</summary>
         public ObservableCollection<GuideSearchResult> SearchResults { get; } = [];
@@ -72,23 +82,12 @@ namespace CtrDxEditor.ViewModels
         /// while the search page covers the reading pane.
         /// </summary>
         /// <remarks>
-        /// This is the sole binding target for the contents list. Reporting <see langword="null"/>
-        /// during search keeps the highlight honest and, because no row is selected, guarantees
-        /// that clicking the previously active row is a real selection change rather than a dead
-        /// click. Writes of <see langword="null"/> are the list echoing that cleared state back and
-        /// are ignored.
+        /// Read-only, and the single source the row flags are derived from: the contents list activates
+        /// rows by click like every other guide destination, so nothing writes the highlight back and it
+        /// cannot disagree with the visible pane. Reporting <see langword="null"/> during search is what
+        /// drops the highlight while the results page covers the article.
         /// </remarks>
-        public GuideArticle? SelectedTocArticle
-        {
-            get => IsSearchActive ? null : SelectedArticle;
-            set
-            {
-                if (value is not null)
-                {
-                    NavigateTo(value.Id);
-                }
-            }
-        }
+        public GuideArticle? SelectedTocArticle => IsSearchActive ? null : SelectedArticle;
 
         /// <summary>Text used to populate the dedicated search-results page.</summary>
         public string SearchText
@@ -283,6 +282,7 @@ namespace CtrDxEditor.ViewModels
 
             if (articleChanged || searchActiveChanged)
             {
+                SyncTocRows();
                 OnPropertyChanged(nameof(SelectedTocArticle));
             }
 
@@ -300,6 +300,20 @@ namespace CtrDxEditor.ViewModels
             if (before.ForwardCount != after.ForwardCount)
             {
                 OnPropertyChanged(nameof(CanGoForward));
+            }
+        }
+
+        /// <summary>Points every contents row's highlight at <see cref="SelectedTocArticle"/>.</summary>
+        /// <remarks>
+        /// Each row raises its own change notification, so the row losing the highlight repaints as
+        /// surely as the row gaining it - including rows in a drawer that was closed throughout.
+        /// </remarks>
+        private void SyncTocRows()
+        {
+            GuideArticle? active = SelectedTocArticle;
+            foreach (GuideTocRow row in TocRows)
+            {
+                row.SetActive(ReferenceEquals(row.Article, active));
             }
         }
 
@@ -352,6 +366,45 @@ namespace CtrDxEditor.ViewModels
             int ResultCount,
             int BackCount,
             int ForwardCount);
+    }
+
+    /// <summary>One table-of-contents row, carrying its own highlight state.</summary>
+    /// <param name="article">Article this row navigates to.</param>
+    public sealed class GuideTocRow(GuideArticle article) : INotifyPropertyChanged
+    {
+        /// <summary>Raised when the row's highlight turns on or off.</summary>
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        /// <summary>The article this row stands for.</summary>
+        public GuideArticle Article { get; } = article;
+
+        /// <summary>Stable article identifier carried to navigation.</summary>
+        public string Id => Article.Id;
+
+        /// <summary>Localized table-of-contents section.</summary>
+        public string Section => Article.Section;
+
+        /// <summary>Localized article title.</summary>
+        public string Title => Article.Title;
+
+        /// <summary>Localized article summary.</summary>
+        public string Summary => Article.Summary;
+
+        /// <summary>Whether this row is the one being read, and so carries the highlight.</summary>
+        public bool IsActive { get; private set; }
+
+        /// <summary>Turns the highlight on or off, notifying only on a real change.</summary>
+        /// <param name="active">Whether this row is the article in the reading pane.</param>
+        internal void SetActive(bool active)
+        {
+            if (IsActive == active)
+            {
+                return;
+            }
+
+            IsActive = active;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsActive)));
+        }
     }
 
     /// <summary>One article card displayed on the dedicated Usage Guide search page.</summary>
