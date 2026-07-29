@@ -41,6 +41,12 @@ namespace CtrDxEditor.Views
             }
 
             ContentSetupDialog install = new() { DataContext = setup };
+
+            if (setup.AllowDownload)
+            {
+                _ = setup.DownloadCommand.ExecuteAsync(null);
+            }
+
             _ = await install.ShowAsync();
         }
     }
