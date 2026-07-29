@@ -217,5 +217,35 @@ namespace CtrDxEditor.Core.Tests
 
             Assert.Equal(90, RopeLength.Solve(g, 0.5, new Vec2(0, 90)), 6);
         }
+        /// <summary>Grabbing the knob and solving from where it already sits must not change the length.</summary>
+        [Theory]
+        [InlineData(200, 0)]
+        [InlineData(200, 150)]
+        [InlineData(0, 200)]
+        public void PressingTheKnobLeavesTheLengthAlone(int candyX, int candyY)
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(candyX, candyY));
+
+            (RopeLength.Handle handle, double t) =
+                RopeLength.HitTest(g, g.Knob, knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(RopeLength.Handle.Knob, handle);
+            Assert.Equal(g.Length, RopeLength.Solve(g, t, g.Knob), 0);
+        }
+
+        /// <summary>Grabbing the cord away from the knob must not change the length either.</summary>
+        [Fact]
+        public void PressingTheCordLeavesTheLengthAlone()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(200, 150));
+            Vec2 onCord = RopeStripBuilder.CalcPathBezier(
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length), 0.3);
+
+            (RopeLength.Handle handle, double t) =
+                RopeLength.HitTest(g, onCord, knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(RopeLength.Handle.Cord, handle);
+            Assert.Equal(g.Length, RopeLength.Solve(g, t, onCord), 0);
+        }
     }
 }
