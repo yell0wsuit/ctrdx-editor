@@ -121,24 +121,36 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(RopeLength.Handle.None, awayHandle);
         }
 
-        /// <summary>The parameter is the point's projection along the chord, clamped away from the ends.</summary>
+        /// <summary>A cord hit reports the curve parameter it landed on, not a projection onto the chord.</summary>
         [Fact]
-        public void ParameterProjectsOntoTheChordAndClamps()
+        public void CordHitReportsTheCurveParameter()
         {
-            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(100, 0));
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(200, 150));
+            Vec2[] controls = RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length);
 
-            Assert.Equal(0.4, RopeLength.Parameter(g, new Vec2(40, 999)), 6);
-            Assert.Equal(RopeLength.MinParameter, RopeLength.Parameter(g, new Vec2(-50, 0)), 6);
-            Assert.Equal(RopeLength.MaxParameter, RopeLength.Parameter(g, new Vec2(150, 0)), 6);
+            (_, double t) = RopeLength.HitTest(
+                g, RopeStripBuilder.CalcPathBezier(controls, 0.3), knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(0.3, t, 2);
         }
 
-        /// <summary>A hook sitting on its target has no usable chord, so the parameter degenerates safely.</summary>
+        /// <summary>
+        /// The cord's ends are refused rather than clamped into range. Clamping would anchor the drag to a
+        /// parameter the cursor is not on, so the length would jump the moment the press landed.
+        /// </summary>
         [Fact]
-        public void DegenerateChordParameterIsTheMidpoint()
+        public void CordEndsAreNotGrabbable()
         {
-            RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(0, 0));
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(200, 150));
+            Vec2[] controls = RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length);
 
-            Assert.Equal(0.5, RopeLength.Parameter(g, new Vec2(0, 60)), 6);
+            (RopeLength.Handle nearHook, _) = RopeLength.HitTest(
+                g, RopeStripBuilder.CalcPathBezier(controls, 0.02), knobTolerance: 9, cordTolerance: 6);
+            (RopeLength.Handle nearTarget, _) = RopeLength.HitTest(
+                g, RopeStripBuilder.CalcPathBezier(controls, 0.98), knobTolerance: 9, cordTolerance: 6);
+
+            Assert.Equal(RopeLength.Handle.None, nearHook);
+            Assert.Equal(RopeLength.Handle.None, nearTarget);
         }
 
         /// <summary>Solving puts the drawn cord under the cursor at the parameter the drag started from.</summary>

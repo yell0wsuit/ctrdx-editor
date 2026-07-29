@@ -18,19 +18,19 @@ namespace CtrDxEditor.Core.Editing
         public const double MinLength = 1;
 
         /// <summary>
-        /// Chords shorter than this are degenerate: the hook sits on its target, so a chord parameter
-        /// carries no information and the drag falls back to plain distance from the hook.
+        /// Chords shorter than this are degenerate: the hook sits on its target, so there is no cord shape
+        /// to solve against and the drag falls back to plain distance from the hook.
         /// </summary>
         public const double MinChord = 1;
 
         /// <summary>
-        /// Chord parameters are clamped into [<see cref="MinParameter"/>, <see cref="MaxParameter"/>].
-        /// Near an endpoint the cord barely moves for a large length change, so an unclamped drag there
-        /// would swing the length wildly for a pixel of travel.
+        /// A drag can only start on the stretch of cord between <see cref="MinParameter"/> and
+        /// <see cref="MaxParameter"/>. Near an endpoint the cord barely moves for a large length change, so
+        /// a drag anchored there would swing the length wildly for a pixel of travel.
         /// </summary>
         public const double MinParameter = 0.15;
 
-        /// <summary>The far end of the clamp described on <see cref="MinParameter"/>.</summary>
+        /// <summary>The far end of the grabbable stretch described on <see cref="MinParameter"/>.</summary>
         public const double MaxParameter = 0.85;
 
         // How finely the drawn cord is sampled when looking for its lowest point.
@@ -50,9 +50,10 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="Chord">The straight-line distance between the two, in level units.</param>
         /// <param name="Length">The authored rest length, in level units.</param>
         /// <param name="Knob">The drag knob's position on the drawn cord, in level units.</param>
+        /// <param name="KnobParameter">The curve parameter <paramref name="Knob"/> was found at.</param>
         /// <param name="Taut">Whether the rope has no slack (<paramref name="Length"/> is at most <paramref name="Chord"/>).</param>
         public readonly record struct Geometry(
-            Vec2 Hook, Vec2 Target, double Chord, double Length, Vec2 Knob, bool Taut);
+            Vec2 Hook, Vec2 Target, double Chord, double Length, Vec2 Knob, double KnobParameter, bool Taut);
 
         /// <summary>What part of a rope a point is over, so the canvas can route a drag.</summary>
         public enum Handle
@@ -86,7 +87,8 @@ namespace CtrDxEditor.Core.Editing
             Vec2 target = new(bound.X, bound.Y);
             double chord = Distance(hook, target);
             double length = ReadLength(grab);
-            return new Geometry(hook, target, chord, length, KnobPoint(hook, target, length), length <= chord);
+            (Vec2 knob, double knobT) = KnobPoint(hook, target, length);
+            return new Geometry(hook, target, chord, length, knob, knobT, length <= chord);
         }
 
         /// <summary>The grab's authored rest length, or 0 when the attribute is missing or unparsable.</summary>
@@ -101,7 +103,7 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// Classifies what part of the rope <paramref name="point"/> is over and reports the chord
+        /// Classifies what part of the rope <paramref name="point"/> is over and reports the curve
         /// parameter the resulting drag should be anchored to. The knob wins over the cord, since it sits
         /// on it. Tolerances are in level units, so the caller converts screen pixels via the zoom.
         /// </summary>
@@ -113,19 +115,30 @@ namespace CtrDxEditor.Core.Editing
         public static (Handle Handle, double Parameter) HitTest(
             Geometry g, Vec2 point, double knobTolerance, double cordTolerance)
         {
+            // The knob carries its own parameter rather than deriving one: it must round-trip exactly, or
+            // a press with no movement would solve for a different point on the cord and shift the length.
             if (Distance(point, g.Knob) <= knobTolerance)
             {
-                return (Handle.Knob, Parameter(g, g.Knob));
+                return (Handle.Knob, g.KnobParameter);
             }
 
             Vec2[] controls = RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length);
             Vec2 previous = RopeStripBuilder.CalcPathBezier(controls, 0);
             for (int i = 1; i <= CordSamples; i++)
             {
-                Vec2 next = RopeStripBuilder.CalcPathBezier(controls, (double)i / CordSamples);
+                double nextT = (double)i / CordSamples;
+                Vec2 next = RopeStripBuilder.CalcPathBezier(controls, nextT);
                 if (SegmentDistance(point, previous, next) <= cordTolerance)
                 {
-                    return (Handle.Cord, Parameter(g, point));
+                    double previousT = (double)(i - 1) / CordSamples;
+                    double t = previousT
+                        + ((nextT - previousT) * SegmentFraction(point, previous, next));
+
+                    // Refuse the ends rather than clamping into range: clamping would anchor the drag to a
+                    // parameter the cursor is not actually on, which shifts the length the moment you press.
+                    return t is < MinParameter or > MaxParameter
+                        ? (Handle.None, 0)
+                        : (Handle.Cord, t);
                 }
                 previous = next;
             }
@@ -134,36 +147,17 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The chord parameter for a point: its projection onto the hook-to-target chord, normalized so 0
-        /// is the hook and 1 is the target, then clamped into the usable middle of the rope. A degenerate
-        /// chord has no direction to project onto, so it reports the midpoint.
-        /// </summary>
-        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
-        /// <param name="point">The position to project, in level units.</param>
-        /// <returns>The clamped chord parameter.</returns>
-        public static double Parameter(Geometry g, Vec2 point)
-        {
-            if (g.Chord < MinChord)
-            {
-                return 0.5;
-            }
-
-            double dx = g.Target.X - g.Hook.X;
-            double dy = g.Target.Y - g.Hook.Y;
-            double t = (((point.X - g.Hook.X) * dx) + ((point.Y - g.Hook.Y) * dy)) / (g.Chord * g.Chord);
-            return Math.Clamp(t, MinParameter, MaxParameter);
-        }
-
-        /// <summary>
         /// The rest length that puts the drawn cord under <paramref name="point"/>: bisects length until
-        /// the cord's vertical drop below the chord at <paramref name="t"/> matches the point's own drop.
-        /// Floors at the chord distance, because every shorter rope draws as the same straight line — use
-        /// <see cref="SolveTaut"/> to reach that range. A degenerate chord has no drop to measure, so it
+        /// the cord's own Y at curve parameter <paramref name="t"/> reaches the point's. Comparing the
+        /// curve against the cursor directly, rather than against the chord, keeps the solve in the same
+        /// parameterization the cord is drawn in, so pressing without moving is a no-op. Floors at the
+        /// chord distance, because every shorter rope draws as the same straight line — use
+        /// <see cref="SolveTaut"/> to reach that range. A degenerate chord has no curve to measure, so it
         /// reads plain distance from the hook instead; note that is unclamped above, unlike
         /// <see cref="SolveTaut"/>, since there is no meaningful taut ceiling when the chord is zero.
         /// </summary>
         /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
-        /// <param name="t">The chord parameter recorded when the drag began, from <see cref="Parameter"/>.</param>
+        /// <param name="t">The curve parameter recorded when the drag began, from <see cref="HitTest"/>.</param>
         /// <param name="point">The drag position, in level units.</param>
         /// <returns>The new rest length in level units.</returns>
         public static double Solve(Geometry g, double t, Vec2 point)
@@ -173,8 +167,8 @@ namespace CtrDxEditor.Core.Editing
                 return Math.Max(MinLength, Distance(point, g.Hook));
             }
 
-            double wanted = point.Y - ChordY(g.Hook, g.Target, t);
-            if (wanted <= 0)
+            double wanted = point.Y;
+            if (wanted <= CurveY(g, g.Chord, t))
             {
                 return g.Chord;
             }
@@ -183,7 +177,7 @@ namespace CtrDxEditor.Core.Editing
             // through those three points, so it is a good first guess; double until it actually brackets.
             double low = g.Chord;
             double high = Math.Max(low, Distance(point, g.Hook) + Distance(point, g.Target));
-            for (int i = 0; i < SolveIterations && Drop(g, high, t) < wanted; i++)
+            for (int i = 0; i < SolveIterations && CurveY(g, high, t) < wanted; i++)
             {
                 high = low + Math.Max(1, (high - low) * 2);
             }
@@ -191,7 +185,7 @@ namespace CtrDxEditor.Core.Editing
             for (int i = 0; i < SolveIterations; i++)
             {
                 double mid = (low + high) / 2;
-                if (Drop(g, mid, t) < wanted)
+                if (CurveY(g, mid, t) < wanted)
                 {
                     low = mid;
                 }
@@ -205,13 +199,13 @@ namespace CtrDxEditor.Core.Editing
 
         /// <summary>
         /// The rest length for a below-taut drag: distance from the hook normalized by the drag's fixed
-        /// chord parameter, then clamped into [<see cref="MinLength"/>, the chord distance]. Normalizing
+        /// curve parameter, then clamped into [<see cref="MinLength"/>, the chord distance]. Normalizing
         /// makes this mapping meet <see cref="Solve"/> at the same point on the taut chord, so toggling Alt
         /// does not jump. Every length in that range draws as the same straight cord, so the number is the
         /// only feedback and the canvas shows it beside the cursor.
         /// </summary>
         /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
-        /// <param name="t">The fixed chord parameter recorded when the drag began.</param>
+        /// <param name="t">The fixed curve parameter recorded when the drag began.</param>
         /// <param name="point">The drag position, in level units.</param>
         /// <returns>The new rest length in level units.</returns>
         public static double SolveTaut(Geometry g, double t, Vec2 point)
@@ -220,13 +214,15 @@ namespace CtrDxEditor.Core.Editing
             return Math.Clamp(Distance(point, g.Hook) / parameter, MinLength, Math.Max(MinLength, g.Chord));
         }
 
-        // The knob sits where the drawn cord hangs furthest below its chord. Sampling beats solving: the
-        // cord is a bezier over a variable number of controls, so its low point has no closed form. Ties
-        // lose to the midpoint, which keeps a taut rope's knob centered instead of drifting to an end.
-        private static Vec2 KnobPoint(Vec2 hook, Vec2 target, double length)
+        // The knob sits where the drawn cord hangs furthest below its chord, and carries the curve
+        // parameter it was found at so a drag from it solves for that exact point. Sampling beats solving:
+        // the cord is a bezier over a variable number of controls, so its low point has no closed form.
+        // Ties lose to the midpoint, which keeps a taut rope's knob centered instead of drifting to an end.
+        private static (Vec2 Point, double T) KnobPoint(Vec2 hook, Vec2 target, double length)
         {
             Vec2[] controls = RopeStripBuilder.ControlPoints(hook, target, length);
             Vec2 best = RopeStripBuilder.CalcPathBezier(controls, 0.5);
+            double bestT = 0.5;
             double bestDrop = best.Y - ChordY(hook, target, 0.5);
             for (int i = 1; i < KnobSamples; i++)
             {
@@ -237,12 +233,13 @@ namespace CtrDxEditor.Core.Editing
                 {
                     bestDrop = drop;
                     best = p;
+                    bestT = t;
                 }
             }
-            return best;
+            return (best, bestT);
         }
 
-        // The chord's own Y at parameter t, which the cord's drop is measured against.
+        // The chord's own Y at parameter t, which the knob search measures sag against.
         private static double ChordY(Vec2 hook, Vec2 target, double t)
         {
             return hook.Y + ((target.Y - hook.Y) * t);
@@ -253,27 +250,29 @@ namespace CtrDxEditor.Core.Editing
             return GrabRadius.Distance(a, b);
         }
 
-        // How far the drawn cord hangs below its chord at t, for a candidate rest length.
-        private static double Drop(Geometry g, double length, double t)
+        // The drawn cord's Y at curve parameter t, for a candidate rest length.
+        private static double CurveY(Geometry g, double length, double t)
         {
-            Vec2 p = RopeStripBuilder.CalcPathBezier(
-                RopeStripBuilder.ControlPoints(g.Hook, g.Target, length), t);
-            return p.Y - ChordY(g.Hook, g.Target, t);
+            return RopeStripBuilder.CalcPathBezier(
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, length), t).Y;
+        }
+
+        // How far along a segment the closest point to `point` lies, as a 0-1 fraction.
+        private static double SegmentFraction(Vec2 point, Vec2 a, Vec2 b)
+        {
+            double dx = b.X - a.X;
+            double dy = b.Y - a.Y;
+            double lengthSquared = (dx * dx) + (dy * dy);
+            return lengthSquared <= 0
+                ? 0
+                : Math.Clamp((((point.X - a.X) * dx) + ((point.Y - a.Y) * dy)) / lengthSquared, 0, 1);
         }
 
         // Shortest distance from a point to a line segment, used to walk the drawn cord.
         private static double SegmentDistance(Vec2 point, Vec2 a, Vec2 b)
         {
-            double dx = b.X - a.X;
-            double dy = b.Y - a.Y;
-            double lengthSquared = (dx * dx) + (dy * dy);
-            if (lengthSquared <= 0)
-            {
-                return Distance(point, a);
-            }
-
-            double t = Math.Clamp((((point.X - a.X) * dx) + ((point.Y - a.Y) * dy)) / lengthSquared, 0, 1);
-            return Distance(point, new Vec2(a.X + (dx * t), a.Y + (dy * t)));
+            double f = SegmentFraction(point, a, b);
+            return Distance(point, new Vec2(a.X + ((b.X - a.X) * f), a.Y + ((b.Y - a.Y) * f)));
         }
     }
 }

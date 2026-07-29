@@ -416,7 +416,7 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private RopeLength.Handle _ropeDrag;
 
-        /// <summary>The chord parameter the active rope drag is anchored to, fixed when the drag began so
+        /// <summary>The curve parameter the active rope drag is anchored to, fixed when the drag began so
         /// the gesture does not slide along the rope as the cursor moves.</summary>
         private double _ropeDragParameter;
 
