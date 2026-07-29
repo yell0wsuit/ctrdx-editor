@@ -99,6 +99,36 @@ namespace CtrDxEditor.Tests
             Assert.Same(star, PaletteItem(vm, "star").Icon);
         }
 
+        /// <summary>
+        /// An object whose art is absent from the installed content bundle is dropped from the palette,
+        /// so a stale bundle cannot be used to place an object that would render as nothing.
+        /// </summary>
+        [Fact]
+        public void PaletteHidesObjectsMissingFromTheInstalledContent()
+        {
+            SpriteCache sprites = new(new EmptyStore());
+            SetPrivateField(sprites, "_unavailableElements", new HashSet<string> { "star" });
+            EditorViewModel vm = new(sprites);
+
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.False(PaletteHas(vm, "star"));
+            // Everything the bundle does have is untouched.
+            Assert.True(PaletteHas(vm, "candy"));
+            Assert.True(PaletteHas(vm, "lightBulb"));
+        }
+
+        /// <summary>A bundle matching the editor build hides nothing.</summary>
+        [Fact]
+        public void PaletteKeepsEveryObjectWhenContentIsComplete()
+        {
+            EditorViewModel vm = Vm();
+
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+
+            Assert.True(PaletteHas(vm, "star"));
+        }
+
         /// <summary>Updating level settings rewrites the document's resolution and special value.</summary>
         [Fact]
         public void UpdateLevelSettingsWritesResolution()

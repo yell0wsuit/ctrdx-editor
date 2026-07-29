@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -53,8 +54,9 @@ namespace CtrDxEditor.Tests
             public Task<byte[]> ReadBytesAsync(string relPath)
             {
                 RequestedBytePaths.Add(relPath);
-                // Stop before SpriteCache ever constructs a Bitmap, which this test project cannot do.
-                throw new InvalidOperationException("probe: stop before bitmap decode");
+                // Stands in for content the bundle does not have, and stops before SpriteCache
+                // constructs a Bitmap, which this test project cannot do.
+                throw new FileNotFoundException($"probe: no content at {relPath}");
             }
 
             public Task<string> ReadTextAsync(string relPath)
@@ -75,10 +77,61 @@ namespace CtrDxEditor.Tests
             ThrowingImageStore store = new();
             SpriteCache cache = new(store, ".webp");
 
-            _ = await Assert.ThrowsAsync<InvalidOperationException>(cache.PreloadAsync);
+            await cache.PreloadAsync();
 
             Assert.NotEmpty(store.RequestedBytePaths);
             Assert.All(store.RequestedBytePaths, p => Assert.EndsWith(".webp", p));
+        }
+
+        /// <summary>
+        /// Content the store cannot serve costs only the objects that need it: preload completes, and
+        /// those elements are reported unavailable instead of taking the editor down.
+        /// </summary>
+        /// <remarks>
+        /// This is what lets an editor build add an object without breaking every user whose installed
+        /// bundle predates it. A throwing preload propagates out of <c>App.TryShowEditorAsync</c>, which
+        /// treats it as unloadable content and sends the user back through content setup.
+        /// </remarks>
+        [Fact]
+        public async Task PreloadSurvivesContentItCannotRead()
+        {
+            ThrowingImageStore store = new();
+            SpriteCache cache = new(store);
+
+            await cache.PreloadAsync();
+
+            Assert.NotEmpty(cache.UnavailableElements);
+            Assert.True(cache.IsUnavailable("bubble"));
+        }
+
+        /// <summary>Elements the bundle does have are not reported unavailable.</summary>
+        [Fact]
+        public async Task PreloadReportsNothingUnavailableForAnElementWithoutADescriptor()
+        {
+            ThrowingImageStore store = new();
+            SpriteCache cache = new(store);
+
+            await cache.PreloadAsync();
+
+            // Sprite-less elements have no descriptor to fail, so they must keep their palette place
+            // rather than be swept up by a bundle that is merely missing art for other objects.
+            Assert.False(cache.IsUnavailable("does-not-exist"));
+        }
+
+        /// <summary>
+        /// A shared atlas that will not load is read once, not once per descriptor that references it.
+        /// </summary>
+        [Fact]
+        public async Task PreloadReadsEachUnreadableAtlasOnlyOnce()
+        {
+            ThrowingImageStore store = new();
+            SpriteCache cache = new(store);
+
+            await cache.PreloadAsync();
+
+            Assert.Equal(
+                store.RequestedBytePaths.Count,
+                store.RequestedBytePaths.Distinct().Count());
         }
 
         /// <summary>Verifies that unknown object elements still return no sprite.</summary>

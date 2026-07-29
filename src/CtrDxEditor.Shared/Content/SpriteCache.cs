@@ -49,6 +49,7 @@ namespace CtrDxEditor.Content
         private readonly Dictionary<string, Bitmap> _bitmaps = [];
         private readonly Dictionary<string, Atlas> _atlases = [];
         private readonly Dictionary<string, Bitmap?> _thumbnails = [];
+        private readonly HashSet<string> _unavailableElements = [];
         // Non-default candy skins (index 1..) are loaded on demand, not during preload. Concurrent so an
         // off-thread picker preload and the UI-thread canvas render can both resolve skins without racing.
         private readonly ConcurrentDictionary<int, Bitmap?> _candyBitmaps = new();
@@ -58,6 +59,25 @@ namespace CtrDxEditor.Content
         private readonly ConcurrentDictionary<int, Bitmap?> _backgrounds = new();
         private readonly ConcurrentDictionary<int, Bitmap?> _backgroundsP2 = new();
         private readonly ConcurrentDictionary<int, Bitmap?> _backgroundThumbnails = new();
+
+        /// <summary>
+        /// Elements whose sprite art is absent from the installed content bundle, as discovered by
+        /// <see cref="PreloadAsync"/>. Empty for a bundle that matches this editor build.
+        /// </summary>
+        /// <remarks>
+        /// Populated only for elements that <em>have</em> a <see cref="VisualDescriptor"/> whose atlas
+        /// would not load. An element with no descriptor at all is not listed here, because it is
+        /// deliberately sprite-less rather than missing, and must keep its place in the palette.
+        /// </remarks>
+        public IReadOnlyCollection<string> UnavailableElements => _unavailableElements;
+
+        /// <summary>Whether an element's sprite art is missing from the installed content bundle.</summary>
+        /// <param name="element">The object's XML element name.</param>
+        /// <returns><see langword="true"/> when the element has a descriptor but its atlas could not be loaded.</returns>
+        public bool IsUnavailable(string element)
+        {
+            return _unavailableElements.Contains(element);
+        }
 
         /// <summary>Reads a non-sprite content asset from the active platform store.</summary>
         /// <param name="relativePath">Manifest-relative content path.</param>
@@ -152,24 +172,23 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>Loads every statically-known atlas image and frame table into memory once.</summary>
+        /// <remarks>
+        /// Each descriptor is loaded independently, so an installed bundle predating an object the editor
+        /// has since gained costs only that object: its element joins
+        /// <see cref="UnavailableElements"/> and the palette drops it, rather than the whole preload
+        /// throwing and sending the user back through content setup. Levels that already place such an
+        /// object still open - <see cref="GetSprite"/> returns null for it and the renderers skip it.
+        /// </remarks>
         public async Task PreloadAsync()
         {
+            // A shared atlas that is missing would otherwise be re-read once per descriptor using it,
+            // turning one absent file into dozens of failed reads.
+            HashSet<string> failedPaths = [];
             foreach (VisualDescriptor v in VisualDescriptorMap.ByElement.Values)
             {
-                foreach (SpriteLayer layer in AllLayers(v))
+                if (!await TryPreloadDescriptorAsync(v, failedPaths))
                 {
-                    string imagePath = layer.AtlasImageBasePath + imageExtension;
-                    if (!_bitmaps.ContainsKey(imagePath))
-                    {
-                        byte[] bytes = await store.ReadBytesAsync(imagePath);
-                        using MemoryStream ms = new(bytes);
-                        _bitmaps[imagePath] = new Bitmap(ms);
-                    }
-                    if (!_atlases.ContainsKey(layer.AtlasJsonRelPath))
-                    {
-                        string json = await store.ReadTextAsync(layer.AtlasJsonRelPath);
-                        _atlases[layer.AtlasJsonRelPath] = new Atlas(AtlasJsonLoader.ParseFrames(json));
-                    }
+                    _ = _unavailableElements.Add(v.Element);
                 }
             }
 
@@ -607,6 +626,57 @@ namespace CtrDxEditor.Content
         public void PreloadCandySkin(int skin)
         {
             _ = LoadCandySkin(skin);
+        }
+
+        /// <summary>
+        /// Loads every layer of one descriptor, reporting whether the element ended up fully drawable.
+        /// </summary>
+        /// <param name="descriptor">Descriptor whose layers are being resolved.</param>
+        /// <param name="failedPaths">Content paths already known to be unreadable, extended in place.</param>
+        /// <returns><see langword="false"/> when any layer's image or atlas could not be loaded.</returns>
+        /// <remarks>
+        /// Catches broadly on purpose. The point is to survive whatever a stale or hand-assembled bundle
+        /// turns out to contain - an absent file, a truncated image, an atlas whose JSON no longer parses -
+        /// none of which should be able to stop the editor from opening. Anything caught is logged and
+        /// costs only the elements that depend on it.
+        /// </remarks>
+        private async Task<bool> TryPreloadDescriptorAsync(VisualDescriptor descriptor, HashSet<string> failedPaths)
+        {
+            bool complete = true;
+            foreach (SpriteLayer layer in AllLayers(descriptor))
+            {
+                string imagePath = layer.AtlasImageBasePath + imageExtension;
+                if (failedPaths.Contains(imagePath) || failedPaths.Contains(layer.AtlasJsonRelPath))
+                {
+                    complete = false;
+                    continue;
+                }
+
+                try
+                {
+                    if (!_bitmaps.ContainsKey(imagePath))
+                    {
+                        byte[] bytes = await store.ReadBytesAsync(imagePath);
+                        using MemoryStream ms = new(bytes);
+                        _bitmaps[imagePath] = new Bitmap(ms);
+                    }
+                    if (!_atlases.ContainsKey(layer.AtlasJsonRelPath))
+                    {
+                        string json = await store.ReadTextAsync(layer.AtlasJsonRelPath);
+                        _atlases[layer.AtlasJsonRelPath] = new Atlas(AtlasJsonLoader.ParseFrames(json));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _ = failedPaths.Add(imagePath);
+                    _ = failedPaths.Add(layer.AtlasJsonRelPath);
+                    complete = false;
+                    Console.WriteLine(
+                        $"[CtrDx] Sprite art for '{descriptor.Element}' is missing from the installed "
+                        + $"content ({imagePath}); the object will be unavailable.\n{ex}");
+                }
+            }
+            return complete;
         }
 
         private static IEnumerable<SpriteLayer> AllLayers(VisualDescriptor descriptor)

@@ -1567,6 +1567,13 @@ namespace CtrDxEditor.ViewModels
                 {
                     continue;
                 }
+                // An object the installed content bundle has no art for cannot be drawn, so offering it
+                // would place an invisible object. Happens when the editor gains an object that the
+                // user's already-installed bundle predates.
+                if (Sprites.IsUnavailable(PaletteSpriteKey(d.ElementName)))
+                {
+                    continue;
+                }
                 bool enabled = Document is not null && LockedObject is null && !Cardinality.IsAtCapacity(d, objs);
                 Palette.Add(new PaletteItemViewModel(
                     d.ElementName, Localizer.ObjectName(d.ElementName), enabled,
