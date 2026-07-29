@@ -40,6 +40,10 @@ namespace CtrDxEditor.Core.Editing
         // segments, so this is a shape-fidelity knob rather than a hit-accuracy one.
         private const int CordSamples = 32;
 
+        // Bisection budget. The bracket is at most a few thousand level units wide, so this lands well
+        // inside the whole-unit precision the length attribute stores.
+        private const int SolveIterations = 20;
+
         /// <summary>Resolved rope geometry in level space.</summary>
         /// <param name="Hook">The grab's hook position, in level units.</param>
         /// <param name="Target">The bound candy or light bulb's position, in level units.</param>
@@ -150,6 +154,68 @@ namespace CtrDxEditor.Core.Editing
             return Math.Clamp(t, MinParameter, MaxParameter);
         }
 
+        /// <summary>
+        /// The rest length that puts the drawn cord under <paramref name="point"/>: bisects length until
+        /// the cord's vertical drop below the chord at <paramref name="t"/> matches the point's own drop.
+        /// Floors at the chord distance, because every shorter rope draws as the same straight line — use
+        /// <see cref="SolveTaut"/> to reach that range. A degenerate chord has no drop to measure, so it
+        /// reads plain distance from the hook instead; note that is unclamped above, unlike
+        /// <see cref="SolveTaut"/>, since there is no meaningful taut ceiling when the chord is zero.
+        /// </summary>
+        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
+        /// <param name="t">The chord parameter recorded when the drag began, from <see cref="Parameter"/>.</param>
+        /// <param name="point">The drag position, in level units.</param>
+        /// <returns>The new rest length in level units.</returns>
+        public static double Solve(Geometry g, double t, Vec2 point)
+        {
+            if (g.Chord < MinChord)
+            {
+                return Math.Max(MinLength, Distance(point, g.Hook));
+            }
+
+            double wanted = point.Y - ChordY(g.Hook, g.Target, t);
+            if (wanted <= 0)
+            {
+                return g.Chord;
+            }
+
+            // The two-segment path through the cursor is a lower bound on the arc length of any curve
+            // through those three points, so it is a good first guess; double until it actually brackets.
+            double low = g.Chord;
+            double high = Math.Max(low, Distance(point, g.Hook) + Distance(point, g.Target));
+            for (int i = 0; i < SolveIterations && Drop(g, high, t) < wanted; i++)
+            {
+                high = low + Math.Max(1, (high - low) * 2);
+            }
+
+            for (int i = 0; i < SolveIterations; i++)
+            {
+                double mid = (low + high) / 2;
+                if (Drop(g, mid, t) < wanted)
+                {
+                    low = mid;
+                }
+                else
+                {
+                    high = mid;
+                }
+            }
+            return (low + high) / 2;
+        }
+
+        /// <summary>
+        /// The rest length for a below-taut drag: plain distance from the hook, clamped into
+        /// [<see cref="MinLength"/>, the chord distance]. Every length in that range draws as the same
+        /// straight cord, so the number is the only feedback and the canvas shows it beside the cursor.
+        /// </summary>
+        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
+        /// <param name="point">The drag position, in level units.</param>
+        /// <returns>The new rest length in level units.</returns>
+        public static double SolveTaut(Geometry g, Vec2 point)
+        {
+            return Math.Clamp(Distance(point, g.Hook), MinLength, Math.Max(MinLength, g.Chord));
+        }
+
         // The knob sits where the drawn cord hangs furthest below its chord. Sampling beats solving: the
         // cord is a bezier over a variable number of controls, so its low point has no closed form. Ties
         // lose to the midpoint, which keeps a taut rope's knob centered instead of drifting to an end.
@@ -181,6 +247,14 @@ namespace CtrDxEditor.Core.Editing
         private static double Distance(Vec2 a, Vec2 b)
         {
             return GrabRadius.Distance(a, b);
+        }
+
+        // How far the drawn cord hangs below its chord at t, for a candidate rest length.
+        private static double Drop(Geometry g, double length, double t)
+        {
+            Vec2 p = RopeStripBuilder.CalcPathBezier(
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, length), t);
+            return p.Y - ChordY(g.Hook, g.Target, t);
         }
 
         // Shortest distance from a point to a line segment, used to walk the drawn cord.
