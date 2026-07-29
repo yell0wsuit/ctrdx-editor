@@ -251,6 +251,7 @@ namespace CtrDxEditor.Rendering
                 Point[] points = LevelSceneRenderer.SelectionOutlinePointsWithPreview(v, selected, sb, PreviewSpinDegrees(selected), PreviewAnimationSeconds(selected));
                 DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
+                DrawRopeLengthHandle(context, v);
 
                 // Tint the active hand segment so it is clear which one the dial and fields act on, and give
                 // the segment under the cursor a fainter hover tint as a "click to select" cue.
@@ -894,6 +895,44 @@ namespace CtrDxEditor.Rendering
             {
                 GrabRenderer.DrawGrabRadiusRings(context, v, objects, grabRadiusPen);
             }
+        }
+
+        /// <summary>
+        /// Draws the selected grab's rope-length knob on its cord, plus the live length readout while the
+        /// rope is being dragged. A taut rope's knob is hollow: every length at or below the straight-line
+        /// gap draws the same cord, so past that point the number is the only feedback there is.
+        /// </summary>
+        /// <param name="context">Target drawing context.</param>
+        /// <param name="v">Current level-to-screen transform.</param>
+        private void DrawRopeLengthHandle(DrawingContext context, ViewTransform v)
+        {
+            if (SelectedRopeGeometry() is not { } g)
+            {
+                return;
+            }
+
+            Vec2 screen = v.LevelToScreen(g.Knob);
+            Point center = new(screen.X, screen.Y);
+            context.DrawEllipse(
+                g.Taut ? Brushes.Transparent : Brushes.White, _palette.OrbitPathArrow, center, 5, 5);
+            if (_ropeHovered || _ropeDrag != RopeLength.Handle.None)
+            {
+                context.DrawEllipse(null, _palette.OrbitPathArrow, center, 8, 8);
+            }
+
+            if (_ropeDrag == RopeLength.Handle.None)
+            {
+                return;
+            }
+
+            FormattedText readout = new(
+                ((int)Math.Round(g.Length)).ToString(CultureInfo.InvariantCulture),
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(FontFamily.DefaultFontFamilyName, FontStyle.Normal, FontWeight.Bold),
+                Math.Max(10.0, 16.0 * v.Zoom),
+                _palette.StarDurationText);
+            context.DrawText(readout, new Point(center.X + 10, center.Y - (readout.Height / 2)));
         }
 
         private RopeVisual? BuildRopeForVisibleGrab(LevelObject grab, LevelDocument doc)
