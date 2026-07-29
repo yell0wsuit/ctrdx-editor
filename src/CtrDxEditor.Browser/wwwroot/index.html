@@ -74,6 +74,14 @@
                 font-weight: 600;
             }
 
+            #splash-hint {
+                max-width: 320px;
+                padding: 0 24px;
+                font-size: 0.8rem;
+                line-height: 1.45;
+                opacity: 0.6;
+            }
+
             #splash .spinner {
                 width: 36px;
                 height: 36px;
@@ -103,6 +111,10 @@
             <div class="spinner"></div>
             <p id="splash-progress">Now loading...</p>
             <h1>Cut the Rope DX: Level Editor</h1>
+            <p id="splash-hint" role="status" hidden>
+                Taking too long? You might want to check your internet speed, or
+                reload the page.
+            </p>
         </div>
         <script>
             // Hide the splash once Avalonia mounts content into #out (typically a canvas). A
