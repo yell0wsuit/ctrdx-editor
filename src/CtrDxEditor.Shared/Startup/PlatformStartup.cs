@@ -39,6 +39,13 @@ namespace CtrDxEditor.Startup
         public IPlaytestLauncher? Playtest { get; init; }
 
         /// <summary>
+        /// Reports whether a newer release has been published, offering the user the release page at
+        /// startup. Null where the head is not user-updatable (the browser, which always loads the
+        /// deployed build), which skips the check entirely.
+        /// </summary>
+        public Func<Task<bool>>? CheckForUpdate { get; init; }
+
+        /// <summary>
         /// Reads platform safe-area insets, when this head can do so more reliably than Avalonia's
         /// <c>InsetsManager</c>. Null on heads that have nothing better (desktop), where the manager is used.
         /// </summary>

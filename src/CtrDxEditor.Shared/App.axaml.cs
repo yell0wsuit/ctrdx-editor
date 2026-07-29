@@ -91,37 +91,62 @@ namespace CtrDxEditor
             _ = WarmUpFilePickerAsync(root);
 
             IContentStore? installed = await _startup.ResolveInstalled();
-            if (installed is not null && await TryShowEditorAsync(root, installed))
+            if (installed is null || !await TryShowEditorAsync(root, installed))
             {
-                return;
+                // Either no content is installed, or installed content passed the cheap existence check
+                // yet failed to actually load (wrong-platform bundle, corrupt atlas, ...): run setup.
+                // Browser setup blocks dismissal because the editor cannot run without content. Keep the
+                // loop as a defensive fallback in case the dialog is removed by some mechanism other than
+                // its normal close path. Desktop instead quits on dismissal.
+                do
+                {
+                    ContentSetupViewModel vm = new(
+                        _startup.Installer,
+                        async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
+                        allowQuit: allowQuit,
+                        allowManualDownload: true,
+                        allowDownload: _startup.AllowDirectDownload,
+                        downloadSizeLabel: _startup.DownloadSizeLabel,
+                        manualDownloadUrl: _startup.ManualDownloadUrl);
+                    ContentSetupDialog dialog = new() { DataContext = vm };
+                    _ = await dialog.ShowAsync();
+
+                    if (allowQuit && root.DataContext is null)
+                    {
+                        // Desktop: dismissing setup without installing quits the app.
+                        desktop?.Shutdown();
+                        return;
+                    }
+                }
+                while (root.DataContext is null);
             }
 
-            // Either no content is installed, or installed content passed the cheap existence check
-            // yet failed to actually load (wrong-platform bundle, corrupt atlas, ...): run setup.
-            // Browser setup blocks dismissal because the editor cannot run without content. Keep the
-            // loop as a defensive fallback in case the dialog is removed by some mechanism other than
-            // its normal close path. Desktop instead quits on dismissal.
-            do
-            {
-                ContentSetupViewModel vm = new(
-                    _startup.Installer,
-                    async () => await TryShowEditorAsync(root, _startup.InstalledStore()),
-                    allowQuit: allowQuit,
-                    allowManualDownload: true,
-                    allowDownload: _startup.AllowDirectDownload,
-                    downloadSizeLabel: _startup.DownloadSizeLabel,
-                    manualDownloadUrl: _startup.ManualDownloadUrl);
-                ContentSetupDialog dialog = new() { DataContext = vm };
-                _ = await dialog.ShowAsync();
+            // Deliberately not awaited: the editor is already usable, and the check makes a network
+            // request whose result nothing here depends on. Reached only once the editor is up, so the
+            // prompt can never stack on top of the content setup dialog the user must complete first.
+            _ = CheckForUpdateAsync(root);
+        }
 
-                if (allowQuit && root.DataContext is null)
+        /// <summary>Offers the release page when GitHub has published a build newer than this one.</summary>
+        /// <param name="root">Attached control that hosts the dialog and owns the URI launcher.</param>
+        /// <remarks>
+        /// Skipped entirely on heads that leave <c>CheckForUpdate</c> null (the browser). Swallows its
+        /// own failures, since it runs unawaited and must never bring startup down with an unobserved
+        /// exception.
+        /// </remarks>
+        private async Task CheckForUpdateAsync(Control root)
+        {
+            try
+            {
+                if (_startup.CheckForUpdate is { } check && await check())
                 {
-                    // Desktop: dismissing setup without installing quits the app.
-                    desktop?.Shutdown();
-                    return;
+                    await UpdatePrompt.ShowAsync(root);
                 }
             }
-            while (root.DataContext is null);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CtrDx] Update prompt failed; continuing without it.\n{ex}");
+            }
         }
 
         /// <summary>

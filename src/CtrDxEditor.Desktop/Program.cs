@@ -6,6 +6,7 @@ using CtrDxEditor.Content;
 using CtrDxEditor.Desktop.Playtest;
 using CtrDxEditor.Playtest;
 using CtrDxEditor.Startup;
+using CtrDxEditor.Update;
 
 namespace CtrDxEditor.Desktop
 {
@@ -38,6 +39,7 @@ namespace CtrDxEditor.Desktop
                 DownloadSizeLabel = "310 MB",
                 ManualDownloadUrl = ContentDownloader.AssetsUrl,
                 Playtest = new ProcessPlaytestLauncher(),
+                CheckForUpdate = () => GitHubUpdateChecker.IsUpdateAvailableAsync(AppVersion.Display),
                 ResolveInstalled = async () =>
                 {
                     string? resolved = ContentLocation.Resolve(

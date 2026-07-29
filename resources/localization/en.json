@@ -671,6 +671,10 @@
     "Dialog.Unsaved.New": "Discard and continue",
     "Dialog.Unsaved.Quit": "Discard and quit",
 
+    "Dialog.Update.Header": "A new version is available",
+    "Dialog.Update.Body": "There's a new version of the editor available. Would you like to check on GitHub Releases now?",
+    "Dialog.Update.Later": "Later",
+
     "Layer.Add": "Add new layer",
     "Layer.Delete": "Delete active layer",
     "Layer.MoveUp": "Move active layer up",

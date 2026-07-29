@@ -15,7 +15,7 @@
               MinWidth="96" Padding="16,6"
               HorizontalContentAlignment="Center"
               VerticalContentAlignment="Center" />
-      <Button Classes="danger" Content="{Binding PositiveText}" Click="Confirm_Click"
+      <Button Classes.danger="{Binding IsDestructive}" Content="{Binding PositiveText}" Click="Confirm_Click"
               MinWidth="96" Padding="16,6"
               HorizontalContentAlignment="Center"
               VerticalContentAlignment="Center" />

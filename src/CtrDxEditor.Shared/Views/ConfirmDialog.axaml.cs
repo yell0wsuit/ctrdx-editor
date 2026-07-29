@@ -25,6 +25,10 @@ namespace CtrDxEditor.Views
         public static readonly StyledProperty<string> NegativeTextProperty =
             AvaloniaProperty.Register<ConfirmDialog, string>(nameof(NegativeText));
 
+        /// <summary>The <see cref="IsDestructive"/> property.</summary>
+        public static readonly StyledProperty<bool> IsDestructiveProperty =
+            AvaloniaProperty.Register<ConfirmDialog, bool>(nameof(IsDestructive), defaultValue: true);
+
         /// <summary>The dialog's title line.</summary>
         public string Header
         {
@@ -51,6 +55,17 @@ namespace CtrDxEditor.Views
         {
             get => GetValue(NegativeTextProperty);
             set => SetValue(NegativeTextProperty, value);
+        }
+
+        /// <summary>
+        /// Whether confirming discards work or is otherwise hard to undo, which styles the confirming
+        /// button as a warning. Defaults to <see langword="true"/>, since most confirmations are asked
+        /// precisely because the answer is destructive.
+        /// </summary>
+        public bool IsDestructive
+        {
+            get => GetValue(IsDestructiveProperty);
+            set => SetValue(IsDestructiveProperty, value);
         }
 
         /// <summary>Creates the confirmation dialog.</summary>
