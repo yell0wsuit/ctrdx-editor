@@ -2,8 +2,6 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <!-- viewport-fit=cover is required for env(safe-area-inset-*) to report non-zero on iOS; without
-             it the notch and home-indicator insets read as zero no matter what the app asks for. -->
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
@@ -16,6 +14,23 @@
             #out {
                 height: 100%;
                 margin: 0;
+            }
+
+            html,
+            body,
+            #out {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+                overscroll-behavior: none;
+            }
+
+            #out input,
+            #out textarea {
+                -webkit-user-select: text;
+                user-select: text;
             }
 
             #splash {
@@ -43,9 +58,13 @@
                 pointer-events: none;
             }
 
+            #splash img {
+                width: 96px;
+                height: 96px;
+            }
+
             #splash h1 {
                 margin: 0;
-                padding: 0 24px;
                 font-size: 1.25rem;
                 font-weight: 600;
                 text-align: center;
@@ -70,7 +89,15 @@
     <body>
         <div id="out"></div>
         <div id="splash">
+            <img
+                src="./icon-256.webp"
+                width="96"
+                height="96"
+                alt="Cut the Rope DX: Level Editor icon"
+                decoding="async"
+            />
             <div class="spinner"></div>
+            <p>Now loading...</p>
             <h1>Cut the Rope DX: Level Editor</h1>
         </div>
         <script>
