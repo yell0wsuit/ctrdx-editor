@@ -63,11 +63,15 @@
                 height: 96px;
             }
 
+            #splash p,
             #splash h1 {
                 margin: 0;
+                text-align: center;
+            }
+
+            #splash h1 {
                 font-size: 1.25rem;
                 font-weight: 600;
-                text-align: center;
             }
 
             #splash .spinner {
@@ -97,7 +101,7 @@
                 decoding="async"
             />
             <div class="spinner"></div>
-            <p>Now loading...</p>
+            <p id="splash-progress">Now loading...</p>
             <h1>Cut the Rope DX: Level Editor</h1>
         </div>
         <script>
