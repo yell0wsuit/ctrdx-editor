@@ -153,19 +153,22 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The displayed rotation, degree-signed. Registered objects use
-        /// <see cref="ObjectRotation.DisplayDegrees"/>; hands read the indexed segment's synthesized angle
-        /// property, and a ghost bouncer preview reads the ghost's ordinary <c>angle</c> property.
+        /// The authored rotation, degree-signed. Hands read the indexed segment's synthesized angle
+        /// property; everything else reads its stored <c>angle</c>.
         /// </summary>
+        /// <remarks>
+        /// Deliberately the stored value, not <see cref="ObjectRotation.DisplayDegrees"/>. The property
+        /// panel binds the raw attribute, so routing the badge through a spec's <c>DisplayOffset</c> or
+        /// <c>StoredAngleSign</c> would make the two disagree — a pump storing 0 would badge 90°, and a
+        /// conveyor storing 45 would badge -45°.
+        /// </remarks>
         private static Entry[] Rotation(LevelObject obj, int index)
         {
             return HandObject.IsHand(obj.Type)
                 ? index < 1 || index > HandObject.SegmentCount(obj)
                     ? []
                     : AngleAttr(obj, HandObject.AngleAttr(index))
-                : RotationTable.For(obj.Type) is { } spec
-                    ? [new Entry("angle", Whole(ObjectRotation.DisplayDegrees(obj, spec)) + "°")]
-                    : AngleAttr(obj, "angle");
+                : AngleAttr(obj, RotationTable.For(obj.Type)?.AttributeName ?? "angle");
         }
 
         /// <summary>An angle attribute formatted as a degree-signed badge value, or nothing when absent.</summary>

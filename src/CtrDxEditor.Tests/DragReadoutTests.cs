@@ -53,6 +53,26 @@ namespace CtrDxEditor.Tests
                 entries);
         }
 
+        /// <summary>
+        /// The badge reports the same number the property panel does. The panel binds the raw <c>angle</c>
+        /// attribute, so a spec's DisplayOffset or StoredAngleSign must not leak into the readout — a pump
+        /// storing 0 reads 0, not the 90 it renders at.
+        /// </summary>
+        [Theory]
+        [InlineData("pump", "0", "0°")]
+        [InlineData("pump", "45", "45°")]
+        [InlineData("rocket", "20", "20°")]
+        [InlineData("transporter", "45", "45°")]
+        [InlineData("bouncer1", "-30", "-30°")]
+        public void RotationMatchesThePropertyPanelValue(string type, string stored, string expected)
+        {
+            DragReadout.Entry entry = Assert.Single(
+                For(DragKind.Rotate, Obj(type, ("angle", stored))));
+
+            Assert.Equal("angle", entry.AttrKey);
+            Assert.Equal(expected, entry.Value);
+        }
+
         /// <summary>A rotation readout carries the degree sign, so the number is not read as a length.</summary>
         [Fact]
         public void RotateCarriesDegreeSign()
