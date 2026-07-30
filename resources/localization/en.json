@@ -305,10 +305,11 @@
 
     "Guide.Article.rockets.Title": "Rockets",
     "Guide.Article.rockets.Summary": "Aim a rocket and tune its thrust and burn.",
-    "Guide.Article.rockets.SearchTerms": "rocket|impulse|thrust|launch|burn time|rotatable|experiments",
+    "Guide.Article.rockets.SearchTerms": "rocket|impulse|thrust|launch|burn time|rotatable|experiments|path|orbit|polyline",
     "Guide.Article.rockets.InGame": "A rocket attaches to the candy and fires when tapped, thrusting it along the direction the rocket faces. It is the strongest push in the game, and unlike a bubble or a cushion it keeps pushing for as long as it burns.",
     "Guide.Article.rockets.Editing": "Drag a rocket from the palette, in the Cut the Rope: Experiments group, and aim it with its rotation dial.",
     "Guide.Article.rockets.Properties": "**Impulse** is the thrust strength. **Impulse factor** scales that thrust while the rope tied to the rocket is slack, so the push eases off rather than snapping. **Burn time** is how long it fires, with *-1* meaning it burns until it is spent. **Rotatable** lets the player turn the rocket during play instead of accepting your aim.",
+    "Guide.Article.rockets.Movement": "A rocket also takes a **movement path**, so it can orbit a point or travel a polyline while it waits for the candy. The path stops the moment the rocket latches on, and physics takes over from there, so it only governs where the rocket is patrolling beforehand.",
     "Guide.Article.rockets.Playtest.Tip": "The editor shows placement and direction but does not simulate flight, so thrust values can only really be judged in game. Change impulse in small steps and playtest between them.",
     "Guide.Article.rockets.Selected.Caption": "A selected rocket with its direction and properties.",
 

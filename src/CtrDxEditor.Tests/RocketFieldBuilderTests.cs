@@ -3,6 +3,7 @@ using System.Linq;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -68,6 +69,40 @@ namespace CtrDxEditor.Tests
             (ObservableCollection<AttributeFieldViewModel> fields, LevelObject rocket) = Build(("time", "5"));
             fields.Single(f => f.Name == "timed").Value = "false";
             Assert.Equal("-1", rocket.GetAttr("time"));
+        }
+
+        /// <summary>
+        /// The game calls <c>ParseMover</c> on rockets, so they take mover paths; a rocket's own rotation is
+        /// the player's to aim, so it gets movement without the self-spin controls.
+        /// </summary>
+        [Fact]
+        public void RocketExposesMovementButNotSelfSpin()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, _) = Build();
+            Assert.Equal("none", fields.Single(f => f.Name == "movementMode").Value);
+            Assert.DoesNotContain(fields, f => f.Name is "spin" or "spinSpeed" or "spinClockwise");
+        }
+
+        /// <summary>Choosing Orbit seeds a circular DX path and the speed that drives it.</summary>
+        [Fact]
+        public void ChoosingOrbitWritesCircularPath()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, LevelObject rocket) = Build();
+            fields.Single(f => f.Name == "movementMode").Value = "orbit";
+
+            Assert.Equal("RC30", rocket.GetAttr("path"));
+            Assert.True(MoverPath.HasActiveMovement(rocket));
+        }
+
+        /// <summary>Choosing Polyline seeds a real segment, so the canvas has something to draw and edit.</summary>
+        [Fact]
+        public void ChoosingPolylineWritesMovingSegment()
+        {
+            (ObservableCollection<AttributeFieldViewModel> fields, LevelObject rocket) = Build();
+            fields.Single(f => f.Name == "movementMode").Value = "polyline";
+
+            Assert.True(MoverPath.IsPolylineMovement(rocket.GetAttr("path")));
+            Assert.True(MoverPath.HasActiveMovement(rocket));
         }
     }
 }

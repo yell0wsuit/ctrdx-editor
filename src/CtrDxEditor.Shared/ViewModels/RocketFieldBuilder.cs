@@ -11,7 +11,9 @@ namespace CtrDxEditor.ViewModels
     /// <summary>
     /// Builds the rocket properties panel: launch fields with help on impulse/impulseFactor, a star-style
     /// timed-burn disclosure for the game's `time` attribute (-1 = fires until impact, positive = burns
-    /// then exhausts), and the shared spin/path controls (same as spike/bouncer).
+    /// then exhausts), and the shared mover-path movement controls (None / Orbit / Polyline), which the
+    /// game honours because <c>LoadRocket</c> calls <c>ParseMover</c>. A rocket's heading is the player's
+    /// to aim, so it gets no self-spin controls.
     /// </summary>
     public static class RocketFieldBuilder
     {
@@ -56,7 +58,7 @@ namespace CtrDxEditor.ViewModels
                 fields.Add(new AttributeFieldViewModel(value, "time", AttrType.Number, null, onChanged, onChanging));
             }
 
-            SpinFieldBuilder.Build(fields, value, onChanged, onChanging, rebuild);
+            SpinFieldBuilder.BuildMovement(fields, value, onChanged, onChanging, rebuild);
         }
 
         private static double Time(LevelObject rocket)
