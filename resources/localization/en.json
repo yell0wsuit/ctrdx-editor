@@ -723,7 +723,10 @@
     "Object.pipe": "Bamboo tube",
 
     "Attr.velocity": "Velocity",
+    "Attr.water": "Water",
     "Attr.width": "Width",
+    "Attr.x": "X",
+    "Attr.y": "Y",
     "Attr.direction": "Direction",
     "Attr.direction.forward": "Forward",
     "Attr.direction.backward": "Backward",
