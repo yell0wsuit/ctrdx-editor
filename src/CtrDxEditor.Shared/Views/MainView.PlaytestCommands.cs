@@ -25,7 +25,7 @@ namespace CtrDxEditor.Views
     // user is not looking at.
     public partial class MainView
     {
-        private bool _playtestExitHooked;
+        private bool _playtestEventsHooked;
 
         private async void Playtest_Click(object? sender, RoutedEventArgs e)
         {
@@ -57,7 +57,7 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            HookPlaytestExit(launcher);
+            HookPlaytestEvents(launcher);
 
             try
             {
@@ -101,14 +101,15 @@ namespace CtrDxEditor.Views
         }
 
         // Subscribed once per view. A clean exit is silent; a non-zero one carries the game's own
-        // stderr diagnostic, which is how it reports a level it could not load.
-        private void HookPlaytestExit(IPlaytestLauncher launcher)
+        // stderr diagnostic, which is how it reports a level it could not load. An unsupported launch is
+        // the case a wrong or too-old program was picked: it never handshook, so the level never played.
+        private void HookPlaytestEvents(IPlaytestLauncher launcher)
         {
-            if (_playtestExitHooked)
+            if (_playtestEventsHooked)
             {
                 return;
             }
-            _playtestExitHooked = true;
+            _playtestEventsHooked = true;
 
             launcher.Exited += (_, args) =>
             {
@@ -121,6 +122,14 @@ namespace CtrDxEditor.Views
                     string.IsNullOrWhiteSpace(args.StandardError)
                         ? $"Cut the Rope: DX exited with code {args.ExitCode}."
                         : args.StandardError,
+                    NotificationType.Error)));
+            };
+
+            launcher.Unsupported += (_, _) =>
+            {
+                Dispatcher.UIThread.Post(() => Notifications()?.Show(new Notification(
+                    Localizer.Get("Notification.Playtest.Failed"),
+                    Localizer.Get("Playtest.Unsupported.Body"),
                     NotificationType.Error)));
             };
         }

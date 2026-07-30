@@ -14,11 +14,26 @@ namespace CtrDxEditor.Playtest
         public string StandardError { get; } = standardError;
     }
 
+    /// <summary>Describes a launched program that never identified itself as a compatible Cut the Rope: DX.</summary>
+    /// <param name="executablePath">The resolved executable that was launched but produced no handshake.</param>
+    public sealed class PlaytestUnsupportedEventArgs(string executablePath) : EventArgs
+    {
+        /// <summary>The resolved executable that was launched but produced no handshake.</summary>
+        public string ExecutablePath { get; } = executablePath;
+    }
+
     /// <summary>Plays a level in Cut the Rope: DX. Absent on platforms that cannot spawn processes.</summary>
     public interface IPlaytestLauncher : IDisposable
     {
         /// <summary>Raised when the playtest process exits. Not raised on the UI thread.</summary>
         event EventHandler<PlaytestExitedEventArgs>? Exited;
+
+        /// <summary>
+        /// Raised when a freshly launched process produced no Cut the Rope: DX handshake within the grace
+        /// period - it is a different program, or a build too old to understand <c>--level</c>. Not raised
+        /// on the UI thread, and never raised for a reload (<see cref="Play"/> returning false).
+        /// </summary>
+        event EventHandler<PlaytestUnsupportedEventArgs>? Unsupported;
 
         /// <summary>Writes <paramref name="levelXml"/> to the session level file, starting the game if it is not already running.</summary>
         /// <param name="executablePath">The user-picked executable or macOS .app bundle path.</param>

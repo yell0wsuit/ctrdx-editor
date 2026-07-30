@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 using CtrDxEditor.Playtest;
 
@@ -16,6 +17,12 @@ namespace CtrDxEditor.Desktop.Playtest
     /// <param name="tempRootOverride">Container for session directories; defaults to the system temp root.</param>
     public sealed class ProcessPlaytestLauncher(string? tempRootOverride = null) : IPlaytestLauncher
     {
+        // How long a freshly launched game has to emit its stdout handshake before it is judged not to
+        // be a compatible Cut the Rope: DX. The game prints the line before its run loop starts, so it
+        // normally arrives within about a second; the window is generous because a miss only warns - it
+        // never kills the process - so a slow cold start is never interrupted by mistake.
+        private static readonly TimeSpan HandshakeGracePeriod = TimeSpan.FromSeconds(10);
+
         private readonly PlaytestTempStore _temp = new(tempRootOverride);
         private readonly Lock _gate = new();
         private Process? _current;
@@ -23,6 +30,9 @@ namespace CtrDxEditor.Desktop.Playtest
 
         /// <inheritdoc />
         public event EventHandler<PlaytestExitedEventArgs>? Exited;
+
+        /// <inheritdoc />
+        public event EventHandler<PlaytestUnsupportedEventArgs>? Unsupported;
 
         /// <inheritdoc />
         public bool Play(string executablePath, string levelXml)
@@ -58,6 +68,9 @@ namespace CtrDxEditor.Desktop.Playtest
                 ArgumentList = { "--level", levelPath },
                 UseShellExecute = false,
                 RedirectStandardError = true,
+                // Watched for the game's handshake line, which is how a compatible Cut the Rope: DX
+                // proves it understood --level. Also drained so a full pipe cannot block the game.
+                RedirectStandardOutput = true,
                 // The game resolves its content relative to its own location, so run it from there
                 // rather than inheriting the editor's working directory.
                 WorkingDirectory = Path.GetDirectoryName(binary) ?? "",
@@ -65,6 +78,11 @@ namespace CtrDxEditor.Desktop.Playtest
 
             Process process = new() { StartInfo = info, EnableRaisingEvents = true };
             StringBuilder stderr = new();
+
+            // Cancelled the moment the handshake arrives or the process ends, which stands the pending
+            // "unsupported" timeout down. Owned by this launch and captured by every handler below, so a
+            // later launch's timeout can never be cancelled by this one.
+            CancellationTokenSource handshake = new();
 
             // Drained asynchronously: a full stderr pipe would otherwise block the game once the OS
             // buffer fills.
@@ -76,11 +94,24 @@ namespace CtrDxEditor.Desktop.Playtest
                 }
             };
 
+            // The handshake is the positive signal that this build is Cut the Rope: DX and accepted the
+            // level. Seeing it cancels the timeout; anything else on stdout is ignored (and drained).
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data is not null && PlaytestHandshakeLine.TryParse(e.Data, out int _, out string _))
+                {
+                    handshake.Cancel();
+                }
+            };
+
             process.Exited += (_, _) =>
             {
                 // Flushes the remaining redirected output; without it stderr can be truncated.
                 process.WaitForExit();
                 int code = process.ExitCode;
+                // An exit before the grace period elapses is not a missing handshake - stand the
+                // timeout down so a game the user simply closed early is never called unsupported.
+                handshake.Cancel();
                 lock (_gate)
                 {
                     // Only clear if this is still the current process.
@@ -110,9 +141,11 @@ namespace CtrDxEditor.Desktop.Playtest
             {
                 _ = process.Start();
                 process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
             }
             catch
             {
+                handshake.Cancel();
                 lock (_gate)
                 {
                     if (ReferenceEquals(_current, process))
@@ -123,6 +156,42 @@ namespace CtrDxEditor.Desktop.Playtest
                 process.Dispose();
                 throw;
             }
+
+            ArmHandshakeTimeout(process, binary, handshake);
+        }
+
+        // Warns, once the grace period passes with no handshake, that the launched program is not a
+        // compatible Cut the Rope: DX. Never kills the process: an old build has opened its normal menu
+        // and a genuine game may just be slow to start, so the safe move is to tell the user, not to
+        // yank a window away. The handshake token stands this down when the game identifies itself, ends,
+        // or the launcher is disposed.
+        private void ArmHandshakeTimeout(Process process, string binary, CancellationTokenSource handshake)
+        {
+            _ = Task.Delay(HandshakeGracePeriod, handshake.Token).ContinueWith(
+                task =>
+                {
+                    handshake.Dispose();
+                    if (task.IsCanceled)
+                    {
+                        return; // Handshake seen, process ended, or shutting down - nothing to report.
+                    }
+
+                    bool report;
+                    lock (_gate)
+                    {
+                        // Report only if this exact process is still the running one and we are not tearing
+                        // down. A reload never re-arms this, so the check also rejects a stale timeout.
+                        report = !_disposed && ReferenceEquals(_current, process);
+                    }
+
+                    if (report)
+                    {
+                        Unsupported?.Invoke(this, new PlaytestUnsupportedEventArgs(binary));
+                    }
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
 
         /// <inheritdoc />
