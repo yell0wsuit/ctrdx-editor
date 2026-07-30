@@ -127,10 +127,15 @@ namespace CtrDxEditor.Views
 
             launcher.Unsupported += (_, _) =>
             {
-                Dispatcher.UIThread.Post(() => Notifications()?.Show(new Notification(
-                    Localizer.Get("Notification.Playtest.Failed"),
-                    Localizer.Get("Playtest.Unsupported.Body"),
-                    NotificationType.Error)));
+                Dispatcher.UIThread.Post(() =>
+                {
+                    MessageDialog dialog = new()
+                    {
+                        Header = Localizer.Get("Playtest.Unsupported.Header"),
+                        Message = Localizer.Get("Playtest.Unsupported.Body"),
+                    };
+                    _ = dialog.ShowAsync();
+                });
             };
         }
 

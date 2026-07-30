@@ -542,6 +542,7 @@
     "Notification.Playtest.Failed": "Could not play this level",
     "Notification.Playtest.LocationSet": "The location of Cut the Rope: DX has been set",
 
+    "Playtest.Unsupported.Header": "This may not be a compatible Cut the Rope: DX",
     "Playtest.Unsupported.Body": "This program did not identify itself as Cut the Rope: DX. It may be a different application, or a version too old to play test levels. Update the game, or pick the right program with File > Set DX Location.",
 
     "Playtest.Resolve.NothingSelected": "No Cut the Rope: DX executable has been selected.",
