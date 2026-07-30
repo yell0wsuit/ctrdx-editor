@@ -467,6 +467,27 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while the hand's base is being dragged.</summary>
         private bool _handBaseDrag;
 
+        /// <summary>
+        /// True while any object-editing drag is in flight. Chrome that competes with the drag readout for
+        /// the slot above the selection — currently the ghost morph selector — hides while this holds.
+        /// Panning and marquee selection are excluded: they change no property, so no readout appears and
+        /// there is nothing to yield to.
+        /// </summary>
+        private bool AnyDragActive =>
+            _dragging
+            || _rotating
+            || _resizingRadius
+            || _resizingTutorialText
+            || _waterDrag
+            || _handBaseDrag
+            || _handJointDrag > 0
+            || _polylinePointDrag > 0
+            || _ropeDrag != RopeLength.Handle.None
+            || _railDrag != GrabRail.Handle.None
+            || _stripResizeDrag != SpikeResize.Handle.None
+            || _conveyorDrag != ConveyorGeometry.Handle.None
+            || _vinylHandleDrag != VinylGeometry.Handle.None;
+
         /// <summary>True when the ordinary object-drag path is moving a mechanical hand.</summary>
         private bool _handObjectDrag;
 
