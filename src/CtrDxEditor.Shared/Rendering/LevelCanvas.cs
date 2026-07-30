@@ -381,6 +381,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while dragging a grab's auto-catch radius ring to resize it.</summary>
         private bool _resizingRadius;
 
+        /// <summary>True while dragging an orbit path's circle to change its radius.</summary>
+        private bool _resizingOrbit;
+
         /// <summary>True while dragging the selected tutorial text's right edge to change wrap width.</summary>
         private bool _resizingTutorialText;
 
@@ -477,6 +480,7 @@ namespace CtrDxEditor.Rendering
             _dragging
             || _rotating
             || _resizingRadius
+            || _resizingOrbit
             || _resizingTutorialText
             || _waterDrag
             || _handBaseDrag

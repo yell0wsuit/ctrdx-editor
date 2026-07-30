@@ -22,6 +22,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Resizing a grab's catch radius or a bulb's lit radius.</summary>
         Radius,
 
+        /// <summary>Resizing the circle a DX orbit path travels.</summary>
+        OrbitRadius,
+
         /// <summary>Dragging the knob on a grab's rope.</summary>
         RopeLength,
 
@@ -127,6 +130,7 @@ namespace CtrDxEditor.Core.Editing
                             DragKind.Move or DragKind.HandBase => Position(obj),
                             DragKind.Rotate => Rotation(obj, index),
                             DragKind.Radius => Radius(obj),
+                            DragKind.OrbitRadius => OrbitRadius(obj),
                             DragKind.RopeLength or DragKind.ConveyorLength => Attr(obj, "length"),
                             DragKind.RailOffset => RailOffset(obj),
                             DragKind.RailResize => [.. Attr(obj, "moveOffset"), .. Attr(obj, "moveLength")],
@@ -188,6 +192,17 @@ namespace CtrDxEditor.Core.Editing
                 : obj.Type == "ghost" && GrabRadius.Of(obj) is double radius
                     ? [new Entry("radius", Whole(radius))]
                     : [];
+        }
+
+        /// <summary>
+        /// The orbit's radius, read back out of the path the drag just rewrote. The path string itself
+        /// ("RC90") is storage, not a number an author reasons about.
+        /// </summary>
+        private static Entry[] OrbitRadius(LevelObject obj)
+        {
+            return OrbitRing.Of(obj) is { } ring
+                ? [new Entry("orbitRadius", Whole(ring.Radius))]
+                : [];
         }
 
         /// <summary>

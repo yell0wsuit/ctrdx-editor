@@ -43,6 +43,7 @@ namespace CtrDxEditor.Tests
         [InlineData("DragKind.Move")]
         [InlineData("DragKind.Rotate")]
         [InlineData("DragKind.Radius")]
+        [InlineData("DragKind.OrbitRadius")]
         [InlineData("DragKind.RopeLength")]
         [InlineData("DragKind.RailOffset")]
         [InlineData("DragKind.RailResize")]

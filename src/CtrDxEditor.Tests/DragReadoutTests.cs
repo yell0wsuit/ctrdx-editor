@@ -133,6 +133,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal("175", entry.Value);
         }
 
+        /// <summary>An orbit resize reports the radius encoded in the path, not the raw path string.</summary>
+        [Fact]
+        public void OrbitRadiusReadsThePathsRadius()
+        {
+            DragReadout.Entry entry = Assert.Single(
+                For(DragKind.OrbitRadius, Obj("star", ("path", "RW90"), ("moveSpeed", "50"))));
+
+            Assert.Equal("orbitRadius", entry.AttrKey);
+            Assert.Equal("90", entry.Value);
+        }
+
         /// <summary>A rail resize reports both attributes the drag writes, offset first.</summary>
         [Fact]
         public void RailResizeReportsOffsetThenLength()
@@ -265,7 +276,7 @@ namespace CtrDxEditor.Tests
             string[] keys =
             [
                 "x", "y", "water", "angle", "radius", "litRadius", "length", "width",
-                "size", "handleAngle", "moveOffset", "moveLength",
+                "size", "handleAngle", "moveOffset", "moveLength", "orbitRadius",
             ];
 
             foreach (string key in keys)

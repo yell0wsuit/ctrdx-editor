@@ -165,6 +165,66 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, method.Invoke(null, [obj]));
         }
 
+        /// <summary>
+        /// A grab that orbits draws two concentric circles. The catch ring is hit-tested first everywhere
+        /// the orbit is — press, hover cursor, and the applying move branch — so the two radii coinciding
+        /// can never make the catch ring unreachable.
+        /// </summary>
+        [Fact]
+        public void CatchRadiusRingOutranksTheOrbitRing()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            string readout = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.DragReadout.cs"));
+
+            Assert.True(
+                input.IndexOf("if (OnRadiusEdge(levelPt))", StringComparison.Ordinal)
+                    < input.IndexOf("if (OnOrbitEdge(levelPt))", StringComparison.Ordinal),
+                "The press handler must offer the catch ring before the orbit ring.");
+            Assert.True(
+                input.IndexOf(": OnRadiusEdge(levelPt) ? ResizeCursor", StringComparison.Ordinal)
+                    < input.IndexOf(": OnOrbitEdge(levelPt) ? ResizeCursor", StringComparison.Ordinal),
+                "The hover cursor chain must test the catch ring before the orbit ring.");
+            Assert.True(
+                input.IndexOf("if (_resizingRadius && SelectedObject is { } g)", StringComparison.Ordinal)
+                    < input.IndexOf("if (_resizingOrbit && SelectedObject is { } orbiter)", StringComparison.Ordinal),
+                "The move handler must apply the catch ring resize before the orbit resize.");
+            Assert.True(
+                readout.IndexOf("if (_resizingRadius)", StringComparison.Ordinal)
+                    < readout.IndexOf("if (_resizingOrbit)", StringComparison.Ordinal),
+                "The badge mapping must follow the same order as the move handler.");
+        }
+
+        /// <summary>
+        /// Nothing draws the orbit circle while movement paths are hidden — not even for the selected
+        /// object, unlike polyline vertices, which keep their own handles. So the ring stops being
+        /// grabbable then, rather than leaving an invisible drag target on the canvas.
+        /// </summary>
+        [Fact]
+        public void OrbitRingIsOnlyGrabbableWhileItIsDrawn()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            int method = input.IndexOf("private bool OnOrbitEdge", StringComparison.Ordinal);
+            int end = input.IndexOf("\n        /// <summary>", method, StringComparison.Ordinal);
+            string body = input[method..(end < 0 ? input.Length : end)];
+
+            Assert.Contains("ShowMovementPaths", body, StringComparison.Ordinal);
+        }
+
+        /// <summary>An orbit resize is one undoable edit, and its flag clears with the gesture.</summary>
+        [Fact]
+        public void OrbitResizeIsOneUndoableGesture()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            int gesture = input.IndexOf("private void EndPointerGesture()", StringComparison.Ordinal);
+            string body = input[gesture..];
+
+            Assert.Contains("_resizingOrbit = true;", input, StringComparison.Ordinal);
+            Assert.Contains("|| _resizingOrbit", body, StringComparison.Ordinal);
+            Assert.Contains("_resizingOrbit = false;", body, StringComparison.Ordinal);
+        }
+
         private static string SourcePath(params string[] parts)
         {
             string path = AppContext.BaseDirectory;

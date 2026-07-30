@@ -82,6 +82,11 @@ namespace CtrDxEditor.Rendering
                 return (DragKind.Radius, 0, default);
             }
 
+            if (_resizingOrbit)
+            {
+                return (DragKind.OrbitRadius, 0, default);
+            }
+
             if (_railDrag == GrabRail.Handle.SlideHook)
             {
                 return (DragKind.RailOffset, 0, default);

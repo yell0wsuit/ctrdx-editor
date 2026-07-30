@@ -67,6 +67,37 @@ namespace CtrDxEditor.Rendering
                 && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), r, levelPt, HitTolerance(6));
         }
 
+        /// <summary>
+        /// Whether a level-space point sits on the selected object's orbit circle, within the same ~6 px
+        /// screen tolerance the catch-radius ring uses.
+        /// </summary>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        /// <returns>
+        /// True when the point is on the circle a travelling orbit path draws. False while the catch-radius
+        /// ring is also under the point: a grab's two circles are concentric and can coincide, and the ring
+        /// that resizes a stored attribute is the more frequent target.
+        /// </returns>
+        private bool OnOrbitEdge(Vec2 levelPt)
+        {
+            // Unlike a polyline, whose vertices keep their own handles, nothing draws the orbit circle while
+            // movement paths are hidden — so hiding them takes the ring away rather than leaving an
+            // invisible drag target.
+            if (!ShowMovementPaths)
+            {
+                return false;
+            }
+
+            // Same reasoning as OnRadiusEdge: preview draws the circle around the moving object while this
+            // hit-test and the drag both use the authored centre, so editing waits for the preview to stop.
+            return IsSingleSelection
+                && SelectedObject is { } selected
+                && !IsAnimatingInPreview(selected)
+                && View.Zoom > 0
+                && OrbitRing.Of(selected) is { } ring
+                && !OnRadiusEdge(levelPt)
+                && GrabRadius.OnEdge(new Vec2(selected.X, selected.Y), ring.Radius, levelPt, HitTolerance(6));
+        }
+
         /// <summary>Whether a point is over the selected tutorial text's right-edge width handle.</summary>
         private bool HitTutorialTextResize(Vec2 levelPt)
         {
@@ -768,6 +799,16 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // Grabbing the orbit circle resizes the path's radius, on the same terms as the catch ring —
+            // which OnOrbitEdge already yields to where the two circles coincide.
+            if (OnOrbitEdge(levelPt))
+            {
+                BeginDocumentEdit?.Invoke();
+                _resizingOrbit = true;
+                e.Pointer.Capture(this);
+                return;
+            }
+
             // Grabbing the selected movable grab's rail: an end cap resizes, the hook slides, the bar moves
             // the whole grab. Takes priority over hit-testing so the rail wins over anything beneath it.
             GrabRail.Handle handle = HitRail(levelPt);
@@ -1173,6 +1214,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_resizingOrbit && SelectedObject is { } orbiter)
+            {
+                OrbitRing.Apply(orbiter, OrbitRing.FromDrag(new Vec2(orbiter.X, orbiter.Y), levelPt));
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_railDrag != GrabRail.Handle.None && SelectedObject is { } rg && GrabRail.Of(rg) is { } rail)
             {
                 ApplyRailDrag(rg, rail, levelPt);
@@ -1304,6 +1353,7 @@ namespace CtrDxEditor.Rendering
                     : stripHandle != SpikeResize.Handle.None ? CursorForStripResize()
                     : conveyorHover != ConveyorGeometry.Handle.None ? ResizeCursor
                     : OnRadiusEdge(levelPt) ? ResizeCursor
+                    : OnOrbitEdge(levelPt) ? ResizeCursor
                     : handle != GrabRail.Handle.None ? CursorForHandle(handle)
                     : ropeHover != RopeLength.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : _waterHandleHovered ? VResizeCursor
@@ -1363,7 +1413,7 @@ namespace CtrDxEditor.Rendering
         {
             // Capture loss (including the release path's own Capture(null)) can fire with nothing in
             // progress; skip the resets and completion callback unless a gesture is actually active.
-            bool gestureActive = _dragging || _panning || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
+            bool gestureActive = _dragging || _panning || _resizingRadius || _resizingOrbit || _resizingTutorialText || _polylinePointDrag > 0
                 || _handJointDrag > 0 || _handBaseDrag
                 || _railDrag != GrabRail.Handle.None || _ropeDrag != RopeLength.Handle.None
                 || _stripResizeDrag != SpikeResize.Handle.None
@@ -1381,7 +1431,7 @@ namespace CtrDxEditor.Rendering
 
             bool handHandleEdited = (_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved;
             bool editedDocument = (_dragging && (!_handObjectDrag || _handDragHasMoved))
-                || _resizingRadius || _resizingTutorialText || _polylinePointDrag > 0
+                || _resizingRadius || _resizingOrbit || _resizingTutorialText || _polylinePointDrag > 0
                 || handHandleEdited
                 || _railDrag != GrabRail.Handle.None || _ropeDrag != RopeLength.Handle.None
                 || _stripResizeDrag != SpikeResize.Handle.None
@@ -1397,6 +1447,7 @@ namespace CtrDxEditor.Rendering
             _waterDrag = false;
             _panning = false;
             _resizingRadius = false;
+            _resizingOrbit = false;
             _resizingTutorialText = false;
             _tutorialTextResizeHasDragged = false;
             _tutorialTextResizeStartPointerX = 0;
