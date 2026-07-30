@@ -436,6 +436,9 @@ namespace CtrDxEditor.Rendering
             {
                 DrawPolylineLimitHint(context, v, limitObj);
             }
+
+            // Last, so no handle or outline paints over the number the drag is reporting.
+            DrawDragReadout(context, v);
         }
 
         /// <summary>Draws the selected tutorial text's wrap-width handle.</summary>
@@ -818,9 +821,9 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Draws the selected grab's rope-length knob on its cord, plus the live length badge while the
-        /// rope is being dragged. A taut rope's knob is hollow: every length at or below the straight-line
-        /// gap draws the same cord, so past that point the badge is the only feedback there is.
+        /// Draws the selected grab's rope-length knob on its cord. A taut rope's knob is hollow: every length
+        /// at or below the straight-line gap draws the same cord, so past that point the shared drag readout
+        /// is the only feedback there is.
         /// </summary>
         /// <param name="context">Target drawing context.</param>
         /// <param name="v">Current level-to-screen transform.</param>
@@ -839,15 +842,6 @@ namespace CtrDxEditor.Rendering
             if (_ropeHovered || dragging)
             {
                 context.DrawEllipse(null, _palette.OrbitPathArrow, center, 8, 8);
-            }
-
-            if (dragging)
-            {
-                BadgeRenderer.DrawValue(
-                    context,
-                    ((int)Math.Round(g.Length)).ToString(CultureInfo.InvariantCulture),
-                    center,
-                    Bounds.Size);
             }
         }
 
