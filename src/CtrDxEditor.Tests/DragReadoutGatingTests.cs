@@ -103,6 +103,26 @@ namespace CtrDxEditor.Tests
             Assert.Contains("WaterGeometry.Band", ReadReadout(), StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// Ending a gesture repaints. Every drag flag it clears changes what the canvas draws — the badge
+        /// disappears, the ghost morph selector comes back — so without this the last frame of the drag
+        /// stays on screen until some unrelated event happens to invalidate.
+        /// </summary>
+        [Fact]
+        public void EndingAGestureRepaints()
+        {
+            string input = File.ReadAllText(SourcePath(
+                "CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+
+            int method = input.IndexOf("private void EndPointerGesture", StringComparison.Ordinal);
+            Assert.True(method >= 0, "EndPointerGesture is missing.");
+
+            int next = input.IndexOf("\n        /// <inheritdoc />", method, StringComparison.Ordinal);
+            string body = input[method..(next < 0 ? input.Length : next)];
+
+            Assert.Contains("InvalidateVisual();", body, StringComparison.Ordinal);
+        }
+
         private static string ReadReadout()
         {
             return File.ReadAllText(SourcePath(

@@ -1423,6 +1423,12 @@ namespace CtrDxEditor.Rendering
             // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
             SetRopeHovered(false);
             SetHookHovered(false);
+
+            // Every flag cleared above changes what the canvas draws: the drag readout badge goes away and
+            // the ghost morph selector comes back. The hover setters only repaint when their value actually
+            // changed, so this cannot be left to them — after a plain object drag neither one changed, and
+            // the final frame of the drag would stay on screen until something unrelated invalidated.
+            InvalidateVisual();
         }
 
         /// <inheritdoc />
