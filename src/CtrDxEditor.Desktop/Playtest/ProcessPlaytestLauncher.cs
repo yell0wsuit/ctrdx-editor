@@ -170,7 +170,6 @@ namespace CtrDxEditor.Desktop.Playtest
             _ = Task.Delay(HandshakeGracePeriod, handshake.Token).ContinueWith(
                 task =>
                 {
-                    handshake.Dispose();
                     if (task.IsCanceled)
                     {
                         return; // Handshake seen, process ended, or shutting down - nothing to report.
