@@ -143,6 +143,21 @@ namespace CtrDxEditor.Tests
             Assert.True(layout.Plate.Right <= Wide.Width, "The plate must not extend past the right edge.");
         }
 
+        /// <summary>Non-readout badge plates can reuse the same edge clamping and top-edge flip.</summary>
+        [Fact]
+        public void FixedPlateUsesSharedViewportPlacement()
+        {
+            Rect plate = BadgeRenderer.Place(
+                new Point(2, 4),
+                Wide,
+                width: 100,
+                height: BadgeRenderer.Height);
+
+            Assert.True(plate.X >= 0);
+            Assert.True(plate.Y > 4);
+            Assert.True(plate.Right <= Wide.Width);
+        }
+
         /// <summary>No entries means no plate, so an inconsistent drag draws nothing.</summary>
         [Fact]
         public void NoEntriesMeansAnEmptyPlate()

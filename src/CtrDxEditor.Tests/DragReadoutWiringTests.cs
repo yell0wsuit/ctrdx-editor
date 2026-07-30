@@ -88,6 +88,40 @@ namespace CtrDxEditor.Tests
             Assert.Contains("Bounds.Size", ReadReadout(), StringComparison.Ordinal);
         }
 
+        /// <summary>A hand dial passes the active segment so the resolver reads the angle being edited.</summary>
+        [Fact]
+        public void HandRotationPassesTheActiveSegment()
+        {
+            Assert.Contains(
+                "(DragKind.Rotate, _handActiveSegment",
+                ReadReadout(),
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>Rail readouts follow the hook or end cap that the pointer is dragging.</summary>
+        [Fact]
+        public void RailReadoutTracksTheActiveHandle()
+        {
+            string source = ReadReadout();
+
+            Assert.Contains("GrabRail.Of(obj)", source, StringComparison.Ordinal);
+            Assert.Contains("_railDrag switch", source, StringComparison.Ordinal);
+            Assert.Contains("GrabRail.Handle.SlideHook => rail.Hook", source, StringComparison.Ordinal);
+            Assert.Contains("GrabRail.Handle.ResizeStart => rail.Start", source, StringComparison.Ordinal);
+            Assert.Contains("GrabRail.Handle.ResizeEnd => rail.End", source, StringComparison.Ordinal);
+        }
+
+        /// <summary>Rotation readouts follow the dial knob computed from the live rotation target.</summary>
+        [Fact]
+        public void RotationReadoutTracksTheDialKnob()
+        {
+            string source = ReadReadout();
+
+            Assert.Contains("EditableRotationTarget(obj)", source, StringComparison.Ordinal);
+            Assert.Contains("RotationDialRenderer.RadiusPx", source, StringComparison.Ordinal);
+            Assert.Contains("ObjectRotation.KnobPosition", source, StringComparison.Ordinal);
+        }
+
         private static string ReadRendering()
         {
             return File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Rendering.cs"));

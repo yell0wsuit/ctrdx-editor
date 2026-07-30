@@ -283,7 +283,12 @@ namespace CtrDxEditor.Rendering
         /// Positions a plate of the given size above <paramref name="anchor"/>, clamped into
         /// <paramref name="bounds"/> and flipped below the anchor when it will not fit above.
         /// </summary>
-        private static Rect Place(Point anchor, Size bounds, double width, double height)
+        /// <param name="anchor">Screen point the plate sits above.</param>
+        /// <param name="bounds">The canvas size the plate must stay inside.</param>
+        /// <param name="width">Measured plate width in screen pixels.</param>
+        /// <param name="height">Measured plate height in screen pixels.</param>
+        /// <returns>The positioned plate rectangle.</returns>
+        public static Rect Place(Point anchor, Size bounds, double width, double height)
         {
             double above = anchor.Y - height - Gap;
             double y = above >= 0 ? above : anchor.Y + Gap;

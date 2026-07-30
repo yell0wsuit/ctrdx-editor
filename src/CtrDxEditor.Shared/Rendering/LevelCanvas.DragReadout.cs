@@ -114,7 +114,7 @@ namespace CtrDxEditor.Rendering
 
             if (_rotating)
             {
-                return (DragKind.Rotate, 0, default);
+                return (DragKind.Rotate, _handActiveSegment, default);
             }
 
             if (_polylinePointDrag > 0)
@@ -175,6 +175,30 @@ namespace CtrDxEditor.Rendering
             if (obj is null)
             {
                 return default;
+            }
+
+            if (kind is DragKind.RailOffset or DragKind.RailResize
+                && GrabRail.Of(obj) is { } rail)
+            {
+                Vec2 handle = _railDrag switch
+                {
+                    GrabRail.Handle.SlideHook => rail.Hook,
+                    GrabRail.Handle.ResizeStart => rail.Start,
+                    GrabRail.Handle.ResizeEnd => rail.End,
+                    GrabRail.Handle.None or GrabRail.Handle.MoveBar => rail.Hook,
+                    _ => rail.Hook,
+                };
+                Vec2 screen = v.LevelToScreen(handle);
+                return new Point(screen.X, screen.Y);
+            }
+
+            if (kind == DragKind.Rotate && EditableRotationTarget(obj) is { } target)
+            {
+                double radius = v.Zoom > 0 ? RotationDialRenderer.RadiusPx / v.Zoom : 0;
+                Vec2 knob = ObjectRotation.KnobPosition(
+                    target.Center, target.StoredAngle, target.Spec, radius);
+                Vec2 screen = v.LevelToScreen(knob);
+                return new Point(screen.X, screen.Y);
             }
 
             // Everything else anchors to the top of the selection outline: the handle sits on or inside

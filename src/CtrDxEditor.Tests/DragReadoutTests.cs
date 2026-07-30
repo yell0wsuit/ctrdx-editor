@@ -64,6 +64,33 @@ namespace CtrDxEditor.Tests
             Assert.EndsWith("°", entry.Value, StringComparison.Ordinal);
         }
 
+        /// <summary>A hand rotation reads the active segment's synthesized angle property.</summary>
+        [Fact]
+        public void HandRotationReadsTheActiveSegment()
+        {
+            LevelObject hand = Obj(
+                "hand",
+                ("segmentsCount", "2"),
+                ("segment1Angle", "15"),
+                ("segment2Angle", "90"));
+
+            DragReadout.Entry entry = Assert.Single(For(DragKind.Rotate, hand, index: 2));
+
+            Assert.Equal("angle", entry.AttrKey);
+            Assert.Equal("90°", entry.Value);
+        }
+
+        /// <summary>A ghost's bouncer preview rotates through its ordinary angle attribute.</summary>
+        [Fact]
+        public void GhostRotationReadsItsPreviewAngle()
+        {
+            DragReadout.Entry entry = Assert.Single(
+                For(DragKind.Rotate, Obj("ghost", ("angle", "45"))));
+
+            Assert.Equal("angle", entry.AttrKey);
+            Assert.Equal("45°", entry.Value);
+        }
+
         /// <summary>A radius readout uses the ring's own attribute, not a hard-coded "radius".</summary>
         [Fact]
         public void RadiusUsesTheRingsOwnAttribute()
@@ -73,6 +100,17 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("litRadius", entry.AttrKey);
             Assert.Equal("150", entry.Value);
+        }
+
+        /// <summary>A ghost's grab preview resizes the ghost's own catch radius.</summary>
+        [Fact]
+        public void GhostRadiusReadsItsPreviewRadius()
+        {
+            DragReadout.Entry entry = Assert.Single(
+                For(DragKind.Radius, Obj("ghost", ("radius", "175"))));
+
+            Assert.Equal("radius", entry.AttrKey);
+            Assert.Equal("175", entry.Value);
         }
 
         /// <summary>A rail resize reports both attributes the drag writes, offset first.</summary>
@@ -170,6 +208,13 @@ namespace CtrDxEditor.Tests
         public void InconsistentStateYieldsNothing(DragKind kind)
         {
             Assert.Empty(For(kind));
+        }
+
+        /// <summary>No drag yields nothing even when a stale selection object is still present.</summary>
+        [Fact]
+        public void NoneWithAnObjectYieldsNothing()
+        {
+            Assert.Empty(For(DragKind.None, Obj("grab")));
         }
 
         /// <summary>An out-of-range hand segment yields nothing instead of throwing.</summary>

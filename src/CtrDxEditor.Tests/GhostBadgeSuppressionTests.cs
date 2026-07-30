@@ -52,6 +52,18 @@ namespace CtrDxEditor.Tests
             Assert.True(hits > gate, "Hit targets must only be recorded after the drag gate passes.");
         }
 
+        /// <summary>The selector reuses shared placement so its plate and hit targets stay inside the viewport.</summary>
+        [Fact]
+        public void GhostBadgeUsesSharedViewportPlacement()
+        {
+            string source = File.ReadAllText(SourcePath(
+                "CtrDxEditor.Shared", "Rendering", "LevelCanvas.GhostBadge.cs"));
+
+            Assert.Contains("BadgeRenderer.Place(", source, StringComparison.Ordinal);
+            Assert.Contains("Bounds.Size", source, StringComparison.Ordinal);
+            Assert.Contains("bubble.Y", source, StringComparison.Ordinal);
+        }
+
         /// <summary>Every drag flag feeds the gate, so no drag type slips past it.</summary>
         [Theory]
         [InlineData("_dragging")]

@@ -78,7 +78,10 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         /// <param name="kind">The drag in progress.</param>
         /// <param name="obj">The object being dragged; null for <see cref="DragKind.Water"/>.</param>
-        /// <param name="index">The 1-based hand segment for <see cref="DragKind.HandJoint"/>; ignored otherwise.</param>
+        /// <param name="index">
+        /// The 1-based hand segment for a hand <see cref="DragKind.HandJoint"/> or
+        /// <see cref="DragKind.Rotate"/>; ignored otherwise.
+        /// </param>
         /// <param name="point">
         /// Consulted only by <see cref="DragKind.PolylinePoint"/> (the dragged vertex) and
         /// <see cref="DragKind.Water"/> (the height, <c>Y</c> only). Those two are the only kinds whose
@@ -87,63 +90,27 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The badge entries, or an empty list.</returns>
         public static IReadOnlyList<Entry> For(DragKind kind, LevelObject? obj, int index, Vec2 point)
         {
-            switch (kind)
-            {
-                case DragKind.Water:
-                    return [new Entry("water", Whole(point.Y))];
-                case DragKind.PolylinePoint:
-                    return [new Entry("x", Whole(point.X)), new Entry("y", Whole(point.Y))];
-                case DragKind.None:
-                    break;
-                case DragKind.Move:
-                    break;
-                case DragKind.Rotate:
-                    break;
-                case DragKind.Radius:
-                    break;
-                case DragKind.RopeLength:
-                    break;
-                case DragKind.RailOffset:
-                    break;
-                case DragKind.RailResize:
-                    break;
-                case DragKind.ConveyorLength:
-                    break;
-                case DragKind.ConveyorWidth:
-                    break;
-                case DragKind.StripSize:
-                    break;
-                case DragKind.HandJoint:
-                    break;
-                case DragKind.HandBase:
-                    break;
-                case DragKind.VinylAngle:
-                    break;
-                case DragKind.TutorialWidth:
-                    break;
-                default:
-                    break;
-            }
-
-            return obj is null
-                ? []
-                : (IReadOnlyList<Entry>)(kind switch
-                {
-                    DragKind.Move or DragKind.HandBase => Position(obj),
-                    DragKind.Rotate => Rotation(obj),
-                    DragKind.Radius => Radius(obj),
-                    DragKind.RopeLength or DragKind.ConveyorLength => Attr(obj, "length"),
-                    DragKind.RailOffset => RailOffset(obj),
-                    DragKind.RailResize => [.. Attr(obj, "moveOffset"), .. Attr(obj, "moveLength")],
-                    DragKind.ConveyorWidth or DragKind.TutorialWidth => Attr(obj, "width"),
-                    DragKind.StripSize => StripSize(obj),
-                    DragKind.HandJoint => HandJoint(obj, index),
-                    DragKind.VinylAngle => Attr(obj, "handleAngle"),
-                    DragKind.None => throw new NotImplementedException(),
-                    DragKind.PolylinePoint => throw new NotImplementedException(),
-                    DragKind.Water => throw new NotImplementedException(),
-                    _ => [],
-                });
+            return kind == DragKind.Water
+                ? [new Entry("water", Whole(point.Y))]
+                : kind == DragKind.PolylinePoint
+                    ? [new Entry("x", Whole(point.X)), new Entry("y", Whole(point.Y))]
+                    : obj is null
+                        ? []
+                        : kind switch
+                        {
+                            DragKind.Move or DragKind.HandBase => Position(obj),
+                            DragKind.Rotate => Rotation(obj, index),
+                            DragKind.Radius => Radius(obj),
+                            DragKind.RopeLength or DragKind.ConveyorLength => Attr(obj, "length"),
+                            DragKind.RailOffset => RailOffset(obj),
+                            DragKind.RailResize => [.. Attr(obj, "moveOffset"), .. Attr(obj, "moveLength")],
+                            DragKind.ConveyorWidth or DragKind.TutorialWidth => Attr(obj, "width"),
+                            DragKind.StripSize => StripSize(obj),
+                            DragKind.HandJoint => HandJoint(obj, index),
+                            DragKind.VinylAngle => Attr(obj, "handleAngle"),
+                            DragKind.None or DragKind.PolylinePoint or DragKind.Water => [],
+                            _ => [],
+                        };
         }
 
         /// <summary>The object's authored position, X before Y.</summary>
@@ -160,22 +127,38 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The displayed rotation, degree-signed. Uses <see cref="ObjectRotation.DisplayDegrees"/> rather
-        /// than the raw attribute so the badge matches the dial and the property panel.
+        /// The displayed rotation, degree-signed. Registered objects use
+        /// <see cref="ObjectRotation.DisplayDegrees"/>; hands read the indexed segment's synthesized angle
+        /// property, and a ghost bouncer preview reads the ghost's ordinary <c>angle</c> property.
         /// </summary>
-        private static Entry[] Rotation(LevelObject obj)
+        private static Entry[] Rotation(LevelObject obj, int index)
         {
-            return RotationTable.For(obj.Type) is not { } spec
-                ? []
-                : [new Entry("angle", Whole(ObjectRotation.DisplayDegrees(obj, spec)) + "°")];
+            return HandObject.IsHand(obj.Type)
+                ? index < 1 || index > HandObject.SegmentCount(obj)
+                    ? []
+                    : AngleAttr(obj, HandObject.AngleAttr(index))
+                : RotationTable.For(obj.Type) is { } spec
+                    ? [new Entry("angle", Whole(ObjectRotation.DisplayDegrees(obj, spec)) + "°")]
+                    : AngleAttr(obj, "angle");
+        }
+
+        /// <summary>An angle attribute formatted as a degree-signed badge value, or nothing when absent.</summary>
+        private static Entry[] AngleAttr(LevelObject obj, string key)
+        {
+            return double.TryParse(
+                obj.GetAttr(key), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+                ? [new Entry("angle", Whole(value) + "°")]
+                : [];
         }
 
         /// <summary>The resized ring's own attribute, so a bulb reads "litRadius" and a grab reads "radius".</summary>
         private static Entry[] Radius(LevelObject obj)
         {
-            return RadiusRing.Of(obj) is not { } ring
-                ? []
-                : [new Entry(ring.Attr, Whole(ring.Radius))];
+            return RadiusRing.Of(obj) is { } ring
+                ? [new Entry(ring.Attr, Whole(ring.Radius))]
+                : obj.Type == "ghost" && GrabRadius.Of(obj) is double radius
+                    ? [new Entry("radius", Whole(radius))]
+                    : [];
         }
 
         /// <summary>

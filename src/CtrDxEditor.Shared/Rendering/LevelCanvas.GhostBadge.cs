@@ -57,15 +57,15 @@ namespace CtrDxEditor.Rendering
             double separatorsWidth = Math.Max(0, states.Count - 1) * separatorGap;
             double width = contentWidth + separatorsWidth + 12;
             double centerX = v.LevelToScreen(new Vec2(ghost.X, ghost.Y)).X;
-            double top = outline.Min(p => p.Y) - height - 12;
-            Rect bubble = new(centerX - (width / 2), top, width, height);
+            Point anchor = new(centerX, outline.Min(p => p.Y));
+            Rect bubble = BadgeRenderer.Place(anchor, Bounds.Size, width, height);
             context.FillRectangle(BadgeRenderer.Plate, bubble, BadgeRenderer.Radius);
 
             double x = bubble.X + 6;
             for (int i = 0; i < states.Count; i++)
             {
                 GhostMorph morph = states[i];
-                Rect hit = new(x, top + 3, cellWidths[i], height - 6);
+                Rect hit = new(x, bubble.Y + 3, cellWidths[i], height - 6);
                 if (_ghostPreview.Active == morph)
                 {
                     context.FillRectangle(new SolidColorBrush(Color.FromArgb(220, 46, 139, 255)), hit, 4);
@@ -86,7 +86,7 @@ namespace CtrDxEditor.Rendering
                         new Typeface(FontFamily.DefaultFontFamilyName),
                         12,
                         Brushes.LightGray);
-                    context.DrawText(separator, new Point(x + 2, top + ((height - separator.Height) / 2)));
+                    context.DrawText(separator, new Point(x + 2, bubble.Y + ((height - separator.Height) / 2)));
                     x += separatorGap;
                 }
             }
