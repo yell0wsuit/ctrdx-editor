@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Avalonia;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Platform;
 using CtrDxEditor.Playtest;
 
 namespace CtrDxEditor.Startup
@@ -37,6 +38,9 @@ namespace CtrDxEditor.Startup
 
         /// <summary>Plays levels in Cut the Rope: DX for playtesting; null where processes cannot be spawned (the browser).</summary>
         public IPlaytestLauncher? Playtest { get; init; }
+
+        /// <summary>Draws the user's attention to the editor window (taskbar flash / dock bounce); null where unavailable (the browser).</summary>
+        public IUserAttention? Attention { get; init; }
 
         /// <summary>
         /// Reports whether a newer release has been published, offering the user the release page at

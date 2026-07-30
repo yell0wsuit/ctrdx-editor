@@ -129,6 +129,10 @@ namespace CtrDxEditor.Views
             {
                 Dispatcher.UIThread.Post(() =>
                 {
+                    // The game window has the user's focus right now, so a dialog behind it goes unseen.
+                    // Flash the taskbar / bounce the dock first, then raise the dialog to acknowledge.
+                    (DataContext as EditorViewModel)?.Attention?.Demand();
+
                     MessageDialog dialog = new()
                     {
                         Header = Localizer.Get("Playtest.Unsupported.Header"),

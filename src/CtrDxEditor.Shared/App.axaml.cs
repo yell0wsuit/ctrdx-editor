@@ -253,7 +253,7 @@ namespace CtrDxEditor
                 SpriteCache sprites = new(store, _startup.SpriteImageExtension);
                 await Task.Run(sprites.PreloadAsync);
                 EditorSettings initial = await _startup.Settings.LoadAsync();
-                EditorViewModel editor = new(sprites, _startup.Settings, initial, _startup.Playtest);
+                EditorViewModel editor = new(sprites, _startup.Settings, initial, _startup.Playtest, _startup.Attention);
                 editor.InitializeDecorationFromSettings();
                 root.DataContext = editor;
                 return true;

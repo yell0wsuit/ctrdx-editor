@@ -3,6 +3,7 @@ using System;
 using Avalonia;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Desktop.Platform;
 using CtrDxEditor.Desktop.Playtest;
 using CtrDxEditor.Playtest;
 using CtrDxEditor.Startup;
@@ -39,6 +40,7 @@ namespace CtrDxEditor.Desktop
                 DownloadSizeLabel = "310 MB",
                 ManualDownloadUrl = ContentDownloader.AssetsUrl,
                 Playtest = new ProcessPlaytestLauncher(),
+                Attention = new NativeUserAttention(),
                 CheckForUpdate = () => GitHubUpdateChecker.IsUpdateAvailableAsync(AppVersion.Display),
                 RepointContentLocation = async () =>
                 {
