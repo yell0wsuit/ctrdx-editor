@@ -118,6 +118,27 @@ namespace CtrDxEditor.Rendering
                 : (RopeLength.Handle.None, 0);
         }
 
+        /// <summary>
+        /// Arms a rope drag from a press, capturing the state the solvers offset from so the press itself
+        /// cannot change the length.
+        /// </summary>
+        /// <param name="handle">The rope handle under the press.</param>
+        /// <param name="parameter">The curve parameter under the press, from <see cref="HitRope"/>.</param>
+        /// <param name="levelPt">The press position in level coordinates.</param>
+        /// <returns>Whether the drag was armed.</returns>
+        private bool BeginRopeDrag(RopeLength.Handle handle, double parameter, Vec2 levelPt)
+        {
+            if (SelectedRopeGeometry() is not { } g)
+            {
+                return false;
+            }
+
+            BeginDocumentEdit?.Invoke();
+            _ropeDrag = handle;
+            _ropeDragState = RopeLength.BeginDrag(g, parameter, levelPt);
+            return true;
+        }
+
         /// <summary>Updates the rope hover ring and repaints when its visibility changes.</summary>
         /// <param name="hovered">Whether the pointer is over the selected rope.</param>
         private void SetRopeHovered(bool hovered)
@@ -147,8 +168,8 @@ namespace CtrDxEditor.Rendering
             }
 
             double length = mods.HasFlag(KeyModifiers.Alt)
-                ? RopeLength.SolveTaut(g, _ropeDragParameter, levelPt)
-                : RopeLength.Solve(g, _ropeDragParameter, levelPt);
+                ? RopeLength.SolveTaut(g, _ropeDragState, levelPt)
+                : RopeLength.Solve(g, _ropeDragState, levelPt);
             grab.SetAttr("length", Whole(length));
         }
     }

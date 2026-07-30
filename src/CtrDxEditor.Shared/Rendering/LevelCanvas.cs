@@ -416,9 +416,12 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private RopeLength.Handle _ropeDrag;
 
-        /// <summary>The curve parameter the active rope drag is anchored to, fixed when the drag began so
-        /// the gesture does not slide along the rope as the cursor moves.</summary>
-        private double _ropeDragParameter;
+        /// <summary>
+        /// The active rope drag's fixed state, captured when the press landed: where on the cord it is
+        /// anchored, where the press was, and the length at that moment. The solvers work as an offset from
+        /// this, so the gesture neither slides along the rope nor rewrites the length just for being touched.
+        /// </summary>
+        private RopeLength.Drag _ropeDragState;
 
         /// <summary>Whether the cursor is over the selected grab's rope, so the knob shows its hover ring.</summary>
         private bool _ropeHovered;

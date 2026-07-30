@@ -794,11 +794,8 @@ namespace CtrDxEditor.Rendering
             // a small deliberate target that can legitimately sit over other art. The cord is handled much
             // further down, at empty-space priority.
             (RopeLength.Handle ropeHandle, double ropeParameter) = HitRope(levelPt);
-            if (ropeHandle == RopeLength.Handle.Knob)
+            if (ropeHandle == RopeLength.Handle.Knob && BeginRopeDrag(ropeHandle, ropeParameter, levelPt))
             {
-                BeginDocumentEdit?.Invoke();
-                _ropeDrag = ropeHandle;
-                _ropeDragParameter = ropeParameter;
                 e.Pointer.Capture(this);
                 return;
             }
@@ -1007,11 +1004,9 @@ namespace CtrDxEditor.Rendering
 
                 // Nothing was hit, so the rope may claim the press. Deliberately below object hit-testing:
                 // the cord sweeps across the level and must never steal a click from art beneath it.
-                if (ropeHandle == RopeLength.Handle.Cord)
+                if (ropeHandle == RopeLength.Handle.Cord
+                    && BeginRopeDrag(ropeHandle, ropeParameter, levelPt))
                 {
-                    BeginDocumentEdit?.Invoke();
-                    _ropeDrag = ropeHandle;
-                    _ropeDragParameter = ropeParameter;
                     e.Pointer.Capture(this);
                     return;
                 }
@@ -1399,7 +1394,7 @@ namespace CtrDxEditor.Rendering
             _tutorialTextResizeGrabOffsetX = 0;
             _railDrag = GrabRail.Handle.None;
             _ropeDrag = RopeLength.Handle.None;
-            _ropeDragParameter = 0;
+            _ropeDragState = default;
             _stripResizeDrag = SpikeResize.Handle.None;
             _conveyorDrag = ConveyorGeometry.Handle.None;
             _vinylHandleDrag = VinylGeometry.Handle.None;

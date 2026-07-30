@@ -153,20 +153,25 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(RopeLength.Handle.None, nearTarget);
         }
 
-        /// <summary>Solving puts the drawn cord under the cursor at the parameter the drag started from.</summary>
+        /// <summary>
+        /// Dragging a slack rope puts the drawn cord under the cursor, at the parameter the drag started
+        /// from. Only slack ropes can promise this: a taut one draws the same line at every length, so
+        /// there is nothing for the cord to track.
+        /// </summary>
         [Theory]
         [InlineData(60)]
         [InlineData(140)]
         [InlineData(260)]
         public void SolvePutsTheCordUnderTheCursor(double dropBelowChord)
         {
-            RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
-            const double T = 0.5;
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(200, 0));
+            Assert.False(g.Taut);
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, g.KnobParameter, g.Knob);
             Vec2 cursor = new(100, dropBelowChord);
 
-            double solved = RopeLength.Solve(g, T, cursor);
+            double solved = RopeLength.Solve(g, drag, cursor);
             Vec2 cord = RopeStripBuilder.CalcPathBezier(
-                RopeStripBuilder.ControlPoints(g.Hook, g.Target, solved), T);
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, solved), g.KnobParameter);
 
             // Not exact: the cord gains a control point every 35 units of rest length, so its shape steps
             // slightly and bisection lands inside a step. A few level units is sub-pixel at normal zoom.
@@ -180,45 +185,84 @@ namespace CtrDxEditor.Core.Tests
         public void SolveIsMonotoneInTheDragDistance()
         {
             RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, 0.5, new Vec2(100, 0));
 
-            double near = RopeLength.Solve(g, 0.5, new Vec2(100, 40));
-            double middle = RopeLength.Solve(g, 0.5, new Vec2(100, 120));
-            double far = RopeLength.Solve(g, 0.5, new Vec2(100, 300));
+            double near = RopeLength.Solve(g, drag, new Vec2(100, 40));
+            double middle = RopeLength.Solve(g, drag, new Vec2(100, 120));
+            double far = RopeLength.Solve(g, drag, new Vec2(100, 300));
 
             Assert.True(near < middle);
             Assert.True(middle < far);
         }
 
-        /// <summary>A plain drag floors at taut: every shorter rope draws as the same straight cord.</summary>
+        /// <summary>Dragging a slack rope back toward its chord bottoms out at taut, not below.</summary>
         [Fact]
-        public void SolveFloorsAtTheChord()
+        public void PlainDragBottomsOutAtTaut()
         {
-            RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "400"), Candy(200, 0));
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, g.KnobParameter, g.Knob);
 
-            Assert.Equal(200, RopeLength.Solve(g, 0.5, new Vec2(100, 0)), 3);
-            Assert.Equal(200, RopeLength.Solve(g, 0.5, new Vec2(100, -80)), 3);
+            Assert.Equal(g.Chord, RopeLength.Solve(g, drag, new Vec2(100, 0)), 0);
+            Assert.Equal(g.Chord, RopeLength.Solve(g, drag, new Vec2(100, -400)), 0);
         }
 
-        /// <summary>The Alt mapping reads distance from the hook and stays inside the taut range.</summary>
-        [Fact]
-        public void SolveTautReadsDistanceFromTheHookAndClamps()
+        /// <summary>
+        /// Pressing an already-taut rope leaves its length alone. Every length at or below the chord draws
+        /// the same straight cord, so an absolute mapping would have to guess - and would guess the chord.
+        /// </summary>
+        [Theory]
+        [InlineData("1")]
+        [InlineData("50")]
+        [InlineData("199")]
+        [InlineData("200")]
+        public void PressingATautRopeLeavesItsLengthAlone(string length)
         {
-            RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
+            RopeLength.Geometry g = Resolve(Grab(0, 0, length), Candy(200, 0));
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, g.KnobParameter, g.Knob);
 
-            Assert.Equal(75, RopeLength.SolveTaut(g, 0.5, new Vec2(37.5, 0)), 6);
-            Assert.Equal(200, RopeLength.SolveTaut(g, 0.5, new Vec2(900, 0)), 6);
-            Assert.Equal(RopeLength.MinLength, RopeLength.SolveTaut(g, 0.5, new Vec2(0, 0)), 6);
+            Assert.True(g.Taut);
+            Assert.Equal(g.Length, RopeLength.Solve(g, drag, g.Knob), 6);
         }
 
-        /// <summary>Both mappings agree at the same taut-boundary point, so toggling Alt never jumps.</summary>
+        /// <summary>Dragging a taut rope grows it a step at a time from where it was, not from the chord.</summary>
         [Fact]
-        public void MappingsMeetAtTheTautBoundary()
+        public void DraggingATautRopeGrowsFromItsCurrentLength()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "50"), Candy(200, 0));
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, g.KnobParameter, g.Knob);
+
+            double small = RopeLength.Solve(g, drag, new Vec2(100, 10));
+            double bigger = RopeLength.Solve(g, drag, new Vec2(100, 40));
+
+            Assert.True(small > 50, $"expected growth from 50, got {small}");
+            Assert.True(bigger > small);
+            Assert.True(small < 120, $"expected an incremental step from 50, got {small}");
+        }
+
+        /// <summary>The Alt mapping shifts the length by how far the drag moves, and floors at MinLength.</summary>
+        [Fact]
+        public void AltDragShortensRelativeToWhereItStarted()
         {
             RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
-            Vec2 onChord = new(100, 0);
+            Vec2 origin = new(100, 0);
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, 0.5, origin);
 
-            Assert.Equal(200, RopeLength.Solve(g, 0.5, onChord), 3);
-            Assert.Equal(200, RopeLength.SolveTaut(g, 0.5, onChord), 3);
+            Assert.Equal(120, RopeLength.SolveTaut(g, drag, origin), 6);
+            Assert.Equal(20, RopeLength.SolveTaut(g, drag, new Vec2(50, 0)), 6);
+            Assert.Equal(220, RopeLength.SolveTaut(g, drag, new Vec2(150, 0)), 6);
+            Assert.Equal(RopeLength.MinLength, RopeLength.SolveTaut(g, drag, new Vec2(0, 0)), 6);
+        }
+
+        /// <summary>Both mappings leave the length alone at the press point, so toggling Alt never jumps.</summary>
+        [Fact]
+        public void MappingsAgreeAtThePressPoint()
+        {
+            RopeLength.Geometry g = Resolve(Grab(0, 0, "120"), Candy(200, 0));
+            Vec2 origin = new(100, 0);
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, 0.5, origin);
+
+            Assert.Equal(120, RopeLength.Solve(g, drag, origin), 3);
+            Assert.Equal(120, RopeLength.SolveTaut(g, drag, origin), 3);
         }
 
         /// <summary>A hook on its target has no chord to solve against, so the drag falls back to distance.</summary>
@@ -226,9 +270,12 @@ namespace CtrDxEditor.Core.Tests
         public void DegenerateChordSolvesByDistanceFromTheHook()
         {
             RopeLength.Geometry g = Resolve(Grab(0, 0, "200"), Candy(0, 0));
+            RopeLength.Drag drag = RopeLength.BeginDrag(g, 0.5, new Vec2(0, 90));
 
-            Assert.Equal(90, RopeLength.Solve(g, 0.5, new Vec2(0, 90)), 6);
+            Assert.Equal(200, RopeLength.Solve(g, drag, new Vec2(0, 90)), 6);
+            Assert.Equal(210, RopeLength.Solve(g, drag, new Vec2(0, 100)), 6);
         }
+
         /// <summary>Grabbing the knob and solving from where it already sits must not change the length.</summary>
         [Theory]
         [InlineData(200, 0)]
@@ -242,7 +289,7 @@ namespace CtrDxEditor.Core.Tests
                 RopeLength.HitTest(g, g.Knob, knobTolerance: 9, cordTolerance: 6);
 
             Assert.Equal(RopeLength.Handle.Knob, handle);
-            Assert.Equal(g.Length, RopeLength.Solve(g, t, g.Knob), 0);
+            Assert.Equal(g.Length, RopeLength.Solve(g, RopeLength.BeginDrag(g, t, g.Knob), g.Knob), 6);
         }
 
         /// <summary>Grabbing the cord away from the knob must not change the length either.</summary>
@@ -257,7 +304,7 @@ namespace CtrDxEditor.Core.Tests
                 RopeLength.HitTest(g, onCord, knobTolerance: 9, cordTolerance: 6);
 
             Assert.Equal(RopeLength.Handle.Cord, handle);
-            Assert.Equal(g.Length, RopeLength.Solve(g, t, onCord), 0);
+            Assert.Equal(g.Length, RopeLength.Solve(g, RopeLength.BeginDrag(g, t, onCord), onCord), 6);
         }
     }
 }

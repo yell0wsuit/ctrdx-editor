@@ -55,6 +55,16 @@ namespace CtrDxEditor.Core.Editing
         public readonly record struct Geometry(
             Vec2 Hook, Vec2 Target, double Chord, double Length, Vec2 Knob, double KnobParameter, bool Taut);
 
+        /// <summary>
+        /// The fixed state of an in-progress rope drag, captured when the press landed. Both solvers work
+        /// as an offset from this, so a press that never moves cannot change the length whatever the cord
+        /// happens to look like.
+        /// </summary>
+        /// <param name="Parameter">The curve parameter the drag is anchored to, from <see cref="HitTest"/>.</param>
+        /// <param name="Origin">Where the press landed, in level units.</param>
+        /// <param name="Length">The rope's rest length when the press landed, in level units.</param>
+        public readonly record struct Drag(double Parameter, Vec2 Origin, double Length);
+
         /// <summary>What part of a rope a point is over, so the canvas can route a drag.</summary>
         public enum Handle
         {
@@ -147,20 +157,61 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The rest length that puts the drawn cord under <paramref name="point"/>: bisects length until
-        /// the cord's own Y at curve parameter <paramref name="t"/> reaches the point's. Comparing the
-        /// curve against the cursor directly, rather than against the chord, keeps the solve in the same
-        /// parameterization the cord is drawn in, so pressing without moving is a no-op. Floors at the
-        /// chord distance, because every shorter rope draws as the same straight line — use
-        /// <see cref="SolveTaut"/> to reach that range. A degenerate chord has no curve to measure, so it
-        /// reads plain distance from the hook instead; note that is unclamped above, unlike
-        /// <see cref="SolveTaut"/>, since there is no meaningful taut ceiling when the chord is zero.
+        /// Captures the fixed state of a drag as the press lands, so the solvers can work as an offset from
+        /// it rather than reading a length straight out of the cursor position.
         /// </summary>
         /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
-        /// <param name="t">The curve parameter recorded when the drag began, from <see cref="HitTest"/>.</param>
+        /// <param name="parameter">The curve parameter under the press, from <see cref="HitTest"/>.</param>
+        /// <param name="origin">Where the press landed, in level units.</param>
+        /// <returns>The drag state to pass to <see cref="Solve"/> and <see cref="SolveTaut"/>.</returns>
+        public static Drag BeginDrag(Geometry g, double parameter, Vec2 origin)
+        {
+            return new Drag(parameter, origin, g.Length);
+        }
+
+        /// <summary>
+        /// The rest length for a drag: the rope's length at the press, shifted by however much the cord
+        /// mapping has moved since. Relative rather than absolute, because a rope at or below its chord
+        /// draws as the same straight line at every length - an absolute mapping cannot tell 50 from 200 and
+        /// would snap a short rope taut the moment it was touched. Working from the press instead means a
+        /// press that does not move changes nothing, and a drag grows the rope from wherever it already was.
+        /// Only the floor survives from the absolute form: dragging back toward the chord stops at taut,
+        /// since below that the cord stops responding - use <see cref="SolveTaut"/> for that range.
+        /// </summary>
+        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
+        /// <param name="drag">The drag state, from <see cref="BeginDrag"/>.</param>
         /// <param name="point">The drag position, in level units.</param>
         /// <returns>The new rest length in level units.</returns>
-        public static double Solve(Geometry g, double t, Vec2 point)
+        public static double Solve(Geometry g, Drag drag, Vec2 point)
+        {
+            double moved = SagLength(g, drag.Parameter, point) - SagLength(g, drag.Parameter, drag.Origin);
+            return Math.Max(MinLength, drag.Length + moved);
+        }
+
+        /// <summary>
+        /// The rest length for an Alt drag, the one that reaches below taut: the length at the press shifted
+        /// by how much further from the hook the cursor has travelled. Normalizing by the drag's parameter
+        /// keeps a step of cursor travel worth about a step of rope. Relative for the same reason as
+        /// <see cref="Solve"/>, and with no ceiling, so releasing Alt part-way through a drag never jumps.
+        /// Every length at or below the chord draws the same straight cord, so the badge is the only
+        /// feedback this range has.
+        /// </summary>
+        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
+        /// <param name="drag">The drag state, from <see cref="BeginDrag"/>.</param>
+        /// <param name="point">The drag position, in level units.</param>
+        /// <returns>The new rest length in level units.</returns>
+        public static double SolveTaut(Geometry g, Drag drag, Vec2 point)
+        {
+            double parameter = Math.Clamp(drag.Parameter, MinParameter, MaxParameter);
+            double moved = (Distance(point, g.Hook) - Distance(drag.Origin, g.Hook)) / parameter;
+            return Math.Max(MinLength, drag.Length + moved);
+        }
+
+        // The rest length whose drawn cord passes through `point` at curve parameter t: bisects on the
+        // cord's own Y, which rises monotonically with length. This is the absolute mapping the public
+        // solvers difference against; on its own it cannot represent a taut rope, since every length at or
+        // below the chord draws the same line and so reports the chord.
+        private static double SagLength(Geometry g, double t, Vec2 point)
         {
             if (g.Chord < MinChord)
             {
@@ -195,23 +246,6 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
             return (low + high) / 2;
-        }
-
-        /// <summary>
-        /// The rest length for a below-taut drag: distance from the hook normalized by the drag's fixed
-        /// curve parameter, then clamped into [<see cref="MinLength"/>, the chord distance]. Normalizing
-        /// makes this mapping meet <see cref="Solve"/> at the same point on the taut chord, so toggling Alt
-        /// does not jump. Every length in that range draws as the same straight cord, so the number is the
-        /// only feedback and the canvas shows it beside the cursor.
-        /// </summary>
-        /// <param name="g">The rope geometry, from <see cref="Of"/>.</param>
-        /// <param name="t">The fixed curve parameter recorded when the drag began.</param>
-        /// <param name="point">The drag position, in level units.</param>
-        /// <returns>The new rest length in level units.</returns>
-        public static double SolveTaut(Geometry g, double t, Vec2 point)
-        {
-            double parameter = Math.Clamp(t, MinParameter, MaxParameter);
-            return Math.Clamp(Distance(point, g.Hook) / parameter, MinLength, Math.Max(MinLength, g.Chord));
         }
 
         // The knob sits where the drawn cord hangs furthest below its chord, and carries the curve
