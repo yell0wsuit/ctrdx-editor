@@ -550,6 +550,17 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         private bool _slopCleared;
 
+        /// <summary>
+        /// Whether the current press has travelled far enough for its drag readout badge to appear.
+        /// <para>
+        /// Distinct from <see cref="_slopCleared"/>, which gates <em>editing</em> and on mouse clears on any
+        /// movement at all — see <see cref="TouchInput.ExceedsDragSlop"/>. That makes it useless as a
+        /// click-versus-drag test on the desktop: nearly every click moves the cursor a little, so a badge
+        /// gated on it flashes up on plain clicks.
+        /// </para>
+        /// </summary>
+        private bool _readoutArmed;
+
         /// <summary>Guards scrollbar/<see cref="View"/> sync so a programmatic scroll update doesn't recurse back through property changes.</summary>
         private bool _syncingScroll;
 

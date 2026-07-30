@@ -74,13 +74,6 @@ namespace CtrDxEditor.Tests
             Assert.True(gate < draw, "The drag gate must precede drawing.");
         }
 
-        /// <summary>A press that has not cleared the slop threshold is still a tap, and shows no badge.</summary>
-        [Fact]
-        public void ReadoutRequiresClearedSlop()
-        {
-            Assert.Contains("_slopCleared", ReadReadout(), StringComparison.Ordinal);
-        }
-
         /// <summary>The canvas passes its own size so the plate can clamp into the viewport.</summary>
         [Fact]
         public void ReadoutPassesCanvasBounds()

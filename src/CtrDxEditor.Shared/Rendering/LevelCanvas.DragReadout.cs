@@ -25,7 +25,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">Current level-to-screen transform.</param>
         private void DrawDragReadout(DrawingContext context, ViewTransform v)
         {
-            if (!AnyDragActive || !_slopCleared)
+            if (!AnyDragActive || !_readoutArmed)
             {
                 return;
             }
@@ -154,10 +154,19 @@ namespace CtrDxEditor.Rendering
         {
             if (kind == DragKind.Water)
             {
+                // The water attribute is a depth measured up from the level's bottom edge, not a Y
+                // coordinate, so the surface has to come from the shared band geometry — the same source
+                // HitsWaterHandle uses. Deriving it here is how the badge ended up inverted.
+                if (Document is not { } waterDoc
+                    || WaterGeometry.Band(waterDoc.Width, waterDoc.Height, waterDoc.Water) is not { } band)
+                {
+                    return default;
+                }
+
                 // The waterline spans the level, so there is no "dragged point" to track horizontally.
                 // Centering on the viewport keeps the badge stable instead of skating with the cursor.
-                Vec2 waterline = v.LevelToScreen(new Vec2(0, Document?.Water ?? 0));
-                return new Point(Bounds.Width / 2, waterline.Y);
+                Vec2 surface = v.LevelToScreen(new Vec2(band.X, band.Y));
+                return new Point(Bounds.Width / 2, surface.Y);
             }
 
             if (kind == DragKind.RopeLength && SelectedRopeGeometry() is { } rope)

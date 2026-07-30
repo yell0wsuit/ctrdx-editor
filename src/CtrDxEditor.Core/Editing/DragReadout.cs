@@ -72,6 +72,32 @@ namespace CtrDxEditor.Core.Editing
         public readonly record struct Entry(string AttrKey, string Value);
 
         /// <summary>
+        /// Screen pixels a pointer must travel before its badge appears. Small enough that a deliberate
+        /// drag reads as immediate, large enough to swallow the hand-tremor movement that accompanies an
+        /// ordinary click.
+        /// </summary>
+        public const double ArmDistancePx = 3;
+
+        /// <summary>
+        /// Whether a gesture has travelled far enough to read as a drag rather than a click.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately separate from <see cref="TouchInput.ExceedsDragSlop"/>, which exists to decide when
+        /// a press starts <em>editing</em> and reports true on any mouse movement at all. That is correct
+        /// for editing — desktop drags are pixel-precise — but it cannot tell a click from a drag, so it
+        /// would show a badge on every click.
+        /// </remarks>
+        /// <param name="pressPx">Screen-space position where the press began.</param>
+        /// <param name="currentPx">Current screen-space position.</param>
+        /// <returns>True once travel exceeds <see cref="ArmDistancePx"/>.</returns>
+        public static bool IsArmed(Vec2 pressPx, Vec2 currentPx)
+        {
+            double dx = currentPx.X - pressPx.X;
+            double dy = currentPx.Y - pressPx.Y;
+            return (dx * dx) + (dy * dy) > ArmDistancePx * ArmDistancePx;
+        }
+
+        /// <summary>
         /// The entries a drag's badge should show, in display order. Returns empty rather than throwing
         /// whenever state is inconsistent — a missing object, an out-of-range index, an absent attribute —
         /// so a stale drag flag can never crash a render pass.

@@ -663,6 +663,7 @@ namespace CtrDxEditor.Rendering
             _lastPointerWasTouch = e.Pointer.Type == PointerType.Touch;
             _pressOrigin = e.GetPosition(this);
             _slopCleared = false;
+            _readoutArmed = false;
 
             // Pan mode owns the primary contact outright: no hit-testing, and — unlike the empty-space pan
             // further down — no selection clear, since framing a selected object is the main reason to
@@ -1089,6 +1090,14 @@ namespace CtrDxEditor.Rendering
                 }
 
                 _slopCleared = true;
+            }
+
+            // Separate, larger threshold for the readout badge: the slop test above lets any mouse movement
+            // through, so gating the badge on it would flash a badge on ordinary clicks.
+            if (!_readoutArmed)
+            {
+                _readoutArmed = DragReadout.IsArmed(
+                    new Vec2(_pressOrigin.X, _pressOrigin.Y), new Vec2(p.X, p.Y));
             }
 
             Vec2 levelPt = View.ScreenToLevel(new Vec2(p.X, p.Y));
