@@ -37,7 +37,7 @@ namespace CtrDxEditor.UsageGuide
                 [Para("edit-properties", "Fields"), Para("edit-properties", "Help"), Tip("edit-properties", "Precision")],
                 ["select-transform", "level-settings", "object-reference"]),
             Article("level-settings", "EditLevel",
-                [Para("level-settings", "Mechanics"), Para("level-settings", "Water"), Para("level-settings", "Physics"), Para("level-settings", "Customization"), Note("level-settings", "Palette"), EmbeddedIllustration("level-settings", "Dialog", "guide-level-settings.png")],
+                [Para("level-settings", "Name"), Para("level-settings", "Mechanics"), Para("level-settings", "Gravity"), Para("level-settings", "Water"), Para("level-settings", "Physics"), Para("level-settings", "Customization"), Note("level-settings", "Palette"), EmbeddedIllustration("level-settings", "Dialog", "guide-level-settings.png")],
                 ["objectives", "light-bulbs", "validation-review", "first-level"]),
 
             Article("object-reference", "Reference",
@@ -63,7 +63,7 @@ namespace CtrDxEditor.UsageGuide
                 ["modifier-keys", "edit-properties", "select-transform"]),
 
             Article("objectives", "GameObjects",
-                [Para("objectives", "InGame"), Para("objectives", "Editing"), Para("objectives", "Numbering"), Warning("objectives", "Validation")],
+                [Para("objectives", "InGame"), Para("objectives", "Editing"), Para("objectives", "Skin"), Para("objectives", "Numbering"), Warning("objectives", "Validation")],
                 ["stars", "rope-hooks", "lanterns", "validation-review"]),
             Article("stars", "GameObjects",
                 [Para("stars", "InGame"), Para("stars", "Editing"), Para("stars", "Properties"), Tip("stars", "Timeout")],
