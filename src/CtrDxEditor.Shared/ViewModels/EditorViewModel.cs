@@ -2023,6 +2023,12 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
+            if (TargetObject.IsTarget(value.Type))
+            {
+                TargetFieldBuilder.Build(Fields, value, Changed, Changing);
+                return;
+            }
+
             ObjectDescriptor? d = _descriptors.For(value.Type);
             if (d is not null)
             {
