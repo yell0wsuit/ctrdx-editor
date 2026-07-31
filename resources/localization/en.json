@@ -479,7 +479,7 @@
     "Guide.Article.save-export-playtest.Summary": "Save XML, export a rendered image, and launch the level in Cut the Rope: DX.",
     "Guide.Article.save-export-playtest.SearchTerms": "save as|screenshot|png|playtest|dx location|export",
     "Guide.Article.save-export-playtest.Save": "**Save** writes to the current file when the platform supports it; **Save As** chooses a new destination. **Screenshot** exports the rendered level as a PNG.",
-    "Guide.Article.save-export-playtest.Playtest": "On desktop, point the editor at the game once with **File > Set DX Location**, then use **File > Play This Level**. The editor validates the level and writes a temporary playtest copy before launching, so you can try unsaved work.",
+    "Guide.Article.save-export-playtest.Playtest": "On desktop, point the editor at the game once with **File > Set DX Location**, then use **File > Play This Level**, which stays disabled until a location is set. The editor validates the level and writes a temporary playtest copy before launching, so you can try unsaved work.",
     "Guide.Article.save-export-playtest.Browser.Warning": "The browser cannot launch a local game executable. This is by design to minimize security risks. Download or save the level, then open it with your desktop workflow.",
 
     "Guide.Article.troubleshooting.Title": "Troubleshooting",

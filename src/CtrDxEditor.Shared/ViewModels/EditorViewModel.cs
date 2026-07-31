@@ -62,6 +62,27 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this platform can play levels at all; hides the commands when false.</summary>
         public bool CanPlaytest => Playtest is not null;
 
+        /// <summary>Whether a Cut the Rope: DX location has been picked; false until the user sets one.</summary>
+        /// <remarks>
+        /// Answers to the stored path only, not to whether it still resolves on disk. A game that has moved
+        /// or been deleted since is recovered by the launch path re-prompting, which keeps a temporarily
+        /// unreachable path (external drive, network share) from silently disabling the command.
+        /// </remarks>
+        public bool HasDxLocation => !string.IsNullOrWhiteSpace(CurrentSettingsSnapshot.DxExecutablePath);
+
+        /// <summary>True when a level can actually be handed to the game; enables the playtest commands.</summary>
+        public bool CanLaunchPlaytest => HasDocument && HasDxLocation;
+
+        /// <summary>
+        /// Re-reads <see cref="HasDxLocation"/> after the settings snapshot's path is written. The snapshot
+        /// is a plain settings record rather than an observable, so the writer has to say when it changed.
+        /// </summary>
+        public void NotifyDxLocationChanged()
+        {
+            OnPropertyChanged(nameof(HasDxLocation));
+            OnPropertyChanged(nameof(CanLaunchPlaytest));
+        }
+
         /// <summary>
         /// Whether this platform can overwrite the file a level was opened from; hides Save when false.
         /// </summary>
@@ -1894,6 +1915,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(Selection));
             OnPropertyChanged(nameof(SelectedObject));
             OnPropertyChanged(nameof(HasDocument));
+            OnPropertyChanged(nameof(CanLaunchPlaytest));
             NotifyEditCommandCapabilities();
         }
 

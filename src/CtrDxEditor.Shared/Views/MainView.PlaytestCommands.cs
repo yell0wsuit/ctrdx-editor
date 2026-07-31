@@ -16,8 +16,9 @@ using CtrDxEditor.ViewModels;
 namespace CtrDxEditor.Views
 {
     // Playtest commands: hand the open level to Cut the Rope: DX via --level. The launcher owns the
-    // temp file and the macOS .app resolution, so this file only deals with confirmation, the
-    // first-run executable picker, and reporting failures.
+    // temp file and the macOS .app resolution, so this file only deals with confirmation, recovering a
+    // stored path that no longer resolves, and reporting failures. Play stays disabled until a location
+    // is set (EditorViewModel.CanLaunchPlaytest), so the picker here is recovery, not first run.
     //
     // Clicking Play while a game is already running is not an error: the launcher rewrites the level
     // file, the game's own watcher notices, and it reloads in place. No second process, no toast -
@@ -167,6 +168,7 @@ namespace CtrDxEditor.Views
             }
 
             vm.CurrentSettingsSnapshot.DxExecutablePath = path;
+            vm.NotifyDxLocationChanged();
             if (vm.Settings is { } store)
             {
                 await store.SaveAsync(vm.CurrentSettingsSnapshot);
