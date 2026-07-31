@@ -281,6 +281,55 @@ namespace CtrDxEditor.Core.Tests
                 w => w.Key == "Validation.GrabVerticallyAligned");
         }
 
+        /// <summary>Experiments features tuned for mobile physics warn when the level runs the PC model.</summary>
+        [Theory]
+        [InlineData("<rocket x=\"100\" y=\"100\" />", "", "Validation.RocketWithoutMobilePhysics")]
+        [InlineData("<load x=\"100\" y=\"100\" />", "", "Validation.SnailWithoutMobilePhysics")]
+        [InlineData("", "water=\"120\"", "Validation.WaterWithoutMobilePhysics")]
+        public void MobileTunedFeatureWithoutMobilePhysicsWarns(string objects, string flags, string key)
+        {
+            LevelDocument doc = Doc(flags,
+                $"<candy x=\"10\" y=\"10\" /><target x=\"300\" y=\"300\" />{objects}");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == key);
+        }
+
+        /// <summary>The same features are fine once the level opts into mobile physics.</summary>
+        [Theory]
+        [InlineData("<rocket x=\"100\" y=\"100\" />", "Validation.RocketWithoutMobilePhysics")]
+        [InlineData("<load x=\"100\" y=\"100\" />", "Validation.SnailWithoutMobilePhysics")]
+        public void MobileTunedObjectWithMobilePhysicsDoesNotWarn(string objects, string key)
+        {
+            LevelDocument doc = Doc("useMobilePhysics=\"true\"",
+                $"<candy x=\"10\" y=\"10\" /><target x=\"300\" y=\"300\" />{objects}");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == key);
+        }
+
+        /// <summary>Water at 0 means the level has no water at all, so there is nothing to warn about.</summary>
+        [Fact]
+        public void LevelWithoutWaterDoesNotWarnAboutPhysics()
+        {
+            LevelDocument doc = Doc("water=\"0\"",
+                "<candy x=\"10\" y=\"10\" /><target x=\"300\" y=\"300\" />");
+
+            Assert.DoesNotContain(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.WaterWithoutMobilePhysics");
+        }
+
+        /// <summary>Water is a setting, not an object, so mobile physics is what silences it.</summary>
+        [Fact]
+        public void WaterWithMobilePhysicsDoesNotWarn()
+        {
+            LevelDocument doc = Doc("water=\"120\" useMobilePhysics=\"true\"",
+                "<candy x=\"10\" y=\"10\" /><target x=\"300\" y=\"300\" />");
+
+            Assert.DoesNotContain(
+                LevelValidator.Validate(doc),
+                w => w.Key == "Validation.WaterWithoutMobilePhysics");
+        }
+
         /// <summary>A rope bound to a light bulb is checked against the bulb it actually binds to.</summary>
         [Fact]
         public void GrabVerticallyAlignedWithItsBulbWarns()

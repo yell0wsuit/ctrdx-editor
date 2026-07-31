@@ -123,6 +123,30 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
+            // Rockets, water and snails were tuned against the mobile physics model: rockets and water
+            // read their own ActivePhysicsConstants entries (RocketImpulseScale, WaterDamping,
+            // WaterRocketImpulseDivisor, ...) whose values differ per model, and a snail applies a flat
+            // weight to the candy point, so its pull depends on the model's gravity and scale. Under the
+            // PC model they still load and play, they just feel off - advisory, not an error.
+            if (!document.UseMobilePhysics)
+            {
+                if (HasType("rocket"))
+                {
+                    warnings.Add(new LevelWarning("Validation.RocketWithoutMobilePhysics"));
+                }
+
+                if (document.Water > 0f)
+                {
+                    warnings.Add(new LevelWarning("Validation.WaterWithoutMobilePhysics"));
+                }
+
+                // "load" is the snail's element name; see DescriptorTable.
+                if (HasType("load"))
+                {
+                    warnings.Add(new LevelWarning("Validation.SnailWithoutMobilePhysics"));
+                }
+            }
+
             foreach (LevelObject ghost in objects.Where(o => o.Type == "ghost"))
             {
                 if (GhostStates.IsIdleOnly(ghost))

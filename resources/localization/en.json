@@ -921,5 +921,8 @@
     "Validation.GrabVerticallyAligned": "A grab and what its rope binds to are both at x={0}. Offset one of them by a pixel or more.",
     "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing.",
     "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately.",
-    "Validation.CandyOnMouth": "Candy {0} starts on Om Nom's mouth and will be eaten immediately, winning the level."
+    "Validation.CandyOnMouth": "Candy {0} starts on Om Nom's mouth and will be eaten immediately, winning the level.",
+    "Validation.RocketWithoutMobilePhysics": "Level has a rocket but mobile physics is off; rockets are tuned for mobile physics and will feel off without it.",
+    "Validation.WaterWithoutMobilePhysics": "Level has water but mobile physics is off; water is tuned for mobile physics and will feel off without it.",
+    "Validation.SnailWithoutMobilePhysics": "Level has a snail but mobile physics is off; snails are tuned for mobile physics and will feel off without it."
 }
