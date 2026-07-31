@@ -281,7 +281,7 @@ namespace CtrDxEditor.Views
 
             string suggested = _currentLevelFile is { Name: { } name }
                 ? Path.ChangeExtension(name, ".png")
-                : "level.png";
+                : LevelFileNaming.Suggest(vm.Document?.LevelName, "png");
 
             // Pick the destination first, before doing any rendering, so the dialog opens instantly and the
             // "Saving…" toast can appear the moment the user confirms - covering the render + encode below.
@@ -382,7 +382,10 @@ namespace CtrDxEditor.Views
                 {
                     Title = Localizer.Get("Dialog.Save.Title"),
                     DefaultExtension = "xml",
-                    SuggestedFileName = _currentLevelFile?.Name ?? "level.xml",
+                    // A level already living at a file keeps that file's name; the level name only fills in
+                    // the first save, so renaming a level never quietly proposes saving somewhere else.
+                    SuggestedFileName = _currentLevelFile?.Name
+                        ?? LevelFileNaming.Suggest(vm.Document?.LevelName, "xml"),
                     FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.LevelXml")) { Patterns = ["*.xml"] }],
                 });
 
