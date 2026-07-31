@@ -122,6 +122,18 @@ namespace CtrDxEditor.Tests
             }
         }
 
+        /// <summary>The keyboard chord runs behind the same gate, so it cannot bypass a disabled menu item.</summary>
+        [Fact]
+        public void ThePlaytestChordRespectsTheGate()
+        {
+            string shortcuts = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.Shortcuts.cs"));
+
+            Assert.Contains(
+                "EditorShortcut.Playtest when DataContext is EditorViewModel { CanPlaytest: true, CanLaunchPlaytest: true }",
+                shortcuts,
+                StringComparison.Ordinal);
+        }
+
         /// <summary>Setting the location must tell the view, or the command stays greyed out until reload.</summary>
         [Fact]
         public void PickingALocationNotifiesTheViewModel()

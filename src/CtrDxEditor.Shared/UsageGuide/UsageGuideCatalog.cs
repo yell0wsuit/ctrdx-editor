@@ -48,7 +48,7 @@ namespace CtrDxEditor.UsageGuide
                 ["keyboard-shortcuts", "know-the-editor"]),
             Article("keyboard-shortcuts", "Reference",
                 [Note("keyboard-shortcuts", "Platform"), ShortcutTable("keyboard-shortcuts",
-                    "New", "Open", "Save", "SaveAs", "Screenshot", "Close", "Undo", "Redo",
+                    "New", "Open", "Save", "SaveAs", "Playtest", "Screenshot", "Close", "Undo", "Redo",
                     "Clipboard", "SelectAll", "Delete", "Zoom", "Animation", "TutorialText",
                     "RemovePoint")],
                 ["modifier-keys", "menus-commands", "pointer-gestures"]),

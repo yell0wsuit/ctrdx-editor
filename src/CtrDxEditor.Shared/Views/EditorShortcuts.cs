@@ -23,6 +23,9 @@ namespace CtrDxEditor.Views
         /// <summary>Save a screenshot of the level.</summary>
         Screenshot,
 
+        /// <summary>Play the current level in Cut the Rope: DX.</summary>
+        Playtest,
+
         /// <summary>Close the current level.</summary>
         Close,
 
@@ -98,6 +101,7 @@ namespace CtrDxEditor.Views
                 Key.S when !shift => EditorShortcut.Save,
                 Key.S when shift => EditorShortcut.SaveAs,
                 Key.P when shift => EditorShortcut.Screenshot,
+                Key.P when !shift => EditorShortcut.Playtest,
                 Key.W when !shift => EditorShortcut.Close,
                 Key.Z when !shift => EditorShortcut.Undo,
                 Key.Z when shift => EditorShortcut.Redo,

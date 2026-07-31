@@ -85,6 +85,11 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Screenshot when DataContext is EditorViewModel { HasDocument: true }:
                     Screenshot_Click(this, new RoutedEventArgs());
                     return true;
+                // Guarded by the same gate as the menu item, so the chord cannot reach the locate dialog
+                // through a command the user can see is disabled.
+                case EditorShortcut.Playtest when DataContext is EditorViewModel { CanPlaytest: true, CanLaunchPlaytest: true }:
+                    Playtest_Click(this, new RoutedEventArgs());
+                    return true;
                 case EditorShortcut.Close when DataContext is EditorViewModel { HasDocument: true }:
                     Close_Click(this, new RoutedEventArgs());
                     return true;
@@ -137,6 +142,7 @@ namespace CtrDxEditor.Views
                 case EditorShortcut.Save:
                 case EditorShortcut.SaveAs:
                 case EditorShortcut.Screenshot:
+                case EditorShortcut.Playtest:
                 case EditorShortcut.Close:
                 case EditorShortcut.Undo:
                 case EditorShortcut.Redo:

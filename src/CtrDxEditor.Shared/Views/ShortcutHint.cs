@@ -22,6 +22,9 @@ namespace CtrDxEditor.Views
         /// <summary>Localized platform shortcut text for saving the level under a new name.</summary>
         public static string SaveAs { get; } = $"{Mod} Shift S";
 
+        /// <summary>Localized platform shortcut text for playing the level in Cut the Rope: DX.</summary>
+        public static string Playtest { get; } = $"{Mod} P";
+
         /// <summary>Localized platform shortcut text for taking a screenshot.</summary>
         public static string Screenshot { get; } = $"{Mod} Shift P";
 

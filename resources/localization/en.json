@@ -380,7 +380,7 @@
 
     "Guide.Article.keyboard-shortcuts.Title": "Keyboard shortcuts",
     "Guide.Article.keyboard-shortcuts.Summary": "Use the editor's global file, editing, preview, and zoom commands.",
-    "Guide.Article.keyboard-shortcuts.SearchTerms": "ctrl shift p|command shift p|hotkeys|keys|space|delete|f2|tutorial text",
+    "Guide.Article.keyboard-shortcuts.SearchTerms": "ctrl shift p|command shift p|ctrl p|command p|hotkeys|keys|space|delete|f2|tutorial text",
     "Guide.Article.keyboard-shortcuts.Platform.Note": "Use Command instead of Ctrl on macOS. Ctrl/Command-Shift-Z is redo everywhere; Ctrl-Y is an extra redo binding on Windows and Linux only. These chords are ignored while a dialog is open, so the dialog's own text fields keep them.",
     "Guide.Article.keyboard-shortcuts.Shortcut.New.Action": "New level",
     "Guide.Article.keyboard-shortcuts.Shortcut.New.Keys": "Ctrl/⌘ N",
@@ -390,6 +390,8 @@
     "Guide.Article.keyboard-shortcuts.Shortcut.Save.Keys": "Ctrl/⌘ S",
     "Guide.Article.keyboard-shortcuts.Shortcut.SaveAs.Action": "Save As",
     "Guide.Article.keyboard-shortcuts.Shortcut.SaveAs.Keys": "Ctrl/⌘ Shift S",
+    "Guide.Article.keyboard-shortcuts.Shortcut.Playtest.Action": "Play this level",
+    "Guide.Article.keyboard-shortcuts.Shortcut.Playtest.Keys": "Ctrl/⌘ P",
     "Guide.Article.keyboard-shortcuts.Shortcut.Screenshot.Action": "Screenshot",
     "Guide.Article.keyboard-shortcuts.Shortcut.Screenshot.Keys": "Ctrl/⌘ Shift P",
     "Guide.Article.keyboard-shortcuts.Shortcut.Close.Action": "Close level",

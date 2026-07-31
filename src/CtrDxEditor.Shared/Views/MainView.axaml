@@ -63,11 +63,17 @@
           </MenuItem.Header>
         </MenuItem>
         <Separator />
-        <MenuItem Header="{loc:Tr Menu.File.Playtest}" Click="Playtest_Click"
+        <MenuItem Click="Playtest_Click"
                   IsVisible="{Binding CanPlaytest}" IsEnabled="{Binding CanLaunchPlaytest}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="Play" />
           </MenuItem.Icon>
+          <MenuItem.Header>
+            <Grid ColumnDefinitions="*,Auto" MinWidth="170">
+              <AccessText Grid.Column="0" Text="{loc:Tr Menu.File.Playtest}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{x:Static views:ShortcutHint.Playtest}" Opacity="0.6" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+          </MenuItem.Header>
         </MenuItem>
         <MenuItem Header="{loc:Tr Menu.File.SetDxLocation}" Click="SetDxLocation_Click"
                   IsVisible="{Binding CanPlaytest}">

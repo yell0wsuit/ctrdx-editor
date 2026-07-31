@@ -16,6 +16,7 @@ namespace CtrDxEditor.Tests
         [InlineData(Key.S, KeyModifiers.Control, EditorShortcut.Save)]
         [InlineData(Key.S, KeyModifiers.Control | KeyModifiers.Shift, EditorShortcut.SaveAs)]
         [InlineData(Key.P, KeyModifiers.Control | KeyModifiers.Shift, EditorShortcut.Screenshot)]
+        [InlineData(Key.P, KeyModifiers.Control, EditorShortcut.Playtest)]
         [InlineData(Key.W, KeyModifiers.Control, EditorShortcut.Close)]
         [InlineData(Key.Z, KeyModifiers.Control, EditorShortcut.Undo)]
         [InlineData(Key.Z, KeyModifiers.Control | KeyModifiers.Shift, EditorShortcut.Redo)]
@@ -99,6 +100,18 @@ namespace CtrDxEditor.Tests
         {
             Assert.Equal(EditorShortcut.Redo, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Control, KeyModifiers.Control, isMacOS: false, dialogOpen: false));
             Assert.Equal(EditorShortcut.None, EditorShortcuts.ResolveCommand(Key.Y, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
+        }
+
+        /// <summary>P splits on Shift: playtest without it, screenshot with it, so neither shadows the other.</summary>
+        [Fact]
+        public void ShiftSeparatesPlaytestFromScreenshot()
+        {
+            Assert.Equal(
+                EditorShortcut.Playtest,
+                EditorShortcuts.ResolveCommand(Key.P, KeyModifiers.Meta, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
+            Assert.Equal(
+                EditorShortcut.Screenshot,
+                EditorShortcuts.ResolveCommand(Key.P, KeyModifiers.Meta | KeyModifiers.Shift, KeyModifiers.Meta, isMacOS: true, dialogOpen: false));
         }
 
         /// <summary>Delete and unmodified Space resolve to their editor actions.</summary>
