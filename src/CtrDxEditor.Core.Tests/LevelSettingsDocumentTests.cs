@@ -207,6 +207,73 @@ namespace CtrDxEditor.Core.Tests
             Assert.DoesNotContain("levelName", doc.Save());
         }
 
+        /// <summary>Gravity attributes are read as written, both axes independently.</summary>
+        [Fact]
+        public void ReadsGlobalGravity()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="settings">
+                        <map gridSize="32" width="320" height="480" />
+                        <gameDesign globalGravityX="-120.5" globalGravityY="0" />
+                    </layer>
+                </map>
+                """);
+
+            Assert.Equal(-120.5f, doc.GravityX);
+            Assert.Equal(0f, doc.GravityY);
+            Assert.Equal(0f, doc.Settings.GravityY);
+        }
+
+        /// <summary>Absent gravity attributes fall back to the game's defaults: none sideways, Earth downward.</summary>
+        [Fact]
+        public void GravityDefaultsMatchTheGame()
+        {
+            LevelDocument doc = LevelDocument.Parse(NightTwoPart);
+
+            Assert.Equal(LevelGravity.DefaultX, doc.GravityX);
+            Assert.Equal(784f, doc.GravityY);
+        }
+
+        /// <summary>Default gravity is left out of the file entirely, keeping ordinary levels free of noise.</summary>
+        [Fact]
+        public void CreateNewOmitsDefaultGravity()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, 0, false, false));
+
+            Assert.DoesNotContain("globalGravity", doc.Save());
+        }
+
+        /// <summary>Non-default gravity round-trips through a save, including a deliberate weightless level.</summary>
+        [Fact]
+        public void UpdateSettingsWritesNonDefaultGravityIncludingZeroY()
+        {
+            LevelDocument doc = LevelDocument.Parse(NightTwoPart);
+
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, GravityX: 100f, GravityY: 0f));
+
+            Assert.Contains("globalGravityX=\"100\"", doc.Save());
+            Assert.Contains("globalGravityY=\"0\"", doc.Save());
+
+            LevelDocument reloaded = LevelDocument.Parse(doc.Save());
+            Assert.Equal(100f, reloaded.GravityX);
+            Assert.Equal(0f, reloaded.GravityY);
+        }
+
+        /// <summary>Returning either axis to its default removes the attribute rather than writing it out.</summary>
+        [Fact]
+        public void UpdateSettingsRemovesGravityBackAtDefaults()
+        {
+            LevelDocument doc = LevelDocument.CreateNew(
+                new LevelSettings(320, 480, 1.0f, 0, false, false, GravityX: 50f, GravityY: -784f));
+            Assert.Contains("globalGravityY=\"-784\"", doc.Save());
+
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false));
+
+            Assert.DoesNotContain("globalGravity", doc.Save());
+            Assert.Equal(LevelGravity.DefaultY, doc.GravityY);
+        }
+
         /// <summary>Mobile physics is written out explicitly when enabled.</summary>
         [Fact]
         public void CreateNewWithMobilePhysicsWritesAttribute()

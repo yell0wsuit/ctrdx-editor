@@ -112,6 +112,8 @@ namespace CtrDxEditor.ViewModels
         private const int MinRopeSpeed = -100;
         private const int MaxRopeSpeed = 100;
         private const int MaxWater = 10000;
+        private const int MinGravity = -10000;
+        private const int MaxGravity = 10000;
 
         /// <summary>Available resolutions; the last entry is the custom sentinel.</summary>
         public ObservableCollection<ResolutionPreset> Presets { get; } =
@@ -209,6 +211,22 @@ namespace CtrDxEditor.ViewModels
         [NotifyPropertyChangedFor(nameof(HasWaterDrainHint))]
         public partial string WaterSpeedText { get; set; } = Format(0m);
 
+        /// <summary>Horizontal gravity in game units, positive pointing right; 0 is the game's default.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(GravityX))]
+        [NotifyPropertyChangedFor(nameof(GravityXError))]
+        [NotifyPropertyChangedFor(nameof(HasGravityXError))]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial string GravityXText { get; set; } = Format((decimal)LevelGravity.DefaultX);
+
+        /// <summary>Vertical gravity in game units, positive pulling downward; 784 is normal Earth gravity.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(GravityY))]
+        [NotifyPropertyChangedFor(nameof(GravityYError))]
+        [NotifyPropertyChangedFor(nameof(HasGravityYError))]
+        [NotifyPropertyChangedFor(nameof(CanConfirm))]
+        public partial string GravityYText { get; set; } = Format((decimal)LevelGravity.DefaultY);
+
         /// <summary>Custom level width, or null when the box is empty or holds something unparseable.</summary>
         public decimal? CustomWidth { get => Parse(CustomWidthText); set => CustomWidthText = Format(value); }
 
@@ -226,6 +244,12 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Water drain speed, or null when the box holds no usable number.</summary>
         public decimal? WaterSpeed { get => Parse(WaterSpeedText); set => WaterSpeedText = Format(value); }
+
+        /// <summary>Horizontal gravity, or null when the box holds no usable number.</summary>
+        public decimal? GravityX { get => Parse(GravityXText); set => GravityXText = Format(value); }
+
+        /// <summary>Vertical gravity, or null when the box holds no usable number.</summary>
+        public decimal? GravityY { get => Parse(GravityYText); set => GravityYText = Format(value); }
 
         /// <summary>Why the width box is unusable, or empty text when it holds a valid width.</summary>
         public string CustomWidthError => Validate(CustomWidthText, MinWidth, MaxDimension);
@@ -245,6 +269,12 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Why the water speed box is unusable, or empty text when it holds a valid speed.</summary>
         public string WaterSpeedError => Validate(WaterSpeedText, 0, MaxWater);
 
+        /// <summary>Why the horizontal gravity box is unusable, or empty text when it holds a valid value.</summary>
+        public string GravityXError => Validate(GravityXText, MinGravity, MaxGravity);
+
+        /// <summary>Why the vertical gravity box is unusable, or empty text when it holds a valid value.</summary>
+        public string GravityYError => Validate(GravityYText, MinGravity, MaxGravity);
+
         /// <summary>Whether the width box has something to complain about (bound to its message's visibility).</summary>
         public bool HasCustomWidthError => CustomWidthError.Length > 0;
 
@@ -262,6 +292,12 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether the water speed box has something to complain about.</summary>
         public bool HasWaterSpeedError => WaterSpeedError.Length > 0;
+
+        /// <summary>Whether the horizontal gravity box has something to complain about.</summary>
+        public bool HasGravityXError => GravityXError.Length > 0;
+
+        /// <summary>Whether the vertical gravity box has something to complain about.</summary>
+        public bool HasGravityYError => GravityYError.Length > 0;
 
         /// <summary>
         /// How long the pool takes to empty, or empty text when there is no water or no drain. Derived so
@@ -330,6 +366,8 @@ namespace CtrDxEditor.ViewModels
             RopePhysicsSpeedError.Length == 0
             && WaterError.Length == 0
             && WaterSpeedError.Length == 0
+            && GravityXError.Length == 0
+            && GravityYError.Length == 0
             && (!IsCustom || (CustomWidthError.Length == 0 && CustomHeightError.Length == 0))
             && (!IsSpecialCustom || CustomSpecialError.Length == 0);
 
@@ -546,6 +584,8 @@ namespace CtrDxEditor.ViewModels
                 UseMobilePhysics = current.UseMobilePhysics,
                 Water = (decimal)current.Water,
                 WaterSpeed = (decimal)current.WaterSpeed,
+                GravityX = (decimal)current.GravityX,
+                GravityY = (decimal)current.GravityY,
                 CustomWidth = current.Width,
                 CustomHeight = current.Height,
                 SelectedRopeSkin = ropeSkin,
@@ -570,7 +610,9 @@ namespace CtrDxEditor.ViewModels
             return new LevelSettings(
                 width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics,
                 (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m),
-                LevelName?.Trim() ?? string.Empty);
+                LevelName?.Trim() ?? string.Empty,
+                (float)(GravityX ?? (decimal)LevelGravity.DefaultX),
+                (float)(GravityY ?? (decimal)LevelGravity.DefaultY));
         }
 
         private static RopeSkinOption[] BuildRopeSkinOptions()

@@ -182,6 +182,65 @@
 
         <StackPanel Spacing="4">
           <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.Gravity}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Gravity}"
+                             Message="{loc:Tr Dialog.LevelSettings.GravityDescription}" />
+          </StackPanel>
+
+          <!-- Both axes share a row; the game reads them as globalGravityX / globalGravityY. -->
+          <Grid ColumnDefinitions="*,12,*"
+                RowDefinitions="Auto,Auto,Auto">
+            <TextBlock Grid.Row="0"
+                       Grid.Column="0"
+                       Text="{loc:Tr Dialog.LevelSettings.GravityX}"
+                       Opacity="0.75"
+                       FontSize="12"
+                       Margin="0,0,0,2" />
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="2"
+                       Text="{loc:Tr Dialog.LevelSettings.GravityY}"
+                       Opacity="0.75"
+                       FontSize="12"
+                       Margin="0,0,0,2" />
+
+            <ctrl:NumericTextBox Grid.Row="1"
+                                 Grid.Column="0"
+                                 Minimum="-10000"
+                                 Maximum="10000"
+                                 AcceptDecimal="True"
+                                 Text="{Binding GravityXText, Mode=TwoWay}" />
+
+            <ctrl:NumericTextBox Grid.Row="1"
+                                 Grid.Column="2"
+                                 Minimum="-10000"
+                                 Maximum="10000"
+                                 AcceptDecimal="True"
+                                 Text="{Binding GravityYText, Mode=TwoWay}" />
+
+            <TextBlock Grid.Row="2"
+                       Grid.Column="0"
+                       Text="{Binding GravityXError}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource EditorBrush.DangerText}"
+                       FontSize="12"
+                       Margin="0,2,0,0"
+                       IsVisible="{Binding HasGravityXError}" />
+
+            <TextBlock Grid.Row="2"
+                       Grid.Column="2"
+                       Text="{Binding GravityYError}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource EditorBrush.DangerText}"
+                       FontSize="12"
+                       Margin="0,2,0,0"
+                       IsVisible="{Binding HasGravityYError}" />
+          </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <StackPanel Orientation="Horizontal" Spacing="4">
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
                        VerticalAlignment="Center" />
             <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Special}"

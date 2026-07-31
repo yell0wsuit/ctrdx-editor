@@ -49,5 +49,7 @@ namespace CtrDxEditor.Core.Document
         bool UseMobilePhysics = false,
         float Water = 0f,
         float WaterSpeed = 0f,
-        string LevelName = "");
+        string LevelName = "",
+        float GravityX = LevelGravity.DefaultX,
+        float GravityY = LevelGravity.DefaultY);
 }

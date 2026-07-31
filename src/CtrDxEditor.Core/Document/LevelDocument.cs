@@ -54,6 +54,7 @@ namespace CtrDxEditor.Core.Document
                 gameDesignEl.SetAttributeValue("useMobilePhysics", "true");
             }
             ApplyWater(gameDesignEl, settings);
+            ApplyGravity(gameDesignEl, settings);
 
             XElement mapEl = new("map",
                 new XAttribute("gridSize", "32"),
@@ -145,10 +146,21 @@ namespace CtrDxEditor.Core.Document
         /// </summary>
         public float WaterSpeed => ReadFloat(GameDesign, "waterSpeed", 0f);
 
+        /// <summary>
+        /// Horizontal gravity for the level, positive pointing right. Absent means the game's default of none.
+        /// </summary>
+        public float GravityX => ReadFloat(GameDesign, "globalGravityX", LevelGravity.DefaultX);
+
+        /// <summary>
+        /// Vertical gravity for the level, positive pulling downward. Absent means normal Earth gravity, which
+        /// is why an explicit 0 (weightless) is a different level from one carrying no attribute.
+        /// </summary>
+        public float GravityY => ReadFloat(GameDesign, "globalGravityY", LevelGravity.DefaultY);
+
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
             new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed,
-                LevelName);
+                LevelName, GravityX, GravityY);
 
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
         public IReadOnlyList<LevelLayer> Layers =>
@@ -358,6 +370,7 @@ namespace CtrDxEditor.Core.Document
                 gameDesign.Attribute("useMobilePhysics")?.Remove();
             }
             ApplyWater(gameDesign, settings);
+            ApplyGravity(gameDesign, settings);
 
             if (wasTwoParts != settings.TwoParts)
             {
@@ -480,10 +493,21 @@ namespace CtrDxEditor.Core.Document
             map.SetAttributeValue("levelName", name);
         }
 
-        /// <summary>Sets an invariant-formatted float attribute, or removes it when the value is zero.</summary>
-        private static void SetOrRemoveFloat(XElement el, string attr, float value)
+        /// <summary>
+        /// Writes the gravity attributes when they differ from the game's defaults and removes them otherwise.
+        /// Each axis is compared against its own default rather than zero, so a weightless level keeps its
+        /// explicit <c>globalGravityY="0"</c> instead of silently reverting to Earth gravity on the next load.
+        /// </summary>
+        private static void ApplyGravity(XElement gameDesign, LevelSettings settings)
         {
-            if (value == 0f)
+            SetOrRemoveFloat(gameDesign, "globalGravityX", settings.GravityX, LevelGravity.DefaultX);
+            SetOrRemoveFloat(gameDesign, "globalGravityY", settings.GravityY, LevelGravity.DefaultY);
+        }
+
+        /// <summary>Sets an invariant-formatted float attribute, or removes it when it holds its default.</summary>
+        private static void SetOrRemoveFloat(XElement el, string attr, float value, float defaultValue = 0f)
+        {
+            if (value == defaultValue)
             {
                 el.Attribute(attr)?.Remove();
                 return;
