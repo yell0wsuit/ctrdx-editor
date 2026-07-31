@@ -84,6 +84,28 @@ namespace CtrDxEditor.Tests
             Assert.Equal(700, vm.ToSettings().Height);
         }
 
+        /// <summary>A new level starts unnamed, and a name typed in reaches the settings trimmed.</summary>
+        [Fact]
+        public void LevelNameIsBlankByDefaultAndTrimmedOnConfirm()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
+            Assert.Equal(string.Empty, vm.ToSettings().LevelName);
+
+            vm.LevelName = "  Spider Season  ";
+            Assert.Equal("Spider Season", vm.ToSettings().LevelName);
+        }
+
+        /// <summary>Edit mode prefills the existing level name so it survives an unrelated settings change.</summary>
+        [Fact]
+        public void EditModePrefillsLevelName()
+        {
+            LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
+                new LevelSettings(640, 480, 1.0f, 0, false, false, LevelName: "Bath Time"));
+
+            Assert.Equal("Bath Time", vm.LevelName);
+            Assert.Equal("Bath Time", vm.ToSettings().LevelName);
+        }
+
         /// <summary>The special dropdown offers None (0), Default (1), and a Custom sentinel, defaulting to None.</summary>
         [Fact]
         public void SpecialOffersNoneDefaultAndCustom()

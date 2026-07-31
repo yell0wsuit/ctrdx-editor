@@ -129,6 +129,12 @@ namespace CtrDxEditor.ViewModels
         public partial ResolutionPreset SelectedPreset { get; set; }
 
         /// <summary>
+        /// The level's display name; blank levels write no attribute at all. Free text, since the game shows
+        /// an unrecognized name verbatim rather than failing the string-table lookup.
+        /// </summary>
+        [ObservableProperty] public partial string LevelName { get; set; } = string.Empty;
+
+        /// <summary>
         /// Selectable special values. Only 0/1 make sense for a custom level (special stages the game's
         /// built-in tutorial prompts, which the editor can't place); other values are inert here. An
         /// imported level carrying a different value gets it added as an extra option, so it round-trips.
@@ -533,6 +539,7 @@ namespace CtrDxEditor.ViewModels
         {
             LevelSettingsViewModel vm = new(isNewMode: false)
             {
+                LevelName = current.LevelName,
                 RopePhysicsSpeed = (decimal)current.RopePhysicsSpeed,
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
@@ -562,7 +569,8 @@ namespace CtrDxEditor.ViewModels
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
             return new LevelSettings(
                 width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics,
-                (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m));
+                (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m),
+                LevelName?.Trim() ?? string.Empty);
         }
 
         private static RopeSkinOption[] BuildRopeSkinOptions()

@@ -591,6 +591,9 @@
 
     "Dialog.LevelSettings.TitleNew": "New level",
     "Dialog.LevelSettings.TitleEdit": "Level settings",
+    "Dialog.LevelSettings.LevelName": "Level name",
+    "Dialog.LevelSettings.LevelNameDescription": "Name the game shows for this level (and reports to Discord rich presence). Leave it empty for no name.",
+    "Dialog.LevelSettings.LevelNamePlaceholder": "Unnamed level",
     "Dialog.LevelSettings.Resolution": "Resolution",
     "Dialog.LevelSettings.ResolutionDescription": "Sets the level's width and height in game units. Choose Custom to enter a size that is not in the preset list.",
     "Dialog.LevelSettings.Custom": "Custom...",

@@ -13,6 +13,7 @@ namespace CtrDxEditor.Tests
     {
         private static readonly string[] HelpPairs =
         [
+            "LevelName|LevelNameDescription",
             "Resolution|ResolutionDescription",
             "RopePhysicsSpeed|RopePhysicsSpeedDescription",
             "Special|SpecialDescription",

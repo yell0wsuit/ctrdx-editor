@@ -85,6 +85,19 @@
 
         <StackPanel Spacing="4">
           <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.LevelName}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.LevelName}"
+                             Message="{loc:Tr Dialog.LevelSettings.LevelNameDescription}" />
+          </StackPanel>
+
+          <TextBox Text="{Binding LevelName, Mode=TwoWay}"
+                   PlaceholderText="{loc:Tr Dialog.LevelSettings.LevelNamePlaceholder}"
+                   MaxLength="128" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <StackPanel Orientation="Horizontal" Spacing="4">
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.Resolution}"
                        VerticalAlignment="Center" />
             <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Resolution}"

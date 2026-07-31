@@ -154,6 +154,59 @@ namespace CtrDxEditor.Core.Tests
                 target => Assert.Equal("target", target.Type));
         }
 
+        /// <summary>The map element's levelName reaches the settings snapshot as the level's display name.</summary>
+        [Fact]
+        public void ReadsLevelName()
+        {
+            LevelDocument doc = LevelDocument.Parse("""
+                <map>
+                    <layer name="settings">
+                        <map gridSize="32" width="320" height="480" levelName="Rocket Science" />
+                    </layer>
+                </map>
+                """);
+
+            Assert.Equal("Rocket Science", doc.LevelName);
+            Assert.Equal("Rocket Science", doc.Settings.LevelName);
+        }
+
+        /// <summary>A map with no levelName reports an empty name rather than null.</summary>
+        [Fact]
+        public void LevelNameIsEmptyWhenAbsent()
+        {
+            LevelDocument doc = LevelDocument.Parse(NightTwoPart);
+
+            Assert.Equal(string.Empty, doc.LevelName);
+        }
+
+        /// <summary>A named new level writes the attribute; an unnamed one leaves the map free of it.</summary>
+        [Fact]
+        public void CreateNewWritesLevelNameOnlyWhenSet()
+        {
+            LevelDocument named = LevelDocument.CreateNew(
+                new LevelSettings(320, 480, 1.0f, 0, false, false, LevelName: "  Spiders  "));
+            Assert.Equal("Spiders", named.LevelName);
+            Assert.Contains("levelName=\"Spiders\"", named.Save());
+
+            LevelDocument unnamed = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, 0, false, false));
+            Assert.DoesNotContain("levelName", unnamed.Save());
+        }
+
+        /// <summary>Clearing the name removes the attribute, so a level can lose a name it once had.</summary>
+        [Fact]
+        public void UpdateSettingsSetsAndClearsLevelName()
+        {
+            LevelDocument doc = LevelDocument.Parse(NightTwoPart);
+
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, LevelName: "Bath Time"));
+            Assert.Equal("Bath Time", doc.LevelName);
+            Assert.Contains("levelName=\"Bath Time\"", doc.Save());
+
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, LevelName: "   "));
+            Assert.Equal(string.Empty, doc.LevelName);
+            Assert.DoesNotContain("levelName", doc.Save());
+        }
+
         /// <summary>Mobile physics is written out explicitly when enabled.</summary>
         [Fact]
         public void CreateNewWithMobilePhysicsWritesAttribute()

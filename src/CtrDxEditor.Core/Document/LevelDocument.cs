@@ -55,12 +55,15 @@ namespace CtrDxEditor.Core.Document
             }
             ApplyWater(gameDesignEl, settings);
 
+            XElement mapEl = new("map",
+                new XAttribute("gridSize", "32"),
+                new XAttribute("width", settings.Width.ToString(CultureInfo.InvariantCulture)),
+                new XAttribute("height", settings.Height.ToString(CultureInfo.InvariantCulture)));
+            ApplyLevelName(mapEl, settings);
+
             XElement settingsLayer = new("layer",
                 new XAttribute("name", "settings"),
-                new XElement("map",
-                    new XAttribute("gridSize", "32"),
-                    new XAttribute("width", settings.Width.ToString(CultureInfo.InvariantCulture)),
-                    new XAttribute("height", settings.Height.ToString(CultureInfo.InvariantCulture))),
+                mapEl,
                 gameDesignEl);
             XElement objectsLayer = new("layer", new XAttribute("name", "Objects"));
             XDocument doc = new(
@@ -106,6 +109,12 @@ namespace CtrDxEditor.Core.Document
         /// <summary>The level height in map units.</summary>
         public int Height => ReadInt(SettingsMap, "height", 0);
 
+        /// <summary>
+        /// The level's display name, or an empty string when the map carries none. The game resolves it
+        /// through its string table (shipped packs store a key) and shows the raw text when no entry matches.
+        /// </summary>
+        public string LevelName => SettingsMap?.Attribute("levelName")?.Value ?? string.Empty;
+
         /// <summary>Whether the level uses the two-candy split layout.</summary>
         public bool TwoParts =>
             bool.TryParse(GameDesign?.Attribute("twoParts")?.Value, out bool v) && v;
@@ -138,7 +147,8 @@ namespace CtrDxEditor.Core.Document
 
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
-            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed);
+            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed,
+                LevelName);
 
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
         public IReadOnlyList<LevelLayer> Layers =>
@@ -334,6 +344,7 @@ namespace CtrDxEditor.Core.Document
             map.SetAttributeValue("gridSize", "32");
             map.SetAttributeValue("width", settings.Width.ToString(CultureInfo.InvariantCulture));
             map.SetAttributeValue("height", settings.Height.ToString(CultureInfo.InvariantCulture));
+            ApplyLevelName(map, settings);
             gameDesign.SetAttributeValue("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("special", settings.Special.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("twoParts", settings.TwoParts ? "true" : "false");
@@ -451,6 +462,22 @@ namespace CtrDxEditor.Core.Document
         {
             SetOrRemoveFloat(gameDesign, "water", settings.Water);
             SetOrRemoveFloat(gameDesign, "waterSpeed", settings.WaterSpeed);
+        }
+
+        /// <summary>
+        /// Writes the trimmed level name, or removes the attribute when the name is blank, so a level that
+        /// never had one stays free of the attribute.
+        /// </summary>
+        private static void ApplyLevelName(XElement map, LevelSettings settings)
+        {
+            string name = settings.LevelName?.Trim() ?? string.Empty;
+            if (name.Length == 0)
+            {
+                map.Attribute("levelName")?.Remove();
+                return;
+            }
+
+            map.SetAttributeValue("levelName", name);
         }
 
         /// <summary>Sets an invariant-formatted float attribute, or removes it when the value is zero.</summary>
