@@ -161,6 +161,26 @@
 
         <StackPanel Spacing="4">
           <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="{loc:Tr Dialog.LevelSettings.GridSize}"
+                       VerticalAlignment="Center" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.GridSize}"
+                             Message="{loc:Tr Dialog.LevelSettings.GridSizeDescription}" />
+          </StackPanel>
+
+          <ctrl:NumericTextBox Minimum="1"
+                               Maximum="9999"
+                               AcceptDecimal="False"
+                               Text="{Binding GridSizeText, Mode=TwoWay}" />
+
+          <TextBlock Text="{Binding GridSizeError}"
+                     TextWrapping="Wrap"
+                     Foreground="{DynamicResource EditorBrush.DangerText}"
+                     FontSize="12"
+                     IsVisible="{Binding HasGridSizeError}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <StackPanel Orientation="Horizontal" Spacing="4">
             <TextBlock Text="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}"
                        VerticalAlignment="Center" />
             <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.RopePhysicsSpeed}"

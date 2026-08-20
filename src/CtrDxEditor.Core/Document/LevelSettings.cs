@@ -39,6 +39,7 @@ namespace CtrDxEditor.Core.Document
     /// Vertical gravity applied to the level, positive pulling downward;
     /// <see cref="LevelGravity.DefaultY"/> is normal Earth gravity and 0 is weightless.
     /// </param>
+    /// <param name="GridSize">Grid size used for the editor.</param>
     public sealed record LevelSettings(
         int Width,
         int Height,
@@ -51,5 +52,6 @@ namespace CtrDxEditor.Core.Document
         float WaterSpeed = 0f,
         string LevelName = "",
         float GravityX = LevelGravity.DefaultX,
-        float GravityY = LevelGravity.DefaultY);
+        float GravityY = LevelGravity.DefaultY,
+        int GridSize = 32);
 }
