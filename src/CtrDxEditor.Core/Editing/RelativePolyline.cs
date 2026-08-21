@@ -48,7 +48,7 @@ namespace CtrDxEditor.Core.Editing
             }
 
             int storedPointCount = Math.Min(absolutePoints.Count - 1, maxStoredPoints);
-            List<string> values = [with(storedPointCount * 2)];
+            List<string> values = new(storedPointCount * 2);
             for (int i = 1; i <= storedPointCount; i++)
             {
                 Vec2 offset = absolutePoints[i] - anchor;

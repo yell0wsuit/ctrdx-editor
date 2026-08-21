@@ -131,7 +131,7 @@ namespace CtrDxEditor.Rendering
             double plateHeight = (rowWidths.Length * RowHeight) + (VerticalPadding * 2);
             Rect plate = Place(anchor, bounds, plateWidth, plateHeight);
 
-            List<Rect> rows = [with(rowWidths.Length)];
+            List<Rect> rows = new(rowWidths.Length);
             for (int i = 0; i < rowWidths.Length; i++)
             {
                 rows.Add(new Rect(

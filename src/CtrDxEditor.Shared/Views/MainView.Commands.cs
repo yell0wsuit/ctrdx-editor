@@ -538,8 +538,8 @@ namespace CtrDxEditor.Views
 
             Point previewPosition = e.GetPosition(this);
             Point alignedPosition = GetRowDragPreviewPosition(previewPosition, _rowDragGrabOffset);
-            Avalonia.Controls.Canvas.SetLeft(_rowDragPreview, alignedPosition.X);
-            Avalonia.Controls.Canvas.SetTop(_rowDragPreview, alignedPosition.Y);
+            Canvas.SetLeft(_rowDragPreview, alignedPosition.X);
+            Canvas.SetTop(_rowDragPreview, alignedPosition.Y);
 
             _rowDragTreePosition = e.GetPosition(layersTree);
             EnsureRowDragScrollTimer();

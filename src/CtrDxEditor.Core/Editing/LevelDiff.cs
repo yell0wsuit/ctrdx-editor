@@ -134,7 +134,7 @@ namespace CtrDxEditor.Core.Editing
         public static LevelDiffResult Build(string oldXml, string newXml)
         {
             SideBySideDiffModel model = Builder.BuildDiffModel(oldXml, newXml);
-            List<DiffRow> rows = [with(model.OldText.Lines.Count)];
+            List<DiffRow> rows = new(model.OldText.Lines.Count);
             int added = 0;
             int removed = 0;
             int modified = 0;
@@ -183,7 +183,7 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         public static IReadOnlyList<UnifiedDiffRow> ToUnified(IReadOnlyList<DiffRow> rows)
         {
-            List<UnifiedDiffRow> unified = [with(rows.Count)];
+            List<UnifiedDiffRow> unified = new(rows.Count);
 
             foreach (DiffRow row in rows)
             {

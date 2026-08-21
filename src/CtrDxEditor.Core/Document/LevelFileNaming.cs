@@ -40,13 +40,12 @@ namespace CtrDxEditor.Core.Document
         /// Names Windows reserves for devices, which it refuses as a file name whatever the extension. The
         /// BCL exposes no equivalent check, and the list is fixed by the OS.
         /// </summary>
-        private static readonly HashSet<string> ReservedNames =
-        [
-            with(StringComparer.OrdinalIgnoreCase),
+        private static readonly HashSet<string> ReservedNames = new(StringComparer.OrdinalIgnoreCase)
+        {
             "CON", "PRN", "AUX", "NUL",
             "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
             "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-        ];
+        };
 
         /// <summary>
         /// The base file name for a level name: forbidden and control characters become

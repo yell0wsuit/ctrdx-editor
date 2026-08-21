@@ -160,7 +160,7 @@ namespace CtrDxEditor.Core.Editing
             RopeRgb track2 = palette.Shade2;
             bool useTrack1 = false; // game: flag=false -> first batch draws rgbaColor6 (track 2)
 
-            List<Vec2> batch = [with(4)];
+            List<Vec2> batch = new(4);
             double lx = -1, ly = 0, rx = 0, ry = 0; // continued edge vertices; lx == -1 means none yet
             double t = 0;
             while (true)
