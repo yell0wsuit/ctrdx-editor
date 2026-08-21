@@ -170,13 +170,12 @@ namespace CtrDxEditor.Views
             }
         }
 
-        // The shared load path behind both the Open dialog and a window drop: read, parse, warn, confirm,
-        // then hand the XML to the view model. Reading through the stream rather than a local path keeps
+        // The shared load path behind both the Open dialog and a window drop: read, parse, then hand the
+        // document to the view model. Reading through the stream rather than a local path keeps
         // this working in the browser build, where IStorageFile exposes no filesystem path.
         private async Task OpenLevelFileAsync(EditorViewModel vm, IStorageFile file)
         {
             LevelDocument document;
-            IReadOnlyList<LevelWarning> warnings;
             try
             {
                 // The read stays here: it is async I/O that never blocks the thread, and on the
@@ -188,14 +187,10 @@ namespace CtrDxEditor.Views
                     xml = await reader.ReadToEndAsync();
                 }
 
-                // Parse and validation are pure CPU over the text and are the part that actually
-                // stalls the UI on a large level, so they go off-thread on desktop. The browser is
+                // Parsing is pure CPU over the text and is the part that actually stalls the UI on
+                // a large level, so it goes off-thread on desktop. The browser is
                 // single-threaded (no WasmEnableThreads), where this simply runs inline.
-                (document, warnings) = await Task.Run(() =>
-                {
-                    LevelDocument parsed = LevelDocument.Parse(xml);
-                    return (parsed, LevelValidator.Validate(parsed));
-                });
+                document = await Task.Run(() => LevelDocument.Parse(xml));
             }
             catch (Exception ex)
             {
@@ -209,11 +204,6 @@ namespace CtrDxEditor.Views
                 return;
             }
 
-            if (warnings.Count > 0
-                && !await ConfirmValidationAsync(warnings, "Dialog.Validation.EditPrompt", "Dialog.Validation.EditProceed"))
-            {
-                return;
-            }
             if (vm.IsModified && !await UnsavedChangesPrompt.ConfirmDiscardAsync("Dialog.Unsaved.Open"))
             {
                 return;
