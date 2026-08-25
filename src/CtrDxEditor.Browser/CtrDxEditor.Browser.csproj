@@ -6,11 +6,32 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RunAOTCompilation>true</RunAOTCompilation>
     <WasmNativeStrip>true</WasmNativeStrip>
+    <!--
+      Setting this makes the static web assets SDK generate service-worker-assets.js — every
+      published asset with its integrity hash — and stamp a version derived from those hashes
+      into the service worker. The version changes only when an asset does, which is what drives
+      the cache purge.
+    -->
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Browser" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CtrDxEditor.Shared\CtrDxEditor.Shared.csproj" />
+  </ItemGroup>
+
+  <!--
+    wwwroot/icon-512.png is a copy of distribution/icons/CtrDxEditorIcon_512.png rather than a
+    link: linking gives the asset a content root of wwwroot while its identity stays in
+    distribution, and the dev server reads content from the content root, so `dotnet run` answers
+    with an empty 200 and the icon shows as broken. Refresh it from distribution/icons if the app
+    icon ever changes.
+  -->
+
+  <!-- Development serves the inert worker; publish swaps in the caching one. -->
+  <ItemGroup>
+    <ServiceWorker Include="wwwroot/service-worker.js"
+                   PublishedContent="wwwroot/service-worker.published.js" />
   </ItemGroup>
 </Project>

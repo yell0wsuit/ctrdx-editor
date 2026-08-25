@@ -2,11 +2,23 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
+
+        <!-- Resolves to the directory this page is served from, so the app works from a domain
+             root and from a GitHub Pages project subpath alike. It lives here rather than being
+             injected at deploy time because publish hashes index.html into
+             service-worker-assets.js, and a later edit would leave the shipped file failing the
+             integrity check the service worker installs it with. -->
+        <base href="./" />
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
         />
         <link rel="icon" href="./favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="./icon-512.png" />
+        <link rel="manifest" href="./manifest.webmanifest" />
+
+        <meta name="theme-color" content="#202329" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <title>Cut the Rope DX: Level Editor</title>
 
         <meta
@@ -151,6 +163,43 @@
                     transform: rotate(360deg);
                 }
             }
+
+            #update {
+                padding: 20px 24px;
+                border: 0;
+                border-radius: 10px;
+                background: #202329;
+                color: #e6e6e6;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+                box-shadow: 0 8px 32px rgb(0 0 0 / 50%);
+            }
+
+            #update::backdrop {
+                background: rgb(0 0 0 / 50%);
+            }
+
+            #update p {
+                margin: 0 0 16px;
+            }
+
+            #update-actions {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+            }
+
+            #update button {
+                padding: 8px 18px;
+                font-size: 0.95rem;
+                border: 0;
+                border-radius: 6px;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body>
@@ -171,6 +220,14 @@
                 reload the page.
             </p>
         </div>
+        <dialog id="update">
+            <p>A new version of the editor is ready.</p>
+            <div id="update-actions">
+                <button id="update-later">Later</button>
+                <button id="update-now">Update</button>
+            </div>
+        </dialog>
+        <script type="module" src="./pwa.js"></script>
         <script>
             // Hide the splash once Avalonia mounts content into #out (typically a canvas). A
             // MutationObserver is used rather than awaiting main.js's module promise, because
