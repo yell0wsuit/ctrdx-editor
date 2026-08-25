@@ -70,3 +70,4 @@ BenchmarkDotNet.Artifacts/
 distribution/tools/
 /publish/
 *.pyc
+dist/
