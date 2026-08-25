@@ -64,6 +64,56 @@ const dotnetRuntime = await builder.create();
 
 const config = dotnetRuntime.getConfig();
 
+await guardUnsavedChanges(dotnetRuntime, config);
+
 await dotnetRuntime.runMain(config.mainAssemblyName, [
     globalThis.location.href,
 ]);
+
+/**
+ * Warns before the tab closes on a level with unsaved edits.
+ *
+ * The desktop head handles this in MainWindow.OnClosing, but the browser head runs on Avalonia's
+ * single-view lifetime, which has no closing event, so the page has to ask the editor. Registered
+ * before runMain, which does not return while the app is running; the export answers false until
+ * the editor has mounted, so the gap before it does is safe rather than merely brief.
+ *
+ * Best-effort: if the export cannot be reached the editor still starts, just without the warning.
+ *
+ * @param {import("./_framework/dotnet.js").RuntimeAPI} runtime
+ * @param {{ mainAssemblyName?: string }} config
+ */
+async function guardUnsavedChanges(runtime, config) {
+    let hasUnsavedChanges;
+    try {
+        const exports = await runtime.getAssemblyExports(
+            config.mainAssemblyName,
+        );
+        hasUnsavedChanges =
+            exports.CtrDxEditor?.Browser?.Content?.UnsavedChangesInterop
+                ?.HasUnsavedChanges;
+    } catch (error) {
+        console.warn("unsaved-changes guard unavailable:", error);
+        return;
+    }
+    if (typeof hasUnsavedChanges !== "function") {
+        console.warn("unsaved-changes guard unavailable: export not found");
+        return;
+    }
+
+    globalThis.addEventListener("beforeunload", (event) => {
+        // Throwing here would leave the page unclosable, so a broken check gives up its say
+        // rather than trapping the user.
+        let dirty = false;
+        try {
+            dirty = hasUnsavedChanges();
+        } catch (error) {
+            console.warn("unsaved-changes check failed:", error);
+        }
+        if (dirty) {
+            // The browser supplies its own wording; the deprecated returnValue is the only way to
+            // reach browsers too old to honour this, and none of those run an Avalonia WASM app.
+            event.preventDefault();
+        }
+    });
+}
