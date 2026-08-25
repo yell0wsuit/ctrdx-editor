@@ -46,6 +46,9 @@ const shellExclude = [
     /^service-worker(-assets)?\.js$/,
     /^sw-file-save\.js$/,
     /^manifest\.webmanifest$/,
+    // Install-dialog artwork. The browser fetches these when offering to install the app; the
+    // app itself never asks for them, so caching half a megabyte of them offline buys nothing.
+    /^screenshots\//,
     /\.pdb$/,
     /\.map$/,
 ];

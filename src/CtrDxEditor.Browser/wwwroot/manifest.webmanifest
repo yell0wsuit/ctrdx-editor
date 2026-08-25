@@ -1,4 +1,5 @@
 {
+    "id": "./",
     "name": "Cut the Rope DX: Level Editor",
     "short_name": "CTRDX Editor",
     "description": "Create and edit custom Cut the Rope DX levels.",
@@ -13,6 +14,57 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "./screenshots/landscape_ss_01.webp",
+            "sizes": "2940x1846",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "A level open in the editor, with the object palette, canvas, and layers and properties panels"
+        },
+        {
+            "src": "./screenshots/landscape_ss_02.webp",
+            "sizes": "2940x1846",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "The level settings dialog"
+        },
+        {
+            "src": "./screenshots/landscape_ss_03.webp",
+            "sizes": "2940x1846",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "The built-in usage guide, with a searchable table of contents"
+        },
+        {
+            "src": "./screenshots/portrait_ss_01.webp",
+            "sizes": "662x1434",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "Editing a level on a phone, with the toolbar above the canvas and editing tools below"
+        },
+        {
+            "src": "./screenshots/portrait_ss_02.webp",
+            "sizes": "662x1434",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "The searchable object palette, listing every object that can be placed"
+        },
+        {
+            "src": "./screenshots/portrait_ss_03.webp",
+            "sizes": "662x1434",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "The layers panel, showing the objects in the level and their drawing order"
+        },
+        {
+            "src": "./screenshots/portrait_ss_04.webp",
+            "sizes": "662x1434",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "The properties panel, for editing the exact position and angle of an object"
         }
     ]
 }
