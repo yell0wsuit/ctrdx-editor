@@ -604,6 +604,8 @@
     "Dialog.LevelSettings.Custom": "Custom...",
     "Dialog.LevelSettings.Width": "Width",
     "Dialog.LevelSettings.Height": "Height",
+    "Dialog.LevelSettings.GridSize": "Grid size",
+    "Dialog.LevelSettings.GridSizeDescription": "How big the grid is in-editor. 32 is the default.",
     "Dialog.LevelSettings.RopePhysicsSpeed": "Rope physics speed",
     "Dialog.LevelSettings.RopePhysicsSpeedDescription": "Controls how quickly rope physics are simulated. 1 is the normal speed; higher positive values make ropes react faster.",
     "Dialog.LevelSettings.Gravity": "Gravity",
