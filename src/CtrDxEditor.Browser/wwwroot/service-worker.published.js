@@ -30,10 +30,6 @@
 
 self.importScripts("./service-worker-assets.js");
 
-// Avalonia's save-file polyfill streams downloads through whichever service worker is registered
-// on the page, so this one has to speak that protocol too. See sw-file-save.js.
-self.importScripts("./sw-file-save.js");
-
 const cachePrefix = "ctrdxeditor-";
 const shellCacheName = `${cachePrefix}shell-${self.assetsManifest.version}`;
 
@@ -44,7 +40,6 @@ const scopeUrl = new URL("./", self.location.href);
 // excluded for the reasons given above.
 const shellExclude = [
     /^service-worker(-assets)?\.js$/,
-    /^sw-file-save\.js$/,
     /^manifest\.webmanifest$/,
     // Install-dialog artwork. The browser fetches these when offering to install the app; the
     // app itself never asks for them, so caching half a megabyte of them offline buys nothing.
@@ -64,13 +59,9 @@ self.addEventListener("install", (event) => event.waitUntil(onInstall()));
 self.addEventListener("activate", (event) => event.waitUntil(onActivate()));
 self.addEventListener("fetch", (event) => event.respondWith(onFetch(event)));
 
-// Two kinds of message arrive here. Avalonia's save-file polyfill hands over a file to stream,
-// and the page asks to skip waiting once the user accepts the update prompt. Until it does, a new
+// The page asks to skip waiting once the user accepts the update prompt. Until it does, a new
 // worker waits, so a version never changes underneath an editing session in progress.
 self.addEventListener("message", (event) => {
-    if (offerFileSave(event.data)) {
-        return;
-    }
     if (event.data?.type === "skip-waiting") {
         self.skipWaiting();
     }
@@ -92,7 +83,9 @@ async function onActivate() {
     const keys = await caches.keys();
     await Promise.all(
         keys
-            .filter((key) => key.startsWith(cachePrefix) && key !== shellCacheName)
+            .filter(
+                (key) => key.startsWith(cachePrefix) && key !== shellCacheName,
+            )
             .map((key) => caches.delete(key)),
     );
 
@@ -107,14 +100,9 @@ async function onFetch(event) {
         return fetch(request);
     }
 
-    // Before the navigation branch: a streamed save arrives as an iframe navigation, and serving
-    // index.html to it would swallow the download.
-    const fileSave = respondToFileSave(request);
-    if (fileSave !== undefined) {
-        return fileSave;
-    }
-
-    // A navigation to any in-scope URL is this single page.
+    // A navigation to any in-scope URL is this single page. Saving does not come through here:
+    // save-fallback.js keeps Avalonia's polyfill on its Blob download, which never touches the
+    // worker, so nothing but the app itself navigates in scope.
     if (request.mode === "navigate") {
         const cached = await caches.match(new URL("index.html", scopeUrl));
         return cached ?? fetch(request);
