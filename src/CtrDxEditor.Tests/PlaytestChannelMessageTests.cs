@@ -102,8 +102,8 @@ namespace CtrDxEditor.Tests
         [InlineData("[1,2,3]")]
         [InlineData("\"a string\"")]
         [InlineData("{}")]
-        [InlineData("{\"type\":\"bye\"}")]
-        [InlineData("{\"v\":\"1\",\"type\":\"bye\"}")]
+        [InlineData(/*lang=json,strict*/ "{\"type\":\"bye\"}")]
+        [InlineData(/*lang=json,strict*/ "{\"v\":\"1\",\"type\":\"bye\"}")]
         public void MalformedInputIsRejected(string json)
         {
             Assert.False(PlaytestChannelMessage.TryParse(json, out _, out _, out _));
@@ -114,7 +114,8 @@ namespace CtrDxEditor.Tests
         public void UnknownTypeIsIgnoredRatherThanThrowing()
         {
             Assert.False(PlaytestChannelMessage.TryParse(
-                "{\"v\":1,\"type\":\"teleport\"}", out _, out _, out _));
+                                     /*lang=json,strict*/
+                                     "{\"v\":1,\"type\":\"teleport\"}", out _, out _, out _));
         }
 
         /// <summary>Verifies a message from another protocol version is ignored.</summary>
@@ -122,7 +123,8 @@ namespace CtrDxEditor.Tests
         public void MismatchedVersionIsIgnored()
         {
             Assert.False(PlaytestChannelMessage.TryParse(
-                "{\"v\":2,\"type\":\"bye\"}", out _, out _, out _));
+                                     /*lang=json,strict*/
+                                     "{\"v\":2,\"type\":\"bye\"}", out _, out _, out _));
         }
 
         /// <summary>
@@ -132,12 +134,12 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void WireFormatIsStable()
         {
-            Assert.Equal("{\"v\":1,\"type\":\"bye\"}", PlaytestChannelMessage.FormatBye());
-            Assert.Equal("{\"v\":1,\"type\":\"ready\",\"nonce\":\"abc\",\"line\":\"ctrdx-playtest 1 9.9.9\"}",
+            Assert.Equal(/*lang=json,strict*/ "{\"v\":1,\"type\":\"bye\"}", PlaytestChannelMessage.FormatBye());
+            Assert.Equal(/*lang=json,strict*/ "{\"v\":1,\"type\":\"ready\",\"nonce\":\"abc\",\"line\":\"ctrdx-playtest 1 9.9.9\"}",
                 PlaytestChannelMessage.FormatReady("abc", "ctrdx-playtest 1 9.9.9"));
-            Assert.Equal("{\"v\":1,\"type\":\"level\",\"nonce\":\"abc\",\"xml\":\"<map/>\"}",
+            Assert.Equal(/*lang=json,strict*/ "{\"v\":1,\"type\":\"level\",\"nonce\":\"abc\",\"xml\":\"<map/>\"}",
                 PlaytestChannelMessage.FormatLevel("abc", "<map/>"));
-            Assert.Equal("{\"v\":1,\"type\":\"error\",\"message\":\"boom\"}",
+            Assert.Equal(/*lang=json,strict*/ "{\"v\":1,\"type\":\"error\",\"message\":\"boom\"}",
                 PlaytestChannelMessage.FormatError("boom"));
         }
     }
