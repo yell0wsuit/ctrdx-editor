@@ -70,9 +70,11 @@ namespace CtrDxEditor.Views
 
             try
             {
-                // Only a cold launch is announced. A reload returns false: the game flashes its own
-                // restart dim, and a toast in a window the user has just switched away from would
-                // report something they cannot see.
+                // Both a cold launch and a reload are announced. The game is never raised on a
+                // reload - deliberately, since desktop does not raise it either - so the user is
+                // still looking at the editor, where the game's own restart dim is invisible to
+                // them. Without this toast, pressing Play on a running game looks like nothing
+                // happened at all.
                 if (launcher.Play(executable, xml))
                 {
                     Notifications()?.Show(new Notification(
@@ -90,6 +92,15 @@ namespace CtrDxEditor.Views
                         Localizer.Get("Notification.Playtest.BlockedBody"),
                         NotificationType.Warning,
                         onClick: () => _ = launcher.Play(executable, xml)));
+                }
+                else
+                {
+                    // "Sent" rather than "reloaded" on purpose: the level either went to a live game
+                    // or was stashed for one that is still booting, and this wording is true of both.
+                    Notifications()?.Show(new Notification(
+                        Localizer.Get("Notification.Playtest.Reloaded"),
+                        string.Empty,
+                        NotificationType.Success));
                 }
             }
             // Catch-all on purpose: this is an async void handler, so anything that escapes is an

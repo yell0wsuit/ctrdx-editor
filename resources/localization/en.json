@@ -544,6 +544,7 @@
     "Dialog.Playtest.Picker.Title": "Select the Cut the Rope: DX executable",
     "Dialog.FileType.Executable": "Application",
     "Notification.Playtest.Launching": "Launching Cut the Rope: DX…",
+    "Notification.Playtest.Reloaded": "Level sent to Cut the Rope: DX",
     "Notification.Playtest.Failed": "Could not play this level",
     "Notification.Playtest.LocationSet": "The location of Cut the Rope: DX has been set",
     "Notification.Playtest.Rejected": "Cut the Rope: DX could not load this level",
