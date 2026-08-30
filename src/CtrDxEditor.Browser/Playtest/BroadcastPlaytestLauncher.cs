@@ -72,7 +72,10 @@ namespace CtrDxEditor.Browser.Playtest
         /// <para>
         /// This method is synchronous, and a cold launch cannot wait for the game to boot. So the XML
         /// is stashed and posted when the game announces itself; a second Play arriving first replaces
-        /// the stash rather than queueing, because only the newest level is worth sending.
+        /// the stash rather than queueing, because only the newest level is worth sending. The same
+        /// stash-and-replace applies to a reload that lands before the game has handshaken: the window
+        /// exists but nothing on the other end is subscribed to the channel yet, so a post made in that
+        /// window would be silently dropped rather than queued.
         /// </para>
         /// <para>
         /// <b>The window must be opened without an intervening await.</b> Browsers only allow
@@ -89,7 +92,19 @@ namespace CtrDxEditor.Browser.Playtest
 
             if (PlaytestInterop.IsGameOpen())
             {
-                PlaytestInterop.Post(PlaytestChannelMessage.FormatLevel(_nonce, levelXml));
+                // Post directly only once the game has announced itself. Between window.open and the
+                // game's own subscribe there is a gap of seconds while its runtime boots, and a
+                // BroadcastChannel drops messages nobody is listening for yet - so during that window
+                // the newest level replaces the stash and OnReady delivers it instead.
+                if (_handshook)
+                {
+                    PlaytestInterop.Post(PlaytestChannelMessage.FormatLevel(_nonce, levelXml));
+                }
+                else
+                {
+                    _pendingXml = levelXml;
+                }
+
                 return false;
             }
 

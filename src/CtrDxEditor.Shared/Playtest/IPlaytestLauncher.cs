@@ -47,13 +47,17 @@ namespace CtrDxEditor.Playtest
     /// <summary>Plays a level in Cut the Rope: DX. Absent on platforms that cannot spawn processes.</summary>
     public interface IPlaytestLauncher : IDisposable
     {
-        /// <summary>Raised when the playtest process exits. Not raised on the UI thread.</summary>
+        /// <summary>
+        /// Raised when the playtest process exits. The raising thread is not guaranteed to be the UI
+        /// thread - implementations differ - so handlers must marshal to it themselves.
+        /// </summary>
         event EventHandler<PlaytestExitedEventArgs>? Exited;
 
         /// <summary>
         /// Raised when a freshly launched process produced no Cut the Rope: DX handshake within the grace
-        /// period - it is a different program, or a build too old to understand <c>--level</c>. Not raised
-        /// on the UI thread, and never raised for a reload (<see cref="Play"/> returning false).
+        /// period - it is a different program, or a build too old to understand <c>--level</c>. The
+        /// raising thread is not guaranteed to be the UI thread, so handlers must marshal to it
+        /// themselves; never raised for a reload (<see cref="Play"/> returning false).
         /// </summary>
         event EventHandler<PlaytestUnsupportedEventArgs>? Unsupported;
 
@@ -69,7 +73,8 @@ namespace CtrDxEditor.Playtest
         bool RequiresLocation { get; }
 
         /// <summary>
-        /// Raised when a running game reports a level it could not load. Not raised on the UI thread.
+        /// Raised when a running game reports a level it could not load. The raising thread is not
+        /// guaranteed to be the UI thread, so handlers must marshal to it themselves.
         /// </summary>
         /// <remarks>
         /// Deliberately separate from <see cref="Exited"/>: the game has not exited, it is still
