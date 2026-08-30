@@ -224,6 +224,8 @@ namespace CtrDxEditor.Tests
         /// <summary>A launcher that records calls and launches nothing.</summary>
         private sealed class StubLauncher : IPlaytestLauncher
         {
+#pragma warning disable CS0067
+            // Declared to satisfy IPlaytestLauncher; a stub that launches nothing never raises them.
             /// <inheritdoc />
             public event EventHandler<PlaytestExitedEventArgs>? Exited;
 
@@ -232,6 +234,7 @@ namespace CtrDxEditor.Tests
 
             /// <inheritdoc />
             public event EventHandler<PlaytestLevelRejectedEventArgs>? LevelRejected;
+#pragma warning restore CS0067
 
             /// <inheritdoc />
             public bool RequiresLocation { get; init; }
@@ -249,9 +252,6 @@ namespace CtrDxEditor.Tests
             /// <inheritdoc />
             public void Dispose()
             {
-                Exited = null;
-                Unsupported = null;
-                LevelRejected = null;
             }
         }
 
