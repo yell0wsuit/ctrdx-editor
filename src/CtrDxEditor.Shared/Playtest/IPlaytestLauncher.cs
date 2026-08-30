@@ -30,6 +30,20 @@ namespace CtrDxEditor.Playtest
         public string Message { get; } = message;
     }
 
+    /// <summary>
+    /// Implemented by launchers whose launch can be refused by the environment rather than failing.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="IPlaytestLauncher"/> because only the browser can experience it: a
+    /// pop-up blocker rejects <c>window.open</c> when the user gesture that authorized it has been
+    /// spent on an intervening dialog. Desktop has no equivalent and does not implement this.
+    /// </remarks>
+    public interface IBlockableLauncher
+    {
+        /// <summary>Whether the most recent launch attempt was refused by the environment.</summary>
+        bool LastLaunchBlocked { get; }
+    }
+
     /// <summary>Plays a level in Cut the Rope: DX. Absent on platforms that cannot spawn processes.</summary>
     public interface IPlaytestLauncher : IDisposable
     {

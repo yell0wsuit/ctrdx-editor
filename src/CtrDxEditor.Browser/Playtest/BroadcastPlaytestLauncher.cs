@@ -18,7 +18,7 @@ namespace CtrDxEditor.Browser.Playtest
     /// in browser storage forever.
     /// </para>
     /// </remarks>
-    public sealed class BroadcastPlaytestLauncher : IPlaytestLauncher
+    public sealed class BroadcastPlaytestLauncher : IPlaytestLauncher, IBlockableLauncher
     {
         /// <summary>
         /// How long a freshly opened game has to announce itself before it is judged not to be a

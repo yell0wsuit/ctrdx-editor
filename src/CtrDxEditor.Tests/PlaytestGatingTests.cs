@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Playtest;
@@ -219,6 +220,71 @@ namespace CtrDxEditor.Tests
             vm.NotifyDxLocationChanged();
 
             Assert.True(raised);
+        }
+
+        /// <summary>
+        /// A browser launcher must reach Play without opening the desktop-only location dialog first.
+        /// Besides being meaningless in a browser, that await would spend the gesture needed by
+        /// window.open and make the normal launch path popup-blocked.
+        /// </summary>
+        [Fact]
+        public void LocationLookupIsGatedByTheLaunchersRequirement()
+        {
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.PlaytestCommands.cs"));
+
+            int gate = source.IndexOf("if (launcher.RequiresLocation)", StringComparison.Ordinal);
+            int lookup = source.IndexOf("await EnsureDxExecutableAsync(vm)", StringComparison.Ordinal);
+
+            Assert.True(gate >= 0, "Location lookup should be guarded by RequiresLocation.");
+            Assert.True(lookup > gate, "The guarded block should contain the location lookup.");
+        }
+
+        /// <summary>A blocked browser launch offers a fresh user gesture that retries the same level.</summary>
+        [Fact]
+        public void BlockedLaunchOffersAnInAppRetry()
+        {
+            Assert.NotNull(typeof(IBlockableLauncher).GetProperty(nameof(IBlockableLauncher.LastLaunchBlocked)));
+
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.PlaytestCommands.cs"));
+            Assert.Contains("else if (WasLaunchBlocked(launcher))", source, StringComparison.Ordinal);
+            Assert.Contains("onClick: () => _ = launcher.Play(executable, xml)", source, StringComparison.Ordinal);
+        }
+
+        /// <summary>A rejected level is surfaced with localized copy and the game's diagnostic.</summary>
+        [Fact]
+        public void RejectedLevelHasLocalizedNotificationWiring()
+        {
+            string source = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Views", "MainView.PlaytestCommands.cs"));
+            Assert.Contains("launcher.LevelRejected +=", source, StringComparison.Ordinal);
+            Assert.Contains("Localizer.Get(\"Notification.Playtest.Rejected\")", source, StringComparison.Ordinal);
+            Assert.Contains("args.Message", source, StringComparison.Ordinal);
+
+            string sourceDirectory = Directory.GetParent(SourcePath("CtrDxEditor.Shared"))?.FullName
+                ?? throw new InvalidOperationException("Could not locate source directory.");
+            string repositoryRoot = Directory.GetParent(sourceDirectory)?.FullName
+                ?? throw new InvalidOperationException("Could not locate repository root.");
+            string localizationPath = Path.Combine(
+                repositoryRoot,
+                "resources",
+                "localization",
+                "en.json");
+            using JsonDocument localization = JsonDocument.Parse(File.ReadAllText(localizationPath));
+            JsonElement root = localization.RootElement;
+            Assert.True(root.TryGetProperty("Notification.Playtest.Rejected", out _));
+            Assert.Equal(
+                "Your browser blocked the playtest",
+                root.GetProperty("Notification.Playtest.Blocked").GetString());
+            Assert.Equal(
+                "Allow pop-ups for this site, or select this notification to open the playtest.",
+                root.GetProperty("Notification.Playtest.BlockedBody").GetString());
+            Assert.False(root.TryGetProperty("Notification.Playtest.BlockedAction", out _));
+            Assert.Contains(
+                "the game opens in a new browser tab or window",
+                root.GetProperty("Guide.Article.save-export-playtest.Playtest").GetString(),
+                StringComparison.Ordinal);
+            Assert.Equal(
+                "Browser playtest requires the editor and game to be hosted on the same site, with pop-ups allowed.",
+                root.GetProperty("Guide.Article.save-export-playtest.Browser.Warning").GetString());
         }
 
         /// <summary>A launcher that records calls and launches nothing.</summary>
