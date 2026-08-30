@@ -158,11 +158,15 @@ namespace CtrDxEditor.Browser.Playtest
                         break;
                     case PlaytestMessageKind.Ready:
                         break;
-                    case PlaytestMessageKind.Error:
+                    case PlaytestMessageKind.Error when IsOurs(nonce):
                         LevelRejected?.Invoke(this, new PlaytestLevelRejectedEventArgs(payload));
                         break;
-                    case PlaytestMessageKind.Bye:
+                    case PlaytestMessageKind.Error:
+                        break;
+                    case PlaytestMessageKind.Bye when IsOurs(nonce):
                         Exited?.Invoke(this, new PlaytestExitedEventArgs(0, string.Empty));
+                        break;
+                    case PlaytestMessageKind.Bye:
                         break;
                     case PlaytestMessageKind.Unknown:
                     case PlaytestMessageKind.Level:
@@ -180,6 +184,20 @@ namespace CtrDxEditor.Browser.Playtest
                 _sessionXml = null;
                 Unsupported?.Invoke(this, new PlaytestUnsupportedEventArgs("cuttherope-dx (browser)"));
             }
+        }
+
+        /// <summary>Whether a message belongs to this launcher's playtest session.</summary>
+        /// <param name="nonce">The nonce the message carried, empty when it carried none.</param>
+        /// <returns><see langword="true"/> when this launcher should act on the message.</returns>
+        /// <remarks>
+        /// Deliberately lenient about an absent nonce. A game build that predates per-session
+        /// addressing sends none, and dropping its messages would silently stop reporting rejected
+        /// levels; treating them as ours preserves exactly today's behaviour. Once both sides carry a
+        /// nonce, two concurrent playtests stop crossing wires.
+        /// </remarks>
+        private bool IsOurs(string nonce)
+        {
+            return nonce.Length == 0 || string.Equals(nonce, _nonce, StringComparison.Ordinal);
         }
 
         /// <summary>Answers a session that has announced itself, handing over the level it is waiting for.</summary>
