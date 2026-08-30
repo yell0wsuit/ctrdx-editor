@@ -35,9 +35,23 @@ namespace CtrDxEditor.Desktop.Playtest
         public event EventHandler<PlaytestUnsupportedEventArgs>? Unsupported;
 
         /// <inheritdoc />
-        public bool Play(string executablePath, string levelXml)
+        /// <remarks>
+        /// Never raised here. A desktop game reports a level it cannot load by writing to standard
+        /// error and exiting non-zero, which already surfaces through <see cref="Exited"/>.
+        /// </remarks>
+#pragma warning disable CS0067 // Raised only by heads whose transport carries diagnostics back.
+        public event EventHandler<PlaytestLevelRejectedEventArgs>? LevelRejected;
+#pragma warning restore CS0067
+
+        /// <inheritdoc />
+        /// <remarks>True: there is no way to find an arbitrary user's game install.</remarks>
+        public bool RequiresLocation => true;
+
+        /// <inheritdoc />
+        public bool Play(string? executablePath, string levelXml)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            ArgumentNullException.ThrowIfNull(executablePath);
 
             // Resolved before the write so an unusable executable fails without leaving a level file
             // behind that a later, valid launch would silently inherit.

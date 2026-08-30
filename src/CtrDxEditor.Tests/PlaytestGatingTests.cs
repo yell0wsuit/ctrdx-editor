@@ -2,6 +2,7 @@ using System;
 using System.IO;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Playtest;
 using CtrDxEditor.ViewModels;
 
 using Xunit;
@@ -145,6 +146,113 @@ namespace CtrDxEditor.Tests
 
             int notify = source.IndexOf("vm.NotifyDxLocationChanged();", StringComparison.Ordinal);
             Assert.True(notify > assignment, "The notification belongs after the path is stored.");
+        }
+
+        /// <summary>Builds a view model around a specific launcher, which the existing helper never sets.</summary>
+        /// <param name="launcher">The launcher to install, or null for a head without playtest.</param>
+        /// <param name="dxPath">Stored executable path, if any.</param>
+        /// <returns>A view model with no level loaded.</returns>
+        private static EditorViewModel VmWith(IPlaytestLauncher? launcher, string? dxPath = null)
+        {
+            return new EditorViewModel(
+                new SpriteCache(new EmptyContentStore()),
+                initial: new EditorSettings { DxExecutablePath = dxPath },
+                playtest: launcher);
+        }
+
+        /// <summary>
+        /// A head whose launcher needs no executable can play as soon as a level is open, and offers
+        /// no "set location" command. The browser has nothing to point at, so gating on a stored path
+        /// there would disable Play permanently.
+        /// </summary>
+        [Fact]
+        public void LauncherWithoutLocationRequirementCanPlayWithNoStoredPath()
+        {
+            EditorViewModel vm = VmWith(new StubLauncher { RequiresLocation = false });
+            vm.LoadLevelXml(Level);
+
+            Assert.True(vm.CanPlaytest);
+            Assert.True(vm.CanLaunchPlaytest);
+            Assert.False(vm.CanSetDxLocation);
+        }
+
+        /// <summary>A head that does need an executable still gates Play on having picked one.</summary>
+        [Fact]
+        public void LauncherRequiringLocationStillGatesOnStoredPath()
+        {
+            EditorViewModel vm = VmWith(new StubLauncher { RequiresLocation = true });
+            vm.LoadLevelXml(Level);
+
+            Assert.False(vm.CanLaunchPlaytest);
+            Assert.True(vm.CanSetDxLocation);
+
+            vm.CurrentSettingsSnapshot.DxExecutablePath = "/Applications/Cut the Rope DX.app";
+            vm.NotifyDxLocationChanged();
+
+            Assert.True(vm.CanLaunchPlaytest);
+        }
+
+        /// <summary>A head with no launcher at all offers neither command, whatever is stored.</summary>
+        [Fact]
+        public void NoLauncherOffersNeitherCommand()
+        {
+            EditorViewModel vm = VmWith(null, "/Applications/Cut the Rope DX.app");
+            vm.LoadLevelXml(Level);
+
+            Assert.False(vm.CanPlaytest);
+            Assert.False(vm.CanSetDxLocation);
+        }
+
+        /// <summary>
+        /// Setting a location has to announce the set-location gate as well as the play gate, or the
+        /// menu item's visibility goes stale.
+        /// </summary>
+        [Fact]
+        public void NotifyingALocationChangeRaisesTheSetLocationGate()
+        {
+            EditorViewModel vm = VmWith(new StubLauncher { RequiresLocation = true });
+
+            bool raised = false;
+            vm.PropertyChanged += (_, e) =>
+                raised |= e.PropertyName == nameof(EditorViewModel.CanSetDxLocation);
+
+            vm.NotifyDxLocationChanged();
+
+            Assert.True(raised);
+        }
+
+        /// <summary>A launcher that records calls and launches nothing.</summary>
+        private sealed class StubLauncher : IPlaytestLauncher
+        {
+            /// <inheritdoc />
+            public event EventHandler<PlaytestExitedEventArgs>? Exited;
+
+            /// <inheritdoc />
+            public event EventHandler<PlaytestUnsupportedEventArgs>? Unsupported;
+
+            /// <inheritdoc />
+            public event EventHandler<PlaytestLevelRejectedEventArgs>? LevelRejected;
+
+            /// <inheritdoc />
+            public bool RequiresLocation { get; init; }
+
+            /// <summary>The XML handed to the most recent <see cref="Play"/> call.</summary>
+            public string? LastXml { get; private set; }
+
+            /// <inheritdoc />
+            public bool Play(string? executablePath, string levelXml)
+            {
+                LastXml = levelXml;
+                return true;
+            }
+
+            /// <inheritdoc />
+            public void Dispose()
+            {
+                Exited = null;
+                Unsupported = null;
+                LevelRejected = null;
+            }
         }
 
         private static string SourcePath(params string[] parts)

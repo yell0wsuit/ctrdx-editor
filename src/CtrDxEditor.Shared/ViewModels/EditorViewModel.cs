@@ -70,8 +70,15 @@ namespace CtrDxEditor.ViewModels
         /// </remarks>
         public bool HasDxLocation => !string.IsNullOrWhiteSpace(CurrentSettingsSnapshot.DxExecutablePath);
 
-        /// <summary>True when a level can actually be handed to the game; enables the playtest commands.</summary>
-        public bool CanLaunchPlaytest => HasDocument && HasDxLocation;
+        /// <summary>Whether Play can run now: a level is open, and a location is set if one is needed.</summary>
+        public bool CanLaunchPlaytest =>
+            HasDocument && (Playtest is { RequiresLocation: false } || HasDxLocation);
+
+        /// <summary>
+        /// Whether to offer the "set DX location" command. False where the launcher needs no
+        /// executable, since a file picker would there ask for something that is never used.
+        /// </summary>
+        public bool CanSetDxLocation => Playtest is { RequiresLocation: true };
 
         /// <summary>
         /// Re-reads <see cref="HasDxLocation"/> after the settings snapshot's path is written. The snapshot
@@ -81,6 +88,7 @@ namespace CtrDxEditor.ViewModels
         {
             OnPropertyChanged(nameof(HasDxLocation));
             OnPropertyChanged(nameof(CanLaunchPlaytest));
+            OnPropertyChanged(nameof(CanSetDxLocation));
         }
 
         /// <summary>

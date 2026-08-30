@@ -76,7 +76,7 @@
           </MenuItem.Header>
         </MenuItem>
         <MenuItem Header="{loc:Tr Menu.File.SetDxLocation}" Click="SetDxLocation_Click"
-                  IsVisible="{Binding CanPlaytest}">
+                  IsVisible="{Binding CanSetDxLocation}">
           <MenuItem.Icon>
             <icons:MaterialIcon Kind="FolderCogOutline" />
           </MenuItem.Icon>
@@ -912,7 +912,7 @@
                              Text="{loc:Tr Menu.File.Playtest, Plain=True}" />
                 </Grid>
               </Button>
-              <Button Classes="drawerRow" Click="DrawerSetDxLocation_Click" IsVisible="{Binding CanPlaytest}">
+              <Button Classes="drawerRow" Click="DrawerSetDxLocation_Click" IsVisible="{Binding CanSetDxLocation}">
                 <Grid ColumnDefinitions="Auto,*">
                   <icons:MaterialIcon Grid.Column="0" Kind="FolderCogOutline" Width="20" Height="20"
                                       VerticalAlignment="Center" />
