@@ -15,10 +15,10 @@ using CtrDxEditor.ViewModels;
 
 namespace CtrDxEditor.Views
 {
-    // Playtest commands: hand the open level to Cut the Rope: DX via --level. The launcher owns the
-    // temp file and the macOS .app resolution, so this file only deals with confirmation, recovering a
-    // stored path that no longer resolves, and reporting failures. Play stays disabled until a location
-    // is set (EditorViewModel.CanLaunchPlaytest), so the picker here is recovery, not first run.
+    // Playtest commands: hand the open level to Cut the Rope: DX through the active head's launcher.
+    // The desktop launcher owns the temp file and executable resolution; the browser launcher owns its
+    // game window and channel. This file deals with confirmation, location recovery where applicable,
+    // and reporting failures.
     //
     // Clicking Play while a game is already running is not an error: the launcher rewrites the level
     // file, the game's own watcher notices, and it reloads in place. No second process, no toast -
@@ -47,10 +47,18 @@ namespace CtrDxEditor.Views
                 }
             }
 
-            string? executable = await EnsureDxExecutableAsync(vm);
-            if (executable is null)
+            // Only a head that needs an executable is asked for one. Beyond being meaningless in a
+            // browser, this call must not happen there for a second reason: it awaits a dialog, and
+            // window.open is only permitted while the user's click is still on the stack. Keeping
+            // the browser's warning-free path free of any real await is what makes launching work.
+            string? executable = null;
+            if (launcher.RequiresLocation)
             {
-                return; // No path chosen; the user cancelled.
+                executable = await EnsureDxExecutableAsync(vm);
+                if (executable is null)
+                {
+                    return; // No path chosen; the user cancelled.
+                }
             }
 
             if (vm.ToXml() is not { } xml)
@@ -62,15 +70,37 @@ namespace CtrDxEditor.Views
 
             try
             {
-                // Only a cold launch is announced. A reload returns false: the game flashes its own
-                // restart dim, and a toast in a window the user has just switched away from would
-                // report something they cannot see.
+                // Both a cold launch and a reload are announced. The game is never raised on a
+                // reload - deliberately, since desktop does not raise it either - so the user is
+                // still looking at the editor, where the game's own restart dim is invisible to
+                // them. Without this toast, pressing Play on a running game looks like nothing
+                // happened at all.
                 if (launcher.Play(executable, xml))
                 {
                     Notifications()?.Show(new Notification(
                         Localizer.Get("Notification.Playtest.Launching"),
                         string.Empty,
                         NotificationType.Information));
+                }
+                else if (WasLaunchBlocked(launcher))
+                {
+                    // Only reachable when a validation dialog was confirmed first: awaiting a real
+                    // dialog spends the user gesture that window.open needs, and the browser refuses.
+                    // Selecting this notification is a fresh gesture, so the retry succeeds.
+                    Notifications()?.Show(new Notification(
+                        Localizer.Get("Notification.Playtest.Blocked"),
+                        Localizer.Get("Notification.Playtest.BlockedBody"),
+                        NotificationType.Warning,
+                        onClick: () => _ = launcher.Play(executable, xml)));
+                }
+                else
+                {
+                    // "Sent" rather than "reloaded" on purpose: the level either went to a live game
+                    // or was stashed for one that is still booting, and this wording is true of both.
+                    Notifications()?.Show(new Notification(
+                        Localizer.Get("Notification.Playtest.Reloaded"),
+                        string.Empty,
+                        NotificationType.Success));
                 }
             }
             // Catch-all on purpose: this is an async void handler, so anything that escapes is an
@@ -142,6 +172,25 @@ namespace CtrDxEditor.Views
                     _ = dialog.ShowAsync();
                 });
             };
+
+            // The game is still running the level it had before, so this is a notification rather
+            // than the dialog an unsupported launch raises: nothing needs acknowledging, and the
+            // user is looking at the game window anyway.
+            launcher.LevelRejected += (_, args) =>
+            {
+                Dispatcher.UIThread.Post(() => Notifications()?.Show(new Notification(
+                    Localizer.Get("Notification.Playtest.Rejected"),
+                    args.Message,
+                    NotificationType.Error)));
+            };
+        }
+
+        // Asked through a narrow capability interface: only the browser head can have a launch
+        // blocked, and widening IPlaytestLauncher for it would put a browser concern in every head's
+        // contract.
+        private static bool WasLaunchBlocked(IPlaytestLauncher launcher)
+        {
+            return launcher is IBlockableLauncher { LastLaunchBlocked: true };
         }
 
         // Returns a usable executable path, prompting on first use or when the stored one has gone

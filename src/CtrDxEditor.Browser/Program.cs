@@ -5,6 +5,7 @@ using Avalonia.Browser;
 
 using CtrDxEditor;
 using CtrDxEditor.Browser.Content;
+using CtrDxEditor.Browser.Playtest;
 using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
 
@@ -13,6 +14,7 @@ using CtrDxEditor.Startup;
 await IndexedDb.ImportAsync();
 await WebCrypto.ImportAsync();
 await SafeAreaInterop.ImportAsync();
+await PlaytestInterop.ImportAsync();
 await BuildAvaloniaApp().StartBrowserAppAsync("out");
 
 AppBuilder BuildAvaloniaApp()
@@ -37,6 +39,7 @@ AppBuilder BuildAvaloniaApp()
             double[] i = SafeAreaInterop.ReadInsets();
             return new Thickness(i[0], i[1], i[2], i[3]);
         },
+        Playtest = new BroadcastPlaytestLauncher(),
     };
     return AppBuilder.Configure(() => new App(startup)).WithBundledInterFont();
 }
