@@ -34,7 +34,12 @@ namespace CtrDxEditor.Browser.Playtest
         // events raised from Drain land straight on the UI thread the view already marshals to.
         private readonly DispatcherTimer _poll = new() { Interval = PollInterval };
         private string _nonce = "";
-        private string? _pendingXml;
+
+        /// <summary>
+        /// The level the current session is playing. Kept after delivery rather than cleared, so a
+        /// game window the user reloads can be answered when it announces itself a second time.
+        /// </summary>
+        private string? _sessionXml;
         private DateTime _handshakeDeadline = DateTime.MaxValue;
         private bool _handshook;
         private bool _disposed;
@@ -92,24 +97,25 @@ namespace CtrDxEditor.Browser.Playtest
 
             if (PlaytestInterop.IsGameOpen())
             {
+                // Remembered on every Play, not just the cold launch: after a few hot reloads this
+                // is what a refreshed window must be given, and the level from the original launch
+                // would be the wrong one.
+                _sessionXml = levelXml;
+
                 // Post directly only once the game has announced itself. Between window.open and the
                 // game's own subscribe there is a gap of seconds while its runtime boots, and a
-                // BroadcastChannel drops messages nobody is listening for yet - so during that window
-                // the newest level replaces the stash and OnReady delivers it instead.
+                // BroadcastChannel drops messages nobody is listening for yet - during that window
+                // OnReady delivers it instead.
                 if (_handshook)
                 {
                     PlaytestInterop.Post(PlaytestChannelMessage.FormatLevel(_nonce, levelXml));
-                }
-                else
-                {
-                    _pendingXml = levelXml;
                 }
 
                 return false;
             }
 
             _nonce = Guid.NewGuid().ToString("N")[..8];
-            _pendingXml = levelXml;
+            _sessionXml = levelXml;
             _handshook = false;
             _handshakeDeadline = DateTime.UtcNow + HandshakeGracePeriod;
 
@@ -117,7 +123,7 @@ namespace CtrDxEditor.Browser.Playtest
             {
                 LastLaunchBlocked = true;
                 _handshakeDeadline = DateTime.MaxValue;
-                _pendingXml = null;
+                _sessionXml = null;
                 return false;
             }
 
@@ -171,7 +177,7 @@ namespace CtrDxEditor.Browser.Playtest
             if (!_handshook && DateTime.UtcNow > _handshakeDeadline)
             {
                 _handshakeDeadline = DateTime.MaxValue;
-                _pendingXml = null;
+                _sessionXml = null;
                 Unsupported?.Invoke(this, new PlaytestUnsupportedEventArgs("cuttherope-dx (browser)"));
             }
         }
@@ -190,9 +196,11 @@ namespace CtrDxEditor.Browser.Playtest
             _handshook = true;
             _handshakeDeadline = DateTime.MaxValue;
 
-            if (_pendingXml is { } xml)
+            // Deliberately not cleared after sending. A playtest window the user refreshes boots
+            // again and announces itself a second time; answering that with the level this session is
+            // playing is what stops a refresh dropping the user into the normal game.
+            if (_sessionXml is { } xml)
             {
-                _pendingXml = null;
                 PlaytestInterop.Post(PlaytestChannelMessage.FormatLevel(_nonce, xml));
             }
         }
