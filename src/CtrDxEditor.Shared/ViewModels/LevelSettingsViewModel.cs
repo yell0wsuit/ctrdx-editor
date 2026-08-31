@@ -189,7 +189,27 @@ namespace CtrDxEditor.ViewModels
 
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
-        [ObservableProperty] public partial bool UseMobilePhysics { get; set; }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TimeTravelRocketPhysicsEditable))]
+        public partial bool UseMobilePhysics { get; set; }
+
+        /// <summary>
+        /// Whether the level asks for Cut the Rope: Time Travel's rocket tuning. Offered as a mode of
+        /// <see cref="UseMobilePhysics"/>, so turning that off clears this rather than leaving a setting
+        /// checked that the level no longer carries.
+        /// </summary>
+        [ObservableProperty] public partial bool UseTimeTravelRocketPhysics { get; set; }
+
+        /// <summary>Whether the Time Travel rocket checkbox accepts input; it needs mobile physics on.</summary>
+        public bool TimeTravelRocketPhysicsEditable => FlagsEditable && UseMobilePhysics;
+
+        partial void OnUseMobilePhysicsChanged(bool value)
+        {
+            if (!value)
+            {
+                UseTimeTravelRocketPhysics = false;
+            }
+        }
 
         /// <summary>Height of the water pool in level units; 0 means the level has no water.</summary>
         [ObservableProperty]
@@ -582,6 +602,7 @@ namespace CtrDxEditor.ViewModels
                 TwoParts = current.TwoParts,
                 NightLevel = current.NightLevel,
                 UseMobilePhysics = current.UseMobilePhysics,
+                UseTimeTravelRocketPhysics = current.UseTimeTravelRocketPhysics,
                 Water = (decimal)current.Water,
                 WaterSpeed = (decimal)current.WaterSpeed,
                 GravityX = (decimal)current.GravityX,
@@ -609,6 +630,7 @@ namespace CtrDxEditor.ViewModels
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
             return new LevelSettings(
                 width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics,
+                UseMobilePhysics && UseTimeTravelRocketPhysics,
                 (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m),
                 LevelName?.Trim() ?? string.Empty,
                 (float)(GravityX ?? (decimal)LevelGravity.DefaultX),

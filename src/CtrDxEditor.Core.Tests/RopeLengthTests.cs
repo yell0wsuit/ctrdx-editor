@@ -31,7 +31,7 @@ namespace CtrDxEditor.Core.Tests
         private static RopeLength.Geometry Resolve(LevelObject grab, params LevelObject[] others)
         {
             List<LevelObject> objects = [grab, .. others];
-            return RopeLength.Of(grab, RopeResolver.Resolve(grab, objects, twoParts: false))!.Value;
+            return RopeLength.Of(grab, RopeResolver.Resolve(grab, objects, twoParts: false), RopePhysics.Desktop)!.Value;
         }
 
         /// <summary>A bound grab resolves to its hook, its candy, and the gap between them.</summary>
@@ -74,13 +74,13 @@ namespace CtrDxEditor.Core.Tests
             List<LevelObject> withCandy = [Candy(100, 0)];
 
             LevelObject gun = Grab(0, 0, "200", ("gun", "true"));
-            Assert.Null(RopeLength.Of(gun, RopeResolver.Resolve(gun, [gun, .. withCandy], twoParts: false)));
+            Assert.Null(RopeLength.Of(gun, RopeResolver.Resolve(gun, [gun, .. withCandy], twoParts: false), RopePhysics.Desktop));
 
             LevelObject autoCatch = Grab(0, 0, "200", ("radius", "120"));
-            Assert.Null(RopeLength.Of(autoCatch, RopeResolver.Resolve(autoCatch, [autoCatch, .. withCandy], twoParts: false)));
+            Assert.Null(RopeLength.Of(autoCatch, RopeResolver.Resolve(autoCatch, [autoCatch, .. withCandy], twoParts: false), RopePhysics.Desktop));
 
             LevelObject unbound = Grab(0, 0, "200");
-            Assert.Null(RopeLength.Of(unbound, RopeResolver.Resolve(unbound, [unbound], twoParts: false)));
+            Assert.Null(RopeLength.Of(unbound, RopeResolver.Resolve(unbound, [unbound], twoParts: false), RopePhysics.Desktop));
         }
 
         /// <summary>A missing or unparsable length attribute reads as zero rather than throwing.</summary>

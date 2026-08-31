@@ -58,6 +58,16 @@ namespace CtrDxEditor.Content
         private const string AntImageBase = "images/obj_ant";
         private const string TutorialSignsJson = "images/tutorial_signs.json";
         private const string TutorialSignsImageBase = "images/tutorial_signs";
+        private const string AxeJson = "images/obj_axe.json";
+        private const string AxeImageBase = "images/obj_axe";
+        private const string PauseJson = "images/obj_pause.json";
+        private const string PauseImageBase = "images/obj_pause";
+        private const string ChainJson = "images/obj_exp_chain.json";
+        private const string ChainImageBase = "images/obj_exp_chain";
+        private const string HookChainJson = "images/obj_hook_chain.json";
+        private const string HookChainImageBase = "images/obj_hook_chain";
+        private const string HookAutoChainJson = "images/obj_hook_auto_chain.json";
+        private const string HookAutoChainImageBase = "images/obj_hook_auto_chain";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -168,6 +178,29 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(HookJson, HookImageBase, 5),
             ]),
 
+            // Chain hook (game ObjHookChain quads 0/1, back + front). Grab.GetHookTextureResource swaps the
+            // whole atlas when the attached bungee is a chain, and pins the base quad to 0 rather than
+            // rolling Hook01/Hook02, so this variant has no "_02" partner.
+            new("grab_chain",
+            [
+                new SpriteLayer(HookChainJson, HookChainImageBase, 0),
+                new SpriteLayer(HookChainJson, HookChainImageBase, 1),
+            ]),
+
+            // Auto-catch chain hook (game ObjHookAutoChain quads 0/1), used in place of grab_auto when a
+            // radius grab carries HookModifiers.ChainAnchor. Not placeable; picked by grab state.
+            new("grab_auto_chain",
+            [
+                new SpriteLayer(HookAutoChainJson, HookAutoChainImageBase, 0),
+                new SpriteLayer(HookAutoChainJson, HookAutoChainImageBase, 1),
+            ]),
+
+            // Chain rope links (game ObjExpChain). Quad 0 sits on each sampled curve point and quad 1
+            // between adjacent samples; ChainSpritePlanner places them and RopeRenderer draws them, so
+            // these are never composited as an object sprite.
+            new("chain_link", [new SpriteLayer(ChainJson, ChainImageBase, 0)]),
+            new("chain_mid", [new SpriteLayer(ChainJson, ChainImageBase, 1)]),
+
             // Movable-rail pieces (game HookMovable quads 6/8/7 = left cap, center tile, right cap). The
             // canvas assembles these into a rail of arbitrary length; they are never drawn centered like a
             // normal sprite, so the layer order here is left, center, right for the renderer to index.
@@ -251,6 +284,20 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(LanternJson, LanternImageBase, 0),
                 new SpriteLayer(LanternJson, LanternImageBase, 1),
             ]),
+
+            // Axe (game ObjAxe): base (0), blade (1), and pivot cap (2), all centered on the same
+            // 183x201 sourceSize. The game spins the blade while the axe swings; the editor draws the
+            // rest pose.
+            new("axe",
+            [
+                new SpriteLayer(AxeJson, AxeImageBase, 0),
+                new SpriteLayer(AxeJson, AxeImageBase, 1),
+                new SpriteLayer(AxeJson, AxeImageBase, 2),
+            ]),
+
+            // Pause switcher (game ObjPause). Quad 0 is the running face, which is how a level starts;
+            // quad 1 is the frozen face and the remaining quads belong to the burst animation.
+            new("pauseSwitcher", [new SpriteLayer(PauseJson, PauseImageBase, 0)]),
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
             // upright; layers 1-2 are the idle mouse body (Mouse.IdleQuad) and its open eyes

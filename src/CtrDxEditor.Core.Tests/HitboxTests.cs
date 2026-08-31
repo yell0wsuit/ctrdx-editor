@@ -145,16 +145,20 @@ namespace CtrDxEditor.Core.Tests
             AssertBounds(
                 HitboxTable.Compute("bouncer1", 0, 0, scale: 3, HitboxModel.Desktop),
                 -274 / 6.0, -90 / 6.0, 274 / 3.0, 90 / 3.0);
-            // bouncer1 mobile 138 x 30, +60 => 258 x 150.
+            // bouncer1 mobile 140 x 30, +60 => 260 x 150.
             AssertBounds(
                 HitboxTable.Compute("bouncer1", 0, 0, scale: 3, HitboxModel.Phone),
-                -258 / 6.0, -150 / 6.0, 258 / 3.0, 150 / 3.0);
+                -260 / 6.0, -150 / 6.0, 260 / 3.0, 150 / 3.0);
         }
 
-        /// <summary>Bouncers use frozen original-asset widths rather than the repacked JSON atlas widths.</summary>
+        /// <summary>
+        /// Bouncers use frozen original-asset widths rather than the repacked JSON atlas widths. The
+        /// mobile pair is normalized from the iOS high-resolution quads - (100 / 1.5) - 20 and
+        /// (150 / 1.5) - 20 authored units - then scaled to world.
+        /// </summary>
         [Theory]
-        [InlineData("bouncer1", 194, 138)]
-        [InlineData("bouncer2", 302, 273)]
+        [InlineData("bouncer1", 194, 140)]
+        [InlineData("bouncer2", 302, 240)]
         public void BouncersMatchActivePhysicsConstants(
             string element,
             double desktopWidth,
@@ -239,6 +243,63 @@ namespace CtrDxEditor.Core.Tests
         public void UnsupportedElementsReturnNull(string element)
         {
             Assert.Null(HitboxTable.Compute(element, 0, 0, scale: 1, HitboxModel.Desktop));
+        }
+
+        /// <summary>
+        /// The mobile bouncer bands are normalized from the iOS high-resolution quads rather than
+        /// measured: the quad width brought into authored coordinates, less the native 20-unit end cap,
+        /// then scaled to world. Both widths are inflated by the mobile 60-unit collision radius.
+        /// </summary>
+        [Theory]
+        [InlineData("bouncer1", 100.0)]
+        [InlineData("bouncer2", 150.0)]
+        public void MobileBouncerBandsFollowTheIosQuadWidths(string element, double iosQuadWidth)
+        {
+            const double iosHighResolutionScale = 1.5;
+            const double endCap = 20.0;
+            const double wp7ToWorld = 3.0;
+            const double radius = 60.0;
+
+            double authored = (iosQuadWidth / iosHighResolutionScale) - endCap;
+            double world = authored * wp7ToWorld;
+
+            LevelBounds box = Assert.NotNull(
+                HitboxTable.Compute(element, 0, 0, scale: 1, HitboxModel.Phone));
+
+            Assert.Equal((world + (2 * radius)) / 3.0, box.W, 6);
+        }
+
+        /// <summary>
+        /// A Time Travel rocket catches over a wider slat - 0.65 of the 358-pixel quad against the
+        /// 0.6 every other model uses - while keeping the desktop height and centre offset.
+        /// </summary>
+        [Fact]
+        public void TimeTravelWidensTheRocketCatchBox()
+        {
+            LevelObject rocket = new(XElement.Parse("""<rocket x="0" y="0" />"""));
+
+            LevelBounds mobile = Assert.NotNull(
+                HitboxTable.Compute(rocket, scale: 1, HitboxModel.Phone));
+            LevelBounds timeTravel = Assert.NotNull(
+                HitboxTable.Compute(rocket, scale: 1, HitboxModel.Phone, timeTravelRockets: true));
+
+            Assert.Equal(232.7 / 3.0, timeTravel.W, 6);
+            Assert.Equal(8.95 / 3.0, timeTravel.H, 6);
+            Assert.True(timeTravel.W > mobile.W);
+        }
+
+        /// <summary>Without the flag a rocket keeps the box its physics model gives it.</summary>
+        [Fact]
+        public void ARocketFallsBackToItsModelBoxWithoutTheFlag()
+        {
+            LevelObject rocket = new(XElement.Parse("""<rocket x="0" y="0" />"""));
+
+            Assert.Equal(
+                HitboxTable.Compute("rocket", 0, 0, scale: 1, HitboxModel.Phone),
+                HitboxTable.Compute(rocket, scale: 1, HitboxModel.Phone));
+            Assert.Equal(
+                HitboxTable.Compute("rocket", 0, 0, scale: 1, HitboxModel.Desktop),
+                HitboxTable.Compute(rocket, scale: 1, HitboxModel.Desktop));
         }
 
         private static void AssertCenteredStrip(

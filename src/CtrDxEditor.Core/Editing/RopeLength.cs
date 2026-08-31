@@ -52,8 +52,10 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="Knob">The drag knob's position on the drawn cord, in level units.</param>
         /// <param name="KnobParameter">The curve parameter <paramref name="Knob"/> was found at.</param>
         /// <param name="Taut">Whether the rope has no slack (<paramref name="Length"/> is at most <paramref name="Chord"/>).</param>
+        /// <param name="Physics">The level's physics model, which sets how the cord is subdivided.</param>
         public readonly record struct Geometry(
-            Vec2 Hook, Vec2 Target, double Chord, double Length, Vec2 Knob, double KnobParameter, bool Taut);
+            Vec2 Hook, Vec2 Target, double Chord, double Length, Vec2 Knob, double KnobParameter, bool Taut,
+            RopePhysics Physics);
 
         /// <summary>
         /// The fixed state of an in-progress rope drag, captured when the press landed. Both solvers work
@@ -85,8 +87,9 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         /// <param name="grab">The grab whose rope is being edited.</param>
         /// <param name="rope">The resolved rope target, from <see cref="RopeResolver.Resolve"/>.</param>
+        /// <param name="physics">The level's physics model, which sets how the cord is subdivided.</param>
         /// <returns>The rope geometry, or null when there is no rope to edit.</returns>
-        public static Geometry? Of(LevelObject grab, RopeTarget rope)
+        public static Geometry? Of(LevelObject grab, RopeTarget rope, RopePhysics physics)
         {
             if (grab.Type != "grab" || rope.Target is not { } bound)
             {
@@ -97,8 +100,8 @@ namespace CtrDxEditor.Core.Editing
             Vec2 target = new(bound.X, bound.Y);
             double chord = Distance(hook, target);
             double length = ReadLength(grab);
-            (Vec2 knob, double knobT) = KnobPoint(hook, target, length);
-            return new Geometry(hook, target, chord, length, knob, knobT, length <= chord);
+            (Vec2 knob, double knobT) = KnobPoint(hook, target, length, physics);
+            return new Geometry(hook, target, chord, length, knob, knobT, length <= chord, physics);
         }
 
         /// <summary>The grab's authored rest length, or 0 when the attribute is missing or unparsable.</summary>
@@ -132,7 +135,7 @@ namespace CtrDxEditor.Core.Editing
                 return (Handle.Knob, g.KnobParameter);
             }
 
-            Vec2[] controls = RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length);
+            Vec2[] controls = RopeStripBuilder.ControlPoints(g.Hook, g.Target, g.Length, g.Physics);
             Vec2 previous = RopeStripBuilder.CalcPathBezier(controls, 0);
             for (int i = 1; i <= CordSamples; i++)
             {
@@ -252,9 +255,9 @@ namespace CtrDxEditor.Core.Editing
         // parameter it was found at so a drag from it solves for that exact point. Sampling beats solving:
         // the cord is a bezier over a variable number of controls, so its low point has no closed form.
         // Ties lose to the midpoint, which keeps a taut rope's knob centered instead of drifting to an end.
-        private static (Vec2 Point, double T) KnobPoint(Vec2 hook, Vec2 target, double length)
+        private static (Vec2 Point, double T) KnobPoint(Vec2 hook, Vec2 target, double length, RopePhysics physics)
         {
-            Vec2[] controls = RopeStripBuilder.ControlPoints(hook, target, length);
+            Vec2[] controls = RopeStripBuilder.ControlPoints(hook, target, length, physics);
             Vec2 best = RopeStripBuilder.CalcPathBezier(controls, 0.5);
             double bestT = 0.5;
             double bestDrop = best.Y - ChordY(hook, target, 0.5);
@@ -288,7 +291,7 @@ namespace CtrDxEditor.Core.Editing
         private static double CurveY(Geometry g, double length, double t)
         {
             return RopeStripBuilder.CalcPathBezier(
-                RopeStripBuilder.ControlPoints(g.Hook, g.Target, length), t).Y;
+                RopeStripBuilder.ControlPoints(g.Hook, g.Target, length, g.Physics), t).Y;
         }
 
         // How far along a segment the closest point to `point` lies, as a 0-1 fraction.

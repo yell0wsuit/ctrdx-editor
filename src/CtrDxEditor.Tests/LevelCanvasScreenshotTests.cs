@@ -413,8 +413,10 @@ namespace CtrDxEditor.Tests
                 new XAttribute("path", "RC8"),
                 new XAttribute("moveSpeed", "8")));
 
-            LevelBounds authored = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, null])!;
-            LevelBounds preview = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, 0.0])!;
+            // Reflection binds every parameter, optional ones included, so the Time Travel rocket flag
+            // is passed explicitly; a star does not read it either way.
+            LevelBounds authored = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, null, false])!;
+            LevelBounds preview = (LevelBounds)method.Invoke(null, [star, 1.0, HitboxModel.Desktop, 0.0, false])!;
 
             Assert.Equal(authored.X + 8.0, preview.X, 6);
             Assert.Equal(authored.Y, preview.Y, 6);

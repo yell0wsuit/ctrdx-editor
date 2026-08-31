@@ -70,14 +70,27 @@ namespace CtrDxEditor.Core.Editing
 
                 // ActivePhysicsConstants.BouncerCollisionWidth and BouncerHeight, inflated by
                 // BouncerCollisionRadius (40 desktop; 20 mobile x Wp7ToWorldScale(3) = 60 world).
-                new("bouncer1", Centered(194, 10), Centered(138, 30), 40, 60),
-                new("bouncer2", Centered(302, 10), Centered(273, 30), 40, 60),
+                // The mobile widths are normalized from the iOS high-resolution quads rather than
+                // measured: (100 / 1.5) - 20 = 46.67 and (150 / 1.5) - 20 = 80 authored units, each
+                // the quad width brought into authored coordinates less the 20-unit end cap, then
+                // scaled to world.
+                new("bouncer1", Centered(194, 10), Centered(140, 30), 40, 60),
+                new("bouncer2", Centered(302, 10), Centered(240, 30), 40, 60),
 
                 // ActivePhysicsConstants.RocketCatchBox*; the rocket's 0.7 scale affects artwork only.
                 new(
                     "rocket",
                     Centered(214.8, 8.95, centerX: -21.5, centerY: -0.5),
                     Centered(208.8, 8.7, centerX: -25.5, centerY: 0)),
+
+                // A Time Travel rocket catches over a wider slat: 0.65 of the 358-pixel quad rather
+                // than 0.6, keeping the desktop height and centre offset. The flag is a mode of mobile
+                // physics, so only the phone column is ever reached, but both are filled so the row
+                // cannot read as empty if that ever changes.
+                new(
+                    "rocket_timetravel",
+                    Centered(232.7, 8.95, centerX: -21.5, centerY: -0.5),
+                    Centered(232.7, 8.95, centerX: -21.5, centerY: -0.5)),
 
                 // GameScene.GetSnailBoundingBox. The desktop row is obj_snail frame_08_shell's trim
                 // within its 393x418 canvas; Snail.InitWithTexture calls DoRestoreCutTransparency, so
@@ -99,16 +112,25 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="scale">Accepted for call-site symmetry with sprite placement but ignored: collision geometry is authored in world space and does not inherit visual scale.</param>
         /// <param name="model">The physics model, selecting desktop or phone collision geometry.</param>
         /// <param name="mapScale">Atlas pixels per level unit; defaults to the standard map scale.</param>
+        /// <param name="timeTravelRockets">
+        /// Whether the level asked for Time Travel's rocket tuning, which widens a rocket's catch box.
+        /// Unlike a toggled spike this is a level setting rather than object state, so it cannot be read
+        /// off <paramref name="obj"/> and arrives from the caller instead.
+        /// </param>
         /// <returns>The collision bounds in level units, or null when the element has no hitbox.</returns>
         public static LevelBounds? Compute(
             LevelObject obj,
             double scale,
             HitboxModel model,
-            double mapScale = SpritePlacement.MapScale)
+            double mapScale = SpritePlacement.MapScale,
+            bool timeTravelRockets = false)
         {
-            string element = SpikeObject.IsSpike(obj.Type) && SpikeObject.IsToggled(obj)
-                ? $"{obj.Type}_toggled"
-                : obj.Type;
+            string element = obj.Type switch
+            {
+                _ when SpikeObject.IsSpike(obj.Type) && SpikeObject.IsToggled(obj) => $"{obj.Type}_toggled",
+                "rocket" when timeTravelRockets => "rocket_timetravel",
+                _ => obj.Type,
+            };
             return Compute(element, obj.X, obj.Y, scale, model, mapScale);
         }
 

@@ -22,7 +22,7 @@ namespace CtrDxEditor.Tests
             MethodInfo? method = renderer.GetMethod("GameDrawLayer", BindingFlags.Public | BindingFlags.Static);
             Assert.NotNull(method);
 
-            Assert.Equal(12, method.Invoke(null, [lantern]));
+            Assert.Equal(13, method.Invoke(null, [lantern]));
         }
     }
 }

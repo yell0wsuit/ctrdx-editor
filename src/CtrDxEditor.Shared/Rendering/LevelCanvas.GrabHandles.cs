@@ -105,7 +105,9 @@ namespace CtrDxEditor.Rendering
             }
 
             RopeTarget target = RopeResolver.Resolve(grab, doc.AllObjects, doc.TwoParts);
-            return target.Target is { } bound && IsHidden(bound) ? null : RopeLength.Of(grab, target);
+            return target.Target is { } bound && IsHidden(bound)
+                ? null
+                : RopeLength.Of(grab, target, RopePhysics.For(doc.UseMobilePhysics));
         }
 
         /// <summary>What part of the selected grab's rope a level point is over, plus the drag parameter.</summary>

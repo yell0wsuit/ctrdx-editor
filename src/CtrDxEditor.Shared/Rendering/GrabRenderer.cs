@@ -26,14 +26,18 @@ namespace CtrDxEditor.Rendering
         /// </summary>
         public static string SpriteKey(LevelObject obj)
         {
+            bool chain = ChainRope.IsChain(obj);
             return obj.Type switch
             {
                 not "grab" => obj.Type,
+                // A gun and a suction cup draw their own art whatever the rope is; the game's
+                // CreateAxisVisuals never consults the chain in those branches.
                 _ when IsTrue(obj.GetAttr("gun")) => "grab_gun",
                 _ when IsTrue(obj.GetAttr("kickable")) =>
                     IsTrue(obj.GetAttr("kicked")) ? "grab_suction_kicked" : "grab_suction",
                 _ when IsTrue(obj.GetAttr("wheel")) => "grab_wheel",
-                _ => GrabRadius.Of(obj) is not null ? "grab_auto" : obj.Type,
+                _ when GrabRadius.Of(obj) is not null => chain ? "grab_auto_chain" : "grab_auto",
+                _ => chain ? "grab_chain" : obj.Type,
             };
         }
 
@@ -49,6 +53,18 @@ namespace CtrDxEditor.Rendering
         {
             string key = SpriteKey(obj);
             return key == "grab" && SpriteVariantPicker.Pick(obj.Element, 2) == 1 ? "grab_02" : key;
+        }
+
+        /// <summary>
+        /// The per-rope seed for a chain's link tints. Chains pick their tints once per bungee in the
+        /// game, so the editor keys the roll on the grab's XElement - the same table the hook-variant
+        /// roll uses - and links stay put across repaints and drags.
+        /// </summary>
+        /// <param name="obj">The chain grab.</param>
+        /// <returns>A stable seed for this grab.</returns>
+        public static int ChainSeed(LevelObject obj)
+        {
+            return SpriteVariantPicker.Pick(obj.Element, int.MaxValue);
         }
 
         /// <summary>Extra sprite elements drawn over the base grab, without changing selection geometry.</summary>

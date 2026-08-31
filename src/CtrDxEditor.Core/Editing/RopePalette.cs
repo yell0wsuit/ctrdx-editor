@@ -27,12 +27,6 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Number of available rope skins (indices 0..SkinCount-1).</summary>
         public static int SkinCount => 9;
 
-        // The game flags a segment as stretched when its length exceeds rest + 7
-        // (desktop: rest 105). A taut rope stretches uniformly, so per-segment
-        // length/rest equals whole-rope distance/length and the check reduces to
-        // this dimensionless ratio.
-        private const double StretchThresholdRatio = 7.0 / 105.0;
-
         /// <summary>True only for the default brown skin (index 0).</summary>
         public static bool IsDefaultSkin(int skin)
         {
@@ -55,12 +49,17 @@ namespace CtrDxEditor.Core.Editing
         /// highlighted); the red stretch tint fires when the endpoints sit further
         /// apart than the rope's rest length plus the game's threshold.
         /// </summary>
-        public static RopeDrawColors GetDrawColors(int skin, double distance, double length)
+        public static RopeDrawColors GetDrawColors(int skin, double distance, double length, RopePhysics? physics = null)
         {
+            // The game flags a segment as stretched when its length exceeds rest + BungeeStretchRedThreshold.
+            // A taut rope stretches uniformly, so per-segment length/rest equals whole-rope distance/length
+            // and the check reduces to this dimensionless ratio - which differs per physics model, since
+            // both the rest length and the threshold do.
+            double stretchThresholdRatio = (physics ?? RopePhysics.Desktop).StretchThresholdRatio;
             int normalizedSkin = skin is >= 0 and < 9 ? skin : 0;
             (RopeRgb primary, RopeRgb secondary) = GetSkin(normalizedSkin);
 
-            bool stretched = length > 0 && distance > length * (1 + StretchThresholdRatio);
+            bool stretched = length > 0 && distance > length * (1 + stretchThresholdRatio);
 
             // Base colors: when stretched, custom skins draw toward the default brown
             // palette (matches the game); the shade colors keep the skin's own palette.

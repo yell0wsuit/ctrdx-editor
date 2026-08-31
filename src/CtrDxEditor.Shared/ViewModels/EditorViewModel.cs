@@ -1662,6 +1662,7 @@ namespace CtrDxEditor.ViewModels
             {
                 "Cut the Rope" => "Palette.Group.CutTheRope",
                 "Cut the Rope: Experiments" => "Palette.Group.Experiments",
+                "Cut the Rope: Time Travel" => "Palette.Group.TimeTravel",
                 _ => "",
             };
             if (key.Length == 0)

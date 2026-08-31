@@ -21,6 +21,7 @@ namespace CtrDxEditor.Tests
             "HalfCandy|HalfCandyDescription",
             "NightLevel|NightLevelDescription",
             "MobilePhysics|MobilePhysicsDescription",
+            "TimeTravelRocketPhysics|TimeTravelRocketPhysicsDescription",
             "Water|WaterDescription",
             "WaterSpeed|WaterSpeedDescription",
         ];

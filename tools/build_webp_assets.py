@@ -24,7 +24,7 @@ from PIL import Image
 # ContentVersion.CurrentAssetVersion and offers a re-download when a bundle is behind, so bump this
 # whenever a rebuild adds or changes art that a new editor build depends on - and bump the editor's
 # constant in the same change that publishes the result, never before.
-CONTENT_VERSION = 1
+CONTENT_VERSION = 3
 
 
 def parse_args() -> argparse.Namespace:

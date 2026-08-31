@@ -27,7 +27,7 @@ namespace CtrDxEditor.Tests
             MethodInfo? method = renderer.GetMethod("GameDrawLayer", BindingFlags.Public | BindingFlags.Static);
             Assert.NotNull(method);
 
-            Assert.Equal(7, method.Invoke(null, [gap]));
+            Assert.Equal(8, method.Invoke(null, [gap]));
         }
 
         /// <summary>The mouse's activation index is drawn on it as an on-canvas label.</summary>

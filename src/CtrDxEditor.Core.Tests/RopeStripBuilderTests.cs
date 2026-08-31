@@ -41,14 +41,77 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, mid.Y, 9); // quadratic: 0.25*0 + 0.5*100 + 0.25*0
         }
 
-        /// <summary>The control chain grows one link per rest-length unit, with a floor of three.</summary>
+        /// <summary>
+        /// The control chain matches what Bungee.RollplacingWithOffset builds: the anchor and tail, plus
+        /// one part per rest length or part thereof. A rest length is 35 in level units (the game's 105
+        /// world units over its map scale of 3), so a partial remainder still costs a whole part.
+        /// </summary>
         [Theory]
-        [InlineData(0, 3)]
-        [InlineData(100, 4)]
+        [InlineData(0, 2)]     // nothing to subdivide: just the anchor and the tail
+        [InlineData(1, 3)]     // any length at all rolls up to one part
+        [InlineData(35, 3)]    // exactly one rest length
+        [InlineData(36, 4)]    // one over: the remainder still costs a part
+        [InlineData(100, 5)]   // the default authored rope length
         [InlineData(210, 8)]
+        [InlineData(290, 11)]
         public void ControlPointCountFollowsTheRestLengthChain(double length, int expected)
         {
             Assert.Equal(expected, RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length).Length);
+        }
+
+        /// <summary>
+        /// The mobile model subdivides on its own rest length. The game reads BungeeRestLength through
+        /// ActivePhysicsConstants, which is 105 world units on desktop but 30 raw scaled by
+        /// Wp7ToWorldScale to 90 on mobile - 35 and 30 in level units - so the same rope holds more
+        /// parts under mobile physics.
+        /// </summary>
+        [Theory]
+        [InlineData(0, 2, 2)]
+        [InlineData(30, 3, 3)]     // exactly one mobile rest length
+        [InlineData(31, 3, 4)]     // over mobile's, still inside desktop's
+        [InlineData(100, 5, 6)]
+        [InlineData(210, 8, 9)]
+        public void TheMobileModelSubdividesOnItsOwnRestLength(double length, int desktop, int mobile)
+        {
+            Assert.Equal(desktop,
+                RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length, RopePhysics.Desktop).Length);
+            Assert.Equal(mobile,
+                RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length, RopePhysics.Mobile).Length);
+        }
+
+        /// <summary>
+        /// The mobile model also samples each segment less densely - BungeeDrawSamplePoints is 3 against
+        /// the desktop's 4 - so the same rope is drawn from fewer points.
+        /// </summary>
+        [Fact]
+        public void TheMobileModelSamplesEachSegmentLessDensely()
+        {
+            RopeVisual desktop = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290, physics: RopePhysics.Desktop);
+            RopeVisual mobile = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290, physics: RopePhysics.Mobile);
+
+            Assert.Equal(4, RopePhysics.Desktop.SamplesPerSegment);
+            Assert.Equal(3, RopePhysics.Mobile.SamplesPerSegment);
+
+            // 11 controls over 4 samples each is 40 steps, and 12 over 3 each is 33. The sampler walks
+            // t from 0 to 1 inclusive, so a clean step lands exactly on 1 and yields steps + 1 points.
+            // A step of 1/33 does not: accumulating it 33 times falls a hair short, costing one extra
+            // pass before the clamp. The game's own loop accumulates bezierT the same way.
+            Assert.Equal(41, desktop.SamplePoints.Count);
+            Assert.Equal(35, mobile.SamplePoints.Count);
+        }
+
+        /// <summary>
+        /// A level that has not opted into mobile physics uses the desktop model, which is what the
+        /// geometry helpers assume when no model is named.
+        /// </summary>
+        [Fact]
+        public void TheModelFollowsTheLevelSetting()
+        {
+            Assert.Equal(RopePhysics.Desktop, RopePhysics.For(useMobilePhysics: false));
+            Assert.Equal(RopePhysics.Mobile, RopePhysics.For(useMobilePhysics: true));
+            Assert.Equal(
+                RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), 100, RopePhysics.Desktop).Length,
+                RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), 100).Length);
         }
 
         /// <summary>A taut rope's controls lie on the straight chord.</summary>
@@ -181,7 +244,7 @@ namespace CtrDxEditor.Core.Tests
         {
             // Length 290 -> 10 constraint points -> 36 samples -> 37 polyline points (t = 0..1 inclusive).
             RopeVisual visual = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
-            Assert.Equal(37, visual.SamplePoints.Count);
+            Assert.Equal(41, visual.SamplePoints.Count);
             Assert.Equal(new Vec2(0, 0), visual.SamplePoints[0]);
             Assert.Equal(300, visual.SamplePoints[^1].X, 6);
         }

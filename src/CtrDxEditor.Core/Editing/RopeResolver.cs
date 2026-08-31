@@ -15,6 +15,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>The rope targets a light bulb object.</summary>
         Bulb,
 
+        /// <summary>The rope targets an axe object.</summary>
+        Axe,
+
         /// <summary>The rope has no resolved target.</summary>
         None,
     }
@@ -37,7 +40,8 @@ namespace CtrDxEditor.Core.Editing
                 return new RopeTarget(RopeTargetKind.None, null);
             }
 
-            if (IsTrue(grab.GetAttr("bindBulb")))
+            bool bindBulb = IsTrue(grab.GetAttr("bindBulb"));
+            if (bindBulb)
             {
                 List<LevelObject> bulbs = [.. objects.Where(o => o.Type is "lightBulb" or "lightbulb")];
                 if (bulbs.Count > 0)
@@ -49,6 +53,19 @@ namespace CtrDxEditor.Core.Editing
                     return new RopeTarget(RopeTargetKind.Bulb, bulb);
                 }
                 // No bulbs at all: fall through to the candy branch, as the game falls back to star.
+                // Not to an axe - LoadGrabs only reaches its axe branch when bindBulb is off.
+            }
+
+            // LoadGrabs tries the axe before the candy, and an unmatched axe key drops through to the
+            // candy branch rather than leaving the rope unbound.
+            if (!bindBulb && AxeBinding.RequestedKey(grab) is { } axeKey)
+            {
+                LevelObject? axe = objects.FirstOrDefault(o =>
+                    AxeBinding.IsAxe(o) && AxeBinding.KeyEquals(AxeBinding.KeyOf(o), axeKey));
+                if (axe is not null)
+                {
+                    return new RopeTarget(RopeTargetKind.Axe, axe);
+                }
             }
 
             LevelObject? candy;

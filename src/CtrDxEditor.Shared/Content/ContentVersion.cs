@@ -26,8 +26,13 @@ namespace CtrDxEditor.Content
         /// Revision 1 is the baseline: the first bundles to carry a <c>version</c> field at all. Anyone
         /// still holding a bundle from before it reads as 0 and is asked to re-download once.
         /// </para>
+        /// <para>
+        /// Revision 3 is the published ctrdx-assets v3.0 bundle, the first to carry the Time Travel art
+        /// this build needs: obj_axe, obj_pause, obj_exp_chain, obj_hook_chain, and obj_hook_auto_chain.
+        /// Without it the axe and pause switcher have no sprite, so the palette hides them.
+        /// </para>
         /// </remarks>
-        public const int CurrentAssetVersion = 1;
+        public const int CurrentAssetVersion = 3;
 
         /// <summary>Whether an installed bundle predates the revision this build wants.</summary>
         /// <param name="installed">Revision declared by the installed bundle's manifest.</param>

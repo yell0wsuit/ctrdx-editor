@@ -77,6 +77,8 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("kicked", AttrType.Bool, "false"),
                 new AttributeSpec("hidePath", AttrType.Bool, "false"),
                 new AttributeSpec("invisible", AttrType.Bool, "false"),
+                // The game defaults this to true; only an explicit false marks the rope a chain.
+                new AttributeSpec("breakable", AttrType.Bool, "true"),
             ], MaxCount: int.MaxValue),
 
             // Bubble
@@ -243,6 +245,23 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
+
+            // Blade. Cuts chains; ropes may also hang from it, keyed by axeNumber. The game calls the
+            // element and its key "axe", which the round trip preserves; only the editor's label reads
+            // "Blade".
+            // The key is auto-assigned on placement and picked through the grab "Attach to" control,
+            // so it is never typed by hand (see LevelObjectPolicy).
+            new ObjectDescriptor(AxeBinding.Element, "Blade",
+            [
+                new AttributeSpec(AxeBinding.KeyAttribute, AttrType.Text, null),
+            ], MaxCount: int.MaxValue, Game: TimeTravel),
+
+            // Pause switcher. The button that stops and restarts time; the game gives it no
+            // attributes at all (LoadPauseSwitcher reads only x and y).
+            new ObjectDescriptor("pauseSwitcher", "Pause switcher", [], MaxCount: int.MaxValue, Game: TimeTravel),
         ]);
+
+        /// <summary>Palette section for objects that originate from Cut the Rope: Time Travel.</summary>
+        private const string TimeTravel = "Cut the Rope: Time Travel";
     }
 }

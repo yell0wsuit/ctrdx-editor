@@ -88,13 +88,30 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add(new LevelWarning("Validation.DuplicateCandyNumber"));
             }
 
+            List<LevelObject> axes = [.. objects.Where(AxeBinding.IsAxe)];
+            bool BindsToAnAxe(LevelObject grab)
+            {
+                return AxeBinding.RequestedKey(grab) is { } key
+                    && axes.Any(a => AxeBinding.KeyEquals(AxeBinding.KeyOf(a), key));
+            }
+
             foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
             {
                 string? candyNumber = grab.GetAttr("candyNumber");
+                // An imported axed="true" grab keeps its axe key in candyNumber, so a key the axes do
+                // answer to is not a dangling candy reference.
                 if (candyNumber is not null
+                    && !BindsToAnAxe(grab)
                     && !candyKeys.Any(k => string.Equals(k, candyNumber.Trim(), StringComparison.OrdinalIgnoreCase)))
                 {
                     warnings.Add(new LevelWarning("Validation.GrabUnmatchedCandyNumber", candyNumber));
+                }
+
+                // An explicit axeNumber naming no axe silently falls back to the candy, which is never
+                // what the author meant.
+                if (grab.GetAttr(AxeBinding.KeyAttribute) is { } axeNumber && !BindsToAnAxe(grab))
+                {
+                    warnings.Add(new LevelWarning("Validation.GrabUnmatchedAxeNumber", axeNumber));
                 }
 
                 // A hook exactly above or below what its rope binds to starts the bungee as a perfectly
