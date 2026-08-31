@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 using Avalonia;
 using Avalonia.Media;
@@ -94,27 +94,31 @@ namespace CtrDxEditor.Rendering
             canvas.RestoreToCount(save);
         }
 
-        // Snapshots the Avalonia bitmap's pixels (BGRA premultiplied, as Avalonia decodes PNGs — same as the
-        // game's PremultiplyAlpha=True atlas) and bakes the game's additive glow contribution into them, so
-        // the cached SKImage holds ready-to-add pixels for the Plus draw.
+        // Decodes the atlas into a buffer whose layout is ours to name, then bakes the game's additive
+        // glow contribution into it, so the cached SKImage holds ready-to-add pixels for the Plus draw.
+        //
+        // The decode goes through encoded PNG rather than copying the Avalonia bitmap's pixels straight
+        // out. Copying means naming a channel order, and Avalonia's is not ours to assume: this asked for
+        // Bgra8888 and got RGBA, which silently exchanged red and blue. That is invisible on art this
+        // close to greyscale, which is why it survived here while the same mistake turned the chain
+        // copper the moment it met blue art. Decoding into an explicit SKImageInfo cannot be wrong about
+        // either the channel order or the premultiplication the bake expects.
         private static SKImage ImageFor(Bitmap bmp)
         {
             if (ImageCache.TryGetValue(bmp, out SKImage? cached))
             {
                 return cached;
             }
+
             PixelSize size = bmp.PixelSize;
             SKImageInfo info = new(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-            byte[] pixels = new byte[info.BytesSize];
-            GCHandle handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
-            try
-            {
-                bmp.CopyPixels(new PixelRect(0, 0, size.Width, size.Height), handle.AddrOfPinnedObject(), info.BytesSize, info.RowBytes);
-            }
-            finally
-            {
-                handle.Free();
-            }
+
+            using MemoryStream stream = new();
+            bmp.Save(stream, new PngBitmapEncoderOptions());
+            stream.Position = 0;
+            using SKBitmap decoded = SKBitmap.Decode(stream, info);
+
+            byte[] pixels = decoded.Bytes;
             GlowBlend.BakeBgraInPlace(pixels);
             SKImage image = SKImage.FromPixelCopy(info, pixels, info.RowBytes);
             ImageCache.Add(bmp, image);

@@ -59,5 +59,26 @@ namespace CtrDxEditor.Tests
                 Assert.True(GlowBlend.BakeChannel((byte)a, (byte)a) >= GlowBlend.BakeChannel((byte)(a * 3 / 4), (byte)a));
             }
         }
+
+        /// <summary>
+        /// The bake treats the three colour channels identically and only alpha specially, so it reads
+        /// the same whether the buffer is BGRA or RGBA. That is why the glow survived being decoded with
+        /// its red and blue exchanged - the mistake was in how the baked buffer was then interpreted,
+        /// not in the bake - and why fixing the interpretation needs no change here.
+        /// </summary>
+        [Fact]
+        public void TheBakeIsIndifferentToColourChannelOrder()
+        {
+            byte[] asBgra = [10, 20, 30, 200];
+            byte[] asRgba = [30, 20, 10, 200];
+
+            GlowBlend.BakeBgraInPlace(asBgra);
+            GlowBlend.BakeBgraInPlace(asRgba);
+
+            Assert.Equal(asBgra[0], asRgba[2]);
+            Assert.Equal(asBgra[1], asRgba[1]);
+            Assert.Equal(asBgra[2], asRgba[0]);
+            Assert.Equal(asBgra[3], asRgba[3]);
+        }
     }
 }
