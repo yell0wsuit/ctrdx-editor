@@ -35,19 +35,10 @@ namespace CtrDxEditor.Rendering
             return BuildRope(grab, RopeResolver.Resolve(grab, objects, twoParts), skin);
         }
 
-        /// <summary>Builds a single grab's rope visual from an already resolved target.</summary>
-        /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
-        /// <param name="rope">The previously resolved candy or light-bulb target.</param>
-        /// <param name="skin">The active rope-skin index.</param>
-        /// <returns>The built rope visual, or null when the grab or resolved target cannot produce a rope.</returns>
-        public static RopeVisual? BuildRope(LevelObject grab, RopeTarget rope, int skin = 0)
+        /// <summary>The rope's endpoints and rest length, or null when the grab has nothing to hang from.</summary>
+        private static (Vec2 From, Vec2 To, double Length)? Geometry(LevelObject grab, RopeTarget rope)
         {
-            if (grab.Type != "grab")
-            {
-                return null;
-            }
-
-            if (rope.Target is null)
+            if (grab.Type != "grab" || rope.Target is null)
             {
                 return null;
             }
@@ -56,8 +47,29 @@ namespace CtrDxEditor.Rendering
                 grab.GetAttr("length"), NumberStyles.Float, CultureInfo.InvariantCulture, out double len)
                 ? len
                 : 0;
-            return RopeStripBuilder.Build(
-                new Vec2(grab.X, grab.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength, skin);
+            return (new Vec2(grab.X, grab.Y), new Vec2(rope.Target.X, rope.Target.Y), ropeLength);
+        }
+
+        /// <summary>Builds a single grab's rope visual from an already resolved target.</summary>
+        /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
+        /// <param name="rope">The previously resolved candy or light-bulb target.</param>
+        /// <param name="skin">The active rope-skin index.</param>
+        /// <returns>The built rope visual, or null when the grab or resolved target cannot produce a rope.</returns>
+        public static RopeVisual? BuildRope(LevelObject grab, RopeTarget rope, int skin = 0)
+        {
+            if (Geometry(grab, rope) is not { } g)
+            {
+                return null;
+            }
+
+            // A chain hangs on the same curve but is drawn as links rather than a cord, and takes no
+            // rope skin - the game's DrawChain has no palette.
+            return ChainRope.IsChain(grab)
+                ? new RopeVisual([], [])
+                {
+                    ChainSprites = ChainSpritePlanner.Build(g.From, g.To, g.Length, GrabRenderer.ChainSeed(grab)),
+                }
+                : RopeStripBuilder.Build(g.From, g.To, g.Length, skin);
         }
 
         /// <summary>
@@ -76,6 +88,14 @@ namespace CtrDxEditor.Rendering
             DrawingContext ctx, ViewTransform v, SpriteCache sprites, RopeVisual visual, int ropeSeed, Rect opBounds,
             double opacity = 1.0)
         {
+            // The game draws a chain through DrawChain, which never reaches the cord strips or the
+            // Christmas lights inside DrawBungee, so a chain gets neither here.
+            if (visual.ChainSprites.Count > 0)
+            {
+                DrawChain(ctx, v, sprites, visual.ChainSprites, opBounds, opacity);
+                return;
+            }
+
             if (visual.Strips.Count > 0)
             {
                 ctx.Custom(new RopeDrawOperation(opBounds, v, visual.Strips, opacity));
@@ -84,6 +104,32 @@ namespace CtrDxEditor.Rendering
             {
                 DrawChristmasLights(ctx, v, sprites, RopeStripBuilder.ChristmasLightPoints(visual.SamplePoints), ropeSeed);
             }
+        }
+
+        // Hands the planned links to the Skia operation that can multiply each one by its tint. Both
+        // quads live in the same atlas, so one bitmap covers the whole chain. A bundle without the
+        // chain art simply draws nothing, the same way a missing object sprite is skipped.
+        private static void DrawChain(
+            DrawingContext ctx,
+            ViewTransform v,
+            SpriteCache sprites,
+            IReadOnlyList<ChainSprite> links,
+            Rect opBounds,
+            double opacity)
+        {
+            if (Layer(sprites, "chain_link") is not { } link || Layer(sprites, "chain_mid") is not { } mid)
+            {
+                return;
+            }
+
+            ctx.Custom(new ChainDrawOperation(
+                opBounds, v, link.Bitmap, link.Frame.Frame, mid.Frame.Frame, links, opacity));
+        }
+
+        // The single drawable layer of a one-layer sprite, or null when the atlas is not installed.
+        private static SpriteLayerDraw? Layer(SpriteCache sprites, string key)
+        {
+            return sprites.GetSprite(key) is { Layers.Count: >= 1 } sprite ? sprite.Layers[0] : null;
         }
 
         // Port of Bungee.DrawChristmasLights: one random light frame per anchor point,

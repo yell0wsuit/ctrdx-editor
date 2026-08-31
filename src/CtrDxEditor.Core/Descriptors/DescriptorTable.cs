@@ -77,6 +77,8 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("kicked", AttrType.Bool, "false"),
                 new AttributeSpec("hidePath", AttrType.Bool, "false"),
                 new AttributeSpec("invisible", AttrType.Bool, "false"),
+                // The game defaults this to true; only an explicit false marks the rope a chain.
+                new AttributeSpec("breakable", AttrType.Bool, "true"),
             ], MaxCount: int.MaxValue),
 
             // Bubble

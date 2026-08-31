@@ -779,6 +779,7 @@
 
     "Attr.attachTo.Help": "Which object this hook's rope holds. With a single candy it binds automatically. Choose a specific candy, a candy half, or a light bulb when the level has more than one possible target. Greyed out for a gun or auto-rope hook, because neither has an authored rope: they take hold of the candy during play.",
     "Attr.autoCatch.Help": "Off gives the hook a rope from the start, with its length set below. On removes that rope and makes the hook catch the candy whenever it comes within the radius set below.",
+    "Attr.chain.Help": "Turns the rope into a chain: a finger swipe no longer cuts it, and only an axe can. The hook changes to match. A level whose chains have no axe cannot be finished.",
     "Attr.length.Help": "How long this object is: a rope hook's starting rope, or a conveyor belt's span. Shorter ropes swing faster and reach less far.",
     "Attr.radius.Help": "How far this object reaches, drawn as a ring on the canvas: the distance at which an auto-rope hook or a ghost's hook state catches the candy, or how far a mouse can stretch out of its hole.",
     "Attr.movable.Help": "Puts the hook on a rail it slides along during play, instead of fixing it in one spot. Cannot be combined with a wheel, a gun, a suction cup, or path movement.",
@@ -854,6 +855,7 @@
     "Attr.hidePath": "Hide pollen path",
     "Attr.invisible": "Invisible",
     "Attr.autoCatch": "Auto rope",
+    "Attr.chain": "Chain",
     "Attr.movable": "Movable rail",
     "Attr.litRadius": "Lit radius",
     "Attr.candyCaptured": "Starts captured",

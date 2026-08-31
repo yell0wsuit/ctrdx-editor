@@ -11,8 +11,8 @@ namespace CtrDxEditor.ViewModels
 {
     /// <summary>
     /// Builds the grab properties: the "Attach to" binding control, the rope-geometry group with
-    /// progressive Auto-catch / Movable-rail disclosure, and the hook-variant toggles. Structural
-    /// changes trigger a rebuild so disclosure and gating re-evaluate.
+    /// progressive Auto-catch / Chain / Movable-rail disclosure, and the hook-variant toggles.
+    /// Structural changes trigger a rebuild so disclosure and gating re-evaluate.
     /// </summary>
     public static class GrabFieldBuilder
     {
@@ -74,6 +74,18 @@ namespace CtrDxEditor.ViewModels
             fields.Add(autoCatch
                 ? Attr(grab, "radius", AttrType.Whole, onChanged, onChanging, geomEnabled)
                 : Attr(grab, "length", AttrType.Whole, onChanged, onChanging, geomEnabled));
+
+            // Chain sits with the rope geometry because that is what it changes: the rope can only be
+            // cut by an axe, and both the rope and the hook draw as chain art. Structural, because the
+            // toggle repaints the hook. A gun grab has no rope and keeps its own art whatever this
+            // says, so the game ignores it there and so does the panel.
+            fields.Add(Synthetic(
+                "chain",
+                () => ChainRope.IsChain(grab),
+                on => ChainRope.Set(grab, on),
+                Structural,
+                onChanging,
+                geomEnabled));
 
             fields.Add(Synthetic(
                 "movable",

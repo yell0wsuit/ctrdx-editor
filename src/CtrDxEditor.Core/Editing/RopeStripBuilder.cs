@@ -21,7 +21,17 @@ namespace CtrDxEditor.Core.Editing
     /// A built rope visual: the triangle strips plus the bezier sample polyline
     /// (the game's <c>drawPts</c>, which also anchors the Christmas lights).
     /// </summary>
-    public sealed record RopeVisual(IReadOnlyList<RopeStrip> Strips, IReadOnlyList<Vec2> SamplePoints);
+    /// <param name="Strips">The cord's triangle strips; empty for a chain, which is drawn as sprites.</param>
+    /// <param name="SamplePoints">The bezier sample polyline the cord is drawn along.</param>
+    public sealed record RopeVisual(IReadOnlyList<RopeStrip> Strips, IReadOnlyList<Vec2> SamplePoints)
+    {
+        /// <summary>
+        /// The chain links to draw instead of <see cref="Strips"/>, or empty for an ordinary rope. The
+        /// game picks one of the two draw paths per bungee (<c>DrawChain</c> or <c>DrawBungee</c>), so
+        /// exactly one of the two is ever populated.
+        /// </summary>
+        public IReadOnlyList<ChainSprite> ChainSprites { get; init; } = [];
+    }
 
     /// <summary>
     /// Builds the triangle strips that draw a rope exactly like the game's
