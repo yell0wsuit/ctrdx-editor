@@ -60,6 +60,8 @@ namespace CtrDxEditor.Content
         private const string TutorialSignsImageBase = "images/tutorial_signs";
         private const string AxeJson = "images/obj_axe.json";
         private const string AxeImageBase = "images/obj_axe";
+        private const string PauseJson = "images/obj_pause.json";
+        private const string PauseImageBase = "images/obj_pause";
         private const string ChainJson = "images/obj_exp_chain.json";
         private const string ChainImageBase = "images/obj_exp_chain";
         private const string HookChainJson = "images/obj_hook_chain.json";
@@ -292,6 +294,10 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(AxeJson, AxeImageBase, 1),
                 new SpriteLayer(AxeJson, AxeImageBase, 2),
             ]),
+
+            // Pause switcher (game ObjPause). Quad 0 is the running face, which is how a level starts;
+            // quad 1 is the frozen face and the remaining quads belong to the burst animation.
+            new("pauseSwitcher", [new SpriteLayer(PauseJson, PauseImageBase, 0)]),
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
             // upright; layers 1-2 are the idle mouse body (Mouse.IdleQuad) and its open eyes

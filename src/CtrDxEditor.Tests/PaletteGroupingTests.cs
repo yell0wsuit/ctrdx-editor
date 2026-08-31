@@ -59,6 +59,12 @@ namespace CtrDxEditor.Tests
             Assert.True(axe.ShowDivider);
             Assert.Equal("Cut the Rope: Time Travel", axe.GroupName);
 
+            // The pause switcher continues that group without opening another section.
+            PaletteItemViewModel pauseSwitcher = view.Single(i => i.Element == "pauseSwitcher");
+            Assert.Equal("Cut the Rope: Time Travel", pauseSwitcher.GroupName);
+            Assert.False(pauseSwitcher.ShowGroupHeader);
+            Assert.False(pauseSwitcher.ShowDivider);
+
             // The item just before the rocket is the last base-group item: no header, no divider.
             int rocketIndex = System.Array.IndexOf(view, rocket);
             Assert.True(rocketIndex > 0);

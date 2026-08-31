@@ -228,6 +228,7 @@ namespace CtrDxEditor.Tests
             ["pipe"] = "bamboo-tubes",
             ["steamTube"] = "steam-pipes",
             ["axe"] = "axes",
+            ["pauseSwitcher"] = "pause-switchers",
             ["rocket"] = "rockets",
             ["hand"] = "mechanical-hands",
             ["tutorialText"] = "tutorial-objects",

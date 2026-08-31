@@ -226,8 +226,8 @@ namespace CtrDxEditor.Rendering
         /// <summary>The object's fixed draw layer in the game's z-order.</summary>
         /// <remarks>
         /// The game draws objects in a fixed z-order independent of level-list order (GameScene.Draw):
-        /// gravity button, Om Nom + support, vinyl discs, bubbles, bungee ropes, stars, candy (axes
-        /// included), then light-bulb bottles. The vinyl (rotatedCircle) is drawn early (right after Om Nom, before bubbles
+        /// gravity button, Om Nom + support, vinyl discs, bubbles, pause switchers, bungee ropes, stars,
+        /// candy (axes included), then light-bulb bottles. The vinyl (rotatedCircle) is drawn early (right after Om Nom, before bubbles
         /// and grabs), so ropes, hooks, and candy sit on top of it. Same-layer objects keep their list order
         /// because OrderBy is stable. Unknown types sit with the grabs (mid-stack) as a neutral default.
         /// </remarks>
@@ -248,26 +248,28 @@ namespace CtrDxEditor.Rendering
                 "bubble" => 3,
                 "pump" => 4,
                 "spike1" or "spike2" or "spike3" or "spike4" or "electro" => 5,
-                "bouncer1" or "bouncer2" => 6,
+                // Pause switchers draw between the spikes and the bouncers (GameScene.Draw).
+                "pauseSwitcher" => 6,
+                "bouncer1" or "bouncer2" => 7,
                 // Mice bodies draw via DrawMice() after the bouncers and just before the socks.
-                "gap" => 7,
-                "sock" => 7,
+                "gap" => 8,
+                "sock" => 8,
                 // Bamboo tubes draw right after the bouncers and before the socks and steam tubes,
                 // matching GameScene.Draw (bouncers → bamboo tubes → hands → socks → steam tubes).
-                "pipe" => 7,
-                "steamTube" => 8,
-                "ghost" => 9,
-                "grab" => 10,
-                "star" => 11,
-                "candy" or "candyL" or "candyR" => 12,
-                "lantern" => 12,
+                "pipe" => 8,
+                "steamTube" => 9,
+                "ghost" => 10,
+                "grab" => 11,
+                "star" => 12,
+                "candy" or "candyL" or "candyR" => 13,
+                "lantern" => 13,
                 // The game keeps axes in the candies list, so they draw in the same whole-candy pass.
-                "axe" => 12,
-                "lightBulb" => 13,
-                "tutorialText" => 14,
+                "axe" => 13,
+                "lightBulb" => 14,
+                "tutorialText" => 15,
                 "tutorial01" or "tutorial02" or "tutorial03" or "tutorial04" or "tutorial05" or "tutorial06"
-                    or "tutorial07" or "tutorial08" or "tutorial09" or "tutorial10" or "tutorial11" => 15,
-                _ => 10,
+                    or "tutorial07" or "tutorial08" or "tutorial09" or "tutorial10" or "tutorial11" => 16,
+                _ => 11,
             };
         }
 

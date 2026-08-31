@@ -305,6 +305,12 @@
     "Guide.Article.axes.Editing": "Drag an axe from the palette, in the **Cut the Rope: Time Travel** group. It has no properties to set. Because an axe has to reach a chain to cut it, place it where something will carry or swing it into reach rather than parking it out of the way.",
     "Guide.Article.axes.Chains": "An axe is also something a rope can hang from. Select a rope hook and pick the axe under **Attach to**; the hook then ropes the axe instead of a candy, which is how an axe is made to swing. The editor keys each axe for you, so there is no number to type.",
     "Guide.Article.axes.Hazard.Warning": "An axe breaks the candy on contact, at roughly the same reach it cuts chains. A candy that starts within about 57 units of a blade is lost as soon as it drifts in.",
+    "Guide.Article.pause-switchers.Title": "Pause switchers",
+    "Guide.Article.pause-switchers.Summary": "Place the button that stops and restarts time.",
+    "Guide.Article.pause-switchers.SearchTerms": "pause|switcher|freeze|time|stop|time travel",
+    "Guide.Article.pause-switchers.InGame": "Tapping a pause switcher stops gameplay time; tapping again restarts it. While time is stopped everything holds still where it is, which gives the player room to line up a cut or a swing. The button's face changes to show which state it is in.",
+    "Guide.Article.pause-switchers.Editing": "Drag a pause switcher from the palette, in the **Cut the Rope: Time Travel** group. It has no properties: position is the whole design. Put it somewhere a thumb can reach without covering the part of the level the player needs to watch.",
+    "Guide.Article.pause-switchers.Overlay.Note": "However many switchers a level has, they all toggle the same clock and share one screen overlay. Extra buttons only add places to press, not separate timers.",
 
     "Guide.Article.steam-pipes.Title": "Steam pipes",
     "Guide.Article.steam-pipes.Summary": "Aim a pipe that puffs steam in bursts.",
@@ -750,6 +756,7 @@
     "Object.ants": "Ant conveyor",
     "Object.pipe": "Bamboo tube",
     "Object.axe": "Axe",
+    "Object.pauseSwitcher": "Pause switcher",
 
     "Attr.velocity": "Velocity",
     "Attr.water": "Water",

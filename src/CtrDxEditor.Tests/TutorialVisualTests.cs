@@ -51,8 +51,8 @@ namespace CtrDxEditor.Tests
             MethodInfo gameDrawLayer = renderer.GetMethod("GameDrawLayer", BindingFlags.Public | BindingFlags.Static)!;
             int textLayer = (int)gameDrawLayer.Invoke(null, [text])!;
             int iconLayer = (int)gameDrawLayer.Invoke(null, [icon])!;
-            Assert.Equal(14, textLayer);
-            Assert.Equal(15, iconLayer);
+            Assert.Equal(15, textLayer);
+            Assert.Equal(16, iconLayer);
             Assert.True(iconLayer > textLayer);
         }
 

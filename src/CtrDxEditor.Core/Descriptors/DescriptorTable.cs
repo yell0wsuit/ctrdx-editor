@@ -253,6 +253,10 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec(AxeBinding.KeyAttribute, AttrType.Text, null),
             ], MaxCount: int.MaxValue, Game: TimeTravel),
+
+            // Pause switcher. The button that stops and restarts time; the game gives it no
+            // attributes at all (LoadPauseSwitcher reads only x and y).
+            new ObjectDescriptor("pauseSwitcher", "Pause switcher", [], MaxCount: int.MaxValue, Game: TimeTravel),
         ]);
 
         /// <summary>Palette section for objects that originate from Cut the Rope: Time Travel.</summary>
