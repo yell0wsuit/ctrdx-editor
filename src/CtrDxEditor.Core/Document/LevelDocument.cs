@@ -52,6 +52,10 @@ namespace CtrDxEditor.Core.Document
             if (settings.UseMobilePhysics)
             {
                 gameDesignEl.SetAttributeValue("useMobilePhysics", "true");
+                if (settings.UseTimeTravelRocketPhysics)
+                {
+                    gameDesignEl.SetAttributeValue("useTimeTravelRocketPhysics", "true");
+                }
             }
             ApplyWater(gameDesignEl, settings);
             ApplyGravity(gameDesignEl, settings);
@@ -135,6 +139,15 @@ namespace CtrDxEditor.Core.Document
             bool.TryParse(GameDesign?.Attribute("useMobilePhysics")?.Value, out bool v) && v;
 
         /// <summary>
+        /// Whether the level requests Cut the Rope: Time Travel's rocket tuning. The editor offers this
+        /// only as a mode of <see cref="UseMobilePhysics"/>, so a file that sets it alone reads back
+        /// false here - the attribute itself is still round-tripped untouched.
+        /// </summary>
+        public bool UseTimeTravelRocketPhysics =>
+            UseMobilePhysics
+            && bool.TryParse(GameDesign?.Attribute("useTimeTravelRocketPhysics")?.Value, out bool v) && v;
+
+        /// <summary>
         /// Height of the bottom-pinned water band in level units, or 0 when the level has no water.
         /// The game scales this by MapScale and builds the band in GameScene.LoadMetadata.
         /// </summary>
@@ -159,8 +172,8 @@ namespace CtrDxEditor.Core.Document
 
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
-            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics, Water, WaterSpeed,
-                LevelName, GravityX, GravityY);
+            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics,
+                UseTimeTravelRocketPhysics, Water, WaterSpeed, LevelName, GravityX, GravityY);
 
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
         public IReadOnlyList<LevelLayer> Layers =>
@@ -368,6 +381,17 @@ namespace CtrDxEditor.Core.Document
             else
             {
                 gameDesign.Attribute("useMobilePhysics")?.Remove();
+            }
+
+            // A mode of mobile physics, so it is never written on its own; turning mobile physics off
+            // takes it with it.
+            if (settings.UseMobilePhysics && settings.UseTimeTravelRocketPhysics)
+            {
+                gameDesign.SetAttributeValue("useTimeTravelRocketPhysics", "true");
+            }
+            else
+            {
+                gameDesign.Attribute("useTimeTravelRocketPhysics")?.Remove();
             }
             ApplyWater(gameDesign, settings);
             ApplyGravity(gameDesign, settings);

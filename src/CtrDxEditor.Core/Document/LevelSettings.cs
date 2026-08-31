@@ -21,6 +21,10 @@ namespace CtrDxEditor.Core.Document
     /// <param name="TwoParts">Whether the level uses the split two-candy layout.</param>
     /// <param name="NightLevel">Whether the level uses night-level visuals.</param>
     /// <param name="UseMobilePhysics">Whether the level requests the mobile physics model.</param>
+    /// <param name="UseTimeTravelRocketPhysics">
+    /// Whether the level requests Cut the Rope: Time Travel's rocket tuning, which the editor treats as
+    /// a mode of <paramref name="UseMobilePhysics"/> and never writes without it.
+    /// </param>
     /// <param name="Water">
     /// Height of the bottom-pinned water band in level units; 0 means the level has no water.
     /// </param>
@@ -47,6 +51,7 @@ namespace CtrDxEditor.Core.Document
         bool TwoParts,
         bool NightLevel,
         bool UseMobilePhysics = false,
+        bool UseTimeTravelRocketPhysics = false,
         float Water = 0f,
         float WaterSpeed = 0f,
         string LevelName = "",

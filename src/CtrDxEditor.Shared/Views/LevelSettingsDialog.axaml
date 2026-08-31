@@ -296,6 +296,16 @@
             <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.MobilePhysics}"
                              Message="{loc:Tr Dialog.LevelSettings.MobilePhysicsDescription}" />
           </StackPanel>
+
+          <!-- A mode of the mobile model above, so it is indented under it and only takes input while
+               that one is on. -->
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="20,0,0,0">
+            <CheckBox Content="{loc:Tr Dialog.LevelSettings.TimeTravelRocketPhysics}"
+                      IsChecked="{Binding UseTimeTravelRocketPhysics, Mode=TwoWay}"
+                      IsEnabled="{Binding TimeTravelRocketPhysicsEditable}" />
+            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.TimeTravelRocketPhysics}"
+                             Message="{loc:Tr Dialog.LevelSettings.TimeTravelRocketPhysicsDescription}" />
+          </StackPanel>
         </StackPanel>
 
         <StackPanel Spacing="4">
