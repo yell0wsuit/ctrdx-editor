@@ -611,7 +611,7 @@ namespace CtrDxEditor.Rendering
             Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
 
-            // Decoration is clipped to the level's vertical span but not its width: the background column and
+            // Decoration is clipped to the level's vertical span but not its width: the background grid and
             // the water band both legitimately overhang a narrow level's sides, while nothing may spill past
             // its top or bottom edge.
             Rect levelClip = new(0, tl.Y, renderSize.Width, br.Y - tl.Y);
@@ -626,37 +626,67 @@ namespace CtrDxEditor.Rendering
                     doc.Width, doc.Height, ActiveBackground, p1Aspect, p2Aspect,
                     () => BackgroundPlacement.Compute(
                         doc.Width, doc.Height, p1Aspect,
+                        SpriteCache.GetBackgroundTextureWidth(ActiveBackground),
                         p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
                         SpriteCache.GetEarthBgPosition(ActiveBackground)));
 
                 using (context.PushClip(levelClip))
                 {
-                    if (layout.TileHeight > 0.5)
+                    // The game's tile map repeats on both axes (Repeat.ALL), so this is a grid rather than a
+                    // column: a level wider than one screen is backed the whole way across, not down its
+                    // middle only. Both loops start at the last grid line at or before the level's own edge,
+                    // since the grid is anchored on the design screen and need not begin on it.
+                    if (layout.TileHeight > 0.5 && layout.Width > 0.5)
                     {
+                        double firstX = BackgroundPlacement.GridStart(layout.Left, layout.Width);
+                        double firstY = BackgroundPlacement.GridStart(layout.Top, layout.TileHeight);
+
+                        // One pass per layer rather than one per column, so the layers stack in the game's
+                        // order (GameScene.Draw: the whole tile map, then every p2, then every earth) and no
+                        // column's art can be painted over by the next column's tiles.
                         Rect bgSrc = new(bgSize);
-                        for (double ty = 0; ty < doc.Height; ty += layout.TileHeight)
+                        for (double tx = firstX; tx < doc.Width; tx += layout.Width)
                         {
-                            context.DrawImage(bg, bgSrc, LevelSceneRenderer.LevelRectToScreen(v, layout.Left, ty, layout.Width, layout.TileHeight));
+                            for (double ty = firstY; ty < doc.Height; ty += layout.TileHeight)
+                            {
+                                context.DrawImage(bg, bgSrc, LevelSceneRenderer.LevelRectToScreen(v, tx, ty, layout.Width, layout.TileHeight));
+                            }
                         }
-                    }
 
-                    if (layout.P2 is { } p2b && p2 is not null)
-                    {
-                        context.DrawImage(p2, new Rect(p2.Size), LevelSceneRenderer.LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
-                    }
-
-                    if (layout.EarthCenters.Count > 0 && sprites.GetEarthArt() is { } earthArt)
-                    {
-                        IntRect ef = earthArt.Frame.Frame;
-                        double ew = ef.W / SpritePlacement.MapScale;
-                        double eh = ef.H / SpritePlacement.MapScale;
-                        Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
-                        foreach (Vec2 ec in layout.EarthCenters)
+                        // p2 dresses the seam on every column, but its rows stay the map's business rather
+                        // than the grid's - a level of a single section has no seam to dress at all.
+                        if (p2 is not null && layout.P2.Count > 0)
                         {
-                            context.DrawImage(
-                                earthArt.Bitmap,
-                                earthSrc,
-                                LevelSceneRenderer.LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
+                            Rect p2Src = new(p2.Size);
+                            for (double tx = firstX; tx < doc.Width; tx += layout.Width)
+                            {
+                                foreach (LevelBounds p2b in layout.P2)
+                                {
+                                    context.DrawImage(p2, p2Src, LevelSceneRenderer.LevelRectToScreen(v, tx, p2b.Y, p2b.W, p2b.H));
+                                }
+                            }
+                        }
+
+                        // The earth belongs to the p1 tile rather than to the map, so it rides the grid on
+                        // both axes. Its art is drawn inside the background's own scaled matrix, so it takes
+                        // the background's cover scale rather than being sized off the atlas alone.
+                        if (layout.EarthOffset is { } eo && sprites.GetEarthArt() is { } earthArt)
+                        {
+                            IntRect ef = earthArt.Frame.Frame;
+                            double ew = ef.W * layout.Scale / SpritePlacement.MapScale;
+                            double eh = ef.H * layout.Scale / SpritePlacement.MapScale;
+                            Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
+                            for (double tx = firstX; tx < doc.Width; tx += layout.Width)
+                            {
+                                for (double ty = firstY; ty < doc.Height; ty += layout.TileHeight)
+                                {
+                                    context.DrawImage(
+                                        earthArt.Bitmap,
+                                        earthSrc,
+                                        LevelSceneRenderer.LevelRectToScreen(
+                                            v, tx + eo.X - (ew / 2.0), ty + eo.Y - (eh / 2.0), ew, eh));
+                                }
+                            }
                         }
                     }
                 }
