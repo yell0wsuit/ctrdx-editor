@@ -100,17 +100,27 @@ async function onFetch(event) {
         return fetch(request);
     }
 
-    // A navigation to any in-scope URL is this single page. Saving does not come through here:
-    // save-fallback.js keeps Avalonia's polyfill on its Blob download, which never touches the
-    // worker, so nothing but the app itself navigates in scope.
-    if (request.mode === "navigate") {
-        const cached = await caches.match(new URL("index.html", scopeUrl));
-        return cached ?? fetch(request);
-    }
-
+    // Assets answer for themselves even when they are what the address bar was pointed at, so
+    // opening one directly still shows that file rather than the page.
     const hash = shellHashes.get(request.url);
     if (hash !== undefined) {
         return serveShell(request, hash);
+    }
+
+    // Nothing but the app itself navigates in scope. Saving does not come through here:
+    // save-fallback.js keeps Avalonia's polyfill on its Blob download, which never touches the
+    // worker.
+    if (request.mode === "navigate") {
+        // index.html carries <base href="./">, which resolves against the URL it was navigated
+        // to rather than the one it is stored at. Serving it under a deeper path would point
+        // every relative asset at a directory that does not exist, so anything below the scope
+        // root goes back to the start URL instead of being answered with a shell that cannot
+        // load. There are no routes here for such a URL to have meant.
+        if (new URL(request.url).pathname !== scopeUrl.pathname) {
+            return Response.redirect(scopeUrl.href, 302);
+        }
+        const cached = await caches.match(new URL("index.html", scopeUrl));
+        return cached ?? fetch(request);
     }
 
     return fetch(request);
