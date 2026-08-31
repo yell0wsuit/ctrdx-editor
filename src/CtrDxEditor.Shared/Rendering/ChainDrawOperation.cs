@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 using Avalonia;
 using Avalonia.Media;
@@ -136,8 +136,11 @@ namespace CtrDxEditor.Rendering
             return (byte)Math.Round(Math.Clamp(value, 0, 1) * 255);
         }
 
-        // Snapshots the Avalonia bitmap's pixels (BGRA premultiplied, as Avalonia decodes PNGs) into an
-        // SKImage the modulate paint can draw.
+        // Hands the atlas to Skia as encoded PNG rather than reinterpreting its raw bytes. Copying the
+        // pixels out means naming a channel order, and Avalonia's decoded order is not ours to assume -
+        // guessing BGRA when it hands back RGBA swapped red and blue, which turned this blue-grey chain
+        // copper. Encoding once per atlas costs a decode the cache then keeps for the process lifetime,
+        // and cannot get the channels wrong.
         private static SKImage ImageFor(Bitmap bmp)
         {
             if (ImageCache.TryGetValue(bmp, out SKImage? cached))
@@ -145,20 +148,10 @@ namespace CtrDxEditor.Rendering
                 return cached;
             }
 
-            PixelSize size = bmp.PixelSize;
-            SKImageInfo info = new(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-            byte[] pixels = new byte[info.BytesSize];
-            GCHandle handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
-            try
-            {
-                bmp.CopyPixels(new PixelRect(0, 0, size.Width, size.Height), handle.AddrOfPinnedObject(), info.BytesSize, info.RowBytes);
-            }
-            finally
-            {
-                handle.Free();
-            }
-
-            SKImage image = SKImage.FromPixelCopy(info, pixels, info.RowBytes);
+            using MemoryStream stream = new();
+            bmp.Save(stream, new PngBitmapEncoderOptions());
+            stream.Position = 0;
+            SKImage image = SKImage.FromEncodedData(stream);
             ImageCache.Add(bmp, image);
             return image;
         }
