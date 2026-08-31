@@ -20,7 +20,7 @@ namespace CtrDxEditor.Core.Editing
     /// <param name="P2">
     /// The secondary background's bands, one per seam between p1 sections, empty when the map is short or
     /// the background has no p2. Each band describes the grid's origin column; the game repeats it across
-    /// every column the p1 grid covers, so <see cref="BackgroundLayout.Left"/> is where it starts, not
+    /// every column the p1 grid covers, so <see cref="Left"/> is where it starts, not
     /// where it ends.
     /// </param>
     /// <param name="EarthOffset">
