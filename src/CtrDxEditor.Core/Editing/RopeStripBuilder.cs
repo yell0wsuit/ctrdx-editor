@@ -41,12 +41,11 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public static class RopeStripBuilder
     {
-        // The game loads levels at mapScale = 3 (GameScene.Show), so its rope constants
-        // (BUNGEE_REST_LEN 105, half-width 5, 1-unit edge fade) live in XML x 3 world
-        // space. The editor draws in raw XML space, so divide them back down.
+        // The game loads levels at mapScale = 3 (GameScene.Show), so its rope constants (half-width 5,
+        // 1-unit edge fade) live in XML x 3 world space. The editor draws in raw XML space, so divide
+        // them back down. Both of these are literals in DrawBungee rather than physics constants, so
+        // they hold under either model; the ones that do not live in RopePhysics.
         private const double MapScale = 3;
-        private const double RestLength = 105 / MapScale;
-        private const int SamplesPerSegment = 4; // BungeeDrawSamplePoints (dimensionless)
         private const double HalfWidth = 5 / MapScale;
         private const double EdgeFade = 1 / MapScale;
 
@@ -94,9 +93,11 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="a">First endpoint (the grab), in level units.</param>
         /// <param name="b">Second endpoint (the target), in level units.</param>
         /// <param name="length">Rope rest length, in level units.</param>
+        /// <param name="physics">The level's physics model; omitting it assumes the desktop model.</param>
         /// <returns>The control points, ordered from <paramref name="a"/> to <paramref name="b"/>.</returns>
-        public static Vec2[] ControlPoints(Vec2 a, Vec2 b, double length)
+        public static Vec2[] ControlPoints(Vec2 a, Vec2 b, double length, RopePhysics? physics = null)
         {
+            double restLength = (physics ?? RopePhysics.Desktop).RestLength;
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
 
@@ -105,7 +106,7 @@ namespace CtrDxEditor.Core.Editing
             // ends - so the chain holds 2 + ceil(len / restLen) parts, and just the two when there is no
             // length to subdivide. Rounding this down instead cost a part at almost every authored
             // length, which a chain shows directly as too few links.
-            int count = length > 0 ? 2 + (int)Math.Ceiling(length / RestLength) : 2;
+            int count = length > 0 ? 2 + (int)Math.Ceiling(length / restLength) : 2;
             Vec2[] pts = new Vec2[count];
             if (length > distance)
             {
@@ -133,11 +134,15 @@ namespace CtrDxEditor.Core.Editing
         /// Slack ropes hang on the catenary; taut ropes run straight, and ropes pulled
         /// past their rest length pick up the game's red stretch tint.
         /// </summary>
-        public static RopeVisual Build(Vec2 a, Vec2 b, double length, int skin = 0)
+        public static RopeVisual Build(Vec2 a, Vec2 b, double length, int skin = 0, RopePhysics? physics = null)
         {
+            RopePhysics p = physics ?? RopePhysics.Desktop;
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
-            return BuildStrips(ControlPoints(a, b, length), RopePalette.GetDrawColors(skin, distance, length));
+            return BuildStrips(
+                ControlPoints(a, b, length, p),
+                RopePalette.GetDrawColors(skin, distance, length, p),
+                p.SamplesPerSegment);
         }
 
         /// <summary>
@@ -157,11 +162,11 @@ namespace CtrDxEditor.Core.Editing
 
         // Port of the DrawBungee sampling loop: bezier samples batched 4 points at a time,
         // alternating the two color tracks per batch while both ramp shade -> base.
-        private static RopeVisual BuildStrips(Vec2[] pts, RopeDrawColors palette)
+        private static RopeVisual BuildStrips(Vec2[] pts, RopeDrawColors palette, int samplesPerSegment)
         {
             List<RopeStrip> strips = [];
             List<Vec2> samples = [];
-            int sampleCount = (pts.Length - 1) * SamplesPerSegment;
+            int sampleCount = (pts.Length - 1) * samplesPerSegment;
             double sampleStep = 1.0 / sampleCount;
 
             double redStep = (palette.Base1.R - palette.Shade1.R) / (sampleCount - 1);

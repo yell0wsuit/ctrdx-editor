@@ -146,6 +146,22 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(expected, plan.Count);
         }
 
+        /// <summary>
+        /// A chain's link count rides on the part count, so it follows the level's physics model too.
+        /// The samples per segment do not: Bungee.ChainDrawSamplePoints is a plain const 2 under both.
+        /// </summary>
+        [Fact]
+        public void MobilePhysicsGivesAChainMoreLinks()
+        {
+            IReadOnlyList<ChainSprite> desktop =
+                ChainSpritePlanner.Build(new Vec2(0, 0), new Vec2(300, 0), 100, seed: 1, RopePhysics.Desktop);
+            IReadOnlyList<ChainSprite> mobile =
+                ChainSpritePlanner.Build(new Vec2(0, 0), new Vec2(300, 0), 100, seed: 1, RopePhysics.Mobile);
+
+            Assert.Equal(15, desktop.Count);  // 5 parts -> 8 samples
+            Assert.Equal(19, mobile.Count);   // 6 parts -> 10 samples
+        }
+
         /// <summary>Links come first, then the midpoints, matching the game's fill order.</summary>
         [Fact]
         public void LinksArePlannedBeforeMidpoints()

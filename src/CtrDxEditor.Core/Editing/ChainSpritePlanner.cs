@@ -48,10 +48,11 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="b">Second endpoint (the target), in level units.</param>
         /// <param name="length">Rope rest length, in level units.</param>
         /// <param name="seed">Per-rope seed selecting which links are tinted; stable across redraws.</param>
+        /// <param name="physics">The level's physics model; omitting it assumes the desktop model.</param>
         /// <returns>The chain sprites in draw order: every link, then every midpoint.</returns>
-        public static IReadOnlyList<ChainSprite> Build(Vec2 a, Vec2 b, double length, int seed)
+        public static IReadOnlyList<ChainSprite> Build(Vec2 a, Vec2 b, double length, int seed, RopePhysics? physics = null)
         {
-            return Build(RopeStripBuilder.ControlPoints(a, b, length), seed);
+            return Build(RopeStripBuilder.ControlPoints(a, b, length, physics), seed);
         }
 
         /// <summary>

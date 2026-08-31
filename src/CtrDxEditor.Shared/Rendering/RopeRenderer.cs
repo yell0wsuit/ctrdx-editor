@@ -28,11 +28,13 @@ namespace CtrDxEditor.Rendering
         /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
         /// <param name="objects">All level objects used to resolve the grab's candy or light-bulb target.</param>
         /// <param name="twoParts">Whether the level uses separate left and right candy targets.</param>
+        /// <param name="physics">The level's physics model, which sets how the rope is subdivided.</param>
         /// <param name="skin">The active rope-skin index.</param>
         /// <returns>The built rope visual, or null when the grab has no resolved target.</returns>
-        public static RopeVisual? BuildRope(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts, int skin = 0)
+        public static RopeVisual? BuildRope(
+            LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts, RopePhysics physics, int skin = 0)
         {
-            return BuildRope(grab, RopeResolver.Resolve(grab, objects, twoParts), skin);
+            return BuildRope(grab, RopeResolver.Resolve(grab, objects, twoParts), physics, skin);
         }
 
         /// <summary>The rope's endpoints and rest length, or null when the grab has nothing to hang from.</summary>
@@ -53,9 +55,10 @@ namespace CtrDxEditor.Rendering
         /// <summary>Builds a single grab's rope visual from an already resolved target.</summary>
         /// <param name="grab">The authored grab whose hook position and rope attributes define the visual.</param>
         /// <param name="rope">The previously resolved candy or light-bulb target.</param>
+        /// <param name="physics">The level's physics model, which sets how the rope is subdivided.</param>
         /// <param name="skin">The active rope-skin index.</param>
         /// <returns>The built rope visual, or null when the grab or resolved target cannot produce a rope.</returns>
-        public static RopeVisual? BuildRope(LevelObject grab, RopeTarget rope, int skin = 0)
+        public static RopeVisual? BuildRope(LevelObject grab, RopeTarget rope, RopePhysics physics, int skin = 0)
         {
             if (Geometry(grab, rope) is not { } g)
             {
@@ -67,9 +70,9 @@ namespace CtrDxEditor.Rendering
             return ChainRope.IsChain(grab)
                 ? new RopeVisual([], [])
                 {
-                    ChainSprites = ChainSpritePlanner.Build(g.From, g.To, g.Length, GrabRenderer.ChainSeed(grab)),
+                    ChainSprites = ChainSpritePlanner.Build(g.From, g.To, g.Length, GrabRenderer.ChainSeed(grab), physics),
                 }
-                : RopeStripBuilder.Build(g.From, g.To, g.Length, skin);
+                : RopeStripBuilder.Build(g.From, g.To, g.Length, skin, physics);
         }
 
         /// <summary>
@@ -79,7 +82,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="ctx">Target drawing context.</param>
         /// <param name="v">Current level-to-screen transform.</param>
         /// <param name="sprites">Sprite cache holding the lights atlas.</param>
-        /// <param name="visual">The rope built by <see cref="BuildRope(LevelObject, RopeTarget, int)"/>.</param>
+        /// <param name="visual">The rope built by <see cref="BuildRope(LevelObject, RopeTarget, RopePhysics, int)"/>.</param>
         /// <param name="ropeSeed">Per-rope seed keeping the random light frames stable across redraws.</param>
         /// <param name="opBounds">Control bounds for the custom draw operation.</param>
         /// <param name="opacity">Rope alpha multiplier; below 1 for an invisible grab drawn pale. The

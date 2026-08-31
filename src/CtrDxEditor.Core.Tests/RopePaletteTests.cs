@@ -94,5 +94,23 @@ namespace CtrDxEditor.Core.Tests
             Assert.True(RopePalette.IsDefaultSkin(0));
             Assert.False(RopePalette.IsDefaultSkin(1));
         }
+
+        /// <summary>
+        /// The red stretch tint fires at a different point under each model: the game compares a segment
+        /// against restLength + BungeeStretchRedThreshold, and both of those are model-scaled - 7 over
+        /// 105 on desktop against 21 over 90 on mobile, so mobile tolerates far more stretch.
+        /// </summary>
+        [Fact]
+        public void TheStretchTintThresholdFollowsThePhysicsModel()
+        {
+            Assert.Equal(7.0 / 105.0, RopePhysics.Desktop.StretchThresholdRatio, 9);
+            Assert.Equal(21.0 / 90.0, RopePhysics.Mobile.StretchThresholdRatio, 9);
+
+            // 12% past rest: stretched under desktop's 6.7% tolerance, not under mobile's 23%.
+            RopeDrawColors desktop = RopePalette.GetDrawColors(0, distance: 112, length: 100, RopePhysics.Desktop);
+            RopeDrawColors mobile = RopePalette.GetDrawColors(0, distance: 112, length: 100, RopePhysics.Mobile);
+
+            Assert.True(desktop.Shade1.R > mobile.Shade1.R);
+        }
     }
 }

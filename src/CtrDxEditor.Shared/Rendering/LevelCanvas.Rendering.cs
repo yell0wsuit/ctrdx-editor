@@ -850,7 +850,7 @@ namespace CtrDxEditor.Rendering
             RopeTarget target = RopeResolver.Resolve(grab, doc.AllObjects, doc.TwoParts);
             return target.Target is { } boundObject && IsHidden(boundObject)
                 ? null
-                : RopeRenderer.BuildRope(grab, target, ActiveRopeSkin);
+                : RopeRenderer.BuildRope(grab, target, RopePhysics.For(doc.UseMobilePhysics), ActiveRopeSkin);
         }
 
         /// <summary>
