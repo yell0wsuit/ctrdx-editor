@@ -298,6 +298,13 @@
     "Guide.Article.bamboo-tubes.Editing": "Drag a bamboo tube from the palette, in the **Cut the Rope: Experiments** group, and set its starting aim with the rotation dial. **Angle** is its only property.",
     "Guide.Article.bamboo-tubes.Openings.Note": "A tube's two capture openings are interchangeable: candy entering either one leaves by the other. There is nothing to pair and no entrance or exit to choose.",
     "Guide.Article.bamboo-tubes.Overlay.Caption": "A bamboo tube with its rotation dial and capture openings.",
+    "Guide.Article.axes.Title": "Axes",
+    "Guide.Article.axes.Summary": "Place the blade that cuts chains, and hang ropes from it.",
+    "Guide.Article.axes.SearchTerms": "axe|blade|chain|cut|time travel|axeNumber",
+    "Guide.Article.axes.InGame": "An axe is a spinning blade that hangs in the level. It is the only thing that can cut a chain: when the blade comes within about 64 units of a chain, the chain parts there. Its blade spins faster the faster the axe is moving, and stops while time is frozen.",
+    "Guide.Article.axes.Editing": "Drag an axe from the palette, in the **Cut the Rope: Time Travel** group. It has no properties to set. Because an axe has to reach a chain to cut it, place it where something will carry or swing it into reach rather than parking it out of the way.",
+    "Guide.Article.axes.Chains": "An axe is also something a rope can hang from. Select a rope hook and pick the axe under **Attach to**; the hook then ropes the axe instead of a candy, which is how an axe is made to swing. The editor keys each axe for you, so there is no number to type.",
+    "Guide.Article.axes.Hazard.Warning": "An axe breaks the candy on contact, at roughly the same reach it cuts chains. A candy that starts within about 57 units of a blade is lost as soon as it drifts in.",
 
     "Guide.Article.steam-pipes.Title": "Steam pipes",
     "Guide.Article.steam-pipes.Summary": "Aim a pipe that puffs steam in bursts.",
@@ -519,6 +526,7 @@
     "Palette.SearchPlaceholder": "Search…",
     "Palette.Group.CutTheRope": "Cut the Rope",
     "Palette.Group.Experiments": "Cut the Rope: Experiments",
+    "Palette.Group.TimeTravel": "Cut the Rope: Time Travel",
 
     "Dialog.Open.Title": "Open level XML",
     "Dialog.Save.Title": "Save level XML",
@@ -741,6 +749,7 @@
     "Object.snail": "Snail",
     "Object.ants": "Ant conveyor",
     "Object.pipe": "Bamboo tube",
+    "Object.axe": "Axe",
 
     "Attr.velocity": "Velocity",
     "Attr.water": "Water",
@@ -926,6 +935,8 @@
     "Validation.DuplicateCandyNumber": "Duplicate candyNumber values found; grabs cannot tell those candies apart.",
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
+    "Validation.GrabUnmatchedAxeNumber": "A grab binds to axeNumber '{0}', which no axe has, it will bind to the candy instead.",
+    "Validation.ChainWithoutAxe": "Level has a chain rope but no axe; nothing can cut a chain except an axe, so the level cannot be finished.",
     "Validation.GrabVerticallyAligned": "A grab and what its rope binds to are both at x={0}. Offset one of them by a pixel or more.",
     "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing.",
     "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately.",

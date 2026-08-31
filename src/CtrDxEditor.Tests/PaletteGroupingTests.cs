@@ -53,6 +53,12 @@ namespace CtrDxEditor.Tests
             Assert.False(bambooTube.ShowGroupHeader);
             Assert.False(bambooTube.ShowDivider);
 
+            // The axe opens the Time Travel group, so it takes a header and a divider of its own.
+            PaletteItemViewModel axe = view.Single(i => i.Element == "axe");
+            Assert.True(axe.ShowGroupHeader);
+            Assert.True(axe.ShowDivider);
+            Assert.Equal("Cut the Rope: Time Travel", axe.GroupName);
+
             // The item just before the rocket is the last base-group item: no header, no divider.
             int rocketIndex = System.Array.IndexOf(view, rocket);
             Assert.True(rocketIndex > 0);

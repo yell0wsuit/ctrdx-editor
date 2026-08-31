@@ -58,6 +58,8 @@ namespace CtrDxEditor.Content
         private const string AntImageBase = "images/obj_ant";
         private const string TutorialSignsJson = "images/tutorial_signs.json";
         private const string TutorialSignsImageBase = "images/tutorial_signs";
+        private const string AxeJson = "images/obj_axe.json";
+        private const string AxeImageBase = "images/obj_axe";
         private const string ChainJson = "images/obj_exp_chain.json";
         private const string ChainImageBase = "images/obj_exp_chain";
         private const string HookChainJson = "images/obj_hook_chain.json";
@@ -279,6 +281,16 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(LanternJson, LanternImageBase, 0),
                 new SpriteLayer(LanternJson, LanternImageBase, 1),
+            ]),
+
+            // Axe (game ObjAxe): base (0), blade (1), and pivot cap (2), all centered on the same
+            // 183x201 sourceSize. The game spins the blade while the axe swings; the editor draws the
+            // rest pose.
+            new("axe",
+            [
+                new SpriteLayer(AxeJson, AxeImageBase, 0),
+                new SpriteLayer(AxeJson, AxeImageBase, 1),
+                new SpriteLayer(AxeJson, AxeImageBase, 2),
             ]),
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn

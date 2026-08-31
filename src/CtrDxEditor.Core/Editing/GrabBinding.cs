@@ -11,7 +11,8 @@ namespace CtrDxEditor.Core.Editing
 
     /// <summary>
     /// Computes the grab "Attach to" choices, current selection, and apply-logic, faithful to the
-    /// game's grab bind resolution. Tokens: "primary", "candy:{key}", "part:L", "part:R", "bulb:{key}".
+    /// game's grab bind resolution. Tokens: "primary", "candy:{key}", "part:L", "part:R", "bulb:{key}",
+    /// "axe:{key}".
     /// </summary>
     public static class GrabBinding
     {
@@ -49,6 +50,12 @@ namespace CtrDxEditor.Core.Editing
                 options.Add(new GrabBindOption($"bulb:{key}", $"Bulb {key}"));
             }
 
+            foreach (LevelObject axe in objects.Where(AxeBinding.IsAxe))
+            {
+                string key = AxeBinding.KeyOf(axe);
+                options.Add(new GrabBindOption($"axe:{key}", $"Axe {key}"));
+            }
+
             return options;
         }
 
@@ -58,6 +65,15 @@ namespace CtrDxEditor.Core.Editing
             if (IsTrue(grab.GetAttr("bindBulb")))
             {
                 return $"bulb:{grab.GetAttr("bulbNumber") ?? ""}";
+            }
+
+            // An axe target outranks a candy one in LoadGrabs, so it is read first here too. Only a key
+            // some axe actually answers to counts - an unmatched one falls through to the candy branch,
+            // where the game's own fallback puts it.
+            if (AxeBinding.RequestedKey(grab) is { } axeKey
+                && objects.Any(o => AxeBinding.IsAxe(o) && AxeBinding.KeyEquals(AxeBinding.KeyOf(o), axeKey)))
+            {
+                return $"axe:{axeKey}";
             }
 
             if (twoParts)
@@ -92,12 +108,14 @@ namespace CtrDxEditor.Core.Editing
                 grab.RemoveAttr("candyNumber");
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
+                ClearAxe(grab);
             }
             else if (token.StartsWith("candy:", StringComparison.Ordinal))
             {
                 grab.SetAttr("candyNumber", token["candy:".Length..]);
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
+                ClearAxe(grab);
             }
             else if (token is "part:L" or "part:R")
             {
@@ -105,13 +123,33 @@ namespace CtrDxEditor.Core.Editing
                 grab.RemoveAttr("candyNumber");
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
+                ClearAxe(grab);
             }
             else if (token.StartsWith("bulb:", StringComparison.Ordinal))
             {
                 grab.SetAttr("bindBulb", "true");
                 grab.SetAttr("bulbNumber", token["bulb:".Length..]);
                 grab.RemoveAttr("candyNumber");
+                ClearAxe(grab);
             }
+            else if (token.StartsWith("axe:", StringComparison.Ordinal))
+            {
+                grab.SetAttr(AxeBinding.KeyAttribute, token["axe:".Length..]);
+                grab.RemoveAttr("candyNumber");
+                grab.RemoveAttr("bindBulb");
+                grab.RemoveAttr("bulbNumber");
+                // The editor writes only explicit keys, so the imported flag is dropped rather than
+                // left to disagree with the key beside it.
+                grab.RemoveAttr(AxeBinding.LegacyFlagAttribute);
+            }
+        }
+
+        // Drops both spellings of an axe target, so switching away from an axe cannot leave an
+        // imported axed="true" behind to re-capture the grab on the next load.
+        private static void ClearAxe(LevelObject grab)
+        {
+            grab.RemoveAttr(AxeBinding.KeyAttribute);
+            grab.RemoveAttr(AxeBinding.LegacyFlagAttribute);
         }
 
         private static bool KeyEquals(string? a, string? b)

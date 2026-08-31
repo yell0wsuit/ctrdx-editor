@@ -9,7 +9,8 @@ namespace CtrDxEditor.Core.Editing
 {
     /// <summary>
     /// Duplicates objects by deep-copying their XML, dropping any clone whose type is already at its placement
-    /// cap, assigning fresh auto-numbered keys, and remapping grab bindings that point at a co-cloned candy/bulb.
+    /// cap, assigning fresh auto-numbered keys, and remapping grab bindings that point at a co-cloned
+    /// candy, bulb, or axe.
     /// </summary>
     public static class ObjectCloneService
     {
@@ -24,6 +25,7 @@ namespace CtrDxEditor.Core.Editing
             List<LevelObject> clones = [];
             Dictionary<string, string> candyRemap = [];
             Dictionary<string, string> bulbRemap = [];
+            Dictionary<string, string> axeRemap = [];
 
             foreach (LevelObject src in source)
             {
@@ -36,6 +38,7 @@ namespace CtrDxEditor.Core.Editing
                 LevelObject clone = new(new XElement(src.Element));
                 string? oldCandy = src.GetAttr("candyNumber");
                 string? oldBulb = src.GetAttr("bulbNumber");
+                string? oldAxe = src.GetAttr(AxeBinding.KeyAttribute);
                 LevelObjectPolicy.ApplyDefaults(clone, doc);
                 doc.Add(clone, target);
 
@@ -49,6 +52,11 @@ namespace CtrDxEditor.Core.Editing
                 {
                     bulbRemap[oldBulb.Trim()] = newBulb;
                 }
+                if (AxeBinding.IsAxe(clone) && oldAxe is not null
+                    && clone.GetAttr(AxeBinding.KeyAttribute) is { } newAxe)
+                {
+                    axeRemap[oldAxe.Trim()] = newAxe;
+                }
 
                 clones.Add(clone);
             }
@@ -58,6 +66,12 @@ namespace CtrDxEditor.Core.Editing
                 if (IsTrue(grab.GetAttr("bindBulb")))
                 {
                     Retarget(grab, "bulbNumber", bulbRemap);
+                }
+                else if (grab.GetAttr(AxeBinding.KeyAttribute) is not null)
+                {
+                    // A co-cloned axe took a fresh key, so its grab has to follow it rather than stay
+                    // pointed at the original.
+                    Retarget(grab, AxeBinding.KeyAttribute, axeRemap);
                 }
                 else
                 {

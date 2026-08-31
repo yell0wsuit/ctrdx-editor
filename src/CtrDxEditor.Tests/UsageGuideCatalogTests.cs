@@ -227,6 +227,7 @@ namespace CtrDxEditor.Tests
             ["ants"] = "ant-conveyors",
             ["pipe"] = "bamboo-tubes",
             ["steamTube"] = "steam-pipes",
+            ["axe"] = "axes",
             ["rocket"] = "rockets",
             ["hand"] = "mechanical-hands",
             ["tutorialText"] = "tutorial-objects",

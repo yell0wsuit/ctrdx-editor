@@ -245,6 +245,17 @@ namespace CtrDxEditor.Core.Descriptors
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
+
+            // Axe. The blade that cuts chains; ropes may also hang from it, keyed by axeNumber.
+            // The key is auto-assigned on placement and picked through the grab "Attach to" control,
+            // so it is never typed by hand (see LevelObjectPolicy).
+            new ObjectDescriptor(AxeBinding.Element, "Axe",
+            [
+                new AttributeSpec(AxeBinding.KeyAttribute, AttrType.Text, null),
+            ], MaxCount: int.MaxValue, Game: TimeTravel),
         ]);
+
+        /// <summary>Palette section for objects that originate from Cut the Rope: Time Travel.</summary>
+        private const string TimeTravel = "Cut the Rope: Time Travel";
     }
 }
