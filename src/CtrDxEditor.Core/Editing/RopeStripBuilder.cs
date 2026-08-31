@@ -100,8 +100,12 @@ namespace CtrDxEditor.Core.Editing
             Vec2 chord = b - a;
             double distance = Math.Sqrt((chord.X * chord.X) + (chord.Y * chord.Y));
 
-            // The physics chain has 2 + floor(len/restLen) parts; the game's draw loop needs >= 3.
-            int count = Math.Max(3, 2 + (int)(length / RestLength));
+            // Bungee.RollplacingWithOffset starts from the anchor and tail, then inserts one part per
+            // rest length *or part thereof* - the remainder is rolled up to a whole part before the loop
+            // ends - so the chain holds 2 + ceil(len / restLen) parts, and just the two when there is no
+            // length to subdivide. Rounding this down instead cost a part at almost every authored
+            // length, which a chain shows directly as too few links.
+            int count = length > 0 ? 2 + (int)Math.Ceiling(length / RestLength) : 2;
             Vec2[] pts = new Vec2[count];
             if (length > distance)
             {

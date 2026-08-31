@@ -41,11 +41,19 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(50, mid.Y, 9); // quadratic: 0.25*0 + 0.5*100 + 0.25*0
         }
 
-        /// <summary>The control chain grows one link per rest-length unit, with a floor of three.</summary>
+        /// <summary>
+        /// The control chain matches what Bungee.RollplacingWithOffset builds: the anchor and tail, plus
+        /// one part per rest length or part thereof. A rest length is 35 in level units (the game's 105
+        /// world units over its map scale of 3), so a partial remainder still costs a whole part.
+        /// </summary>
         [Theory]
-        [InlineData(0, 3)]
-        [InlineData(100, 4)]
+        [InlineData(0, 2)]     // nothing to subdivide: just the anchor and the tail
+        [InlineData(1, 3)]     // any length at all rolls up to one part
+        [InlineData(35, 3)]    // exactly one rest length
+        [InlineData(36, 4)]    // one over: the remainder still costs a part
+        [InlineData(100, 5)]   // the default authored rope length
         [InlineData(210, 8)]
+        [InlineData(290, 11)]
         public void ControlPointCountFollowsTheRestLengthChain(double length, int expected)
         {
             Assert.Equal(expected, RopeStripBuilder.ControlPoints(new Vec2(0, 0), new Vec2(100, 0), length).Length);
@@ -181,7 +189,7 @@ namespace CtrDxEditor.Core.Tests
         {
             // Length 290 -> 10 constraint points -> 36 samples -> 37 polyline points (t = 0..1 inclusive).
             RopeVisual visual = RopeStripBuilder.Build(new Vec2(0, 0), new Vec2(300, 0), 290);
-            Assert.Equal(37, visual.SamplePoints.Count);
+            Assert.Equal(41, visual.SamplePoints.Count);
             Assert.Equal(new Vec2(0, 0), visual.SamplePoints[0]);
             Assert.Equal(300, visual.SamplePoints[^1].X, 6);
         }

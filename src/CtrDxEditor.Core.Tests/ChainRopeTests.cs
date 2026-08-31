@@ -128,6 +128,24 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(sampleCount - 1, plan.Count(s => s.QuadIndex == ChainSpritePlanner.MidpointQuad));
         }
 
+        /// <summary>
+        /// The link count follows the rope's part count, so it has to match what the game subdivides.
+        /// A default-length rope carries five parts, which is eight samples: eight links and the seven
+        /// midpoints between them.
+        /// </summary>
+        [Theory]
+        [InlineData(0, 3)]     // two parts: two links, one midpoint
+        [InlineData(35, 7)]    // three parts
+        [InlineData(100, 15)]  // the default authored rope length: five parts
+        [InlineData(210, 27)]  // eight parts
+        public void LinkCountFollowsTheGameSubdivision(double length, int expected)
+        {
+            IReadOnlyList<ChainSprite> plan =
+                ChainSpritePlanner.Build(new Vec2(0, 0), new Vec2(300, 0), length, seed: 1);
+
+            Assert.Equal(expected, plan.Count);
+        }
+
         /// <summary>Links come first, then the midpoints, matching the game's fill order.</summary>
         [Fact]
         public void LinksArePlannedBeforeMidpoints()
