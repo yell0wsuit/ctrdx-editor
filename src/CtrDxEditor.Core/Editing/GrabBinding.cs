@@ -59,6 +59,26 @@ namespace CtrDxEditor.Core.Editing
             return options;
         }
 
+        /// <summary>
+        /// Whether the level offers a rope target worth showing a control for. More than one option
+        /// always is. A single option only is when it is not the candy a grab would bind to anyway -
+        /// a lone candy needs no control, but a lone blade or bulb does, because a grab does not take
+        /// either without being told to.
+        /// </summary>
+        /// <param name="options">The options built by <see cref="Options"/>.</param>
+        /// <returns><see langword="true"/> when the "Attach to" control has a choice to offer.</returns>
+        public static bool OffersAChoice(IReadOnlyList<GrabBindOption> options)
+        {
+            return options.Count >= 2 || (options.Count == 1 && !IsCandyTarget(options[0].Token));
+        }
+
+        /// <summary>Whether a token names a candy, which is what a grab binds to by default.</summary>
+        private static bool IsCandyTarget(string token)
+        {
+            return token is "primary" or "part:L" or "part:R"
+                || token.StartsWith("candy:", StringComparison.Ordinal);
+        }
+
         /// <summary>The token identifying a grab's current bind target.</summary>
         public static string CurrentToken(LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
         {

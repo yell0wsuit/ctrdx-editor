@@ -44,7 +44,7 @@ namespace CtrDxEditor.ViewModels
             // an auto-catch grab (which binds candy at runtime) - rather than disappearing and shifting
             // every field below it. Mirrors LoadGrabs, which skips the binding block unless radius == -1.
             IReadOnlyList<GrabBindOption> options = GrabBinding.Options(document.AllObjects, twoParts);
-            if (options.Count >= 2)
+            if (GrabBinding.OffersAChoice(options))
             {
                 AttributeOptionViewModel[] vmOptions =
                     [.. options.Select(o => new AttributeOptionViewModel(o.Token, o.Label))];

@@ -63,6 +63,34 @@ namespace CtrDxEditor.Core.Editing
                 obj.SetAttr(AxeBinding.KeyAttribute, KeyNumbering.NextKey(axeKeys));
             }
 
+            // A rope needs something to hang from, and until a candy exists the only candidates are a
+            // blade or a bulb. The game never binds either on its own - it wants an explicit axeNumber
+            // or bindBulb - so the editor authors that attribute rather than drawing a rope the game
+            // would not build. Both placement orders are covered: a new grab takes the target already
+            // there, and a new blade or bulb adopts the grabs still hanging from nothing.
+            if (!HasCandy(document))
+            {
+                // Only a grab that is hanging from nothing. A clone arrives carrying the binding it was
+                // copied from, and that target is the one it should keep.
+                if (obj.Type == "grab"
+                    && RopeResolver.Resolve(obj, document.AllObjects, document.TwoParts).Target is null)
+                {
+                    BindToFirstRopeTarget(obj, RopeTargetsIn(document.AllObjects));
+                }
+                else if (AxeBinding.IsAxe(obj) || obj.Type is "lightBulb" or "lightbulb")
+                {
+                    // The new object is not in the document yet, and its own key was just assigned
+                    // above, so it is offered here explicitly.
+                    foreach (LevelObject grab in document.AllObjects.Where(g => g.Type == "grab"))
+                    {
+                        if (RopeResolver.Resolve(grab, document.AllObjects, document.TwoParts).Target is null)
+                        {
+                            BindToFirstRopeTarget(grab, [obj]);
+                        }
+                    }
+                }
+            }
+
             // Magic hats teleport in pairs; a new hat completes an open pair or starts a fresh group.
             if (obj.Type == "sock")
             {
@@ -82,6 +110,52 @@ namespace CtrDxEditor.Core.Editing
                     .Max();
                 obj.SetAttr("index", (max + 1).ToString(CultureInfo.InvariantCulture));
             }
+        }
+
+        /// <summary>Whether the level already holds a candy for ropes to default to.</summary>
+        /// <param name="document">The level being edited.</param>
+        /// <returns><see langword="true"/> when a candy of the level's own kind is present.</returns>
+        private static bool HasCandy(LevelDocument document)
+        {
+            return document.TwoParts
+                ? document.AllObjects.Any(o => o.Type is "candyL" or "candyR")
+                : document.AllObjects.Any(o => o.Type == "candy");
+        }
+
+        /// <summary>
+        /// The blades and bulbs a rope may hang from, in document order, so the first one placed is the
+        /// one a rope adopts.
+        /// </summary>
+        /// <param name="objects">The level's objects.</param>
+        /// <returns>The candidate targets, in placement order.</returns>
+        private static IEnumerable<LevelObject> RopeTargetsIn(IEnumerable<LevelObject> objects)
+        {
+            return objects.Where(o => AxeBinding.IsAxe(o) || o.Type is "lightBulb" or "lightbulb");
+        }
+
+        /// <summary>
+        /// Points a grab's rope at the first of <paramref name="targets"/>, leaving the grab alone when
+        /// there is nothing to bind to or the grab has no authored rope to bind. A gun or auto-catch
+        /// hook takes hold during play instead, and LoadGrabs skips the binding block for both, so
+        /// writing a target on one would only add XML the game ignores.
+        /// </summary>
+        /// <param name="grab">The grab to bind.</param>
+        /// <param name="targets">Candidate blades and bulbs, in placement order.</param>
+        private static void BindToFirstRopeTarget(LevelObject grab, IEnumerable<LevelObject> targets)
+        {
+            if (IsTrue(grab.GetAttr("gun")) || GrabRadius.Of(grab) is not null)
+            {
+                return;
+            }
+
+            if (targets.FirstOrDefault() is not { } target)
+            {
+                return;
+            }
+
+            GrabBinding.Apply(grab, AxeBinding.IsAxe(target)
+                ? $"axe:{AxeBinding.KeyOf(target)}"
+                : $"bulb:{target.GetAttr("bulbNumber") ?? string.Empty}");
         }
 
         /// <summary>
