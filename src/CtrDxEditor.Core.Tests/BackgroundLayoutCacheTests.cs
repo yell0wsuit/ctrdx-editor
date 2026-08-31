@@ -32,7 +32,7 @@ namespace CtrDxEditor.Core.Tests
         public void CachedValueIsReturnedOnHit()
         {
             BackgroundLayoutCache cache = new();
-            BackgroundLayout expected = new(12, 34, 56, 78, 1.0, [], []);
+            BackgroundLayout expected = new(12, 34, 56, 78, 1.0, [], null);
 
             BackgroundLayout first = cache.Get(800, 600, 0, 0.5, 0.25, () => expected);
             BackgroundLayout second = cache.Get(800, 600, 0, 0.5, 0.25, Empty);
@@ -109,7 +109,7 @@ namespace CtrDxEditor.Core.Tests
 
         private static BackgroundLayout Empty()
         {
-            return new BackgroundLayout(0, 0, 0, 0, 1.0, [], []);
+            return new BackgroundLayout(0, 0, 0, 0, 1.0, [], null);
         }
     }
 }

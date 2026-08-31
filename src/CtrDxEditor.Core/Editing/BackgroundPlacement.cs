@@ -18,17 +18,19 @@ namespace CtrDxEditor.Core.Editing
     /// size the overlays the game draws inside the background's own scaled matrix.
     /// </param>
     /// <param name="P2">
-    /// The secondary background's bounds, one per seam between p1 sections, empty when the map is short
-    /// or the background has no p2.
+    /// The secondary background's bands, one per seam between p1 sections, empty when the map is short or
+    /// the background has no p2. Each band describes the grid's origin column; the game repeats it across
+    /// every column the p1 grid covers, so <see cref="BackgroundLayout.Left"/> is where it starts, not
+    /// where it ends.
     /// </param>
-    /// <param name="EarthCenters">
-    /// Level-space centers of the earth decoration (cosmic box only), empty when there is no earth. The
-    /// game draws a base earth plus a horizontal copy for maps wider than one screen and a vertical copy
-    /// for maps taller than one screen (up to three), so this holds 0..3 positions.
+    /// <param name="EarthOffset">
+    /// The earth decoration's center as an offset from a p1 tile's top-left (cosmic box only), or null
+    /// when the background has no earth. The earth belongs to the tile rather than to the map, so it is
+    /// drawn once per tile in the grid.
     /// </param>
     public readonly record struct BackgroundLayout(
         double Left, double Top, double Width, double TileHeight, double Scale,
-        IReadOnlyList<LevelBounds> P2, IReadOnlyList<Vec2> EarthCenters);
+        IReadOnlyList<LevelBounds> P2, Vec2? EarthOffset);
 
     /// <summary>
     /// Pure background placement math. The game (GameScene.Draw / GameScene.Init / GameScene.cs) draws the
@@ -38,9 +40,11 @@ namespace CtrDxEditor.Core.Editing
     /// centre (<c>UpdateBackgroundScale</c> sets <c>back.x = SCREEN_WIDTH / 2 / scale - texWidth / 2</c> and
     /// the same for y), and the map is itself centered in that screen (offsetX = (SCREEN_WIDTH - mapWidth) / 2),
     /// so the grid comes out centered on the map horizontally.
-    /// A p2 texture is drawn once per seam between p1 sections (<c>BackgroundTiling.GetP2Count</c> /
-    /// <c>ResolveP2Y</c>), and the earth decorations sit at <c>back.x/back.y</c> plus their authored offset -
-    /// all inside the background's scaled matrix, hence the <see cref="BackgroundLayout.Scale"/> factor.
+    /// Everything anchored to one p1 section repeats with it (<c>BackgroundTiling.GetSectionRange</c>): the
+    /// p2 band dresses the seam on every column, and the earth is drawn on every tile. p2's vertical
+    /// placement is the exception, still driven by the map's height alone through
+    /// <c>GetP2Count</c> / <c>ResolveP2Y</c>. All of it is drawn inside the background's own scaled matrix,
+    /// hence the <see cref="BackgroundLayout.Scale"/> factor.
     /// The world is <see cref="SpritePlacement.MapScale"/> times level space, so all screen-space
     /// constants below are divided by it.
     /// </summary>
@@ -105,8 +109,10 @@ namespace CtrDxEditor.Core.Editing
             double top = (LevelScreenHeight - tileHeight) / 2.0;
 
             List<LevelBounds> p2 = [];
-            // One p2 per seam between p1 sections (BackgroundTiling.GetP2Count / ResolveP2Y). p2 ships the
-            // same pixel width as p1, so it spans one tile and only its height follows its own aspect.
+            // One p2 per seam between p1 sections (BackgroundTiling.GetP2Count / ResolveP2Y). Only the
+            // vertical placement is the map's business: horizontally the band repeats with the columns,
+            // which is the renderer's to walk. p2 ships the same pixel width as p1, so it spans one tile
+            // and only its height follows its own aspect.
             int p2Count = SeamCount(levelHeight);
             if (p2Y > 0 && p2Aspect > 0.0)
             {
@@ -117,31 +123,15 @@ namespace CtrDxEditor.Core.Editing
                 }
             }
 
-            // The earth is center-anchored at earthBgPosition within the p1 texture's space (GameScene
+            // The earth is center-anchored at earthBgPosition within the p1 texture's own space (GameScene
             // CreateEarthImageWithOffsetXY + GravityState.RelayoutEarthAnimations), so it maps to level
-            // space by ×Scale ÷MapScale, offset by the grid origin. The game wraps it with the tiled
-            // background when the map exceeds one screen: an extra copy one tile to the right for wide
-            // maps (mapWidth > SCREEN_WIDTH) and one tile down for tall maps (mapHeight > SCREEN_HEIGHT).
-            // Only ever one copy per axis, however far the map runs on - the p1 grid repeats, the earth
-            // does not (GameScene.LoadMetadata's map case).
-            List<Vec2> earthCenters = [];
-            if (earthPosition is { } e)
-            {
-                Vec2 baseEarth = new(
-                    left + (e.X * scale / SpritePlacement.MapScale),
-                    top + (e.Y * scale / SpritePlacement.MapScale));
-                earthCenters.Add(baseEarth);
-                if (levelWidth > LevelScreenWidth)
-                {
-                    earthCenters.Add(new Vec2(baseEarth.X + width, baseEarth.Y));
-                }
-                if (levelHeight > LevelScreenHeight)
-                {
-                    earthCenters.Add(new Vec2(baseEarth.X, baseEarth.Y + tileHeight));
-                }
-            }
+            // space by ×Scale ÷MapScale and belongs to the tile rather than to the map: GameScene.Draw
+            // translates it by the p1 cadence over every section the view covers, so each tile carries one.
+            Vec2? earthOffset = earthPosition is { } e
+                ? new Vec2(e.X * scale / SpritePlacement.MapScale, e.Y * scale / SpritePlacement.MapScale)
+                : null;
 
-            return new BackgroundLayout(left, top, width, tileHeight, scale, p2, earthCenters);
+            return new BackgroundLayout(left, top, width, tileHeight, scale, p2, earthOffset);
         }
 
         /// <summary>

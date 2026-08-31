@@ -638,9 +638,13 @@ namespace CtrDxEditor.Rendering
                     // since the grid is anchored on the design screen and need not begin on it.
                     if (layout.TileHeight > 0.5 && layout.Width > 0.5)
                     {
-                        Rect bgSrc = new(bgSize);
                         double firstX = BackgroundPlacement.GridStart(layout.Left, layout.Width);
                         double firstY = BackgroundPlacement.GridStart(layout.Top, layout.TileHeight);
+
+                        // One pass per layer rather than one per column, so the layers stack in the game's
+                        // order (GameScene.Draw: the whole tile map, then every p2, then every earth) and no
+                        // column's art can be painted over by the next column's tiles.
+                        Rect bgSrc = new(bgSize);
                         for (double tx = firstX; tx < doc.Width; tx += layout.Width)
                         {
                             for (double ty = firstY; ty < doc.Height; ty += layout.TileHeight)
@@ -648,31 +652,41 @@ namespace CtrDxEditor.Rendering
                                 context.DrawImage(bg, bgSrc, LevelSceneRenderer.LevelRectToScreen(v, tx, ty, layout.Width, layout.TileHeight));
                             }
                         }
-                    }
 
-                    if (p2 is not null)
-                    {
-                        Rect p2Src = new(p2.Size);
-                        foreach (LevelBounds p2b in layout.P2)
+                        // p2 dresses the seam on every column, but its rows stay the map's business rather
+                        // than the grid's - a level of a single section has no seam to dress at all.
+                        if (p2 is not null && layout.P2.Count > 0)
                         {
-                            context.DrawImage(p2, p2Src, LevelSceneRenderer.LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                            Rect p2Src = new(p2.Size);
+                            for (double tx = firstX; tx < doc.Width; tx += layout.Width)
+                            {
+                                foreach (LevelBounds p2b in layout.P2)
+                                {
+                                    context.DrawImage(p2, p2Src, LevelSceneRenderer.LevelRectToScreen(v, tx, p2b.Y, p2b.W, p2b.H));
+                                }
+                            }
                         }
-                    }
 
-                    if (layout.EarthCenters.Count > 0 && sprites.GetEarthArt() is { } earthArt)
-                    {
-                        // The earth is drawn inside the background's own scaled matrix, so its art takes the
-                        // background's cover scale rather than being sized off the atlas alone.
-                        IntRect ef = earthArt.Frame.Frame;
-                        double ew = ef.W * layout.Scale / SpritePlacement.MapScale;
-                        double eh = ef.H * layout.Scale / SpritePlacement.MapScale;
-                        Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
-                        foreach (Vec2 ec in layout.EarthCenters)
+                        // The earth belongs to the p1 tile rather than to the map, so it rides the grid on
+                        // both axes. Its art is drawn inside the background's own scaled matrix, so it takes
+                        // the background's cover scale rather than being sized off the atlas alone.
+                        if (layout.EarthOffset is { } eo && sprites.GetEarthArt() is { } earthArt)
                         {
-                            context.DrawImage(
-                                earthArt.Bitmap,
-                                earthSrc,
-                                LevelSceneRenderer.LevelRectToScreen(v, ec.X - (ew / 2.0), ec.Y - (eh / 2.0), ew, eh));
+                            IntRect ef = earthArt.Frame.Frame;
+                            double ew = ef.W * layout.Scale / SpritePlacement.MapScale;
+                            double eh = ef.H * layout.Scale / SpritePlacement.MapScale;
+                            Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
+                            for (double tx = firstX; tx < doc.Width; tx += layout.Width)
+                            {
+                                for (double ty = firstY; ty < doc.Height; ty += layout.TileHeight)
+                                {
+                                    context.DrawImage(
+                                        earthArt.Bitmap,
+                                        earthSrc,
+                                        LevelSceneRenderer.LevelRectToScreen(
+                                            v, tx + eo.X - (ew / 2.0), ty + eo.Y - (eh / 2.0), ew, eh));
+                                }
+                            }
                         }
                     }
                 }
