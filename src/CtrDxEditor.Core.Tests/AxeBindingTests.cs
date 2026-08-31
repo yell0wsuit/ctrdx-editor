@@ -157,8 +157,9 @@ namespace CtrDxEditor.Core.Tests
 
             IReadOnlyList<GrabBindOption> options = GrabBinding.Options([candy, axe0, axe1], twoParts: false);
 
-            Assert.Contains(options, o => o.Token == "axe:0" && o.Label == "Axe 0");
-            Assert.Contains(options, o => o.Token == "axe:1" && o.Label == "Axe 1");
+            // The token keeps the game's spelling; only the label the author reads says "Blade".
+            Assert.Contains(options, o => o.Token == "axe:0" && o.Label == "Blade 0");
+            Assert.Contains(options, o => o.Token == "axe:1" && o.Label == "Blade 1");
         }
 
         /// <summary>Selecting an axe writes only the explicit key and clears every other target.</summary>

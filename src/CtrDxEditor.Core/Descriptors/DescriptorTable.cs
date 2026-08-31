@@ -246,10 +246,12 @@ namespace CtrDxEditor.Core.Descriptors
                 new AttributeSpec("angle", AttrType.Number, "0"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
 
-            // Axe. The blade that cuts chains; ropes may also hang from it, keyed by axeNumber.
+            // Blade. Cuts chains; ropes may also hang from it, keyed by axeNumber. The game calls the
+            // element and its key "axe", which the round trip preserves; only the editor's label reads
+            // "Blade".
             // The key is auto-assigned on placement and picked through the grab "Attach to" control,
             // so it is never typed by hand (see LevelObjectPolicy).
-            new ObjectDescriptor(AxeBinding.Element, "Axe",
+            new ObjectDescriptor(AxeBinding.Element, "Blade",
             [
                 new AttributeSpec(AxeBinding.KeyAttribute, AttrType.Text, null),
             ], MaxCount: int.MaxValue, Game: TimeTravel),

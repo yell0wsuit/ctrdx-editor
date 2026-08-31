@@ -53,7 +53,7 @@ namespace CtrDxEditor.Core.Editing
             foreach (LevelObject axe in objects.Where(AxeBinding.IsAxe))
             {
                 string key = AxeBinding.KeyOf(axe);
-                options.Add(new GrabBindOption($"axe:{key}", $"Axe {key}"));
+                options.Add(new GrabBindOption($"axe:{key}", $"Blade {key}"));
             }
 
             return options;
