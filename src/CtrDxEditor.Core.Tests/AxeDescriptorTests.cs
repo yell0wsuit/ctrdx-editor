@@ -106,27 +106,6 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("0", grab.GetAttr("axeNumber"));
         }
 
-        /// <summary>A chain with no axe to cut it makes the level unwinnable, and is called out.</summary>
-        [Fact]
-        public void ChainWithoutAnAxeWarns()
-        {
-            LevelDocument doc = PlayableLevel();
-            _ = Add(doc, """<grab x="181" y="87" length="55" breakable="false" />""");
-
-            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.ChainWithoutAxe");
-        }
-
-        /// <summary>An axe in the level settles the chain, so no warning is raised.</summary>
-        [Fact]
-        public void ChainWithAnAxeDoesNotWarn()
-        {
-            LevelDocument doc = PlayableLevel();
-            _ = Add(doc, """<axe x="200" y="90" axeNumber="0" />""");
-            _ = Add(doc, """<grab x="181" y="87" length="55" breakable="false" />""");
-
-            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.ChainWithoutAxe");
-        }
-
         /// <summary>An axeNumber no axe answers to binds the candy instead, which is worth saying.</summary>
         [Fact]
         public void UnmatchedAxeNumberWarns()

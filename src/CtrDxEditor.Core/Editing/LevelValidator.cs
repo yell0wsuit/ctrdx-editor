@@ -95,15 +95,6 @@ namespace CtrDxEditor.Core.Editing
                     && axes.Any(a => AxeBinding.KeyEquals(AxeBinding.KeyOf(a), key));
             }
 
-            // A chain survives every cut but the axe's, so a level whose chains have no axe to meet is
-            // unwinnable. Only authored ropes matter: gun and auto-catch hooks carry the chain anchor
-            // art without ever building a chain.
-            if (axes.Count == 0
-                && objects.Any(o => ChainRope.IsChain(o) && RopeResolver.Resolve(o, objects, document.TwoParts).Target is not null))
-            {
-                warnings.Add(new LevelWarning("Validation.ChainWithoutAxe"));
-            }
-
             foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
             {
                 string? candyNumber = grab.GetAttr("candyNumber");

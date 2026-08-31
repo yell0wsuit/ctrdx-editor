@@ -943,7 +943,6 @@
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
     "Validation.GrabUnmatchedAxeNumber": "A grab binds to axeNumber '{0}', which no blade has, it will bind to the candy instead.",
-    "Validation.ChainWithoutAxe": "Level has a chain rope but no blade; nothing except a blade can cut a chain, so whatever this chain holds can never be released.",
     "Validation.GrabVerticallyAligned": "A grab and what its rope binds to are both at x={0}. Offset one of them by a pixel or more.",
     "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing.",
     "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately.",
