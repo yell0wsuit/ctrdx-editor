@@ -134,7 +134,8 @@ namespace CtrDxEditor.Rendering
                         hitboxModel,
                         _palette.HitboxDesktop,
                         PreviewSpinDegrees(obj),
-                        PreviewAnimationSeconds(obj));
+                        PreviewAnimationSeconds(obj),
+                        doc.UseTimeTravelRocketPhysics);
                     // The bamboo tube has no rectangular bb; its collision is the two circular capture
                     // holes candy contacts, so draw those in place of a box hitbox.
                     if (obj.Type == "pipe")

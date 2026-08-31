@@ -1777,6 +1777,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="pen">Pen for the hitbox outline.</param>
         /// <param name="previewRotationDegrees">Live-preview spin degrees to add to the authored rotation.</param>
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds used to translate orbiting objects.</param>
+        /// <param name="timeTravelRockets">Whether the level asked for Time Travel's wider rocket catch box.</param>
         public static void DrawHitbox(
             DrawingContext ctx,
             ViewTransform v,
@@ -1785,9 +1786,10 @@ namespace CtrDxEditor.Rendering
             HitboxModel model,
             Pen pen,
             double previewRotationDegrees = 0.0,
-            double? animationPreviewSeconds = null)
+            double? animationPreviewSeconds = null,
+            bool timeTravelRockets = false)
         {
-            if (PreviewHitboxBounds(obj, scale, model, animationPreviewSeconds) is not { } b)
+            if (PreviewHitboxBounds(obj, scale, model, animationPreviewSeconds, timeTravelRockets) is not { } b)
             {
                 return;
             }
@@ -1849,9 +1851,10 @@ namespace CtrDxEditor.Rendering
             LevelObject obj,
             double scale,
             HitboxModel model,
-            double? animationPreviewSeconds)
+            double? animationPreviewSeconds,
+            bool timeTravelRockets = false)
         {
-            return HitboxTable.Compute(obj, scale, model) is not { } bounds
+            return HitboxTable.Compute(obj, scale, model, timeTravelRockets: timeTravelRockets) is not { } bounds
                 ? null
                 : Shift(bounds, DrawOffset(obj, animationPreviewSeconds));
         }
