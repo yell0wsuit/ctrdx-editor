@@ -611,7 +611,7 @@ namespace CtrDxEditor.Rendering
             Vec2 tl = v.LevelToScreen(new Vec2(0, 0));
             Vec2 br = v.LevelToScreen(new Vec2(doc.Width, doc.Height));
 
-            // Decoration is clipped to the level's vertical span but not its width: the background column and
+            // Decoration is clipped to the level's vertical span but not its width: the background grid and
             // the water band both legitimately overhang a narrow level's sides, while nothing may spill past
             // its top or bottom edge.
             Rect levelClip = new(0, tl.Y, renderSize.Width, br.Y - tl.Y);
@@ -626,30 +626,46 @@ namespace CtrDxEditor.Rendering
                     doc.Width, doc.Height, ActiveBackground, p1Aspect, p2Aspect,
                     () => BackgroundPlacement.Compute(
                         doc.Width, doc.Height, p1Aspect,
+                        SpriteCache.GetBackgroundTextureWidth(ActiveBackground),
                         p2Aspect, SpriteCache.GetBackgroundP2Y(ActiveBackground),
                         SpriteCache.GetEarthBgPosition(ActiveBackground)));
 
                 using (context.PushClip(levelClip))
                 {
-                    if (layout.TileHeight > 0.5)
+                    // The game's tile map repeats on both axes (Repeat.ALL), so this is a grid rather than a
+                    // column: a level wider than one screen is backed the whole way across, not down its
+                    // middle only. Both loops start at the last grid line at or before the level's own edge,
+                    // since the grid is anchored on the design screen and need not begin on it.
+                    if (layout.TileHeight > 0.5 && layout.Width > 0.5)
                     {
                         Rect bgSrc = new(bgSize);
-                        for (double ty = 0; ty < doc.Height; ty += layout.TileHeight)
+                        double firstX = BackgroundPlacement.GridStart(layout.Left, layout.Width);
+                        double firstY = BackgroundPlacement.GridStart(layout.Top, layout.TileHeight);
+                        for (double tx = firstX; tx < doc.Width; tx += layout.Width)
                         {
-                            context.DrawImage(bg, bgSrc, LevelSceneRenderer.LevelRectToScreen(v, layout.Left, ty, layout.Width, layout.TileHeight));
+                            for (double ty = firstY; ty < doc.Height; ty += layout.TileHeight)
+                            {
+                                context.DrawImage(bg, bgSrc, LevelSceneRenderer.LevelRectToScreen(v, tx, ty, layout.Width, layout.TileHeight));
+                            }
                         }
                     }
 
-                    if (layout.P2 is { } p2b && p2 is not null)
+                    if (p2 is not null)
                     {
-                        context.DrawImage(p2, new Rect(p2.Size), LevelSceneRenderer.LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                        Rect p2Src = new(p2.Size);
+                        foreach (LevelBounds p2b in layout.P2)
+                        {
+                            context.DrawImage(p2, p2Src, LevelSceneRenderer.LevelRectToScreen(v, p2b.X, p2b.Y, p2b.W, p2b.H));
+                        }
                     }
 
                     if (layout.EarthCenters.Count > 0 && sprites.GetEarthArt() is { } earthArt)
                     {
+                        // The earth is drawn inside the background's own scaled matrix, so its art takes the
+                        // background's cover scale rather than being sized off the atlas alone.
                         IntRect ef = earthArt.Frame.Frame;
-                        double ew = ef.W / SpritePlacement.MapScale;
-                        double eh = ef.H / SpritePlacement.MapScale;
+                        double ew = ef.W * layout.Scale / SpritePlacement.MapScale;
+                        double eh = ef.H * layout.Scale / SpritePlacement.MapScale;
                         Rect earthSrc = new(ef.X, ef.Y, ef.W, ef.H);
                         foreach (Vec2 ec in layout.EarthCenters)
                         {

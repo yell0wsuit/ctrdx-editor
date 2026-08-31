@@ -88,10 +88,16 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>
-        /// Per-background secondary (p2) layer Y offset in internal pixels, from the game's pack config
-        /// (<c>boxBackgroundP2Y</c> in ctroriginal_packs.json). Index is the background id (1..17);
+        /// Per-background secondary (p2) layer Y offset in p1 <em>texture</em> pixels, from the game's pack
+        /// config (<c>boxBackgroundP2Y</c> in ctroriginal_packs.json). Index is the background id (1..17);
         /// only bgr_01..bgr_11 ship a p2 layer, so ids 12..17 are 0 (no p2).
         /// </summary>
+        /// <remarks>
+        /// The game draws p2 inside the background's own scaled matrix (<c>GameScene.Draw</c>), so this
+        /// offset is multiplied by the background's cover scale before it reaches the screen - see
+        /// <see cref="GetBackgroundTextureWidth"/>. On art authored below the design width (bgr_11) the two
+        /// differ by a quarter, which is the difference between p2 sitting on the seam and well above it.
+        /// </remarks>
         private static readonly int[] BackgroundP2Y =
         [
             0,     // (id 0 unused)
@@ -118,7 +124,51 @@ namespace CtrDxEditor.Content
         }
 
         /// <summary>
-        /// The earth decoration's center in internal pixels (the game's <c>earthBgPosition</c>) for the
+        /// The p1 art's authored pixel width per background id (1..17), which the game's
+        /// <c>GetBackgroundCoverScale</c> measures the internal screen against. Ids outside the table fall
+        /// back to the design width, the scale's own no-op.
+        /// </summary>
+        /// <remarks>
+        /// Held here rather than read off the decoded bitmap because the canvas decodes every background to
+        /// a fixed <see cref="BackgroundDecodeWidth"/>, which is what makes the art cheap to hold but also
+        /// throws its authored size away. Aspect survives that decode; absolute size does not, and the cover
+        /// scale needs the absolute size.
+        /// </remarks>
+        private static readonly int[] BackgroundTextureWidth =
+        [
+            0,     // (id 0 unused)
+            2559,  // bgr_01
+            2560,  // bgr_02
+            2560,  // bgr_03
+            2560,  // bgr_04
+            2560,  // bgr_05
+            2560,  // bgr_06
+            2560,  // bgr_07
+            2560,  // bgr_08
+            2560,  // bgr_09
+            2560,  // bgr_10
+            2048,  // bgr_11
+            2560,  // bgr_12
+            2560,  // bgr_13
+            2560,  // bgr_14
+            2560,  // bgr_15
+            2048,  // bgr_16
+            2048,  // bgr_17
+        ];
+
+        /// <summary>
+        /// The p1 art's authored pixel width for the given background id, or the game's design width for an
+        /// id the table does not cover.
+        /// </summary>
+        public static double GetBackgroundTextureWidth(int id)
+        {
+            return id >= 1 && id < BackgroundTextureWidth.Length
+                ? BackgroundTextureWidth[id]
+                : BackgroundPlacement.ScreenWidth;
+        }
+
+        /// <summary>
+        /// The earth decoration's center in p1 texture pixels (the game's <c>earthBgPosition</c>) for the
         /// given background id, or null when it has no earth layer. Only the cosmic box (bgr_08) does.
         /// </summary>
         public static Vec2? GetEarthBgPosition(int id)
