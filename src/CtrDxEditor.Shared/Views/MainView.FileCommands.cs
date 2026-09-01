@@ -13,11 +13,14 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Controls;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Localization;
 using CtrDxEditor.Rendering;
 using CtrDxEditor.ViewModels;
+
+using DialogHostAvalonia;
 
 namespace CtrDxEditor.Views
 {
@@ -113,6 +116,22 @@ namespace CtrDxEditor.Views
             LevelSettingsViewModel dialogVm = LevelSettingsViewModel.ForEdit(
                 current, vm.ActiveRopeSkin, vm.ActiveBackground, vm.ActiveCandySkin, vm.ActiveOmNomSupport);
             LevelSettingsDialog dialog = new() { DataContext = dialogVm };
+
+            // Rockets already placed keep their authored impulse, so switching Time Travel's rocket
+            // physics off leaves values tuned against it. Say so the moment the option is unticked,
+            // while the settings dialog is still open - a notice can only stack on a live dialog
+            // session, and the host tears that session down as the dialog closes. Once per dialog, so
+            // toggling the option back and forth does not nag.
+            bool reminded = false;
+            dialogVm.PropertyChanged += async (_, args) =>
+            {
+                if (reminded
+                    || args.PropertyName != nameof(LevelSettingsViewModel.UseTimeTravelRocketPhysics))
+                {
+                    return;
+                }
+                reminded = await RemindAboutRocketImpulseAsync(vm, current, dialogVm.ToSettings());
+            };
             // Fill in the background/candy/platform thumbnails progressively off the UI thread; the dialog opens at once.
             _ = LoadBackgroundThumbnailsAsync(dialogVm, vm.Sprites);
             _ = LoadCandyThumbnailsAsync(dialogVm, vm.Sprites);
@@ -128,7 +147,49 @@ namespace CtrDxEditor.Views
                 vm.ActiveBackground = background;
                 vm.ActiveCandySkin = candySkin;
                 vm.ActiveOmNomSupport = omNomSupport;
+
+                // Rockets already placed keep their authored impulse, so dropping Time Travel's rocket
+                // physics silently leaves values that were tuned against it. Say so once, on apply,
+                // rather than rewriting anything.
             }
+        }
+
+        /// <summary>
+        /// Points the author at rockets whose impulse was authored against Time Travel's rocket physics
+        /// once that option is switched off, and reports whether the notice was shown. Nothing is
+        /// rewritten - the values are theirs to choose.
+        /// </summary>
+        /// <remarks>
+        /// Stacks on the open settings dialog the way <c>HelpButton</c> stacks its help: a scrim over the
+        /// parent surface, then a second session above it.
+        /// </remarks>
+        private static async Task<bool> RemindAboutRocketImpulseAsync(
+            EditorViewModel vm, LevelSettings before, LevelSettings edited)
+        {
+            if (vm.Document is not { } document
+                || !RocketObject.ImpulseNeedsReview(before, edited, document))
+            {
+                return false;
+            }
+
+            MessageDialog reminder = new()
+            {
+                Header = Localizer.Get("Dialog.LevelSettings.RocketImpulseReview"),
+                Message = Localizer.Get("Dialog.LevelSettings.RocketImpulseReviewBody"),
+            };
+
+            DialogSession? parentSession = DialogHost.GetDialogSession(null);
+            DialogBackdrop? backdrop = DialogBackdrop.InsertAfter(parentSession?.Host);
+            try
+            {
+                _ = await DialogHost.Show(reminder);
+            }
+            finally
+            {
+                backdrop?.Detach();
+            }
+
+            return true;
         }
 
         // Shows the non-blocking validation warning; returns true when the user chooses to proceed.

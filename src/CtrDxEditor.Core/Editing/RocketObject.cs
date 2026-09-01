@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 using CtrDxEditor.Core.Document;
 
 namespace CtrDxEditor.Core.Editing
@@ -31,6 +34,30 @@ namespace CtrDxEditor.Core.Editing
         public static string ImpulseFor(LevelDocument? document)
         {
             return document?.UseTimeTravelRocketPhysics == true ? TimeTravelDefaultImpulse : DefaultImpulse;
+        }
+
+        /// <summary>The rockets in <paramref name="document"/>, in document order.</summary>
+        /// <param name="document">The level to search.</param>
+        /// <returns>Every rocket the level holds.</returns>
+        public static IEnumerable<LevelObject> RocketsIn(LevelDocument document)
+        {
+            return document.AllObjects.Where(o => o.Type == Element);
+        }
+
+        /// <summary>
+        /// Whether a settings change turned Time Travel rocket physics off on a level that already holds
+        /// rockets. Their authored impulse was chosen against that tuning and is deliberately left
+        /// untouched, so the editor points the author at it instead of rewriting it.
+        /// </summary>
+        /// <param name="before">The level's settings before the change.</param>
+        /// <param name="after">The settings the author confirmed.</param>
+        /// <param name="document">The level being edited.</param>
+        /// <returns>True when the author should be reminded to revisit rocket impulses.</returns>
+        public static bool ImpulseNeedsReview(LevelSettings before, LevelSettings after, LevelDocument document)
+        {
+            return before.UseTimeTravelRocketPhysics
+                && !after.UseTimeTravelRocketPhysics
+                && RocketsIn(document).Any();
         }
     }
 }
