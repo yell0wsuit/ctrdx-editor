@@ -208,20 +208,43 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(Math.Atan2(0, -1) + (Math.PI / 2), plan[1].Rotation, 6);
         }
 
-        /// <summary>Every link is either left white or shaded a grey in the game's [0.5, 1] range.</summary>
+        /// <summary>Every link is either left white or given one of the game's three mask shades.</summary>
         [Fact]
-        public void LinkTintsAreWhiteOrGrey()
+        public void LinkTintsAreWhiteOrAMaskShade()
+        {
+            IReadOnlyList<ChainSprite> plan = ChainSpritePlanner.Build(new Vec2(0, 0), new Vec2(300, 120), 340, seed: 12345);
+
+            (double R, double G, double B)[] allowed =
+            [
+                (0.78, 0.71, 0.795),
+                (0.85, 0.83, 0.9),
+                (0.88, 0.85, 0.91),
+                (1, 1, 1)
+            ];
+
+            Assert.All(plan, s =>
+            {
+                Assert.Contains(allowed, c => c.R == s.Tint.R && c.G == s.Tint.G && c.B == s.Tint.B);
+                Assert.Equal(1, s.Tint.A);
+            });
+            Assert.Contains(plan, s => s.Tint.R == 1);
+        }
+
+        /// <summary>A link sprite keeps its fourth corner white so the tint shades across the quad;
+        /// a midpoint sprite is flat.</summary>
+        [Fact]
+        public void LinkSpritesShadeTheirFourthCornerAndMidpointsDoNot()
         {
             IReadOnlyList<ChainSprite> plan = ChainSpritePlanner.Build(new Vec2(0, 0), new Vec2(300, 120), 340, seed: 12345);
 
             Assert.All(plan, s =>
             {
-                Assert.Equal(s.Tint.R, s.Tint.G);
-                Assert.Equal(s.Tint.G, s.Tint.B);
-                Assert.InRange(s.Tint.R, 0.5, 1.0);
-                Assert.Equal(1, s.Tint.A);
+                RopeRgba expected = s.QuadIndex == ChainSpritePlanner.LinkQuad ? new RopeRgba(1, 1, 1, 1) : s.Tint;
+                Assert.Equal(expected, s.CornerTint);
             });
-            Assert.Contains(plan, s => s.Tint.R == 1);
+
+            // The rule only shows up where a link is actually tinted, so make sure that case is covered.
+            Assert.Contains(plan, s => s.QuadIndex == ChainSpritePlanner.LinkQuad && s.Tint.R != 1);
         }
 
         /// <summary>The same seed always produces the same tints, so links never flicker across redraws.</summary>

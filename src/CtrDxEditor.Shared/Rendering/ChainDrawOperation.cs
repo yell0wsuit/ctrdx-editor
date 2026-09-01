@@ -19,15 +19,16 @@ namespace CtrDxEditor.Rendering
     /// <summary>
     /// Renders a chain rope's links through SkiaSharp, reproducing the game's <c>Bungee.DrawChain</c>:
     /// the same link art at every planned point, rotated onto the curve and multiplied by that link's
-    /// tint (half the links stay white, the rest take a grey shade).
+    /// tint (half the links stay white, the rest take one of three shades).
     /// </summary>
     /// <remarks>
-    /// This needs its own draw operation for the same reason the glow does: the tint is a per-sprite
+    /// This needs its own draw operation for the same reason the glow does: the tint is a per-vertex
     /// colour multiply, which Avalonia's <see cref="DrawingContext"/> cannot express - pushing opacity
-    /// instead would fade a link toward the background rather than darken it. Skia's modulate colour
-    /// filter is exactly the game's vertex-colour multiply, and folding the caller's opacity into that
-    /// filter's alpha keeps the pale "invisible grab" rendering working. On a non-Skia backend the
-    /// chain is simply not drawn, like the cord strips above it.
+    /// instead would fade a link toward the background rather than darken it. The game's tint is not
+    /// even flat across a sprite: a link keeps its fourth corner white, so the shade falls off across
+    /// the quad. That is a colour mesh rather than a single multiply, so each sprite is drawn as two
+    /// textured triangles whose vertex colours modulate the atlas, exactly as the game's vertex arrays
+    /// do. On a non-Skia backend the chain is simply not drawn, like the cord strips above it.
     /// </remarks>
     /// <param name="bounds">Control bounds for the custom draw operation.</param>
     /// <param name="view">Level-to-screen transform, applied on the Skia canvas so links zoom with the art.</param>
@@ -50,6 +51,9 @@ namespace CtrDxEditor.Rendering
         // the bitmap - the same caching the glow operation uses, and for the same reason: the atlas is
         // already decoded, so decoding it again per frame would be pure waste.
         private static readonly ConditionalWeakTable<Bitmap, SKImage> ImageCache = [];
+
+        // Bungee.BuildQuadIndices: two triangles per sprite over the game's four-corner order.
+        private static readonly ushort[] QuadIndices = [0, 1, 2, 3, 2, 1];
 
         /// <inheritdoc />
         public Rect Bounds { get; } = bounds;
@@ -89,6 +93,15 @@ namespace CtrDxEditor.Rendering
             canvas.Translate((float)view.PanX, (float)view.PanY);
             canvas.Scale((float)view.Zoom);
 
+            // Vertex texture coordinates address the whole atlas, so one shader covers both quads.
+            using SKShader shader = SKShader.CreateImage(
+                image, SKShaderTileMode.Clamp, SKShaderTileMode.Clamp, sampling);
+            using SKPaint paint = new() { IsAntialias = true, Shader = shader };
+
+            SKPoint[] positions = new SKPoint[4];
+            SKPoint[] texs = new SKPoint[4];
+            SKColor[] colors = new SKColor[4];
+
             foreach (ChainSprite sprite in links)
             {
                 IntRect frame = sprite.QuadIndex == ChainSpritePlanner.MidpointQuad ? midpointFrame : linkFrame;
@@ -97,28 +110,39 @@ namespace CtrDxEditor.Rendering
                 float halfW = (float)(frame.W / SpritePlacement.MapScale / 2);
                 float halfH = (float)(frame.H / SpritePlacement.MapScale / 2);
 
-                using SKPaint paint = new()
-                {
-                    IsAntialias = true,
-                    ColorFilter = SKColorFilter.CreateBlendMode(Tint(sprite.Tint, opacity), SKBlendMode.Modulate),
-                };
+                // The game's corner order, so its fourth (shaded) corner lands where it does there.
+                positions[0] = new SKPoint(-halfW, -halfH);
+                positions[1] = new SKPoint(halfW, -halfH);
+                positions[2] = new SKPoint(-halfW, halfH);
+                positions[3] = new SKPoint(halfW, halfH);
+
+                texs[0] = new SKPoint(frame.X, frame.Y);
+                texs[1] = new SKPoint(frame.X + frame.W, frame.Y);
+                texs[2] = new SKPoint(frame.X, frame.Y + frame.H);
+                texs[3] = new SKPoint(frame.X + frame.W, frame.Y + frame.H);
+
+                SKColor tint = Tint(sprite.Tint, opacity);
+                colors[0] = tint;
+                colors[1] = tint;
+                colors[2] = tint;
+                colors[3] = Tint(sprite.CornerTint, opacity);
 
                 int linkSave = canvas.Save();
                 canvas.Translate((float)sprite.Center.X, (float)sprite.Center.Y);
                 canvas.RotateRadians((float)sprite.Rotation);
-                canvas.DrawImage(
-                    image,
-                    new SKRect(frame.X, frame.Y, frame.X + frame.W, frame.Y + frame.H),
-                    new SKRect(-halfW, -halfH, halfW, halfH),
-                    sampling,
-                    paint);
+
+                // Positions are rotated by the canvas; texs stay in atlas space, which is what lets
+                // Skia derive the per-triangle mapping back onto the shader.
+                using SKVertices vertices = SKVertices.CreateCopy(
+                    SKVertexMode.Triangles, positions, texs, colors, QuadIndices);
+                canvas.DrawVertices(vertices, SKBlendMode.Modulate, paint);
                 canvas.RestoreToCount(linkSave);
             }
 
             canvas.RestoreToCount(save);
         }
 
-        // The game multiplies the sprite by a straight RGBA vertex colour; modulate against a
+        // The game multiplies the sprite by a straight RGBA vertex colour; modulating a
         // premultiplied-alpha image needs the colour premultiplied too, or a tinted link at reduced
         // opacity would keep more colour than alpha and fringe.
         private static SKColor Tint(RopeRgba tint, double opacity)

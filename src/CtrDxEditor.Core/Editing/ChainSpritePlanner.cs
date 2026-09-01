@@ -13,8 +13,10 @@ namespace CtrDxEditor.Core.Editing
     /// <param name="QuadIndex">Atlas quad to draw: <see cref="ChainSpritePlanner.LinkQuad"/> or <see cref="ChainSpritePlanner.MidpointQuad"/>.</param>
     /// <param name="Center">Sprite center in level units.</param>
     /// <param name="Rotation">Sprite rotation in radians, clockwise in screen space.</param>
-    /// <param name="Tint">Per-link color; white for half the links and a grey shade for the rest.</param>
-    public readonly record struct ChainSprite(int QuadIndex, Vec2 Center, double Rotation, RopeRgba Tint);
+    /// <param name="Tint">Per-link color; white for half the links and one of three shades for the rest.</param>
+    /// <param name="CornerTint">Color of the sprite's fourth corner, which a link sprite keeps white so
+    /// the tint shades across the quad. Equal to <paramref name="Tint"/> on a midpoint sprite.</param>
+    public readonly record struct ChainSprite(int QuadIndex, Vec2 Center, double Rotation, RopeRgba Tint, RopeRgba CornerTint);
 
     /// <summary>
     /// Lays out the sprites that draw a chain rope, porting the game's <c>Bungee.DrawChain</c> /
@@ -39,6 +41,14 @@ namespace CtrDxEditor.Core.Editing
 
         // Bungee.ChainDrawSamplePoints: bezier samples per control-point segment.
         private const int SamplePoints = 2;
+
+        // Bungee.ChainMaskRed / ChainMaskGreen / ChainMaskBlue: the three shades a tinted link takes.
+        private static readonly double[] MaskRed = [0.78, 0.85, 0.88];
+        private static readonly double[] MaskGreen = [0.71, 0.83, 0.85];
+        private static readonly double[] MaskBlue = [0.795, 0.9, 0.91];
+
+        // The untinted half of the links, and every link sprite's fourth corner.
+        private static readonly RopeRgba White = new(1, 1, 1, 1);
 
         /// <summary>
         /// Builds the chain sprites for a rope from <paramref name="a"/> (the grab) to
@@ -85,14 +95,20 @@ namespace CtrDxEditor.Core.Editing
             for (int i = 0; i < sampleCount; i++)
             {
                 double angle = i == 0 ? 0 : Angle(samples[i - 1], samples[i]);
-                sprites.Add(new ChainSprite(LinkQuad, samples[i], angle, Tint(seed, sprites.Count)));
+
+                // The game's first drawChain pass leaves a link's fourth corner opaque white, so a
+                // tinted link shades across the quad rather than sitting flat.
+                sprites.Add(new ChainSprite(LinkQuad, samples[i], angle, Tint(seed, sprites.Count), White));
             }
             for (int i = 0; i < sampleCount - 1; i++)
             {
                 Vec2 center = new(
                     samples[i].X + ((samples[i + 1].X - samples[i].X) * 0.5),
                     samples[i].Y + ((samples[i + 1].Y - samples[i].Y) * 0.5));
-                sprites.Add(new ChainSprite(MidpointQuad, center, Angle(samples[i], samples[i + 1]), Tint(seed, sprites.Count)));
+
+                // The second pass tints all four corners, so a midpoint sprite is flat.
+                RopeRgba tint = Tint(seed, sprites.Count);
+                sprites.Add(new ChainSprite(MidpointQuad, center, Angle(samples[i], samples[i + 1]), tint, tint));
             }
 
             return sprites;
@@ -118,12 +134,12 @@ namespace CtrDxEditor.Core.Editing
             uint hash = Hash(seed, index);
             if ((hash & 1) != 0)
             {
-                return new RopeRgba(1, 1, 1, 1);
+                return White;
             }
 
-            // Bungee.GetChainMaskColor: a grey in [0.5, 1].
-            double grey = 0.5 + (((hash >> 8) & 0xFF) / 255.0 * 0.5);
-            return new RopeRgba(grey, grey, grey, 1);
+            // Bungee.GetChainMaskColor: one of three shades, indexed at random.
+            int shade = (int)((hash >> 1) % (uint)MaskRed.Length);
+            return new RopeRgba(MaskRed[shade], MaskGreen[shade], MaskBlue[shade], 1);
         }
 
         // Bungee.HashChainSprite. Deliberately unchecked: the game relies on the wrap-around.
