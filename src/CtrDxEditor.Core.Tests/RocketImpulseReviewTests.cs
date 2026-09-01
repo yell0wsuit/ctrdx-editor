@@ -8,9 +8,9 @@ using Xunit;
 namespace CtrDxEditor.Core.Tests
 {
     /// <summary>
-    /// Tests the reminder that fires when a level drops Time Travel's rocket physics. Rockets already
-    /// placed keep the impulse they were authored with, so the editor points the author at them rather
-    /// than rewriting values it did not choose.
+    /// Tests the reminder that fires when a level switches Time Travel's rocket physics either way.
+    /// Rockets already placed keep the impulse they were authored with, so the editor points the user at
+    /// them rather than rewriting values it did not choose.
     /// </summary>
     public class RocketImpulseReviewTests
     {
@@ -41,7 +41,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(RocketObject.ImpulseNeedsReview(doc.Settings, doc.Settings, doc));
         }
 
-        /// <summary>A level that never used the flag has nothing to be reminded about.</summary>
+        /// <summary>A level whose flag is off and stays off has nothing to be reminded about.</summary>
         [Fact]
         public void ALevelWithoutTheFlagStaysQuiet()
         {
@@ -72,6 +72,41 @@ namespace CtrDxEditor.Core.Tests
                 "<rocket x=\"10\" y=\"20\" impulse=\"5\" /><star x=\"1\" y=\"2\" /><rocket x=\"30\" y=\"40\" impulse=\"7\" />");
 
             Assert.Equal(2, RocketObject.RocketsIn(doc).Count());
+        }
+
+        /// <summary>
+        /// Switching the option on is the more damaging direction - the game reads the authored number
+        /// three times larger - so it earns the same reminder.
+        /// </summary>
+        [Fact]
+        public void TurningTheFlagOnWithRocketsAsksForAReview()
+        {
+            LevelDocument doc = Doc("useMobilePhysics=\"true\"", "<rocket x=\"10\" y=\"20\" impulse=\"20\" />");
+
+            Assert.True(RocketObject.ImpulseNeedsReview(doc.Settings, On(doc.Settings), doc));
+        }
+
+        /// <summary>With no rocket placed, switching the option on has nothing to warn about.</summary>
+        [Fact]
+        public void TurningTheFlagOnWithoutRocketsStaysQuiet()
+        {
+            LevelDocument doc = Doc("useMobilePhysics=\"true\"", "<star x=\"10\" y=\"20\" />");
+
+            Assert.False(RocketObject.ImpulseNeedsReview(doc.Settings, On(doc.Settings), doc));
+        }
+
+        /// <summary>Ticking the option and ticking it back leaves the level as it was, so nothing is said.</summary>
+        [Fact]
+        public void ReturningTheFlagToItsStartingValueStaysQuiet()
+        {
+            LevelDocument doc = Doc("useMobilePhysics=\"true\"", "<rocket x=\"10\" y=\"20\" impulse=\"20\" />");
+
+            Assert.False(RocketObject.ImpulseNeedsReview(doc.Settings, Off(On(doc.Settings)), doc));
+        }
+
+        private static LevelSettings On(LevelSettings settings)
+        {
+            return settings with { UseMobilePhysics = true, UseTimeTravelRocketPhysics = true };
         }
 
         private static LevelSettings Off(LevelSettings settings)

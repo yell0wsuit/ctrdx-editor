@@ -45,18 +45,19 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// Whether a settings change turned Time Travel rocket physics off on a level that already holds
-        /// rockets. Their authored impulse was chosen against that tuning and is deliberately left
-        /// untouched, so the editor points the author at it instead of rewriting it.
+        /// Whether a settings change switched Time Travel rocket physics either way on a level that
+        /// already holds rockets. Their authored impulse was chosen against the model the level used
+        /// before, and is deliberately left untouched, so the editor points the user at it instead of
+        /// rewriting it. Both directions matter: the game reads the same number three times larger under
+        /// the Time Travel model, so rockets end up as sluggish one way as they are violent the other.
         /// </summary>
         /// <param name="before">The level's settings before the change.</param>
-        /// <param name="after">The settings the author confirmed.</param>
+        /// <param name="after">The settings the user chose.</param>
         /// <param name="document">The level being edited.</param>
-        /// <returns>True when the author should be reminded to revisit rocket impulses.</returns>
+        /// <returns>True when the user should be reminded to revisit rocket impulses.</returns>
         public static bool ImpulseNeedsReview(LevelSettings before, LevelSettings after, LevelDocument document)
         {
-            return before.UseTimeTravelRocketPhysics
-                && !after.UseTimeTravelRocketPhysics
+            return before.UseTimeTravelRocketPhysics != after.UseTimeTravelRocketPhysics
                 && RocketsIn(document).Any();
         }
     }

@@ -155,9 +155,9 @@ namespace CtrDxEditor.Views
         }
 
         /// <summary>
-        /// Points the author at rockets whose impulse was authored against Time Travel's rocket physics
-        /// once that option is switched off, and reports whether the notice was shown. Nothing is
-        /// rewritten - the values are theirs to choose.
+        /// Points the user at rockets whose impulse was authored against the rocket physics the level used
+        /// before the option was switched, either way, and reports whether the notice was shown. Nothing
+        /// is rewritten - the values are theirs to choose.
         /// </summary>
         /// <remarks>
         /// Stacks on the open settings dialog the way <c>HelpButton</c> stacks its help: a scrim over the
@@ -175,7 +175,9 @@ namespace CtrDxEditor.Views
             MessageDialog reminder = new()
             {
                 Header = Localizer.Get("Dialog.LevelSettings.RocketImpulseReview"),
-                Message = Localizer.Get("Dialog.LevelSettings.RocketImpulseReviewBody"),
+                Message = Localizer.Get(edited.UseTimeTravelRocketPhysics
+                    ? "Dialog.LevelSettings.RocketImpulseReviewBodyOn"
+                    : "Dialog.LevelSettings.RocketImpulseReviewBodyOff"),
             };
 
             DialogSession? parentSession = DialogHost.GetDialogSession(null);
