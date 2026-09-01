@@ -1,6 +1,8 @@
 using System.Linq;
 
 using CtrDxEditor.Core.Descriptors;
+using CtrDxEditor.Core.Document;
+using CtrDxEditor.Core.Editing;
 
 using Xunit;
 
@@ -52,6 +54,59 @@ namespace CtrDxEditor.Core.Tests
             AttributeSpec isRotatable = rocket.Attributes.Single(a => a.Name == "isRotatable");
             Assert.Equal(AttrType.Bool, isRotatable.Type);
             Assert.Equal("false", isRotatable.Default);
+        }
+
+        /// <summary>
+        /// The game scales an authored impulse into world coordinates only under the Time Travel rocket
+        /// model, so a rocket placed in such a level starts from the smaller level-coordinate value.
+        /// </summary>
+        [Fact]
+        public void PlacingARocketInATimeTravelLevelDefaultsToTheSmallerImpulse()
+        {
+            LevelObject rocket = Place(Doc("useMobilePhysics=\"true\" useTimeTravelRocketPhysics=\"true\""));
+
+            Assert.Equal("5", rocket.GetAttr("impulse"));
+            Assert.Equal("0.6", rocket.GetAttr("impulseFactor"));
+        }
+
+        /// <summary>Without the flag the rocket keeps the world-tuned desktop Experiments default.</summary>
+        [Fact]
+        public void PlacingARocketWithoutTimeTravelPhysicsKeepsTheDescriptorImpulse()
+        {
+            Assert.Equal("20", Place(Doc("useMobilePhysics=\"true\"")).GetAttr("impulse"));
+            Assert.Equal("20", Place(Doc("")).GetAttr("impulse"));
+        }
+
+        /// <summary>The flag is a mode of mobile physics, so on its own it does not move the default.</summary>
+        [Fact]
+        public void TheTimeTravelImpulseNeedsMobilePhysicsToo()
+        {
+            Assert.Equal("20", Place(Doc("useTimeTravelRocketPhysics=\"true\"")).GetAttr("impulse"));
+        }
+
+        /// <summary>Callers with no level context still get the descriptor default.</summary>
+        [Fact]
+        public void PlacingARocketWithoutADocumentKeepsTheDescriptorImpulse()
+        {
+            Assert.Equal("20", Place(null).GetAttr("impulse"));
+        }
+
+        private static LevelObject Place(LevelDocument? doc)
+        {
+            return Placement.CreateObject(DescriptorTable.CtrObjects.For("rocket")!, 10, 20, doc);
+        }
+
+        private static LevelDocument Doc(string designAttributes)
+        {
+            return LevelDocument.Parse($"""
+                <map>
+                    <layer name="settings">
+                        <map gridSize="32" width="1024" height="576" />
+                        <gameDesign {designAttributes} />
+                    </layer>
+                    <layer name="Objects" />
+                </map>
+                """);
         }
     }
 }
