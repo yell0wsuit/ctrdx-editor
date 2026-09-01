@@ -1708,7 +1708,7 @@ namespace CtrDxEditor.ViewModels
             }
 
             CaptureUndoSnapshot();
-            LevelObject obj = Placement.CreateObject(d, levelX, levelY);
+            LevelObject obj = Placement.CreateObject(d, levelX, levelY, Document);
             LevelObjectPolicy.ApplyDefaults(obj, Document);
             if (TutorialObject.IsText(obj.Type))
             {

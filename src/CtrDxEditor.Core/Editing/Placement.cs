@@ -13,7 +13,14 @@ namespace CtrDxEditor.Core.Editing
         private const double HandSegmentLength = 50;
 
         /// <summary>Creates an object at the supplied level coordinates with descriptor defaults applied.</summary>
-        public static LevelObject CreateObject(ObjectDescriptor descriptor, int x, int y)
+        /// <param name="descriptor">The object being placed.</param>
+        /// <param name="x">Level X coordinate.</param>
+        /// <param name="y">Level Y coordinate.</param>
+        /// <param name="document">
+        /// The level being placed into, when known. Only defaults that depend on the level's settings
+        /// consult it; the rest come from the descriptor.
+        /// </param>
+        public static LevelObject CreateObject(ObjectDescriptor descriptor, int x, int y, LevelDocument? document = null)
         {
             XElement element = new(descriptor.ElementName);
             element.SetAttributeValue("x", x.ToString(CultureInfo.InvariantCulture));
@@ -28,6 +35,12 @@ namespace CtrDxEditor.Core.Editing
             if (descriptor.ElementName == "electro")
             {
                 element.SetAttributeValue("size", "5");
+            }
+            if (descriptor.ElementName == RocketObject.Element)
+            {
+                // Time Travel levels author impulse in level coordinates and the game scales it up, so
+                // the desktop Experiments default would launch far too hard there.
+                element.SetAttributeValue("impulse", RocketObject.ImpulseFor(document));
             }
 
             LevelObject result = new(element);

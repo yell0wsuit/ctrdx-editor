@@ -209,11 +209,11 @@ namespace CtrDxEditor.Core.Descriptors
             ], MaxCount: int.MaxValue),
 
             // Rocket
-            new ObjectDescriptor("rocket", "Rocket",
+            new ObjectDescriptor(RocketObject.Element, "Rocket",
             [
                 new AttributeSpec("angle", AttrType.Number, "0"),
-                new AttributeSpec("impulse", AttrType.Number, "20"),
-                new AttributeSpec("impulseFactor", AttrType.Number, "0.6"),
+                new AttributeSpec("impulse", AttrType.Number, RocketObject.DefaultImpulse),
+                new AttributeSpec("impulseFactor", AttrType.Number, RocketObject.DefaultImpulseFactor),
                 new AttributeSpec("time", AttrType.Number, "-1"),
                 new AttributeSpec("isRotatable", AttrType.Bool, "false"),
             ], MaxCount: int.MaxValue, Game: "Cut the Rope: Experiments"),
