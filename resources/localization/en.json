@@ -686,6 +686,8 @@
     "Dialog.LevelSettings.Save": "Save",
 
     "Dialog.Validation.Header": "This level may not be playable",
+    "Dialog.Validation.HeaderErrors": "Some content will not appear in the game",
+    "Dialog.Validation.Errors": "The game will drop these:",
     "Dialog.Validation.Body": "Reasons:",
     "Dialog.Validation.SavePrompt": "Save it anyway?",
     "Dialog.Validation.SaveProceed": "Save anyway",

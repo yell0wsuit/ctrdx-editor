@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
@@ -198,13 +199,30 @@ namespace CtrDxEditor.Views
         private static async Task<bool> ConfirmValidationAsync(
             IReadOnlyList<LevelWarning> warnings, string promptKey, string proceedKey)
         {
-            string body = Localizer.Get("Dialog.Validation.Body") + "\n\n"
-                + string.Join("\n", warnings.Select(w => "- " + Localizer.Format(w))) + "\n\n"
-                + Localizer.Get(promptKey);
+            LevelWarning[] errors = [.. warnings.Where(w => w.Severity == LevelWarningSeverity.Error)];
+            LevelWarning[] advisories = [.. warnings.Where(w => w.Severity != LevelWarningSeverity.Error)];
+            StringBuilder body = new();
+            if (errors.Length > 0)
+            {
+                body.AppendLine(Localizer.Get("Dialog.Validation.Errors"));
+                body.AppendLine(string.Join("\n", errors.Select(w => "- " + Localizer.Format(w))));
+                body.AppendLine();
+            }
+
+            if (advisories.Length > 0)
+            {
+                body.AppendLine(Localizer.Get("Dialog.Validation.Body"));
+                body.AppendLine(string.Join("\n", advisories.Select(w => "- " + Localizer.Format(w))));
+                body.AppendLine();
+            }
+
+            body.Append(Localizer.Get(promptKey));
             ConfirmDialog dialog = new()
             {
-                Header = Localizer.Get("Dialog.Validation.Header"),
-                Message = body,
+                Header = Localizer.Get(errors.Length > 0
+                    ? "Dialog.Validation.HeaderErrors"
+                    : "Dialog.Validation.Header"),
+                Message = body.ToString(),
                 PositiveText = Localizer.Get(proceedKey),
                 NegativeText = Localizer.Get("Dialog.Common.Cancel"),
             };
