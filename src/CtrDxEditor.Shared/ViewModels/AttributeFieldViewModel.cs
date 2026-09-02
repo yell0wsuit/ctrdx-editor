@@ -199,7 +199,7 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        /// <inheritdoc cref="IsText" />
+        /// <summary>Whether this field renders as a free-form text box.</summary>
         public bool IsText => EnumOptions is null && !IsBool && !IsNumeric && !IsColor;
 
         /// <summary>Whether the field's control is interactive; false greys it out.</summary>
