@@ -128,5 +128,33 @@ namespace CtrDxEditor.Core.Tests
         {
             Assert.Null(TutorialMotion.Timed(Prompt(("path", "100,0,200,0"), ("ease", "in,out,none"))));
         }
+
+        /// <summary>
+        /// A genuinely circular path (RC.../RW...) is rejected by the IsCircularPath guard itself.
+        /// "R50" in CircularPathIsNotTimedMotion never reaches this branch - RelativePolyline.Points
+        /// can't parse a comma-free string into offsets, so that test passes via the separate
+        /// zero-offsets guard instead. This test forces IsCircularPath's true branch specifically.
+        /// </summary>
+        [Fact]
+        public void GenuinelyCircularPathIsRejectedByTheCircularGuard()
+        {
+            Assert.Null(TutorialMotion.Timed(Prompt(("path", "RC50"), ("ease", "in"))));
+        }
+
+        /// <summary>
+        /// A mid-leg eased position lands at the eased fraction, not the linear one. The second leg
+        /// only moves in Y (X target equals the previous point), so a swapped X/Y axis would show up
+        /// as X drifting when it should hold steady. Using a different ease per leg (none, then in)
+        /// also catches a wrong per-leg Eases index, since linear (0.5) and eased-in (0.25) diverge.
+        /// </summary>
+        [Fact]
+        public void EasedMidLegUsesTheLegsOwnEaseNotLinear()
+        {
+            Vec2 anchor = new(10, 20);
+            TutorialMotion motion = TutorialMotion.Timed(
+                Prompt(("path", "100,0,100,100"), ("moveSpeed", "100"), ("ease", "none,in")))!;
+
+            Assert.Equal(new Vec2(110, 45), motion.PositionAt(1.5, anchor));
+        }
     }
 }
