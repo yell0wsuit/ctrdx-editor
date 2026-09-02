@@ -75,6 +75,15 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains("Validation.Tutorial.TravelExceedsPass", Keys(Level(element)));
         }
 
+        /// <summary>The comparison uses the game's float parsing and arithmetic at the rounding boundary.</summary>
+        [Fact]
+        public void TravelComparisonUsesGameFloatArithmetic()
+        {
+            string element = """<tutorial01 x="1" y="1" path="1,0" moveSpeed="1.00000005" ease="none" fadeIn="0" duration="0.999999955" fadeOut="0" />""";
+
+            Assert.Contains("Validation.Tutorial.TravelExceedsPass", Keys(Level(element)));
+        }
+
         /// <summary>Split subjects are legal once the level authors two parts.</summary>
         [Fact]
         public void SplitSubjectIsLegalInATwoPartLevel()
