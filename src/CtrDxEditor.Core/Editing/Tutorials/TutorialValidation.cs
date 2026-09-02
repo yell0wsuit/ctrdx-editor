@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -248,73 +247,22 @@ namespace CtrDxEditor.Core.Editing
             return parts.Length == 1 || parts.Length == legs;
         }
 
+        /// <summary>
+        /// Whether authored travel outruns its pass, at the game's own float precision - the two
+        /// quantities come from <see cref="TutorialMotion.TravelSecondsAtGameFloatPrecision"/> and
+        /// <see cref="TutorialTiming.PassSecondsAtGameFloatPrecision"/>, which own the game's default
+        /// constants and its exact arithmetic, so this rule carries neither.
+        /// </summary>
         private static bool TravelExceedsPass(LevelObject prompt)
         {
-            if (!OptionalGameFloat(prompt.GetAttr("moveSpeed"), 100f, out float speed) || speed <= 0f
-                || !OptionalGameFloat(prompt.GetAttr("moveDelay"), 0f, out float moveDelay) || moveDelay < 0f
-                || !OptionalGameFloat(prompt.GetAttr("fadeIn"), 1f, out float fadeIn) || fadeIn < 0f
-                || !OptionalGameFloat(prompt.GetAttr("fadeOut"), 0.5f, out float fadeOut) || fadeOut < 0f)
+            float? travelSeconds = TutorialMotion.TravelSecondsAtGameFloatPrecision(prompt);
+            float? passSeconds = TutorialTiming.PassSecondsAtGameFloatPrecision(prompt);
+            if (travelSeconds is null || passSeconds is null)
             {
                 return false;
             }
 
-            float defaultHold = TutorialObject.IsText(prompt.Type) ? 5f : 5.2f;
-            if (!OptionalGameFloat(prompt.GetAttr("duration"), defaultHold, out float hold)
-                || (hold < 0f && hold != TutorialTiming.ForeverHold))
-            {
-                return false;
-            }
-
-            float passSeconds = hold == TutorialTiming.ForeverHold
-                ? float.MaxValue
-                : fadeIn + hold + fadeOut;
-            float travelSeconds = moveDelay;
-            float previousX = 0f;
-            float previousY = 0f;
-            string path = prompt.GetAttr("path")!;
-            string trimmed = path.EndsWith(',') ? path[..^1] : path;
-            string[] parts = trimmed.Split(',');
-            for (int pair = 0; pair < parts.Length; pair += 2)
-            {
-                if (!PathComponent(parts[pair], out float x)
-                    || !PathComponent(parts[pair + 1], out float y))
-                {
-                    return false;
-                }
-
-                float dx = x - previousX;
-                float dy = y - previousY;
-                float distance = MathF.Sqrt((dx * dx) + (dy * dy));
-                travelSeconds += distance / speed;
-                previousX = x;
-                previousY = y;
-            }
-
-            return passSeconds - travelSeconds < 0f;
-        }
-
-        private static bool OptionalGameFloat(string? value, float fallback, out float parsed)
-        {
-            if (value is null)
-            {
-                parsed = fallback;
-                return true;
-            }
-
-            return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)
-                && float.IsFinite(parsed);
-        }
-
-        private static bool PathComponent(string value, out float parsed)
-        {
-            if (value.Length == 0)
-            {
-                parsed = 0f;
-                return true;
-            }
-
-            return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)
-                && float.IsFinite(parsed);
+            return passSeconds.Value - travelSeconds.Value < 0f;
         }
 
         private static bool TryRepeat(string? value, out int repeat)

@@ -40,6 +40,9 @@ namespace CtrDxEditor.Core.Editing
     /// </summary>
     public sealed class TutorialMotion
     {
+        /// <summary>The game's moveSpeed default (TutorialPromptLoader.Parse), world units per second.</summary>
+        private const double DefaultMoveSpeed = 100.0;
+
         private TutorialMotion(
             IReadOnlyList<Vec2> offsets,
             IReadOnlyList<TutorialEase> eases,
@@ -112,7 +115,7 @@ namespace CtrDxEditor.Core.Editing
                 return null;
             }
 
-            double speed = Positive(o.GetAttr("moveSpeed"), 100.0);
+            double speed = Positive(o.GetAttr("moveSpeed"), DefaultMoveSpeed);
             double[] legs = new double[offsets.Length];
             Vec2 previous = new(0, 0);
             for (int leg = 0; leg < offsets.Length; leg++)
@@ -122,6 +125,57 @@ namespace CtrDxEditor.Core.Editing
             }
 
             return new TutorialMotion(offsets, eases, legs, NonNegative(o.GetAttr("moveDelay"), 0.0));
+        }
+
+        /// <summary>
+        /// Seconds authored travel takes for one pass in Timed mode, evaluated at the game's float
+        /// precision instead of <see cref="TravelSeconds"/>'s double. Mirrors the game's own
+        /// TutorialMotion.Parse arithmetic exactly - float moveSpeed, float path components, MathF.Sqrt -
+        /// so a comparison against <see cref="TutorialTiming.PassSecondsAtGameFloatPrecision"/> lands on
+        /// the same side of the rounding boundary the game does. Returns null when the prompt is not in
+        /// Timed mode, its path is circular, or moveSpeed, moveDelay or a path component fails the
+        /// game's own strict float parse (non-finite, unparseable, or out of range).
+        /// </summary>
+        public static float? TravelSecondsAtGameFloatPrecision(LevelObject o)
+        {
+            if (ModeOf(o) != TutorialMotionMode.Timed || MoverPath.IsCircularPath(o.GetAttr("path")))
+            {
+                return null;
+            }
+
+            if (!GameFloat.TryPositive(o.GetAttr("moveSpeed"), (float)DefaultMoveSpeed, out float speed)
+                || !GameFloat.TryNonNegative(o.GetAttr("moveDelay"), 0f, out float moveDelay))
+            {
+                return null;
+            }
+
+            string path = o.GetAttr("path")!;
+            string trimmed = path.EndsWith(',') ? path[..^1] : path;
+            string[] parts = trimmed.Split(',');
+            if (parts.Length == 0 || parts.Length % 2 != 0)
+            {
+                return null;
+            }
+
+            float travel = moveDelay;
+            float previousX = 0f;
+            float previousY = 0f;
+            for (int pair = 0; pair < parts.Length; pair += 2)
+            {
+                if (!GameFloat.TryPathComponent(parts[pair], out float x)
+                    || !GameFloat.TryPathComponent(parts[pair + 1], out float y))
+                {
+                    return null;
+                }
+
+                float dx = x - previousX;
+                float dy = y - previousY;
+                travel += MathF.Sqrt((dx * dx) + (dy * dy)) / speed;
+                previousX = x;
+                previousY = y;
+            }
+
+            return travel;
         }
 
         /// <summary>The eased fraction of a leg travelled, integrating the game's constant acceleration.</summary>

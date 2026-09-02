@@ -23,15 +23,27 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Authored pass count meaning "repeat until the level ends".</summary>
         public const int ForeverRepeat = -1;
 
+        /// <summary>The game's fadeIn default (TutorialPromptLoader.Parse), in seconds.</summary>
+        private const double DefaultFadeIn = 1.0;
+
+        /// <summary>The game's fadeOut default (TutorialPromptLoader.Parse), in seconds.</summary>
+        private const double DefaultFadeOut = 0.5;
+
+        /// <summary>The game's hold default for tutorialText prompts (TutorialPromptLoader.Parse), in seconds.</summary>
+        private const double DefaultTextHold = 5.0;
+
+        /// <summary>The game's hold default for sign prompts (TutorialPromptLoader.Parse), in seconds.</summary>
+        private const double DefaultSignHold = 5.2;
+
         /// <summary>Reads a prompt's timing, defaulting the hold by element kind as the loader does.</summary>
         public static TutorialTiming For(LevelObject o)
         {
-            double defaultHold = TutorialObject.IsText(o.Type) ? 5.0 : 5.2;
+            double defaultHold = TutorialObject.IsText(o.Type) ? DefaultTextHold : DefaultSignHold;
             return new TutorialTiming(
                 NonNegative(o.GetAttr("delay"), 0.0),
-                NonNegative(o.GetAttr("fadeIn"), 1.0),
+                NonNegative(o.GetAttr("fadeIn"), DefaultFadeIn),
                 HoldOf(o.GetAttr("duration"), defaultHold),
-                NonNegative(o.GetAttr("fadeOut"), 0.5),
+                NonNegative(o.GetAttr("fadeOut"), DefaultFadeOut),
                 RepeatOf(o.GetAttr("repeat")));
         }
 
@@ -45,6 +57,28 @@ namespace CtrDxEditor.Core.Editing
         public double PassSeconds => HoldsForever
             ? double.PositiveInfinity
             : FadeIn + Hold + FadeOut;
+
+        /// <summary>
+        /// Seconds one pass occupies, evaluated at the game's float precision instead of
+        /// <see cref="PassSeconds"/>'s double. Mirrors TutorialPromptLoader.Parse's fadeIn + hold +
+        /// fadeOut exactly, including its use of float.MaxValue as the forever-hold stand-in, so a
+        /// comparison against <see cref="TutorialMotion.TravelSecondsAtGameFloatPrecision"/> lands on
+        /// the same side of the rounding boundary the game does. Returns null when fadeIn, fadeOut or
+        /// duration fails the game's own strict float parse (non-finite, unparseable, or negative other
+        /// than the forever sentinel).
+        /// </summary>
+        public static float? PassSecondsAtGameFloatPrecision(LevelObject o)
+        {
+            float defaultHold = TutorialObject.IsText(o.Type) ? (float)DefaultTextHold : (float)DefaultSignHold;
+            if (!GameFloat.TryNonNegative(o.GetAttr("fadeIn"), (float)DefaultFadeIn, out float fadeIn)
+                || !GameFloat.TryNonNegative(o.GetAttr("fadeOut"), (float)DefaultFadeOut, out float fadeOut)
+                || !TryHoldGameFloat(o.GetAttr("duration"), defaultHold, out float hold))
+            {
+                return null;
+            }
+
+            return hold == (float)ForeverHold ? float.MaxValue : fadeIn + hold + fadeOut;
+        }
 
         /// <summary>Seconds the whole prompt occupies, or null when it never ends.</summary>
         public double? TotalSeconds => HoldsForever || RepeatsForever
@@ -105,6 +139,12 @@ namespace CtrDxEditor.Core.Editing
                 && parsed == ForeverHold
                     ? ForeverHold
                     : NonNegative(value, fallback);
+        }
+
+        /// <summary>As <see cref="GameFloat.TryNonNegative"/>, additionally accepting the forever sentinel.</summary>
+        private static bool TryHoldGameFloat(string? value, float fallback, out float parsed)
+        {
+            return GameFloat.TryOptional(value, fallback, out parsed) && (parsed >= 0f || parsed == (float)ForeverHold);
         }
 
         private static int RepeatOf(string? value)
