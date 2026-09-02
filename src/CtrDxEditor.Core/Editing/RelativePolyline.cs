@@ -21,11 +21,12 @@ namespace CtrDxEditor.Core.Editing
                 return [.. points];
             }
 
-            string[] parts = path.Split(',');
+            string trimmed = path.EndsWith(',') ? path[..^1] : path;
+            string[] parts = trimmed.Split(',');
             for (int i = 0; i + 1 < parts.Length; i += 2)
             {
-                if (!double.TryParse(parts[i], NumberStyles.Float, CultureInfo.InvariantCulture, out double x)
-                    || !double.TryParse(parts[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                if (!TryComponent(parts[i], out double x)
+                    || !TryComponent(parts[i + 1], out double y))
                 {
                     continue;
                 }
@@ -146,6 +147,19 @@ namespace CtrDxEditor.Core.Editing
             List<Vec2> edited = [.. points];
             edited.RemoveAt(index);
             return Serialize(anchor, edited);
+        }
+
+        /// <summary>An empty component reads as zero and a trailing comma is ignored, matching the game's
+        /// TutorialMotion.ParseOffsets, so a hand-authored path draws here exactly as it moves there.</summary>
+        private static bool TryComponent(string part, out double value)
+        {
+            if (part.Length == 0)
+            {
+                value = 0;
+                return true;
+            }
+
+            return double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
         }
 
         private static string Format(double value)
