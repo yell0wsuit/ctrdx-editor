@@ -20,5 +20,8 @@ namespace CtrDxEditor.Core.Descriptors
 
         /// <summary>A free-form text attribute.</summary>
         Text,
+
+        /// <summary>A color attribute, authored as <c>#RRGGBB</c> or an <c>R,G,B</c> triplet.</summary>
+        Color,
     }
 }

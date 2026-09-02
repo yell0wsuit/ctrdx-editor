@@ -93,6 +93,16 @@
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                  Text="{Binding Value, Mode=TwoWay}" />
+        <DockPanel Grid.Column="1" IsVisible="{Binding IsColor}" LastChildFill="True">
+          <Border DockPanel.Dock="Left" Width="24" Height="24" Margin="0,0,6,0" CornerRadius="4"
+                  VerticalAlignment="Center"
+                  Background="{Binding Value, Converter={x:Static conv:ColorSwatchConverters.Background}}"
+                  BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+                  BorderThickness="1" />
+          <TextBox IsEnabled="{Binding IsEnabled}"
+                   Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
+                   Text="{Binding Value, Mode=TwoWay}" />
+        </DockPanel>
       </Grid>
     </DataTemplate>
   </UserControl.Resources>

@@ -38,6 +38,7 @@ namespace CtrDxEditor.ViewModels
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
+            IsColor = type == AttrType.Color;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(localizationName, v))).ToArray();
             HelpText = ConventionHelp(localizationName);
@@ -87,6 +88,7 @@ namespace CtrDxEditor.ViewModels
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
+            IsColor = type == AttrType.Color;
             HelpText = ConventionHelp(labelName ?? name);
             _get = get;
             _set = set;
@@ -153,6 +155,9 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Whether this numeric field accepts decimal values.</summary>
         public bool AllowsDecimal { get; }
 
+        /// <summary>Whether this field edits a color, shown as a swatch beside a hex box.</summary>
+        public bool IsColor { get; }
+
         /// <summary>
         /// Smallest value a numeric field accepts. Lengths and radii are magnitudes and cannot go
         /// negative in game; coordinates and sentinel fields (e.g. timeout = -1) can, so they keep the
@@ -194,8 +199,8 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        /// <summary>Whether this field renders as a free-form text box.</summary>
-        public bool IsText => EnumOptions is null && !IsBool && !IsNumeric;
+        /// <inheritdoc cref="IsText" />
+        public bool IsText => EnumOptions is null && !IsBool && !IsNumeric && !IsColor;
 
         /// <summary>Whether the field's control is interactive; false greys it out.</summary>
         [ObservableProperty]
