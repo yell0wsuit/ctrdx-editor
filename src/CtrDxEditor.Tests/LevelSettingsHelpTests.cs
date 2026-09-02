@@ -17,7 +17,6 @@ namespace CtrDxEditor.Tests
             "Resolution|ResolutionDescription",
             "RopePhysicsSpeed|RopePhysicsSpeedDescription",
             "Gravity|GravityDescription",
-            "Special|SpecialDescription",
             "HalfCandy|HalfCandyDescription",
             "NightLevel|NightLevelDescription",
             "MobilePhysics|MobilePhysicsDescription",

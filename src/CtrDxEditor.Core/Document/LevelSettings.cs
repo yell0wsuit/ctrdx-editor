@@ -17,7 +17,6 @@ namespace CtrDxEditor.Core.Document
     /// <param name="Width">Level width in map units.</param>
     /// <param name="Height">Level height in map units.</param>
     /// <param name="RopePhysicsSpeed">Rope simulation speed multiplier.</param>
-    /// <param name="Special">Special tutorial-trigger identifier.</param>
     /// <param name="TwoParts">Whether the level uses the split two-candy layout.</param>
     /// <param name="NightLevel">Whether the level uses night-level visuals.</param>
     /// <param name="UseMobilePhysics">Whether the level requests the mobile physics model.</param>
@@ -47,7 +46,6 @@ namespace CtrDxEditor.Core.Document
         int Width,
         int Height,
         float RopePhysicsSpeed,
-        int Special,
         bool TwoParts,
         bool NightLevel,
         bool UseMobilePhysics = false,

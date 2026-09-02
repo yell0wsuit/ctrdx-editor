@@ -20,7 +20,7 @@ namespace CtrDxEditor.Tests
         {
             LevelCanvas canvas = new()
             {
-                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, false, false)),
                 PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, x, y),
             };
 
@@ -35,7 +35,7 @@ namespace CtrDxEditor.Tests
         {
             LevelCanvas canvas = new()
             {
-                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, false, false)),
                 View = ViewTransform.Identity,
                 PlaceAt = (_, x, y) => Placement.CreateObject(DescriptorTable.CtrObjects.For("star")!, x, y),
             };
@@ -52,7 +52,7 @@ namespace CtrDxEditor.Tests
             LevelObject? created = null;
             LevelCanvas canvas = new()
             {
-                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, false, false)),
                 PlaceAt = (_, x, y) => created = Placement.CreateObject(
                     DescriptorTable.CtrObjects.For(AntPath.Element)!, x, y),
             };
@@ -70,7 +70,7 @@ namespace CtrDxEditor.Tests
             LevelObject? created = null;
             LevelCanvas canvas = new()
             {
-                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, false, false)),
+                Document = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, false, false)),
                 PlaceAt = (_, x, y) => created = Placement.CreateObject(
                     DescriptorTable.CtrObjects.For("pipe")!, x, y),
             };

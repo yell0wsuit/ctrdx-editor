@@ -20,9 +20,6 @@ namespace CtrDxEditor.ViewModels
     /// <summary>One selectable level resolution; <see cref="IsCustom"/> enables the manual width/height inputs.</summary>
     public sealed record ResolutionPreset(string Label, int Width, int Height, bool IsCustom);
 
-    /// <summary>One selectable special (tutorial-staging) value: user-facing label, XML integer. <see cref="IsCustom"/> reveals the manual input.</summary>
-    public sealed record SpecialOption(string Label, int Value, bool IsCustom = false);
-
     /// <summary>One selectable rope skin; Id -1 is the Random sentinel, 0 is Default, 1..8 are skins.</summary>
     public sealed partial class RopeSkinOption(int id, string label) : ObservableObject
     {
@@ -108,7 +105,6 @@ namespace CtrDxEditor.ViewModels
         private const int MinWidth = 320;
         private const int MinHeight = 480;
         private const int MaxDimension = 9999;
-        private const int MaxSpecial = 99;
         private const int MinRopeSpeed = -100;
         private const int MaxRopeSpeed = 100;
         private const int MaxWater = 10000;
@@ -136,18 +132,6 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         [ObservableProperty] public partial string LevelName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Selectable special values. Only 0/1 make sense for a custom level (special stages the game's
-        /// built-in tutorial prompts, which the editor can't place); other values are inert here. An
-        /// imported level carrying a different value gets it added as an extra option, so it round-trips.
-        /// </summary>
-        public ObservableCollection<SpecialOption> SpecialOptions { get; } =
-        [
-            new(Localizer.Get("Dialog.LevelSettings.Special.None"), 0),
-            new(Localizer.Get("Dialog.LevelSettings.Special.Default"), 1),
-            new(Localizer.Get("Dialog.LevelSettings.Custom"), 0, IsCustom: true),
-        ];
-
         // The numeric fields are stored as the raw text the box holds, because NumericTextBox filters
         // input character by character and so has to bind a string. Each one exposes a decimal? view
         // over that text: null means "empty or not a number", which CanConfirm rejects. The bounds
@@ -173,19 +157,6 @@ namespace CtrDxEditor.ViewModels
         [NotifyPropertyChangedFor(nameof(HasRopePhysicsSpeedError))]
         [NotifyPropertyChangedFor(nameof(CanConfirm))]
         public partial string RopePhysicsSpeedText { get; set; } = Format(1.0m);
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(IsSpecialCustom))]
-        [NotifyPropertyChangedFor(nameof(HasCustomSpecialError))]
-        [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial SpecialOption SelectedSpecial { get; set; }
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CustomSpecial))]
-        [NotifyPropertyChangedFor(nameof(CustomSpecialError))]
-        [NotifyPropertyChangedFor(nameof(HasCustomSpecialError))]
-        [NotifyPropertyChangedFor(nameof(CanConfirm))]
-        public partial string CustomSpecialText { get; set; } = Format(0m);
 
         [ObservableProperty] public partial bool TwoParts { get; set; }
         [ObservableProperty] public partial bool NightLevel { get; set; }
@@ -256,9 +227,6 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Rope simulation speed multiplier, or null when the box holds no usable number.</summary>
         public decimal? RopePhysicsSpeed { get => Parse(RopePhysicsSpeedText); set => RopePhysicsSpeedText = Format(value); }
 
-        /// <summary>Manually entered special value, or null when the box holds no usable number.</summary>
-        public decimal? CustomSpecial { get => Parse(CustomSpecialText); set => CustomSpecialText = Format(value); }
-
         /// <summary>Water height, or null when the box holds no usable number.</summary>
         public decimal? Water { get => Parse(WaterText); set => WaterText = Format(value); }
 
@@ -280,9 +248,6 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Why the rope speed box is unusable, or empty text when it holds a valid speed.</summary>
         public string RopePhysicsSpeedError => Validate(RopePhysicsSpeedText, MinRopeSpeed, MaxRopeSpeed);
 
-        /// <summary>Why the special box is unusable, or empty text when it holds a valid special value.</summary>
-        public string CustomSpecialError => Validate(CustomSpecialText, 0, MaxSpecial);
-
         /// <summary>Why the water box is unusable, or empty text when it holds a valid height.</summary>
         public string WaterError => Validate(WaterText, 0, MaxWater);
 
@@ -303,9 +268,6 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether the rope speed box has something to complain about.</summary>
         public bool HasRopePhysicsSpeedError => RopePhysicsSpeedError.Length > 0;
-
-        /// <summary>Whether the special box has something to complain about. Hidden while the box itself is.</summary>
-        public bool HasCustomSpecialError => IsSpecialCustom && CustomSpecialError.Length > 0;
 
         /// <summary>Whether the water box has something to complain about.</summary>
         public bool HasWaterError => WaterError.Length > 0;
@@ -366,9 +328,6 @@ namespace CtrDxEditor.ViewModels
         // change on one side doesn't recurse back through the other.
         private bool _syncingSelection;
 
-        /// <summary>Whether the manual special-value input is active.</summary>
-        public bool IsSpecialCustom => SelectedSpecial.IsCustom;
-
         /// <summary>Whether the dialog is creating a new level rather than editing an existing one.</summary>
         public bool IsNewMode { get; private init; }
 
@@ -388,8 +347,7 @@ namespace CtrDxEditor.ViewModels
             && WaterSpeedError.Length == 0
             && GravityXError.Length == 0
             && GravityYError.Length == 0
-            && (!IsCustom || (CustomWidthError.Length == 0 && CustomHeightError.Length == 0))
-            && (!IsSpecialCustom || CustomSpecialError.Length == 0);
+            && (!IsCustom || (CustomWidthError.Length == 0 && CustomHeightError.Length == 0));
 
         /// <summary>
         /// Reads a box's text as a number. Invariant culture because <c>NumericTextBox</c> only ever lets
@@ -425,7 +383,6 @@ namespace CtrDxEditor.ViewModels
         {
             IsNewMode = isNewMode;
             SelectedPreset = Presets[0];
-            SelectedSpecial = SpecialOptions[0];
 
             // Mirror a radio-button click (option.IsSelected) back into the Selected* id.
             foreach (RopeSkinOption option in RopeSkinOptions)
@@ -560,22 +517,6 @@ namespace CtrDxEditor.ViewModels
             _syncingSelection = false;
         }
 
-        // Selects the listed option matching value, or routes an unlisted value (e.g. an imported
-        // tutorial pack's special=3) through Custom so a settings edit preserves it unchanged.
-        private void SelectSpecial(int value)
-        {
-            SpecialOption? match = SpecialOptions.FirstOrDefault(o => !o.IsCustom && o.Value == value);
-            if (match is not null)
-            {
-                SelectedSpecial = match;
-            }
-            else
-            {
-                CustomSpecial = value;
-                SelectedSpecial = SpecialOptions.Single(o => o.IsCustom);
-            }
-        }
-
         // Coalesces a nullable numeric field (empty box) to a fallback, then clamps into range.
         private static int ClampOrDefault(decimal? value, int fallback, int min, int max)
         {
@@ -614,7 +555,6 @@ namespace CtrDxEditor.ViewModels
                 SelectedCandySkin = candySkin,
                 SelectedOmNomSupport = omNomSupport,
             };
-            vm.SelectSpecial(current.Special);
             ResolutionPreset? match = vm.Presets.FirstOrDefault(
                 p => !p.IsCustom && p.Width == current.Width && p.Height == current.Height);
             vm.SelectedPreset = match ?? vm.Presets.Single(p => p.IsCustom);
@@ -626,10 +566,9 @@ namespace CtrDxEditor.ViewModels
         {
             int width = IsCustom ? ClampOrDefault(CustomWidth, MinWidth, MinWidth, MaxDimension) : SelectedPreset.Width;
             int height = IsCustom ? ClampOrDefault(CustomHeight, MinHeight, MinHeight, MaxDimension) : SelectedPreset.Height;
-            int special = IsSpecialCustom ? ClampOrDefault(CustomSpecial, 0, 0, MaxSpecial) : SelectedSpecial.Value;
             float rope = (float)(RopePhysicsSpeed ?? 1.0m);
             return new LevelSettings(
-                width, height, rope, special, TwoParts, NightLevel, UseMobilePhysics,
+                width, height, rope, TwoParts, NightLevel, UseMobilePhysics,
                 UseMobilePhysics && UseTimeTravelRocketPhysics,
                 (float)(Water ?? 0m), (float)(WaterSpeed ?? 0m),
                 LevelName?.Trim() ?? string.Empty,

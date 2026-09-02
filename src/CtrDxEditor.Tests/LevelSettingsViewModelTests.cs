@@ -63,7 +63,7 @@ namespace CtrDxEditor.Tests
         public void EditModePrefillsMatchingPresetAndAllowsFlags()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(640, 480, 1.0f, 1, TwoParts: true, NightLevel: false));
+                new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             Assert.True(vm.FlagsEditable);
             Assert.False(vm.IsCustom);
@@ -77,7 +77,7 @@ namespace CtrDxEditor.Tests
         public void EditModeWithNonPresetResolutionSelectsCustom()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(500, 700, 1.0f, 0, TwoParts: false, NightLevel: false));
+                new LevelSettings(500, 700, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.True(vm.IsCustom);
             Assert.Equal(500, vm.ToSettings().Width);
@@ -100,7 +100,7 @@ namespace CtrDxEditor.Tests
         public void EditModePrefillsLevelName()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(640, 480, 1.0f, 0, false, false, LevelName: "Bath Time"));
+                new LevelSettings(640, 480, 1.0f, false, false, LevelName: "Bath Time"));
 
             Assert.Equal("Bath Time", vm.LevelName);
             Assert.Equal("Bath Time", vm.ToSettings().LevelName);
@@ -143,33 +143,6 @@ namespace CtrDxEditor.Tests
             vm.GravityXText = "";
             Assert.True(vm.HasGravityXError);
             Assert.False(vm.CanConfirm);
-        }
-
-        /// <summary>The special dropdown offers None (0), Default (1), and a Custom sentinel, defaulting to None.</summary>
-        [Fact]
-        public void SpecialOffersNoneDefaultAndCustom()
-        {
-            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
-
-            Assert.Equal([0, 1], vm.SpecialOptions.Where(o => !o.IsCustom).Select(o => o.Value));
-            Assert.Contains(vm.SpecialOptions, o => o.IsCustom);
-            Assert.False(vm.IsSpecialCustom);
-            Assert.Equal(0, vm.ToSettings().Special); // defaults to None
-        }
-
-        /// <summary>Selecting Custom writes the manually entered special value (clamped to 0..99).</summary>
-        [Fact]
-        public void CustomSpecialValueIsUsedAndClamped()
-        {
-            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
-            vm.SelectedSpecial = vm.SpecialOptions.Single(o => o.IsCustom);
-
-            Assert.True(vm.IsSpecialCustom);
-            vm.CustomSpecial = 7;
-            Assert.Equal(7, vm.ToSettings().Special);
-
-            vm.CustomSpecial = 500; // above the 99 cap
-            Assert.Equal(99, vm.ToSettings().Special);
         }
 
         /// <summary>Confirm is blocked while a required numeric field is empty, and allowed once filled.</summary>
@@ -238,16 +211,6 @@ namespace CtrDxEditor.Tests
             Assert.Equal("2.25", vm.RopePhysicsSpeedText);
         }
 
-        /// <summary>A hidden custom field being null does not block confirm (only visible required fields count).</summary>
-        [Fact]
-        public void CanConfirmIgnoresHiddenCustomFields()
-        {
-            LevelSettingsViewModel vm = LevelSettingsViewModel.ForNew();
-            vm.CustomSpecial = null; // special is on None, so the custom input is hidden
-
-            Assert.True(vm.CanConfirm);
-        }
-
         /// <summary>The mobile-physics flag flows into the produced settings.</summary>
         [Fact]
         public void ToSettingsIncludesMobilePhysics()
@@ -261,7 +224,7 @@ namespace CtrDxEditor.Tests
         [Fact]
         public void ForEditPrefillsMobilePhysics()
         {
-            LevelSettings current = new(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true);
+            LevelSettings current = new(320, 480, 1.0f, false, false, UseMobilePhysics: true);
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(current);
             Assert.True(vm.UseMobilePhysics);
         }
@@ -338,7 +301,7 @@ namespace CtrDxEditor.Tests
         public void ShowRememberDecorationNewOnly()
         {
             Assert.True(LevelSettingsViewModel.ForNew().ShowRememberDecoration);
-            Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, 0, false, false)).ShowRememberDecoration);
+            Assert.False(LevelSettingsViewModel.ForEdit(new LevelSettings(320, 480, 1f, false, false)).ShowRememberDecoration);
         }
 
         /// <summary>Edit mode seeds the decoration pickers from the editor's live rope/background/candy/platform ids.</summary>
@@ -346,7 +309,7 @@ namespace CtrDxEditor.Tests
         public void ForEditPrefillsDecoration()
         {
             LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(320, 480, 1f, 0, false, false), ropeSkin: 5, background: 7, candySkin: 9, omNomSupport: 11);
+                new LevelSettings(320, 480, 1f, false, false), ropeSkin: 5, background: 7, candySkin: 9, omNomSupport: 11);
             Assert.Equal(5, vm.SelectedRopeSkin);
             Assert.Equal(7, vm.SelectedBackground);
             Assert.Equal(9, vm.SelectedCandySkin);
@@ -413,18 +376,6 @@ namespace CtrDxEditor.Tests
             vm.BackgroundOptions.Single(o => o.Id == 6).IsSelected = true;
             Assert.Equal(6, vm.SelectedBackground);
             Assert.All(vm.BackgroundOptions.Where(o => o.Id != 6), o => Assert.False(o.IsSelected));
-        }
-
-        /// <summary>An imported level's unlisted special value routes through Custom so it round-trips.</summary>
-        [Fact]
-        public void EditModeWithUnlistedSpecialSelectsCustom()
-        {
-            LevelSettingsViewModel vm = LevelSettingsViewModel.ForEdit(
-                new LevelSettings(320, 480, 1.0f, 3, TwoParts: false, NightLevel: false));
-
-            Assert.True(vm.IsSpecialCustom);
-            Assert.Equal(3m, vm.CustomSpecial);
-            Assert.Equal(3, vm.ToSettings().Special);
         }
 
         /// <summary>The drain hint is hidden unless the level has both a pool and a speed to drain it.</summary>

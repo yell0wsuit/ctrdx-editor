@@ -61,7 +61,7 @@ namespace CtrDxEditor.Tests
         public void SingleCandyLevelShowsCandyAndBulbNotHalves()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.True(PaletteHas(vm, "candy"));
             Assert.False(PaletteHas(vm, "candyL"));
@@ -74,7 +74,7 @@ namespace CtrDxEditor.Tests
         public void TwoPartNightLevelShowsHalvesAndBulbNotCandy()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(320, 480, 1.0f, 0, TwoParts: true, NightLevel: true));
+            vm.NewLevel(new LevelSettings(320, 480, 1.0f, TwoParts: true, NightLevel: true));
 
             Assert.False(PaletteHas(vm, "candy"));
             Assert.True(PaletteHas(vm, "candyL"));
@@ -94,7 +94,7 @@ namespace CtrDxEditor.Tests
             });
             EditorViewModel vm = new(sprites);
 
-            vm.NewLevel(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: true));
+            vm.NewLevel(new LevelSettings(320, 480, 1.0f, TwoParts: false, NightLevel: true));
 
             Assert.Same(star, PaletteItem(vm, "star").Icon);
         }
@@ -110,7 +110,7 @@ namespace CtrDxEditor.Tests
             SetPrivateField(sprites, "_unavailableElements", new HashSet<string> { "star" });
             EditorViewModel vm = new(sprites);
 
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.False(PaletteHas(vm, "star"));
             // Everything the bundle does have is untouched.
@@ -124,23 +124,22 @@ namespace CtrDxEditor.Tests
         {
             EditorViewModel vm = Vm();
 
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.True(PaletteHas(vm, "star"));
         }
 
-        /// <summary>Updating level settings rewrites the document's resolution and special value.</summary>
+        /// <summary>Updating level settings rewrites the document's resolution.</summary>
         [Fact]
         public void UpdateLevelSettingsWritesResolution()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(320, 480, 1.0f, TwoParts: false, NightLevel: false));
 
-            vm.UpdateLevelSettings(new LevelSettings(640, 960, 1.0f, 2, TwoParts: false, NightLevel: false));
+            vm.UpdateLevelSettings(new LevelSettings(640, 960, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.Equal(640, vm.Document!.Width);
             Assert.Equal(960, vm.Document!.Height);
-            Assert.Equal(2, vm.Document!.Special);
         }
 
         /// <summary>Turning on two-part mode auto-creates the halves, so their palette items gray out.</summary>
@@ -148,10 +147,10 @@ namespace CtrDxEditor.Tests
         public void SwitchingBackToHalfCandyGraysOutAutoCreatedHalves()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 101, 170);
 
-            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             Assert.False(PaletteItem(vm, "candyL").Enabled);
             Assert.False(PaletteItem(vm, "candyR").Enabled);
@@ -162,12 +161,12 @@ namespace CtrDxEditor.Tests
         public void SwitchingBackToHalfCandyNotifiesCanvasRefresh()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 101, 170);
             int mutations = 0;
             vm.ObjectMutated += () => mutations++;
 
-            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            vm.UpdateLevelSettings(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             Assert.Equal(1, mutations);
             Assert.Contains(vm.Document!.AllObjects, o => o.Type == "candyL");
@@ -179,7 +178,7 @@ namespace CtrDxEditor.Tests
         public void HalfCandyPaletteAllowsOneOfEachHalf()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             _ = vm.PlaceObject("candyL", 320, 240);
 
@@ -197,7 +196,7 @@ namespace CtrDxEditor.Tests
         public void LockedObjectDisablesPalettePlacement()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject locked = vm.PlaceObject("target", 320, 240)!;
 
             vm.ToggleLock(locked);
@@ -217,7 +216,7 @@ namespace CtrDxEditor.Tests
         public void PaletteShowsSingleSpikeEntry()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.True(PaletteHas(vm, "spike1"));
             Assert.False(PaletteHas(vm, "spike2"));
@@ -230,7 +229,7 @@ namespace CtrDxEditor.Tests
         public void PaletteShowsSingleBouncerEntry()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.True(PaletteHas(vm, "bouncer1"));
             Assert.False(PaletteHas(vm, "bouncer2"));

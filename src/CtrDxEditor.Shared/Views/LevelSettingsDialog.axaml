@@ -241,39 +241,6 @@
 
         <StackPanel Spacing="4">
           <StackPanel Orientation="Horizontal" Spacing="4">
-            <TextBlock Text="{loc:Tr Dialog.LevelSettings.Special}"
-                       VerticalAlignment="Center" />
-            <ctrl:HelpButton Header="{loc:Tr Dialog.LevelSettings.Special}"
-                             Message="{loc:Tr Dialog.LevelSettings.SpecialDescription}" />
-          </StackPanel>
-
-          <ComboBox ItemsSource="{Binding SpecialOptions}"
-                    SelectedItem="{Binding SelectedSpecial, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch">
-            <ComboBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:SpecialOption">
-                <TextBlock Text="{Binding Label}" />
-              </DataTemplate>
-            </ComboBox.ItemTemplate>
-          </ComboBox>
-
-          <!-- The manual value input only appears when the "Custom…" option is selected. -->
-          <StackPanel Spacing="2"
-                      IsVisible="{Binding IsSpecialCustom}">
-            <ctrl:NumericTextBox Minimum="0"
-                                 Maximum="99"
-                                 Text="{Binding CustomSpecialText, Mode=TwoWay}" />
-
-            <TextBlock Text="{Binding CustomSpecialError}"
-                       TextWrapping="Wrap"
-                       Foreground="{DynamicResource EditorBrush.DangerText}"
-                       FontSize="12"
-                       IsVisible="{Binding HasCustomSpecialError}" />
-          </StackPanel>
-        </StackPanel>
-
-        <StackPanel Spacing="4">
-          <StackPanel Orientation="Horizontal" Spacing="4">
             <CheckBox Content="{loc:Tr Dialog.LevelSettings.HalfCandy}"
                       IsChecked="{Binding TwoParts, Mode=TwoWay}"
                       IsEnabled="{Binding FlagsEditable}" />

@@ -110,7 +110,7 @@ namespace CtrDxEditor.Tests
         public void RefreshFieldsShowsWidthAfterCanvasResize()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject text = vm.PlaceObject("tutorialText", 20, 30)!;
             Assert.DoesNotContain(vm.Fields, f => f.Name == "width");
 

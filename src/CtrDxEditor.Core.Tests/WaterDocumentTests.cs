@@ -97,7 +97,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateNewOmitsWaterByDefault()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.DoesNotContain("water=", doc.Save());
             Assert.Equal(0f, doc.Water);
@@ -108,7 +108,7 @@ namespace CtrDxEditor.Core.Tests
         public void CreateNewWritesRequestedWater()
         {
             LevelDocument doc = LevelDocument.CreateNew(
-                new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false, Water: 150f));
+                new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false, Water: 150f));
 
             Assert.Equal(150f, doc.Water);
             Assert.Contains("water=\"150\"", doc.Save());
