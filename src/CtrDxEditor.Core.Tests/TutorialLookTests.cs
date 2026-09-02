@@ -39,6 +39,14 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("70,37,0", triplet.Format());
         }
 
+        /// <summary>Format() is not a verbatim reproducer within a spelling family: hex digits always emit uppercase.</summary>
+        [Fact]
+        public void FormatNormalizesHexToUppercase()
+        {
+            Assert.True(TutorialColor.TryParse("#ff0000", out TutorialColor color));
+            Assert.Equal("#FF0000", color.Format());
+        }
+
         [Theory]
         [InlineData("#46250")]
         [InlineData("#4625000")]

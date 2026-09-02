@@ -8,9 +8,15 @@ namespace CtrDxEditor.Core.Editing
     /// <summary>
     /// A tutorial prompt's authored color, in either spelling the game accepts. Mirrors
     /// TutorialEvent.ParseColor/ParseHex/ParseChannels. <see cref="Triplet"/> records which spelling
-    /// was authored so <see cref="Format"/> returns it unchanged, keeping a merely-opened level
-    /// byte-identical on save; a color the user edits through the picker is normalised to
-    /// <c>#RRGGBB</c> by that field, not here.
+    /// FAMILY was authored - hex versus triplet - so <see cref="Format"/> keeps writing that family
+    /// rather than silently switching it. <see cref="Format"/> is not a verbatim reproducer of the
+    /// authored text within that family, though: it normalises whitespace and always emits hex
+    /// digits uppercase, so <c>"#ff0000"</c> parses with <c>Triplet=false</c> and formats back as
+    /// <c>"#FF0000"</c>. That is safe only because a color the user has not edited is never
+    /// re-serialized through <see cref="Format"/> at all - the document layer preserves an attribute
+    /// nothing called SetAttr on, which is what keeps a merely-opened level byte-identical on save.
+    /// A caller must therefore only write <see cref="Format"/>'s output for a color the user actually
+    /// changed; redisplaying-and-resaving an unedited color through it would break that guarantee.
     /// </summary>
     public readonly record struct TutorialColor(byte Red, byte Green, byte Blue, bool Triplet)
     {
@@ -29,7 +35,11 @@ namespace CtrDxEditor.Core.Editing
             return TryParseChannels(value, out color);
         }
 
-        /// <summary>Renders as authored: <c>#RRGGBB</c> for a hex color, <c>R,G,B</c> for a triplet.</summary>
+        /// <summary>
+        /// Renders the authored spelling family: <c>#RRGGBB</c> (hex digits uppercase) for a hex
+        /// color, whitespace-normalised <c>R,G,B</c> for a triplet. Not a verbatim reproduction of
+        /// the original text - see the type-level remarks on when that is safe to write back.
+        /// </summary>
         public string Format()
         {
             return Triplet
