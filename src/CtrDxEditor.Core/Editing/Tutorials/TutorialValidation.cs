@@ -167,10 +167,13 @@ namespace CtrDxEditor.Core.Editing
                     continue;
                 }
 
-                if (!TryFinite(value, out double parsed)
-                    || (attribute == "duration"
-                        ? parsed < 0 && parsed != TutorialTiming.ForeverHold
-                        : parsed < 0))
+                if (!TryFinite(value, out double parsed))
+                {
+                    return true;
+                }
+
+                if (parsed < 0
+                    && (attribute is not "duration" || parsed is not TutorialTiming.ForeverHold))
                 {
                     return true;
                 }
