@@ -242,8 +242,15 @@ namespace CtrDxEditor.Core.Editing
 
         private static bool Component(string part, out double value)
         {
-            return double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
-                && double.IsFinite(value);
+            if (float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float gameValue)
+                && float.IsFinite(gameValue))
+            {
+                value = gameValue;
+                return true;
+            }
+
+            value = 0;
+            return false;
         }
     }
 }

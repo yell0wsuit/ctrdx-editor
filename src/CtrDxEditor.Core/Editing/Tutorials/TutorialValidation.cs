@@ -261,8 +261,15 @@ namespace CtrDxEditor.Core.Editing
 
         private static bool TryFinite(string? value, out double parsed)
         {
-            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)
-                && double.IsFinite(parsed);
+            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float gameValue)
+                && float.IsFinite(gameValue))
+            {
+                parsed = gameValue;
+                return true;
+            }
+
+            parsed = 0;
+            return false;
         }
 
         private static LevelWarning Error(string rule, string locale, string element)
