@@ -14,6 +14,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(LevelWarningSeverity.Warning, new LevelWarning("Validation.NoCandy").Severity);
         }
 
+        /// <summary>An error initializer changes severity without disturbing message arguments.</summary>
         [Fact]
         public void ErrorSeverityIsSetByInitializer()
         {

@@ -204,19 +204,19 @@ namespace CtrDxEditor.Views
             StringBuilder body = new();
             if (errors.Length > 0)
             {
-                body.AppendLine(Localizer.Get("Dialog.Validation.Errors"));
-                body.AppendLine(string.Join("\n", errors.Select(w => "- " + Localizer.Format(w))));
-                body.AppendLine();
+                _ = body.AppendLine(Localizer.Get("Dialog.Validation.Errors"));
+                _ = body.AppendLine(string.Join("\n", errors.Select(w => "- " + Localizer.Format(w))));
+                _ = body.AppendLine();
             }
 
             if (advisories.Length > 0)
             {
-                body.AppendLine(Localizer.Get("Dialog.Validation.Body"));
-                body.AppendLine(string.Join("\n", advisories.Select(w => "- " + Localizer.Format(w))));
-                body.AppendLine();
+                _ = body.AppendLine(Localizer.Get("Dialog.Validation.Body"));
+                _ = body.AppendLine(string.Join("\n", advisories.Select(w => "- " + Localizer.Format(w))));
+                _ = body.AppendLine();
             }
 
-            body.Append(Localizer.Get(promptKey));
+            _ = body.Append(Localizer.Get(promptKey));
             ConfirmDialog dialog = new()
             {
                 Header = Localizer.Get(errors.Length > 0
