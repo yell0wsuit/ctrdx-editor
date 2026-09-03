@@ -59,10 +59,7 @@ namespace CtrDxEditor.Rendering
             // An authored color replaces the ink outright, which is what the game does; the invert
             // exists only so black ink stays visible on a dark canvas, so a color supersedes it.
             TutorialLook look = TutorialLook.For(obj);
-            bool colored = look.Color is not null && !TutorialObject.IsColoredQuad(quad);
-            bool inks = colored || TutorialObject.ShouldInvert(quad, dark);
-
-            if (inks)
+            if (TutorialObject.ShouldInk(quad, dark, look.Color is not null))
             {
                 TutorialColor ink = look.EffectiveColor(dark);
                 Rect destination = new(artBounds.X, artBounds.Y, artBounds.W, artBounds.H);
@@ -78,7 +75,13 @@ namespace CtrDxEditor.Rendering
             }
             else
             {
-                DrawIconLayer(ctx, view, layer, artBounds, angle);
+                // DrawIconLayer is a plain DrawImage call, which PushOpacity reaches (unlike the ink
+                // path's ctx.Custom operation, which is why that path threads alpha through its own
+                // constructor instead). Both branches must agree on the same opacity*alpha strength.
+                using (ctx.PushOpacity(look.Opacity * alpha))
+                {
+                    DrawIconLayer(ctx, view, layer, artBounds, angle);
+                }
             }
         }
 

@@ -99,6 +99,27 @@ namespace CtrDxEditor.Core.Tests
             Assert.False(TutorialObject.ShouldInvert(10, dark: true));
         }
 
+        /// <summary>
+        /// Full truth table over quad kind (line-art vs. full-color) x canvas x authored-color: an
+        /// authored color inks a line-art quad on either canvas, a line-art quad with no color inks
+        /// only on dark (today's invert), and a full-color quad never inks under any combination -
+        /// authoring a color on it does not open a route to ink, matching the game refusing to color
+        /// quads 9/10 rather than letting an authored color flatten them to a silhouette.
+        /// </summary>
+        [Theory]
+        [InlineData(0, true, true, true)]
+        [InlineData(0, true, false, true)]
+        [InlineData(0, false, true, true)]
+        [InlineData(0, false, false, false)]
+        [InlineData(9, true, true, false)]
+        [InlineData(9, true, false, false)]
+        [InlineData(9, false, true, false)]
+        [InlineData(9, false, false, false)]
+        public void ShouldInkFollowsQuadKindCanvasAndAuthoredColor(int quad, bool dark, bool hasColor, bool expected)
+        {
+            Assert.Equal(expected, TutorialObject.ShouldInk(quad, dark, hasColor));
+        }
+
         /// <summary>Adds the English locale only when no locale exists.</summary>
         [Fact]
         public void EnsureEnglishLocaleSetsWhenAbsentAndKeepsExisting()

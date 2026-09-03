@@ -111,6 +111,21 @@ namespace CtrDxEditor.Core.Editing
             return dark && !IsColoredQuad(quad);
         }
 
+        /// <summary>
+        /// Whether an icon quad should be drawn through ink replacement rather than as its unmodified
+        /// art: either an authored color was given and the quad isn't full-color, or the dark-canvas
+        /// invert applies. A full-color quad (finger/fingers) never inks, whether or not a color was
+        /// authored on it - the game refuses to color one rather than flattening it to a silhouette.
+        /// </summary>
+        /// <param name="quad">The zero-based icon quad.</param>
+        /// <param name="dark">Whether the canvas is dark.</param>
+        /// <param name="hasAuthoredColor">Whether the prompt authored a <c>color</c> attribute.</param>
+        public static bool ShouldInk(int quad, bool dark, bool hasAuthoredColor)
+        {
+            bool colored = hasAuthoredColor && !IsColoredQuad(quad);
+            return colored || ShouldInvert(quad, dark);
+        }
+
         /// <summary>Sets <c>locale="en"</c> when absent (leaves any existing value untouched).</summary>
         public static void EnsureEnglishLocale(LevelObject o)
         {
