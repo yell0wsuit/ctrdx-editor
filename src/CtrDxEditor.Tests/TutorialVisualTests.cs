@@ -14,6 +14,8 @@ using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
 
+using SkiaSharp;
+
 using Xunit;
 
 namespace CtrDxEditor.Tests
@@ -57,18 +59,69 @@ namespace CtrDxEditor.Tests
             Assert.True(iconLayer > textLayer);
         }
 
-        /// <summary>Uses byte-domain translation values so black line art inverts to white.</summary>
+        /// <summary>
+        /// With no authored color, the ink matrix must still resolve to white at full alpha - exactly
+        /// what today's dark-canvas invert produces for flat black art (R=G=B=0 everywhere), so this is
+        /// the regression guard that the no-color path is unchanged.
+        /// </summary>
         [Fact]
-        public void InvertMatrixMapsBlackToWhite()
+        public void InkMatrixDefaultsToWhiteAtFullAlpha()
         {
-            Type operation = typeof(VisualDescriptorMap).Assembly.GetType(
-                "CtrDxEditor.Rendering.TutorialInvertDrawOperation")!;
-            FieldInfo matrixField = operation.GetField("InvertMatrix", BindingFlags.NonPublic | BindingFlags.Static)!;
-            float[] matrix = (float[])matrixField.GetValue(null)!;
+            float[] matrix = InvokeInkMatrix(new SKColor(255, 255, 255), 1.0);
 
             Assert.Equal(255, matrix[4]);
             Assert.Equal(255, matrix[9]);
             Assert.Equal(255, matrix[14]);
+            Assert.Equal(1f, matrix[18]);
+        }
+
+        /// <summary>
+        /// The ink matrix discards the source RGB entirely (coefficients zero on every R/G/B row) and
+        /// writes an authored color's own channels as the offsets, regardless of what color art it is
+        /// painting over - matching the game's <c>PremultipliedTint.Apply</c>, which never reads the
+        /// source color either.
+        /// </summary>
+        [Fact]
+        public void InkMatrixIgnoresSourceColorAndWritesAuthoredChannels()
+        {
+            float[] matrix = InvokeInkMatrix(new SKColor(0x8B, 0x45, 0x13), 1.0);
+
+            for (int i = 0; i < 15; i++)
+            {
+                if (i is not (4 or 9 or 14))
+                {
+                    Assert.Equal(0f, matrix[i]);
+                }
+            }
+
+            Assert.Equal(0x8B, matrix[4]);
+            Assert.Equal(0x45, matrix[9]);
+            Assert.Equal(0x13, matrix[14]);
+        }
+
+        /// <summary>
+        /// The alpha row keeps the source alpha's shape (coefficient 1 slot carries the multiplier
+        /// instead) rather than replacing it with a constant, so a half-strength ink still traces the
+        /// art's own silhouette instead of painting a solid rectangle.
+        /// </summary>
+        [Theory]
+        [InlineData(0.4)]
+        [InlineData(1.5)]
+        [InlineData(-0.2)]
+        public void InkMatrixClampsAlphaScaleToUnitRange(double alpha)
+        {
+            float[] matrix = InvokeInkMatrix(new SKColor(1, 2, 3), alpha);
+
+            Assert.InRange(matrix[18], 0f, 1f);
+            Assert.Equal(0f, matrix[19]);
+        }
+
+        private static float[] InvokeInkMatrix(SKColor color, double alpha)
+        {
+            Type operation = typeof(VisualDescriptorMap).Assembly.GetType(
+                "CtrDxEditor.Rendering.TutorialInvertDrawOperation")!;
+            MethodInfo inkMatrix = operation.GetMethod("InkMatrix", BindingFlags.NonPublic | BindingFlags.Static)!;
+            return (float[])inkMatrix.Invoke(null, [color, alpha])!;
         }
 
         /// <summary>Palette drag ghosts use the tutorial renderer so dark-theme inversion is preserved.</summary>

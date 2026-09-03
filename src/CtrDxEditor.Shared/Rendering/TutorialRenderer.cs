@@ -18,14 +18,30 @@ namespace CtrDxEditor.Rendering
     {
         private const double MinimumIconSelectionSize = 16.0;
 
-        /// <summary>Draws a tutorial icon, inverted on the dark canvas unless it is a color quad.</summary>
+        /// <summary>
+        /// Draws a tutorial icon at its authored look: an authored <c>color</c> replaces the ink outright
+        /// and supersedes the dark-canvas invert (white ink on dark) that otherwise keeps black line art
+        /// visible; a full-color quad (finger/fingers) never takes ink, matching the game refusing to
+        /// color one.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="view">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache supplying the tutorial atlas.</param>
+        /// <param name="obj">The tutorial icon object.</param>
+        /// <param name="operationBounds">Screen bounds for the custom draw operation.</param>
+        /// <param name="dark">Whether the canvas is the dark blank background.</param>
+        /// <param name="alpha">
+        /// Extra alpha multiplier, on top of the authored <c>opacity</c>. Defaults to full so a prompt
+        /// drawn with preview off shows at its authored peak; a fade envelope multiplies this down.
+        /// </param>
         public static void DrawIcon(
             DrawingContext ctx,
             ViewTransform view,
             SpriteCache sprites,
             LevelObject obj,
             Rect operationBounds,
-            bool dark)
+            bool dark,
+            double alpha = 1.0)
         {
             if (sprites.GetSprite(obj.Type) is not { Layers.Count: > 0 } sprite)
             {
@@ -39,8 +55,16 @@ namespace CtrDxEditor.Rendering
 
             int quad = TutorialObject.Icon(obj);
             LevelBounds artBounds = IconArtBounds(layer, obj.X, obj.Y, sprite.Scale);
-            if (TutorialObject.ShouldInvert(quad, dark))
+
+            // An authored color replaces the ink outright, which is what the game does; the invert
+            // exists only so black ink stays visible on a dark canvas, so a color supersedes it.
+            TutorialLook look = TutorialLook.For(obj);
+            bool colored = look.Color is not null && !TutorialObject.IsColoredQuad(quad);
+            bool inks = colored || TutorialObject.ShouldInvert(quad, dark);
+
+            if (inks)
             {
+                TutorialColor ink = look.EffectiveColor(dark);
                 Rect destination = new(artBounds.X, artBounds.Y, artBounds.W, artBounds.H);
                 ctx.Custom(new TutorialInvertDrawOperation(
                     operationBounds,
@@ -48,7 +72,9 @@ namespace CtrDxEditor.Rendering
                     layer.Bitmap,
                     layer.Frame.Frame,
                     destination,
-                    angle));
+                    angle,
+                    new SKColor(ink.Red, ink.Green, ink.Blue),
+                    look.Opacity * alpha));
             }
             else
             {
