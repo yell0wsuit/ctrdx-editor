@@ -34,6 +34,11 @@ namespace CtrDxEditor.Rendering
         /// Extra alpha multiplier, on top of the authored <c>opacity</c>. Defaults to full so a prompt
         /// drawn with preview off shows at its authored peak; a fade envelope multiplies this down.
         /// </param>
+        /// <param name="drawOffset">
+        /// Level-unit offset from the authored position, from <c>LevelSceneRenderer.DrawOffset</c>.
+        /// Defaults to zero so a prompt drawn with preview off (or with no authored motion) draws exactly
+        /// where authored; live preview of a Timed or Looping prompt shifts it here.
+        /// </param>
         public static void DrawIcon(
             DrawingContext ctx,
             ViewTransform view,
@@ -41,7 +46,8 @@ namespace CtrDxEditor.Rendering
             LevelObject obj,
             Rect operationBounds,
             bool dark,
-            double alpha = 1.0)
+            double alpha = 1.0,
+            Vec2 drawOffset = default)
         {
             if (sprites.GetSprite(obj.Type) is not { Layers.Count: > 0 } sprite)
             {
@@ -54,7 +60,7 @@ namespace CtrDxEditor.Rendering
                 : 0.0;
 
             int quad = TutorialObject.Icon(obj);
-            LevelBounds artBounds = IconArtBounds(layer, obj.X, obj.Y, sprite.Scale);
+            LevelBounds artBounds = IconArtBounds(layer, obj.X + drawOffset.X, obj.Y + drawOffset.Y, sprite.Scale);
 
             // An authored color replaces the ink outright, which is what the game does; the invert
             // exists only so black ink stays visible on a dark canvas, so a color supersedes it.
@@ -100,6 +106,11 @@ namespace CtrDxEditor.Rendering
         /// Extra alpha multiplier, on top of the authored <c>opacity</c>. Defaults to full so a prompt
         /// drawn with preview off shows at its authored peak; a fade envelope multiplies this down.
         /// </param>
+        /// <param name="drawOffset">
+        /// Level-unit offset from the authored position, from <c>LevelSceneRenderer.DrawOffset</c>.
+        /// Defaults to zero so a prompt drawn with preview off (or with no authored motion) draws exactly
+        /// where authored; live preview of a Timed or Looping prompt shifts it here.
+        /// </param>
         public static void DrawText(
             DrawingContext ctx,
             ViewTransform view,
@@ -107,7 +118,8 @@ namespace CtrDxEditor.Rendering
             LevelObject obj,
             Rect operationBounds,
             bool dark,
-            double alpha = 1.0)
+            double alpha = 1.0,
+            Vec2 drawOffset = default)
         {
             string text = obj.GetAttr("text") ?? string.Empty;
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
@@ -117,8 +129,8 @@ namespace CtrDxEditor.Rendering
                 view,
                 sprites,
                 text,
-                obj.X,
-                obj.Y,
+                obj.X + drawOffset.X,
+                obj.Y + drawOffset.Y,
                 width,
                 dark,
                 look,

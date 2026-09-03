@@ -277,12 +277,20 @@ namespace CtrDxEditor.Rendering
         /// <remarks>
         /// Most types draw their sprite at the preview position, so their bounds travel with them. The types
         /// listed here draw from authored geometry instead — an ant conveyor lays its trail along the whole
-        /// authored path and only marches individual ants down it, a conveyor, hand, and tutorial ignore preview
+        /// authored path and only marches individual ants down it, and a conveyor and hand ignore preview
         /// time entirely — so their bounds must stay put. This mirrors the early returns in
         /// <see cref="DrawObject"/>: whenever a branch there draws without using <c>drawOffset</c>, its type
         /// belongs in this list, or <see cref="DrawOffset"/> will report a move that never happens and the cull
         /// box will slide off the art. <c>ViewportCullingTests.DrawsAtPreviewPositionMatchesTheDrawBranches</c>
         /// locks the list so the pairing is not silently broken.
+        /// <para>
+        /// Tutorial text and icons are listed here too, but for a narrower reason: whether one moves depends
+        /// on its authored motion (<see cref="TutorialMotion.ModeOf"/>), not on its type alone, so this
+        /// type-only classifier cannot answer for it the way it answers for everything else.
+        /// <see cref="DrawOffset"/> special-cases both tutorial types ahead of this method entirely - it
+        /// still reports a real offset for a Timed or Looping prompt, and <see cref="DrawObject"/>'s
+        /// tutorial branches still apply that offset, despite this method saying false for them.
+        /// </para>
         /// </remarks>
         /// <param name="obj">The object to classify.</param>
         /// <returns>True when the drawn position follows live preview, and so the cull box must follow it too.</returns>
@@ -304,7 +312,11 @@ namespace CtrDxEditor.Rendering
         /// The drawn position arrives as <paramref name="drawOffset"/> rather than being derived here, so the
         /// caller's viewport cull and this draw read one answer and cannot disagree about where the object is.
         /// Every branch below that draws without applying it must have its type excluded by
-        /// <see cref="DrawsAtPreviewPosition"/>, which is what keeps the two aligned for the rest.
+        /// <see cref="DrawsAtPreviewPosition"/>, which is what keeps the two aligned for the rest - the
+        /// tutorial branches are the one case that both applies <paramref name="drawOffset"/> (a Timed or
+        /// Looping prompt) and is excluded (a prompt with no motion draws from authored geometry, and
+        /// <see cref="DrawOffset"/> already answers zero for it), since <see cref="TutorialMotion.ModeOf"/>
+        /// rather than the type alone decides whether it moves.
         /// </remarks>
         /// <param name="ctx">Destination drawing context.</param>
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
@@ -336,13 +348,19 @@ namespace CtrDxEditor.Rendering
         {
             if (TutorialObject.IsText(obj.Type))
             {
-                TutorialRenderer.DrawText(ctx, v, sprites, obj, tutorialBounds, tutorialDark);
+                double textAlpha = animationPreviewSeconds is double textSeconds
+                    ? TutorialTiming.For(obj).AlphaAt(textSeconds)
+                    : 1.0;
+                TutorialRenderer.DrawText(ctx, v, sprites, obj, tutorialBounds, tutorialDark, textAlpha, drawOffset);
                 return;
             }
 
             if (TutorialObject.IsImage(obj.Type))
             {
-                TutorialRenderer.DrawIcon(ctx, v, sprites, obj, tutorialBounds, tutorialDark);
+                double iconAlpha = animationPreviewSeconds is double iconSeconds
+                    ? TutorialTiming.For(obj).AlphaAt(iconSeconds)
+                    : 1.0;
+                TutorialRenderer.DrawIcon(ctx, v, sprites, obj, tutorialBounds, tutorialDark, iconAlpha, drawOffset);
                 return;
             }
 
@@ -807,9 +825,13 @@ namespace CtrDxEditor.Rendering
         /// <para>
         /// An offset rather than a position so the answer costs nothing when there is nothing to say: the
         /// early-out returns before reading a single attribute. Types that <see cref="DrawsAtPreviewPosition"/>
-        /// rejects draw from authored geometry and never move; a pathless object cannot move either, and most
-        /// of a level is pathless. During preview this runs for every object every frame, and
-        /// <see cref="LevelObject"/> re-reads the XML on each attribute access, so the order matters.
+        /// rejects draw from authored geometry and never move, with one exception carved out below: a
+        /// tutorial prompt is rejected too (its non-motion draw branches never touch <c>drawOffset</c>), but
+        /// when it authors Timed or Looping motion this method still answers for it, ahead of that guard,
+        /// because the tutorial draw calls thread the same offset through independently. A pathless object
+        /// cannot move either, and most of a level is pathless. During preview this runs for every object
+        /// every frame, and <see cref="LevelObject"/> re-reads the XML on each attribute access, so the
+        /// order matters.
         /// </para>
         /// </remarks>
         /// <param name="obj">The object to locate.</param>
@@ -817,15 +839,66 @@ namespace CtrDxEditor.Rendering
         /// <returns>The level-unit offset from the authored position, or zero when the object draws where authored.</returns>
         public static Vec2 DrawOffset(LevelObject obj, double? animationPreviewSeconds)
         {
-            if (animationPreviewSeconds is not double seconds
-                || !DrawsAtPreviewPosition(obj)
-                || string.IsNullOrWhiteSpace(obj.GetAttr("path")))
+            if (animationPreviewSeconds is not double seconds)
             {
                 return default;
             }
 
+            if (TutorialObject.IsText(obj.Type) || TutorialObject.IsImage(obj.Type))
+            {
+                return TutorialMotion.ModeOf(obj) switch
+                {
+                    // The timeline, not the shared mover: eased legs, a leading moveDelay, one pass per
+                    // envelope repeat (mirroring TutorialTiming.AlphaAt's own pass wraparound so the two
+                    // stay in step), and a stationary tail once travel finishes early within a pass.
+                    TutorialMotionMode.Timed when TutorialMotion.Timed(obj) is { } motion
+                        => TimedTutorialOffset(obj, motion, seconds),
+                    // A bare path runs the same shared mover as any other pathed object - genuinely the
+                    // mover, not a tutorial-specific system - and it never stops for the fade.
+                    TutorialMotionMode.Looping => MoverOffset(obj, seconds),
+                    // Mode None (no path, or an unusable one for Timed) draws from authored geometry.
+                    _ => default,
+                };
+            }
+
+            if (!DrawsAtPreviewPosition(obj) || string.IsNullOrWhiteSpace(obj.GetAttr("path")))
+            {
+                return default;
+            }
+
+            return MoverOffset(obj, seconds);
+        }
+
+        /// <summary>The offset the shared polyline/circular mover reports for an object at an elapsed time.</summary>
+        private static Vec2 MoverOffset(LevelObject obj, double seconds)
+        {
             Vec2 moved = ObjectSpin.PreviewPosition(obj, seconds);
             return new Vec2(moved.X - obj.X, moved.Y - obj.Y);
+        }
+
+        /// <summary>The offset a Timed tutorial's authored travel reports at an elapsed time.</summary>
+        private static Vec2 TimedTutorialOffset(LevelObject obj, TutorialMotion motion, double seconds)
+        {
+            Vec2 anchor = new(obj.X, obj.Y);
+            Vec2 moved = motion.PositionAt(TimedTutorialMotionSeconds(TutorialTiming.For(obj), seconds), anchor);
+            return new Vec2(moved.X - anchor.X, moved.Y - anchor.Y);
+        }
+
+        /// <summary>
+        /// Maps elapsed preview time to time-within-the-current-envelope-pass, the clock
+        /// <see cref="TutorialMotion.PositionAt"/> expects: the game rebuilds the same motion keyframes
+        /// once per pass (anchored back at the authored position each time), so travel replays alongside
+        /// each fade rather than only playing through once. Before the prompt's delay, or with an
+        /// unbounded (forever-hold) pass, the raw elapsed value passes through untouched - there is
+        /// nothing to wrap.
+        /// </summary>
+        private static double TimedTutorialMotionSeconds(TutorialTiming timing, double seconds)
+        {
+            double elapsed = seconds - timing.Delay;
+            double pass = timing.PassSeconds;
+            return elapsed > 0 && double.IsFinite(pass) && pass > 0
+                ? elapsed % pass
+                : elapsed;
         }
 
         /// <summary>Where an object draws this frame: its authored point shifted by <see cref="DrawOffset"/>.</summary>
