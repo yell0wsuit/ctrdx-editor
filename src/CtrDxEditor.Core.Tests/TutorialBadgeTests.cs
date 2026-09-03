@@ -43,5 +43,35 @@ namespace CtrDxEditor.Core.Tests
         {
             Assert.NotNull(TutorialBadge.KeyFor(Prompt(("delay", "2"))));
         }
+
+        /// <summary>A sequencing group alone is worth annotating even with no trigger or delay.</summary>
+        [Fact]
+        public void GroupAloneEarnsABadge()
+        {
+            Assert.Equal("Canvas.Tutorial.Badge.Group", TutorialBadge.KeyFor(Prompt(("group", "intro"))));
+        }
+
+        /// <summary>
+        /// An unparseable showOn is not "start": the game's loader (skipInvalid: true) drops the whole
+        /// prompt when TutorialEvent.Parse throws, so it never plays at all. A badge that fell back to no
+        /// annotation here would read as "plays at start" - the exact misrepresentation this badge exists
+        /// to prevent - so it gets its own distinct key instead.
+        /// </summary>
+        [Fact]
+        public void UnparseableShowOnGetsItsOwnKey()
+        {
+            Assert.Equal("Canvas.Tutorial.Badge.Invalid", TutorialBadge.KeyFor(Prompt(("showOn", "notARealEvent"))));
+        }
+
+        /// <summary>
+        /// An unparseable showOn wins over every other reason to show a badge: the whole prompt is
+        /// dropped, so an authored delay or group is moot and must not be shown instead.
+        /// </summary>
+        [Fact]
+        public void UnparseableShowOnTakesPriorityOverDelayAndGroup()
+        {
+            LevelObject prompt = Prompt(("showOn", "notARealEvent"), ("delay", "2"), ("group", "intro"));
+            Assert.Equal("Canvas.Tutorial.Badge.Invalid", TutorialBadge.KeyFor(prompt));
+        }
     }
 }

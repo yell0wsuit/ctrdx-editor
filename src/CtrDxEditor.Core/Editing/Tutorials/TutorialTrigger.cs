@@ -194,19 +194,34 @@ namespace CtrDxEditor.Core.Editing
         public const string GroupKey = "Canvas.Tutorial.Badge.Group";
 
         /// <summary>
+        /// Key for a prompt whose <c>showOn</c> failed to parse. The game's loader
+        /// (TutorialPromptLoader.LoadAll, called with skipInvalid: true) catches exactly this failure per
+        /// prompt and drops the whole prompt - it never plays at all - so this must never be confused with
+        /// a start prompt, which plays immediately.
+        /// </summary>
+        public const string InvalidKey = "Canvas.Tutorial.Badge.Invalid";
+
+        /// <summary>
         /// The localization key for <paramref name="o"/>'s trigger badge, or null when a start prompt with
         /// no delay and no group needs none - it already plays exactly when the t=0 preview shows it, so
         /// there is nothing to correct.
         /// </summary>
         /// <remarks>
-        /// An unparseable <c>showOn</c> falls back to start, the same non-throwing fallback
-        /// <see cref="TutorialEvents.TryParse"/> gives every other reader of this attribute in the editor
-        /// (e.g. the properties panel). The validator separately flags that value as one the game would
-        /// drop the prompt for, so this badge does not duplicate that warning.
+        /// A <c>showOn</c> that fails to parse takes priority over every other check and returns
+        /// <see cref="InvalidKey"/>: unlike a null or <c>"start"</c> value (both of which
+        /// <see cref="TutorialEvents.TryParse"/> accepts as <see cref="TutorialEvent.Start"/>), an
+        /// authored-but-unrecognized value makes the game's loader drop the prompt entirely, so delay and
+        /// group are moot - the prompt never plays regardless of what else is authored on it. The validator
+        /// separately flags the same value as an error the game would drop the prompt for; this badge does
+        /// not duplicate that message, only the on-canvas consequence of it.
         /// </remarks>
         public static string? KeyFor(LevelObject o)
         {
-            _ = TutorialEvents.TryParse(o.GetAttr("showOn"), out TutorialEvent showOn);
+            if (!TutorialEvents.TryParse(o.GetAttr("showOn"), out TutorialEvent showOn))
+            {
+                return InvalidKey;
+            }
+
             if (showOn != TutorialEvent.Start)
             {
                 return TutorialEvents.Kind(showOn) == TutorialEventKind.State ? StateKey : EdgeKey;
