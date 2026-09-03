@@ -93,5 +93,37 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(1.0, TutorialLook.For(Prompt("tutorialText", ("opacity", "5"))).Opacity);
             Assert.Equal(1.0, TutorialLook.For(Prompt("tutorialText", ("size", "0"))).Size);
         }
+
+        /// <summary>With no authored color, the dark canvas still gets white and the light canvas black.</summary>
+        [Fact]
+        public void EffectiveColorFallsBackToDarkCanvasInvertWhenUnauthored()
+        {
+            TutorialLook look = TutorialLook.For(Prompt("tutorialText"));
+
+            TutorialColor onDark = look.EffectiveColor(dark: true);
+            TutorialColor onLight = look.EffectiveColor(dark: false);
+
+            Assert.Equal((byte)255, onDark.Red);
+            Assert.Equal((byte)255, onDark.Green);
+            Assert.Equal((byte)255, onDark.Blue);
+            Assert.Equal((byte)0, onLight.Red);
+            Assert.Equal((byte)0, onLight.Green);
+            Assert.Equal((byte)0, onLight.Blue);
+        }
+
+        /// <summary>An authored color wins over the dark-canvas invert in both directions.</summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void AuthoredColorSupersedesDarkCanvasInvert(bool dark)
+        {
+            TutorialLook look = TutorialLook.For(Prompt("tutorialText", ("color", "#8B4513")));
+
+            TutorialColor effective = look.EffectiveColor(dark);
+
+            Assert.Equal((byte)0x8B, effective.Red);
+            Assert.Equal((byte)0x45, effective.Green);
+            Assert.Equal((byte)0x13, effective.Blue);
+        }
     }
 }

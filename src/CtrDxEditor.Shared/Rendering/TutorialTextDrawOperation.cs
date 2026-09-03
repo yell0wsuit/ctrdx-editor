@@ -119,8 +119,13 @@ namespace CtrDxEditor.Rendering
         /// pixel-height-to-em ratio, probed once.
         /// </summary>
         /// <param name="sprites">Sprite cache supplying the typeface.</param>
+        /// <param name="sizeScale">
+        /// Authored <c>size</c> multiplier. The game rasterizes a genuinely bigger face rather than
+        /// stretching glyphs drawn at the base size, so this scales the em size actually requested from
+        /// Skia instead of scaling a fixed-size result afterward.
+        /// </param>
         /// <returns>A font sized for the selected gooddog or Inter typeface.</returns>
-        public static SKFont CreateFont(SpriteCache sprites)
+        public static SKFont CreateFont(SpriteCache sprites, double sizeScale = 1.0)
         {
             TypefaceSelection selection = GetTypefaceSelection(sprites);
             lock (TypefaceCacheLock)
@@ -136,7 +141,7 @@ namespace CtrDxEditor.Rendering
                         : (float)pixelHeight;
                 }
 
-                return new SKFont(selection.Typeface, selection.EmSize.Value);
+                return new SKFont(selection.Typeface, selection.EmSize.Value * (float)sizeScale);
             }
         }
 
@@ -147,8 +152,32 @@ namespace CtrDxEditor.Rendering
     }
 
     /// <summary>
+    /// Shared wrap-box height arithmetic so painting, hit-testing and auto-width all size the same box
+    /// for the same wrapped line count. <see cref="TutorialFont.TopSpacingLevel"/> is added unscaled,
+    /// mirroring the game's own <c>GetTopSpacing()</c>, which is likewise added after the size multiplier
+    /// rather than scaled by it.
+    /// </summary>
+    internal static class TutorialTextMetrics
+    {
+        /// <summary>Total level-space height of a wrapped tutorial text box at <paramref name="look"/>'s scale.</summary>
+        /// <param name="lineCount">Number of wrapped lines, as returned by <see cref="TutorialTextLayout.Wrap"/>.</param>
+        /// <param name="look">The prompt's authored size and line-height multipliers.</param>
+        /// <returns>The box height in level units.</returns>
+        public static double HeightLevel(int lineCount, TutorialLook look)
+        {
+            double fontHeight = TutorialFont.FontSizeLevel * look.Size;
+            double lineAdvance = TutorialFont.LineAdvanceLevel * look.Size * look.LineHeight;
+            return lineCount > 0
+                ? ((lineCount - 1) * lineAdvance) + fontHeight + TutorialFont.TopSpacingLevel
+                : fontHeight + TutorialFont.TopSpacingLevel;
+        }
+    }
+
+    /// <summary>
     /// Draws tutorial text from the game's top-left wrap-box origin in the gooddog font, greedily wrapped
-    /// to the authored width. Text is white on the dark blank canvas and black otherwise. A non-Skia
+    /// to the authored width. An authored <c>color</c> supersedes the dark-canvas invert (white on dark,
+    /// black otherwise); <c>size</c> and <c>lineHeight</c> re-wrap and re-space the lines rather than just
+    /// stretching glyphs, matching the game's own re-wrap once those multipliers are known. A non-Skia
     /// backend draws nothing.
     /// </summary>
     internal sealed class TutorialTextDrawOperation(
@@ -159,7 +188,9 @@ namespace CtrDxEditor.Rendering
         double originX,
         double originY,
         double widthLevel,
-        bool dark)
+        bool dark,
+        TutorialLook look,
+        double alpha = 1.0)
         : ICustomDrawOperation
     {
         /// <inheritdoc />
@@ -198,11 +229,18 @@ namespace CtrDxEditor.Rendering
 
             using ISkiaSharpApiLease lease = leaseFeature.Lease();
             SKCanvas canvas = lease.SkCanvas;
-            using SKFont font = TutorialFont.CreateFont(sprites);
+
+            // A genuinely resized face, not a fixed-size one rescaled after measuring: the game
+            // rasterizes text at its own multiplied size for the same reason (crisp glyphs at any scale),
+            // and this single font is what both the wrap decision and the painted glyphs measure through,
+            // so they cannot disagree about how wide a line is.
+            using SKFont font = TutorialFont.CreateFont(sprites, look.Size);
+            TutorialColor color = look.EffectiveColor(dark);
+            byte a = (byte)Math.Clamp(look.Opacity * alpha * 255.0, 0, 255);
             using SKPaint paint = new()
             {
                 IsAntialias = true,
-                Color = dark ? SKColors.White : SKColors.Black,
+                Color = new SKColor(color.Red, color.Green, color.Blue, a),
             };
 
             IReadOnlyList<string> lines = TutorialTextLayout.Wrap(text, widthLevel, s => font.MeasureText(s));
@@ -215,15 +253,25 @@ namespace CtrDxEditor.Rendering
             canvas.Translate((float)view.PanX, (float)view.PanY);
             canvas.Scale((float)view.Zoom);
 
+            if (look.Angle != 0)
+            {
+                double heightLevel = TutorialTextMetrics.HeightLevel(lines.Count, look);
+                canvas.RotateDegrees(
+                    (float)look.Angle,
+                    (float)(originX + (widthLevel / 2)),
+                    (float)(originY + (heightLevel / 2)));
+            }
+
             SKFontMetrics metrics = font.Metrics;
             double firstBaseline = originY + TutorialFont.TopSpacingLevel - metrics.Ascent;
+            double lineAdvance = TutorialFont.LineAdvanceLevel * look.Size * look.LineHeight;
 
             for (int i = 0; i < lines.Count; i++)
             {
                 string line = lines[i];
                 float lineWidth = font.MeasureText(line);
                 float x = (float)(originX + ((widthLevel - lineWidth) / 2));
-                float y = (float)(firstBaseline + (i * TutorialFont.LineAdvanceLevel));
+                float y = (float)(firstBaseline + (i * lineAdvance));
                 canvas.DrawText(line, x, y, font, paint);
             }
 

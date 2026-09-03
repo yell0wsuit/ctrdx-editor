@@ -122,6 +122,26 @@ namespace CtrDxEditor.Core.Editing
                 Positive(o.GetAttr("lineHeight"), 1.0));
         }
 
+        /// <summary>
+        /// The color a prompt should draw with: the authored override when one is set, otherwise
+        /// today's dark-canvas-invert default (white on dark, black otherwise). An authored
+        /// <c>color</c> supersedes that default rather than tinting it, mirroring the game's
+        /// <c>colorOverride</c>, which replaces the font's own color instead of modulating it.
+        /// </summary>
+        /// <param name="dark">Whether the canvas is the dark blank background.</param>
+        /// <returns>The RGB channels to paint with. Never null.</returns>
+        public TutorialColor EffectiveColor(bool dark)
+        {
+            if (Color is { } authored)
+            {
+                return authored;
+            }
+
+            return dark
+                ? new TutorialColor(255, 255, 255, Triplet: false)
+                : new TutorialColor(0, 0, 0, Triplet: false);
+        }
+
         private static TutorialColor? ColorOf(string? value)
         {
             return value is not null && TutorialColor.TryParse(value, out TutorialColor color)
