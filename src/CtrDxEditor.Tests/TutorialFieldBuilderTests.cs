@@ -458,7 +458,10 @@ namespace CtrDxEditor.Tests
             Assert.Contains(harness.Fields, f => f.Name == "duration");
         }
 
-        /// <summary>repeat's forever toggle writes -1 and hides the numeric field the same way duration does.</summary>
+        /// <summary>
+        /// repeat's forever toggle writes -1 and hides the numeric field the same way duration does;
+        /// unchecking it restores the schema's real default of one pass, not an arbitrary "2".
+        /// </summary>
         [Fact]
         public void RepeatForeverTogglesRepeatSentinelAndFieldVisibility()
         {
@@ -470,6 +473,72 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("-1", obj.GetAttr("repeat"));
             Assert.DoesNotContain(harness.Fields, f => f.Name == "repeat");
+
+            harness.Fields.Single(f => f.Name == "repeatsForever").Value = "false";
+
+            Assert.Equal("1", obj.GetAttr("repeat"));
+            Assert.Contains(harness.Fields, f => f.Name == "repeat");
+        }
+
+        /// <summary>group is a sequencing tag, not a trigger condition, so it belongs in Timing.</summary>
+        [Fact]
+        public void GroupFieldBelongsToTiming()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel group = fields.Single(f => f.Name == "group");
+
+            Assert.Equal("Timing", group.GroupHeader);
+        }
+
+        /// <summary>An authored group tag alone starts Timing expanded, and leaves Trigger collapsed.</summary>
+        [Fact]
+        public void AuthoredGroupExpandsTimingNotTrigger()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("group", "intro")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            PropertyGroupViewModel[] groups = [.. EditorViewModel.GroupFields(fields)];
+
+            Assert.True(groups.Single(g => g.Header == "Timing").IsExpanded);
+            Assert.False(groups.Single(g => g.Header == "Trigger").IsExpanded);
+        }
+
+        /// <summary>rotateSpeed is offered only in Looping - the shared mover reads it, the timeline can't.</summary>
+        [Fact]
+        public void RotateSpeedIsLoopingOnly()
+        {
+            LevelObject looping = new(new XElement("tutorial10", new XAttribute("path", "100,0")));
+            LevelObject timed = new(new XElement(
+                "tutorial10", new XAttribute("path", "100,0"), new XAttribute("moveDelay", "0")));
+            LevelObject none = new(new XElement("tutorial10"));
+
+            Assert.Equal(TutorialMotionMode.Looping, TutorialMotion.ModeOf(looping));
+            Assert.Contains(Build(looping), f => f.Name == "rotateSpeed");
+            Assert.DoesNotContain(Build(timed), f => f.Name == "rotateSpeed");
+            Assert.DoesNotContain(Build(none), f => f.Name == "rotateSpeed");
+        }
+
+        /// <summary>
+        /// Typing a repeat count into Timing on a currently-Looping prompt reclassifies its motion:
+        /// ModeOf treats any authored repeat as a Timed marker on a path-bearing prompt, so the edit
+        /// must rebuild the panel or the Motion group is left showing a stale "Looping".
+        /// </summary>
+        [Fact]
+        public void EditingTimingRepeatOnALoopingPromptRebuildsAsTimed()
+        {
+            LevelObject obj = new(new XElement("tutorial10", new XAttribute("path", "100,0")));
+            Harness harness = new(obj);
+            Assert.Equal("looping", harness.Fields.Single(f => f.Name == "motion").Value);
+
+            harness.Fields.Single(f => f.Name == "repeat").Value = "3";
+
+            Assert.Equal(1, harness.RebuildCount);
+            Assert.Equal(TutorialMotionMode.Timed, TutorialMotion.ModeOf(obj));
+            Assert.Equal("timed", harness.Fields.Single(f => f.Name == "motion").Value);
+            Assert.Equal("3", obj.GetAttr("repeat"));
+            // ease was never authored; TutorialMotion.Timed treats that the same as "none" per leg,
+            // so no seeding is needed for the panel to read and display Timed motion correctly.
+            Assert.NotNull(TutorialMotion.Timed(obj));
         }
     }
 }

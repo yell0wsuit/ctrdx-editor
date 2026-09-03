@@ -169,8 +169,7 @@ namespace CtrDxEditor.ViewModels
             bool hasArea = value.GetAttr("inArea") is not null;
             bool startsCollapsed = showOn == TutorialEvent.Start
                 && subject == TutorialSubject.Any
-                && !hasArea
-                && string.IsNullOrEmpty(value.GetAttr("group"));
+                && !hasArea;
 
             fields.Add(new AttributeFieldViewModel(
                 "showOn",
@@ -226,12 +225,6 @@ namespace CtrDxEditor.ViewModels
                 AddAreaField(fields, value, "inAreaWidth", header, a => a.Width, (a, v) => a with { Width = v }, onChanged, onChanging);
                 AddAreaField(fields, value, "inAreaHeight", header, a => a.Height, (a, v) => a with { Height = v }, onChanged, onChanging);
             }
-
-            fields.Add(new AttributeFieldViewModel(value, "group", AttrType.Text, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = TriggerGroupIndex,
-            });
         }
 
         private static void AddAreaField(
@@ -277,17 +270,26 @@ namespace CtrDxEditor.ViewModels
             string header = Localizer.Get("Panel.Timing");
             TutorialTiming timing = TutorialTiming.For(value);
             double defaultHold = isText ? 5.0 : 5.2;
-            bool startsCollapsed = timing.Delay == 0.0
+            bool startsCollapsed = string.IsNullOrEmpty(value.GetAttr("group"))
+                && timing.Delay == 0.0
                 && timing.FadeIn == 1.0
                 && timing.Hold == defaultHold
                 && timing.FadeOut == 0.5
                 && timing.Repeat == 1;
 
-            fields.Add(new AttributeFieldViewModel(value, "delay", AttrType.Number, null, onChanged, onChanging)
+            // A sequencing tag, not a trigger condition - TutorialTrigger.cs never reads it - so it
+            // belongs with the rest of the prompt's scheduling, not with Trigger.
+            fields.Add(new AttributeFieldViewModel(value, "group", AttrType.Text, null, onChanged, onChanging)
             {
                 GroupHeader = header,
                 GroupIndex = TimingGroupIndex,
                 GroupStartsCollapsed = startsCollapsed,
+            });
+
+            fields.Add(new AttributeFieldViewModel(value, "delay", AttrType.Number, null, onChanged, onChanging)
+            {
+                GroupHeader = header,
+                GroupIndex = TimingGroupIndex,
             });
             fields.Add(new AttributeFieldViewModel(value, "fadeIn", AttrType.Number, null, onChanged, onChanging)
             {
@@ -325,7 +327,7 @@ namespace CtrDxEditor.ViewModels
                 "repeatsForever",
                 AttrType.Bool,
                 () => timing.RepeatsForever ? "true" : "false",
-                v => value.SetAttr("repeat", v == "true" ? "-1" : "2"),
+                v => value.SetAttr("repeat", v == "true" ? "-1" : "1"),
                 structural,
                 onChanging)
             {
@@ -334,7 +336,11 @@ namespace CtrDxEditor.ViewModels
             });
             if (!timing.RepeatsForever)
             {
-                fields.Add(new AttributeFieldViewModel(value, "repeat", AttrType.Whole, null, onChanged, onChanging)
+                // Structural: TutorialMotion.ModeOf treats any authored repeat - including a
+                // finite pass count typed here - as a Timed marker on a path-bearing prompt, so an
+                // edit here can silently reclassify Motion. Rebuilding keeps the Motion group (and
+                // its mode dropdown) in sync with what the document now actually reads as.
+                fields.Add(new AttributeFieldViewModel(value, "repeat", AttrType.Whole, null, structural, onChanging)
                 {
                     GroupHeader = header,
                     GroupIndex = TimingGroupIndex,
@@ -453,6 +459,17 @@ namespace CtrDxEditor.ViewModels
                 GroupHeader = header,
                 GroupIndex = MotionGroupIndex,
             });
+
+            if (mode == TutorialMotionMode.Looping)
+            {
+                // Only the shared mover reads rotateSpeed (CTRMover.FromXml); Timed motion clears
+                // it because the timeline can't express rotation, so it has no effect there.
+                fields.Add(new AttributeFieldViewModel(value, "rotateSpeed", AttrType.Number, null, onChanged, onChanging)
+                {
+                    GroupHeader = header,
+                    GroupIndex = MotionGroupIndex,
+                });
+            }
 
             if (mode != TutorialMotionMode.Timed)
             {
