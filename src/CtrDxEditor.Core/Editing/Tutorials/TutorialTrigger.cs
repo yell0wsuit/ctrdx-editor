@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
+using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Core.Editing
@@ -170,6 +171,54 @@ namespace CtrDxEditor.Core.Editing
 
         /// <summary>Every event once, in declaration order, for the properties dropdown.</summary>
         public static IReadOnlyList<TutorialEvent> All { get; } = Enum.GetValues<TutorialEvent>();
+    }
+
+    /// <summary>
+    /// Resolves the localization key for a tutorial prompt's on-canvas trigger badge (drawn by
+    /// LevelCanvas, in CtrDxEditor.Shared). Preview fires every prompt at t=0 regardless of what would
+    /// really trigger it - the editor has no simulation - so this badge is what keeps that simplification
+    /// honest: it tells the level author what the prompt is actually waiting for.
+    /// </summary>
+    public static class TutorialBadge
+    {
+        /// <summary>Key for a prompt gated on a single-transition event, e.g. "on rope cut".</summary>
+        public const string EdgeKey = "Canvas.Tutorial.Badge.Edge";
+
+        /// <summary>Key for a prompt gated on a held condition, e.g. "while bubbled".</summary>
+        public const string StateKey = "Canvas.Tutorial.Badge.State";
+
+        /// <summary>Key for a start prompt whose only annotation-worthy fact is an authored delay.</summary>
+        public const string DelayKey = "Canvas.Tutorial.Badge.Delay";
+
+        /// <summary>Key for a start prompt whose only annotation-worthy fact is an authored sequencing group.</summary>
+        public const string GroupKey = "Canvas.Tutorial.Badge.Group";
+
+        /// <summary>
+        /// The localization key for <paramref name="o"/>'s trigger badge, or null when a start prompt with
+        /// no delay and no group needs none - it already plays exactly when the t=0 preview shows it, so
+        /// there is nothing to correct.
+        /// </summary>
+        /// <remarks>
+        /// An unparseable <c>showOn</c> falls back to start, the same non-throwing fallback
+        /// <see cref="TutorialEvents.TryParse"/> gives every other reader of this attribute in the editor
+        /// (e.g. the properties panel). The validator separately flags that value as one the game would
+        /// drop the prompt for, so this badge does not duplicate that warning.
+        /// </remarks>
+        public static string? KeyFor(LevelObject o)
+        {
+            _ = TutorialEvents.TryParse(o.GetAttr("showOn"), out TutorialEvent showOn);
+            if (showOn != TutorialEvent.Start)
+            {
+                return TutorialEvents.Kind(showOn) == TutorialEventKind.State ? StateKey : EdgeKey;
+            }
+
+            if (TutorialTiming.For(o).Delay > 0)
+            {
+                return DelayKey;
+            }
+
+            return string.IsNullOrEmpty(o.GetAttr("group")) ? null : GroupKey;
+        }
     }
 
     /// <summary>Selects which active candy body may satisfy a tutorial trigger.</summary>

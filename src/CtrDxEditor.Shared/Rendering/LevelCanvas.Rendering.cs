@@ -130,6 +130,7 @@ namespace CtrDxEditor.Rendering
                 {
                     LevelSceneRenderer.DrawSpinArrow(context, v, obj, _palette.SpinArrow);
                 }
+                DrawTutorialBadge(context, v, sprites, obj);
             }
 
             if (ShowHitboxes)
