@@ -302,4 +302,73 @@ namespace CtrDxEditor.Core.Editing
                     : fallback;
         }
     }
+
+    /// <summary>
+    /// Writes the attribute combination that selects a tutorial prompt's <see cref="TutorialMotionMode"/>.
+    /// Kept in Core, apart from the panel view model, so the writes are unit-testable without a UI.
+    /// </summary>
+    public static class TutorialMotionEditor
+    {
+        /// <summary>Path seeded when a mode needs one and none usable is authored.</summary>
+        private const string DefaultPath = "100,0";
+
+        /// <summary>
+        /// Removes the attributes the target mode does not read and seeds what it needs: a default
+        /// path when entering a mode with none authored (or with a circular one while entering
+        /// Timed), and <c>ease="none"</c> when entering Timed with no ease. Leaves moveSpeed alone
+        /// when it is already authored - the game's default of 100 is meaningful - and never touches
+        /// it directly except to clear it along with the rest of the motion attributes in None.
+        /// </summary>
+        /// <param name="o">The tutorial prompt whose motion attributes are updated.</param>
+        /// <param name="mode">The motion mode to switch to.</param>
+        public static void SetMode(LevelObject o, TutorialMotionMode mode)
+        {
+            switch (mode)
+            {
+                case TutorialMotionMode.None:
+                    o.RemoveAttr("path");
+                    o.RemoveAttr("ease");
+                    o.RemoveAttr("moveDelay");
+                    o.RemoveAttr("moveSpeed");
+                    o.RemoveAttr("repeat");
+                    o.RemoveAttr("rotateSpeed");
+                    break;
+
+                case TutorialMotionMode.Looping:
+                    o.RemoveAttr("ease");
+                    o.RemoveAttr("moveDelay");
+                    o.RemoveAttr("repeat");
+                    if (string.IsNullOrEmpty(o.GetAttr("path")))
+                    {
+                        o.SetAttr("path", DefaultPath);
+                    }
+                    break;
+
+                case TutorialMotionMode.Timed:
+                    o.RemoveAttr("rotateSpeed");
+                    if (!HasTimeableOffset(o.GetAttr("path")))
+                    {
+                        o.SetAttr("path", DefaultPath);
+                    }
+                    if (o.GetAttr("ease") is null)
+                    {
+                        o.SetAttr("ease", "none");
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Whether a path is usable for Timed motion: not circular (the timeline can't express an
+        /// orbit) and carrying at least one parseable offset (an empty or garbage path parses to
+        /// none). A circular path is the common case this rejects, but any path <see cref="TutorialMotion.Timed"/>
+        /// could not turn into a leg is replaced the same way.
+        /// </summary>
+        private static bool HasTimeableOffset(string? path)
+        {
+            return !string.IsNullOrEmpty(path)
+                && !MoverPath.IsCircularPath(path)
+                && RelativePolyline.Points(new Vec2(0, 0), path).Length > 1;
+        }
+    }
 }

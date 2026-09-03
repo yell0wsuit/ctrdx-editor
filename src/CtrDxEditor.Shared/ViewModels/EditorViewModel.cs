@@ -1828,7 +1828,10 @@ namespace CtrDxEditor.ViewModels
             {
                 if (current is null || current.Header != field.GroupHeader || current.Index != field.GroupIndex)
                 {
-                    current = new PropertyGroupViewModel(field.GroupHeader, field.GroupIndex);
+                    current = new PropertyGroupViewModel(field.GroupHeader, field.GroupIndex)
+                    {
+                        IsExpanded = !field.GroupStartsCollapsed,
+                    };
                     groups.Add(current);
                 }
                 current.Fields.Add(field);

@@ -137,6 +137,14 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public int GroupIndex { get; init; } = -1;
 
+        /// <summary>
+        /// Whether the section this field belongs to should start collapsed because every attribute in
+        /// it currently sits at its default. Read only from the field that opens a new section (see
+        /// <c>EditorViewModel.GroupFields</c>); false on every field unless a builder opts in, so
+        /// existing panels stay expanded as before.
+        /// </summary>
+        public bool GroupStartsCollapsed { get; init; }
+
         /// <summary>Whether this field has help text to surface via a help icon.</summary>
         public bool HasHelp => !string.IsNullOrEmpty(HelpText);
 

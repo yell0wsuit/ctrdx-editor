@@ -46,6 +46,35 @@ namespace CtrDxEditor.Tests
             return fields;
         }
 
+        /// <summary>Rebuilds the field list in place, the way EditorViewModel's structural callback does.</summary>
+        private sealed class Harness
+        {
+            private readonly LevelObject _obj;
+            private readonly SpriteCache _sprites = new(new EmptyStore());
+
+            public Harness(LevelObject obj)
+            {
+                _obj = obj;
+                Populate();
+            }
+
+            public ObservableCollection<AttributeFieldViewModel> Fields { get; } = [];
+
+            public int RebuildCount { get; private set; }
+
+            private void Populate()
+            {
+                Fields.Clear();
+                TutorialFieldBuilder.Build(Fields, _obj, _sprites, () => { }, () => { }, Rebuild);
+            }
+
+            private void Rebuild()
+            {
+                RebuildCount++;
+                Populate();
+            }
+        }
+
         /// <summary>Builds an eleven-choice icon picker and an angle field for tutorial icons.</summary>
         [Fact]
         public void IconPanelHasIconPickerAndAngle()
@@ -118,6 +147,329 @@ namespace CtrDxEditor.Tests
             vm.RefreshFieldValues();
 
             Assert.Contains(vm.Fields, f => f.Name == "width");
+        }
+
+        /// <summary>Groups appear content, Trigger, Timing, Look, Motion, in that order.</summary>
+        [Fact]
+        public void GroupsAppearInBriefOrder()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            PropertyGroupViewModel[] groups = [.. EditorViewModel.GroupFields(fields)];
+
+            Assert.False(groups[0].HasHeader);
+            Assert.Equal(["Trigger", "Timing", "Look", "Motion"], groups.Skip(1).Select(g => g.Header));
+        }
+
+        /// <summary>A freshly placed icon has every attribute at its default, so every titled section starts collapsed.</summary>
+        [Fact]
+        public void DefaultObjectCollapsesEveryTitledSection()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            PropertyGroupViewModel[] groups = [.. EditorViewModel.GroupFields(fields)];
+
+            foreach (PropertyGroupViewModel group in groups.Where(g => g.HasHeader))
+            {
+                Assert.False(group.IsExpanded);
+            }
+        }
+
+        /// <summary>An authored non-default Timing attribute starts that section expanded, not the others.</summary>
+        [Fact]
+        public void NonDefaultAttributeExpandsOnlyItsOwnSection()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("fadeIn", "2")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            PropertyGroupViewModel[] groups = [.. EditorViewModel.GroupFields(fields)];
+
+            Assert.True(groups.Single(g => g.Header == "Timing").IsExpanded);
+            Assert.False(groups.Single(g => g.Header == "Trigger").IsExpanded);
+            Assert.False(groups.Single(g => g.Header == "Look").IsExpanded);
+            Assert.False(groups.Single(g => g.Header == "Motion").IsExpanded);
+        }
+
+        /// <summary>showOn lists all 31 tutorial events, edge events before the state conditions.</summary>
+        [Fact]
+        public void ShowOnListsAllThirtyOneEventsEdgeFirst()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel showOn = fields.Single(f => f.Name == "showOn");
+
+            Assert.Equal(31, showOn.EnumOptions!.Length);
+            Assert.Equal("start", showOn.EnumOptions![0].Value);
+            Assert.Equal("bubbled", showOn.EnumOptions![24].Value);
+            Assert.Equal("candyMoved", showOn.EnumOptions![^1].Value);
+        }
+
+        /// <summary>subject offers exactly any/primary/left/right.</summary>
+        [Fact]
+        public void SubjectOffersFourOptions()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel subject = fields.Single(f => f.Name == "subject");
+
+            Assert.Equal(["any", "primary", "left", "right"], subject.EnumOptions!.Select(o => o.Value));
+        }
+
+        /// <summary>Reading a color field never rewrites the raw attribute, whatever spelling or casing it carries.</summary>
+        [Fact]
+        public void ColorFieldDisplaysRawTextWithoutRewriting()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("color", "#ff0000")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel color = fields.Single(f => f.Name == "color");
+
+            Assert.Equal("#ff0000", color.Value);
+            Assert.Equal("#ff0000", obj.GetAttr("color"));
+        }
+
+        /// <summary>Building the panel alone, with no edit, never calls SetAttr on an authored color.</summary>
+        [Fact]
+        public void UnrelatedEditDoesNotTouchAnUntouchedColor()
+        {
+            LevelObject obj = new(new XElement(
+                "tutorial01", new XAttribute("color", "1, 2, 3"), new XAttribute("angle", "0")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+
+            fields.Single(f => f.Name == "angle").Value = "45";
+
+            Assert.Equal("1, 2, 3", obj.GetAttr("color"));
+        }
+
+        /// <summary>An actual edit always writes hex, even when the prior spelling was a triplet.</summary>
+        [Fact]
+        public void EditingATripletColorWritesHex()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("color", "1,2,3")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel color = fields.Single(f => f.Name == "color");
+
+            color.Value = "10,20,30";
+
+            Assert.Equal("#0A141E", obj.GetAttr("color"));
+        }
+
+        /// <summary>An edit that parses as hex is re-emitted uppercase, per FormatHex.</summary>
+        [Fact]
+        public void EditingToLowercaseHexNormalizesToUppercase()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("color", "#000000")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel color = fields.Single(f => f.Name == "color");
+
+            color.Value = "#ff9900";
+
+            Assert.Equal("#FF9900", obj.GetAttr("color"));
+        }
+
+        /// <summary>An edit that doesn't parse at all is written verbatim, so the field stays typeable.</summary>
+        [Fact]
+        public void UnparseableColorEditStaysTypeable()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel color = fields.Single(f => f.Name == "color");
+
+            color.Value = "purple";
+
+            Assert.Equal("purple", obj.GetAttr("color"));
+        }
+
+        /// <summary>color is offered even on the two full-color quads the validator flags it on.</summary>
+        [Theory]
+        [InlineData("tutorial10")]
+        [InlineData("tutorial11")]
+        public void ColorIsOfferedOnFullColorQuads(string element)
+        {
+            LevelObject obj = new(new XElement(element));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+
+            Assert.Contains(fields, f => f.Name == "color");
+        }
+
+        /// <summary>size and lineHeight are text-only, never offered on a sign icon.</summary>
+        [Fact]
+        public void SizeAndLineHeightAreTextOnly()
+        {
+            LevelObject icon = new(new XElement("tutorial01"));
+            LevelObject text = new(new XElement("tutorialText", new XAttribute("text", "hi")));
+
+            Assert.DoesNotContain(Build(icon), f => f.Name == "size");
+            Assert.DoesNotContain(Build(icon), f => f.Name == "lineHeight");
+            Assert.Contains(Build(text), f => f.Name == "size");
+            Assert.Contains(Build(text), f => f.Name == "lineHeight");
+        }
+
+        /// <summary>A fresh icon starts with no motion fields beyond the mode picker itself, reading None.</summary>
+        [Fact]
+        public void FreshIconStartsAtMotionNone()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+            AttributeFieldViewModel motion = fields.Single(f => f.Name == "motion");
+
+            Assert.Equal("none", motion.Value);
+            Assert.DoesNotContain(fields, f => f.Name == "path");
+        }
+
+        /// <summary>Switching motion to Looping rebuilds the panel and reveals path and moveSpeed, not ease.</summary>
+        [Fact]
+        public void SwitchingToLoopingRevealsPathAndSpeedOnly()
+        {
+            LevelObject obj = new(new XElement("tutorial10"));
+            Harness harness = new(obj);
+            AttributeFieldViewModel motion = harness.Fields.Single(f => f.Name == "motion");
+
+            motion.SelectedOption = motion.EnumOptions!.Single(o => o.Value == "looping");
+
+            Assert.Equal(1, harness.RebuildCount);
+            Assert.NotNull(obj.GetAttr("path"));
+            Assert.Contains(harness.Fields, f => f.Name == "path");
+            Assert.Contains(harness.Fields, f => f.Name == "moveSpeed");
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "moveDelay");
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "ease");
+        }
+
+        /// <summary>Switching motion to Timed reveals moveDelay and one ease dropdown per leg.</summary>
+        [Fact]
+        public void SwitchingToTimedRevealsMoveDelayAndEasePerLeg()
+        {
+            LevelObject obj = new(new XElement("tutorial10", new XAttribute("path", "100,0,200,0")));
+            Harness harness = new(obj);
+            AttributeFieldViewModel motion = harness.Fields.Single(f => f.Name == "motion");
+
+            motion.SelectedOption = motion.EnumOptions!.Single(o => o.Value == "timed");
+
+            Assert.Equal(1, harness.RebuildCount);
+            Assert.Contains(harness.Fields, f => f.Name == "moveDelay");
+            Assert.Equal(2, harness.Fields.Count(f => f.Name == "ease"));
+        }
+
+        /// <summary>Editing the path to add a leg rebuilds the panel with a matching extra ease dropdown.</summary>
+        [Fact]
+        public void EditingPathChangesEaseLegCount()
+        {
+            LevelObject obj = new(new XElement(
+                "tutorial10", new XAttribute("path", "100,0"), new XAttribute("moveDelay", "0")));
+            Harness harness = new(obj);
+            Assert.Single(harness.Fields, f => f.Name == "ease");
+
+            harness.Fields.Single(f => f.Name == "path").Value = "100,0,200,0";
+
+            Assert.Equal(1, harness.RebuildCount);
+            Assert.Equal(2, harness.Fields.Count(f => f.Name == "ease"));
+        }
+
+        /// <summary>Setting every leg to the same ease serializes the single-value shorthand.</summary>
+        [Fact]
+        public void AgreeingLegsSerializeToShorthand()
+        {
+            LevelObject obj = new(new XElement(
+                "tutorial10", new XAttribute("path", "100,0,200,0"), new XAttribute("moveDelay", "0")));
+            Harness harness = new(obj);
+            AttributeFieldViewModel[] eases = [.. harness.Fields.Where(f => f.Name == "ease")];
+            Assert.Equal(2, eases.Length);
+
+            eases[0].SelectedOption = eases[0].EnumOptions!.Single(o => o.Value == "in");
+            Assert.Equal("in,none", obj.GetAttr("ease"));
+
+            eases[1].SelectedOption = eases[1].EnumOptions!.Single(o => o.Value == "in");
+            Assert.Equal("in", obj.GetAttr("ease"));
+        }
+
+        /// <summary>Toggling motion to None clears path, ease and moveDelay in one rebuild.</summary>
+        [Fact]
+        public void SwitchingBackToNoneClearsMotionFields()
+        {
+            LevelObject obj = new(new XElement(
+                "tutorial10", new XAttribute("path", "100,0"), new XAttribute("moveDelay", "0")));
+            Harness harness = new(obj);
+            AttributeFieldViewModel motion = harness.Fields.Single(f => f.Name == "motion");
+
+            motion.SelectedOption = motion.EnumOptions!.Single(o => o.Value == "none");
+
+            Assert.Null(obj.GetAttr("path"));
+            Assert.Null(obj.GetAttr("moveDelay"));
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "path");
+        }
+
+        /// <summary>inArea is off by default; turning it on seeds a rectangle and reveals four number fields.</summary>
+        [Fact]
+        public void TurningOnInAreaSeedsRectAndRevealsFields()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            Harness harness = new(obj);
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "inAreaX");
+
+            harness.Fields.Single(f => f.Name == "inArea").Value = "true";
+
+            Assert.Equal(1, harness.RebuildCount);
+            Assert.Equal("0,0,100,100", obj.GetAttr("inArea"));
+            Assert.Contains(harness.Fields, f => f.Name == "inAreaX");
+            Assert.Contains(harness.Fields, f => f.Name == "inAreaY");
+            Assert.Contains(harness.Fields, f => f.Name == "inAreaWidth");
+            Assert.Contains(harness.Fields, f => f.Name == "inAreaHeight");
+        }
+
+        /// <summary>Editing one inArea component preserves the other three.</summary>
+        [Fact]
+        public void EditingOneAreaComponentPreservesTheOthers()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("inArea", "10,20,100,100")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+
+            fields.Single(f => f.Name == "inAreaWidth").Value = "50";
+
+            Assert.Equal("10,20,50,100", obj.GetAttr("inArea"));
+        }
+
+        /// <summary>Turning inArea off removes the attribute and hides the four fields.</summary>
+        [Fact]
+        public void TurningOffInAreaRemovesAttribute()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("inArea", "10,20,100,100")));
+            Harness harness = new(obj);
+
+            harness.Fields.Single(f => f.Name == "inArea").Value = "false";
+
+            Assert.Null(obj.GetAttr("inArea"));
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "inAreaX");
+        }
+
+        /// <summary>duration's forever toggle writes -1 and hides the numeric field; unchecking restores a real value.</summary>
+        [Fact]
+        public void HoldForeverTogglesDurationSentinelAndFieldVisibility()
+        {
+            LevelObject obj = new(new XElement("tutorialText", new XAttribute("text", "hi")));
+            Harness harness = new(obj);
+            Assert.Contains(harness.Fields, f => f.Name == "duration");
+
+            harness.Fields.Single(f => f.Name == "holdsForever").Value = "true";
+
+            Assert.Equal("-1", obj.GetAttr("duration"));
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "duration");
+
+            harness.Fields.Single(f => f.Name == "holdsForever").Value = "false";
+
+            Assert.Equal("5", obj.GetAttr("duration"));
+            Assert.Contains(harness.Fields, f => f.Name == "duration");
+        }
+
+        /// <summary>repeat's forever toggle writes -1 and hides the numeric field the same way duration does.</summary>
+        [Fact]
+        public void RepeatForeverTogglesRepeatSentinelAndFieldVisibility()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            Harness harness = new(obj);
+            Assert.Contains(harness.Fields, f => f.Name == "repeat");
+
+            harness.Fields.Single(f => f.Name == "repeatsForever").Value = "true";
+
+            Assert.Equal("-1", obj.GetAttr("repeat"));
+            Assert.DoesNotContain(harness.Fields, f => f.Name == "repeat");
         }
     }
 }
