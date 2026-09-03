@@ -69,6 +69,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Solid direction arrow for RC/RW orbital movement.</summary>
         public Pen OrbitPathArrow { get; private set; } = SolidPen(Color.FromRgb(0x25, 0x63, 0xEB), 2.25);
 
+        /// <summary>Dashed rectangle marking a tutorial prompt's <c>inArea</c> trigger region, and its corner handles.</summary>
+        public Pen TutorialArea { get; private set; } = OverlayPen(Color.FromRgb(0xA2, 0x1C, 0xAF), 1.5);
+
         /// <summary>Text brush for a timed-star duration label on the blank (no-background) canvas:
         /// pure white in the dark theme, pure black in the light theme. When a background is applied
         /// the canvas draws these labels black regardless.</summary>
@@ -102,6 +105,7 @@ namespace CtrDxEditor.Rendering
             Color orbitColor = ThemeColor(host, "EditorColor.OverlayOrbitPath", Color.FromRgb(0x25, 0x63, 0xEB));
             OrbitPath = DottedPen(orbitColor, 1.5);
             OrbitPathArrow = SolidPen(orbitColor, 2.25);
+            TutorialArea = OverlayPen(ThemeColor(host, "EditorColor.OverlayTutorialArea", Color.FromRgb(0xA2, 0x1C, 0xAF)), 1.5);
             StarDurationText = host.ActualThemeVariant == ThemeVariant.Dark ? Brushes.White : Brushes.Black;
         }
 

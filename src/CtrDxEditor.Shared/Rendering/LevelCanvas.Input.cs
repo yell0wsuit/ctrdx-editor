@@ -775,6 +775,20 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            // A trigger-area corner resizes inArea; only the four corner dots are hit-testable, so a click
+            // anywhere else on (or inside) the rectangle falls through to ordinary object hit-testing below.
+            int areaCorner = HitTutorialAreaCorner(levelPt);
+            if (areaCorner >= 0 && SelectedObject is { } areaObj)
+            {
+                BeginDocumentEdit?.Invoke();
+                _tutorialAreaCornerDrag = areaCorner;
+                ApplyTutorialAreaCornerDrag(areaObj, areaCorner, levelPt);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                e.Pointer.Capture(this);
+                return;
+            }
+
             // A vinyl handle drag rotates the disc; it takes priority over the size ring since both sit on
             // the disc edge (the ring wins everywhere except the two handle spots).
             VinylGeometry.Handle vinylHandle = HitVinylHandle(levelPt);
@@ -1190,6 +1204,14 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
+            if (_tutorialAreaCornerDrag >= 0 && SelectedObject is { } areaDrag)
+            {
+                ApplyTutorialAreaCornerDrag(areaDrag, _tutorialAreaCornerDrag, levelPt);
+                SelectedObjectMoved?.Invoke();
+                InvalidateVisual();
+                return;
+            }
+
             if (_vinylHandleDrag != VinylGeometry.Handle.None && SelectedObject is { } vinylDrag)
             {
                 vinylDrag.SetAttr("handleAngle", Whole(VinylGeometry.AngleFor(vinylDrag, _vinylHandleDrag, levelPt)));
@@ -1305,6 +1327,12 @@ namespace CtrDxEditor.Rendering
                 VinylGeometry.Handle vinylHover = HitVinylHandle(levelPt);
                 bool tutorialTextResizeHover = HitTutorialTextResize(levelPt);
                 SetVinylHandleHovered(vinylHover);
+                int oldAreaCornerHover = _tutorialAreaCornerHover;
+                _tutorialAreaCornerHover = HitTutorialAreaCorner(levelPt);
+                if (oldAreaCornerHover != _tutorialAreaCornerHover)
+                {
+                    InvalidateVisual();
+                }
                 int oldHoverPoint = _polylineHoverPoint;
                 bool oldNubHot = _polylineNubHot;
                 bool oldLimitHint = _polylineAtLimitHint;
@@ -1344,6 +1372,7 @@ namespace CtrDxEditor.Rendering
                     InvalidateVisual();
                 }
                 Cursor = tutorialTextResizeHover ? ResizeCursor
+                    : _tutorialAreaCornerHover >= 0 ? ResizeCursor
                     : _handSplitPreview is not null ? new Cursor(StandardCursorType.Cross)
                     : vinylHover != VinylGeometry.Handle.None ? new Cursor(StandardCursorType.Hand)
                     : handAffordance == HandPointerAffordance.JointResize ? CursorForHandJoint(_handHoverJoint)
@@ -1418,7 +1447,8 @@ namespace CtrDxEditor.Rendering
                 || _railDrag != GrabRail.Handle.None || _ropeDrag != RopeLength.Handle.None
                 || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
-                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered || _waterDrag;
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _hookHovered || _waterDrag
+                || _tutorialAreaCornerDrag >= 0;
             if (!gestureActive)
             {
                 return;
@@ -1436,7 +1466,8 @@ namespace CtrDxEditor.Rendering
                 || _railDrag != GrabRail.Handle.None || _ropeDrag != RopeLength.Handle.None
                 || _stripResizeDrag != SpikeResize.Handle.None
                 || _conveyorDrag != ConveyorGeometry.Handle.None
-                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag;
+                || _vinylHandleDrag != VinylGeometry.Handle.None || _rotating || _waterDrag
+                || _tutorialAreaCornerDrag >= 0;
             _dragging = false;
             _pendingDupDrag = false;
             _dupDragArmed = false;
@@ -1458,6 +1489,7 @@ namespace CtrDxEditor.Rendering
             _stripResizeDrag = SpikeResize.Handle.None;
             _conveyorDrag = ConveyorGeometry.Handle.None;
             _vinylHandleDrag = VinylGeometry.Handle.None;
+            _tutorialAreaCornerDrag = -1;
             _rotating = false;
             _rotationDragCenter = default;
             _polylinePointDrag = -1;
@@ -1491,6 +1523,11 @@ namespace CtrDxEditor.Rendering
             SetDialKnobHovered(false); // nor the rotation knob
             SetVinylHandleHovered(VinylGeometry.Handle.None); // nor the vinyl handle glow
             ResetPolylineHover();
+            if (_tutorialAreaCornerHover != -1)
+            {
+                _tutorialAreaCornerHover = -1;
+                InvalidateVisual();
+            }
             _handHoverJoint = 0;
             if (_handSplitPreview is not null || _handHoverSegment != 0)
             {

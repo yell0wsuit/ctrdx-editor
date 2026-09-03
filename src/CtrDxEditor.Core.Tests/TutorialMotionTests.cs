@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Xml.Linq;
 
 using CtrDxEditor.Core.Document;
@@ -75,6 +76,41 @@ namespace CtrDxEditor.Core.Tests
                 Prompt(("path", "100,0,200,0,300,0"), ("ease", "in")))!;
 
             Assert.Equal([TutorialEase.In, TutorialEase.In, TutorialEase.In], motion.Eases);
+        }
+
+        /// <summary>
+        /// Each leg's marker sits at the anchor-relative midpoint of that leg alone, matched to that leg's
+        /// own ease - not the previous leg's, and not the path's overall midpoint.
+        /// </summary>
+        [Fact]
+        public void LegMarkersPairEachLegsMidpointWithItsOwnEase()
+        {
+            TutorialMotion motion = TutorialMotion.Timed(
+                Prompt(("path", "230,0,440,0"), ("moveSpeed", "440"), ("ease", "in,out")))!;
+
+            IReadOnlyList<(Vec2 Midpoint, TutorialEase Ease)> markers = motion.LegMarkers;
+
+            Assert.Equal(2, markers.Count);
+            Assert.Equal(new Vec2(115, 0), markers[0].Midpoint); // (0,0) -> (230,0)
+            Assert.Equal(TutorialEase.In, markers[0].Ease);
+            Assert.Equal(new Vec2(335, 0), markers[1].Midpoint); // (230,0) -> (440,0)
+            Assert.Equal(TutorialEase.Out, markers[1].Ease);
+        }
+
+        /// <summary>A three-leg path with a single shorthand ease marks every leg's own midpoint the same way.</summary>
+        [Fact]
+        public void LegMarkersCoverEveryLegOnAMultiLegPath()
+        {
+            TutorialMotion motion = TutorialMotion.Timed(
+                Prompt(("path", "100,0,100,100,0,100"), ("ease", "none")))!;
+
+            IReadOnlyList<(Vec2 Midpoint, TutorialEase Ease)> markers = motion.LegMarkers;
+
+            Assert.Equal(3, markers.Count);
+            Assert.Equal(new Vec2(50, 0), markers[0].Midpoint);
+            Assert.Equal(new Vec2(100, 50), markers[1].Midpoint);
+            Assert.Equal(new Vec2(50, 100), markers[2].Midpoint);
+            Assert.All(markers, m => Assert.Equal(TutorialEase.None, m.Ease));
         }
 
         /// <summary>Easing integrates the game's constant acceleration: p squared, and its mirror.</summary>

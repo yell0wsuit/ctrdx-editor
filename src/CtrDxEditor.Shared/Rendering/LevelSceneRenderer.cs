@@ -1941,6 +1941,74 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
+        /// Draws a tutorial prompt's <c>inArea</c> trigger region as a faint dashed rectangle, whenever the
+        /// prompt authors a parseable area. Deliberately body-less: the interior is never hit-tested (only
+        /// the canvas's corner handles are, and only for the selected prompt) so an object sitting inside a
+        /// <c>candyMoved</c> region - the normal case - stays selectable through the outline.
+        /// </summary>
+        /// <param name="ctx">The drawing context to render into.</param>
+        /// <param name="v">The view transform mapping level coordinates to screen pixels.</param>
+        /// <param name="obj">The candidate tutorial prompt.</param>
+        /// <param name="areaPen">The pen for the dashed outline.</param>
+        public static void DrawTutorialArea(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen areaPen)
+        {
+            if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
+                || !TutorialArea.TryParse(obj.GetAttr("inArea"), out TutorialArea area))
+            {
+                return;
+            }
+
+            Vec2 topLeft = v.LevelToScreen(new Vec2(area.X, area.Y));
+            Vec2 bottomRight = v.LevelToScreen(new Vec2(area.X + area.Width, area.Y + area.Height));
+            using (ctx.PushOpacity(0.5))
+            {
+                ctx.DrawRectangle(areaPen, new Rect(new Point(topLeft.X, topLeft.Y), new Point(bottomRight.X, bottomRight.Y)));
+            }
+        }
+
+        /// <summary>
+        /// Marks each leg of a Timed-motion tutorial's path at its midpoint, distinguishing <c>none</c>,
+        /// <c>in</c> and <c>out</c> easing: a polyline drawn as a plain line looks identical whichever ease
+        /// is authored, so <c>ease="in,out"</c> would otherwise be invisible on the canvas.
+        /// </summary>
+        /// <param name="ctx">The drawing context to render into.</param>
+        /// <param name="v">The view transform mapping level coordinates to screen pixels.</param>
+        /// <param name="obj">The candidate tutorial prompt.</param>
+        /// <param name="markerPen">The pen and brush used for every marker variant.</param>
+        public static void DrawTutorialEaseMarkers(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen markerPen)
+        {
+            if (TutorialMotion.Timed(obj) is not { } motion)
+            {
+                return;
+            }
+
+            Vec2 anchor = new(obj.X, obj.Y);
+            foreach ((Vec2 midpoint, TutorialEase ease) in motion.LegMarkers)
+            {
+                Vec2 screen = v.LevelToScreen(new Vec2(anchor.X + midpoint.X, anchor.Y + midpoint.Y));
+                Point center = new(screen.X, screen.Y);
+                switch (ease)
+                {
+                    case TutorialEase.None:
+                        // Hollow: constant speed, nothing to call out.
+                        ctx.DrawEllipse(null, markerPen, center, 3, 3);
+                        break;
+                    case TutorialEase.In:
+                        // Filled: slow start.
+                        ctx.DrawEllipse(markerPen.Brush, null, center, 3, 3);
+                        break;
+                    case TutorialEase.Out:
+                        // Filled with a ring: slow end - a heavier mark than the symmetric "in".
+                        ctx.DrawEllipse(markerPen.Brush, null, center, 3, 3);
+                        ctx.DrawEllipse(null, markerPen, center, 6, 6);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown tutorial ease: {ease}");
+                }
+            }
+        }
+
+        /// <summary>
         /// Draws one path segment, trimmed to the visible canvas. Movement paths use sentinel offsets that run
         /// far off the map, and the dotted path pen tessellates a segment's whole screen length into dashes
         /// before rasterization can discard the off-screen ones — so a level full of long paths pays for

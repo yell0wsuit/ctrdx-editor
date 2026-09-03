@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
+using CtrDxEditor.Core.Geometry;
+
 namespace CtrDxEditor.Core.Editing
 {
     /// <summary>Named tutorial conditions accepted by the map XML schema, in the game's order.</summary>
@@ -251,6 +253,73 @@ namespace CtrDxEditor.Core.Editing
 
             value = 0;
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Pure canvas geometry for dragging a <see cref="TutorialArea"/> by its corners. The rectangle has no
+    /// rotation, so a drag only ever moves the two edges meeting at the dragged corner; the opposite corner
+    /// is the pivot that stays put. Kept in Core, apart from the canvas hit-testing/drawing, so the drag
+    /// math is unit-testable without a UI.
+    /// </summary>
+    public static class TutorialAreaResize
+    {
+        /// <summary>Smallest width/height a drag may produce, so a corner dragged onto its neighbor never
+        /// collapses the area to a zero-size rectangle that <see cref="TutorialArea.TryParse"/> would reject.</summary>
+        private const double MinSize = 1;
+
+        /// <summary>The area's four corners in map coordinates, clockwise from top-left.</summary>
+        /// <param name="area">The trigger area.</param>
+        /// <returns>Corners in order: top-left (0), top-right (1), bottom-right (2), bottom-left (3).</returns>
+        public static Vec2[] Corners(TutorialArea area)
+        {
+            return
+            [
+                new Vec2(area.X, area.Y),
+                new Vec2(area.X + area.Width, area.Y),
+                new Vec2(area.X + area.Width, area.Y + area.Height),
+                new Vec2(area.X, area.Y + area.Height),
+            ];
+        }
+
+        /// <summary>Returns the corner index (0..3, see <see cref="Corners"/>) under a point, or -1.</summary>
+        /// <param name="area">The trigger area.</param>
+        /// <param name="point">The point to test, in map coordinates.</param>
+        /// <param name="tolerance">The hit radius, in the same units as <paramref name="point"/>.</param>
+        public static int HitCorner(TutorialArea area, Vec2 point, double tolerance)
+        {
+            Vec2[] corners = Corners(area);
+            double toleranceSquared = tolerance * tolerance;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                double dx = corners[i].X - point.X;
+                double dy = corners[i].Y - point.Y;
+                if ((dx * dx) + (dy * dy) <= toleranceSquared)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Moves one corner to a new position, recomputing the rectangle from the dragged corner and its
+        /// fixed opposite. The result always has positive dimensions: dragging past the opposite corner
+        /// flips which side is which rather than inverting width or height.
+        /// </summary>
+        /// <param name="area">The area before the drag.</param>
+        /// <param name="corner">The corner index being dragged, 0..3 clockwise from top-left (see <see cref="Corners"/>).</param>
+        /// <param name="to">The corner's new position, in map coordinates.</param>
+        /// <returns>The area recomputed from the dragged corner and the fixed opposite corner.</returns>
+        public static TutorialArea DragCorner(TutorialArea area, int corner, Vec2 to)
+        {
+            Vec2 opposite = Corners(area)[(corner + 2) % 4];
+            double minX = Math.Min(opposite.X, to.X);
+            double maxX = Math.Max(opposite.X, to.X);
+            double minY = Math.Min(opposite.Y, to.Y);
+            double maxY = Math.Max(opposite.Y, to.Y);
+            return new TutorialArea(minX, minY, Math.Max(MinSize, maxX - minX), Math.Max(MinSize, maxY - minY));
         }
     }
 }

@@ -88,6 +88,36 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
+        /// The corner index (0..3, see <see cref="TutorialAreaResize.Corners"/>) of the selected tutorial
+        /// prompt's <c>inArea</c> handle under a level point, or -1. Deliberately does not test the
+        /// rectangle's interior: a <c>candyMoved</c> region's normal case is objects sitting inside it, and a
+        /// body hit-test would make those unselectable.
+        /// </summary>
+        /// <param name="levelPt">The point to test, in level coordinates.</param>
+        private int HitTutorialAreaCorner(Vec2 levelPt)
+        {
+            return IsSingleSelection && SelectedObject is { } sel && View.Zoom > 0
+                && (TutorialObject.IsText(sel.Type) || TutorialObject.IsImage(sel.Type))
+                && TutorialArea.TryParse(sel.GetAttr("inArea"), out TutorialArea area)
+                ? TutorialAreaResize.HitCorner(area, levelPt, HitTolerance(9))
+                : -1;
+        }
+
+        /// <summary>Writes the dragged corner's new <c>inArea</c>, normalized to positive dimensions.</summary>
+        /// <param name="obj">The tutorial prompt being edited.</param>
+        /// <param name="corner">The corner being dragged, as returned by <see cref="HitTutorialAreaCorner"/>.</param>
+        /// <param name="levelPt">The pointer position in level coordinates.</param>
+        private static void ApplyTutorialAreaCornerDrag(LevelObject obj, int corner, Vec2 levelPt)
+        {
+            if (!TutorialArea.TryParse(obj.GetAttr("inArea"), out TutorialArea area))
+            {
+                return;
+            }
+
+            obj.SetAttr("inArea", TutorialAreaResize.DragCorner(area, corner, levelPt).Format());
+        }
+
+        /// <summary>
         /// The selected grab's editable rope geometry, or null when there is nothing to edit: not a single
         /// grab selection, locked out, no authored rope, or a rope whose bound object is hidden (the cord
         /// is not drawn then, so a handle floating in space would be misleading).

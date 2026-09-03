@@ -79,6 +79,31 @@ namespace CtrDxEditor.Core.Editing
         public double TravelSeconds { get; }
 
         /// <summary>
+        /// Anchor-relative midpoint of each leg, paired with that leg's ease. A polyline drawn as a plain
+        /// line looks identical whether a leg eases in, out, or not at all - <c>PositionAt</c> is where the
+        /// difference actually shows, but that needs a running preview. This gives the canvas a static point
+        /// per leg to mark instead, one entry per <see cref="Offsets"/> in the same order.
+        /// </summary>
+        public IReadOnlyList<(Vec2 Midpoint, TutorialEase Ease)> LegMarkers
+        {
+            get
+            {
+                (Vec2, TutorialEase)[] markers = new (Vec2, TutorialEase)[Offsets.Count];
+                Vec2 previous = new(0, 0);
+                for (int leg = 0; leg < Offsets.Count; leg++)
+                {
+                    Vec2 midpoint = new(
+                        (previous.X + Offsets[leg].X) / 2,
+                        (previous.Y + Offsets[leg].Y) / 2);
+                    markers[leg] = (midpoint, Eases[leg]);
+                    previous = Offsets[leg];
+                }
+
+                return markers;
+            }
+        }
+
+        /// <summary>
         /// Which motion system a prompt uses. The game decides by attribute presence: a bare path
         /// runs the shared mover, and any of ease, moveDelay or repeat switches it to the timeline.
         /// A pathless prompt is inert whatever its speeds say, because CTRMover.FromXml returns null.
