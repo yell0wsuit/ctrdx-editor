@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Linq;
 
+using Avalonia;
+
 using CtrDxEditor.Content;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Geometry;
@@ -24,6 +26,9 @@ namespace CtrDxEditor.Tests
     {
         private static Type EditablePath =>
             typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.EditablePath")!;
+
+        private static Type LevelSceneRenderer =>
+            typeof(SpriteCache).Assembly.GetType("CtrDxEditor.Rendering.LevelSceneRenderer")!;
 
         /// <summary>A tutorial icon's real polyline movement is picked up by the canvas's generic path adapter,
         /// exactly as a mover's would be - <c>EditablePath.For</c> and <c>IsEditablePolyline</c> read only the
@@ -121,6 +126,45 @@ namespace CtrDxEditor.Tests
             Assert.Equal(-1, hit);
         }
 
+        /// <summary>
+        /// The rendered path for a Timed tutorial prompt is identical whether <c>moveSpeed</c> is authored at
+        /// all: <c>TutorialMotion.Timed</c> falls back to the game's own default of 100 either way, and that
+        /// default affects only leg timing, never the path's own points. This is derived straight from the
+        /// schema (the documented default), not from re-running the renderer's own logic.
+        /// </summary>
+        [Fact]
+        public void TutorialMotionPathPointsAreIdenticalWhetherOrNotMoveSpeedIsAuthored()
+        {
+            LevelObject withoutSpeed = Tutorial10NoSpeed("230,0,440,0", ease: "in,out");
+            LevelObject withSpeed100 = Tutorial10("230,0,440,0", moveSpeed: "100", ease: "in,out");
+
+            Point[] pointsWithoutSpeed = ComputeTutorialMotionPathPoints(ViewTransform.Identity, withoutSpeed);
+            Point[] pointsWithSpeed100 = ComputeTutorialMotionPathPoints(ViewTransform.Identity, withSpeed100);
+
+            Assert.Equal(3, pointsWithoutSpeed.Length); // anchor + 2 offsets
+            Assert.Equal(pointsWithSpeed100, pointsWithoutSpeed);
+        }
+
+        /// <summary>
+        /// Pins the regression this task's review caught: a Timed tutorial prompt with no authored
+        /// <c>moveSpeed</c> must still draw a real path. The shared mover's own point computation
+        /// (<c>ComputeMovementPathPoints</c>, gated on <c>MoverPath.HasActiveMovement</c> - moveSpeed must be
+        /// authored and positive) returns nothing at all for this exact object, which is the bug: the ease
+        /// markers read straight from <c>TutorialMotion</c> regardless, so they would float with no path
+        /// beneath them to sit on.
+        /// </summary>
+        [Fact]
+        public void TutorialPathDrawsEvenWithoutAnAuthoredMoveSpeed()
+        {
+            LevelObject withoutSpeed = Tutorial10NoSpeed("230,0,440,0", ease: "in,out");
+
+            Point[] tutorialPoints = ComputeTutorialMotionPathPoints(ViewTransform.Identity, withoutSpeed);
+            Point[] sharedMoverPoints = ComputeMovementPathPoints(ViewTransform.Identity, withoutSpeed);
+
+            Assert.True(tutorialPoints.Length >= 2); // a real, drawable path
+            Assert.Empty(sharedMoverPoints); // confirms the shared mover gate really would have hidden it
+        }
+
         private static int HitTutorialAreaCorner(LevelCanvas canvas, Vec2 levelPt)
         {
             MethodInfo method = typeof(LevelCanvas).GetMethod(
@@ -143,6 +187,20 @@ namespace CtrDxEditor.Tests
             _ = path.GetType().GetMethod(method)!.Invoke(path, args);
         }
 
+        private static Point[] ComputeTutorialMotionPathPoints(ViewTransform v, LevelObject obj)
+        {
+            MethodInfo method = LevelSceneRenderer.GetMethod(
+                "ComputeTutorialMotionPathPoints", BindingFlags.Public | BindingFlags.Static)!;
+            return (Point[])method.Invoke(null, [v, obj])!;
+        }
+
+        private static Point[] ComputeMovementPathPoints(ViewTransform v, LevelObject obj)
+        {
+            MethodInfo method = LevelSceneRenderer.GetMethod(
+                "ComputeMovementPathPoints", BindingFlags.Public | BindingFlags.Static)!;
+            return (Point[])method.Invoke(null, [v, obj])!;
+        }
+
         private static LevelObject Tutorial10(string path, string moveSpeed, string ease)
         {
             return new LevelObject(new XElement(
@@ -151,6 +209,19 @@ namespace CtrDxEditor.Tests
                 new XAttribute("y", "0"),
                 new XAttribute("path", path),
                 new XAttribute("moveSpeed", moveSpeed),
+                new XAttribute("ease", ease)));
+        }
+
+        /// <summary>A Timed tutorial prompt that deliberately omits <c>moveSpeed</c> - the case the game
+        /// still animates at its own default speed, but the shared mover's active-movement gate would treat
+        /// as motionless.</summary>
+        private static LevelObject Tutorial10NoSpeed(string path, string ease)
+        {
+            return new LevelObject(new XElement(
+                "tutorial10",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("path", path),
                 new XAttribute("ease", ease)));
         }
 

@@ -1967,6 +1967,79 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
+        /// Draws a Timed-motion tutorial prompt's own path line and direction arrows, sourced directly from
+        /// <see cref="TutorialMotion"/> rather than <see cref="MoverPath.HasActiveMovement"/>. The shared
+        /// mover's active-movement gate treats an unauthored <c>moveSpeed</c> as "does not move," which is
+        /// correct for the general mover case but wrong for a tutorial: <see cref="TutorialMotion.Timed"/>
+        /// already falls back to the game's own <c>moveSpeed</c> default (100) when none is authored, so the
+        /// prompt visibly animates in the game regardless. Left ungated on speed here so the ease markers
+        /// (<see cref="DrawTutorialEaseMarkers"/>), which read the same fallback, never draw over a path the
+        /// author cannot see.
+        /// </summary>
+        /// <remarks>
+        /// Timed motion travels its legs once and rests on the last offset — unlike the shared mover, which
+        /// always loops — so this draws an open polyline (no closing segment back to the anchor).
+        /// </remarks>
+        /// <param name="ctx">The drawing context to render into.</param>
+        /// <param name="v">The view transform mapping level coordinates to screen pixels.</param>
+        /// <param name="obj">The candidate tutorial prompt.</param>
+        /// <param name="pathPen">The pen for the path line.</param>
+        /// <param name="arrowPen">The pen for the direction chevrons.</param>
+        /// <param name="viewport">The canvas size in pixels, used to clip path segments to what is visible.</param>
+        public static void DrawTutorialMotionPath(
+            DrawingContext ctx, ViewTransform v, LevelObject obj, Pen pathPen, Pen arrowPen, IntSize viewport)
+        {
+            Point[] points = ComputeTutorialMotionPathPoints(v, obj);
+            if (points.Length < 2)
+            {
+                return;
+            }
+
+            for (int i = 0; i < points.Length - 1; i++)
+            {
+                DrawClippedPathLine(ctx, pathPen, points[i], points[i + 1], viewport);
+                DrawSegmentArrow(ctx, arrowPen, points[i], points[i + 1]);
+            }
+        }
+
+        /// <summary>
+        /// Screen-space points for a Timed-motion tutorial prompt's own path: the anchor followed by each
+        /// leg's offset, in order. Sourced from <see cref="TutorialMotion.Timed"/> rather than
+        /// <see cref="MoverPath.HasActiveMovement"/>/<see cref="ComputeMovementPathPoints"/>, so - unlike
+        /// those - the result does not depend on whether <c>moveSpeed</c> is authored: <see cref="TutorialMotion.Timed"/>
+        /// already falls back to the game's own default (100) when it is absent, and that fallback affects
+        /// only leg timing, never the offsets themselves. Empty when <paramref name="obj"/> is not a tutorial
+        /// prompt in Timed mode.
+        /// </summary>
+        /// <param name="v">The view transform mapping level coordinates to screen pixels.</param>
+        /// <param name="obj">The candidate tutorial prompt.</param>
+        public static Point[] ComputeTutorialMotionPathPoints(ViewTransform v, LevelObject obj)
+        {
+            if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
+                || TutorialMotion.Timed(obj) is not { } motion)
+            {
+                return [];
+            }
+
+            Vec2 anchor = new(obj.X, obj.Y);
+            Point[] points = new Point[motion.Offsets.Count + 1];
+            points[0] = TutorialScreenPoint(v, anchor, new Vec2(0, 0));
+            for (int i = 0; i < motion.Offsets.Count; i++)
+            {
+                points[i + 1] = TutorialScreenPoint(v, anchor, motion.Offsets[i]);
+            }
+
+            return points;
+        }
+
+        /// <summary>Screen point for an anchor-relative offset, as used by Timed tutorial motion.</summary>
+        private static Point TutorialScreenPoint(ViewTransform v, Vec2 anchor, Vec2 offset)
+        {
+            Vec2 screen = v.LevelToScreen(new Vec2(anchor.X + offset.X, anchor.Y + offset.Y));
+            return new Point(screen.X, screen.Y);
+        }
+
+        /// <summary>
         /// Marks each leg of a Timed-motion tutorial's path at its midpoint, distinguishing <c>none</c>,
         /// <c>in</c> and <c>out</c> easing: a polyline drawn as a plain line looks identical whichever ease
         /// is authored, so <c>ease="in,out"</c> would otherwise be invisible on the canvas.
@@ -1977,7 +2050,8 @@ namespace CtrDxEditor.Rendering
         /// <param name="markerPen">The pen and brush used for every marker variant.</param>
         public static void DrawTutorialEaseMarkers(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen markerPen)
         {
-            if (TutorialMotion.Timed(obj) is not { } motion)
+            if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
+                || TutorialMotion.Timed(obj) is not { } motion)
             {
                 return;
             }

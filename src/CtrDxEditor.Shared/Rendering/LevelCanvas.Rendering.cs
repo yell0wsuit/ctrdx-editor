@@ -108,7 +108,21 @@ namespace CtrDxEditor.Rendering
             {
                 if (ShowMovementPaths)
                 {
-                    LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    // A Timed tutorial prompt draws its own path: TutorialMotion.Timed falls back to the
+                    // game's moveSpeed default (100) when none is authored, so the shared mover's "moveSpeed
+                    // must be authored and positive" active-movement gate would otherwise hide the line (and
+                    // leave the ease markers below floating with nothing to sit on) for a prompt that really
+                    // does move in the game.
+                    bool timedTutorial = (TutorialObject.IsText(obj.Type) || TutorialObject.IsImage(obj.Type))
+                        && TutorialMotion.ModeOf(obj) == TutorialMotionMode.Timed;
+                    if (timedTutorial)
+                    {
+                        LevelSceneRenderer.DrawTutorialMotionPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    }
+                    else
+                    {
+                        LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    }
                     LevelSceneRenderer.DrawTutorialEaseMarkers(context, v, obj, _palette.OrbitPathArrow);
                 }
                 LevelSceneRenderer.DrawTutorialArea(context, v, obj, _palette.TutorialArea);
