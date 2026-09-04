@@ -778,12 +778,10 @@ namespace CtrDxEditor.Rendering
             // A trigger-area corner resizes inArea; only the four corner dots are hit-testable, so a click
             // anywhere else on (or inside) the rectangle falls through to ordinary object hit-testing below.
             int areaCorner = HitTutorialAreaCorner(levelPt);
-            if (areaCorner >= 0 && SelectedObject is { } areaObj)
+            if (areaCorner >= 0 && SelectedObject is not null)
             {
                 BeginDocumentEdit?.Invoke();
                 _tutorialAreaCornerDrag = areaCorner;
-                ApplyTutorialAreaCornerDrag(areaObj, areaCorner, levelPt);
-                SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 e.Pointer.Capture(this);
                 return;
@@ -1207,7 +1205,6 @@ namespace CtrDxEditor.Rendering
             if (_tutorialAreaCornerDrag >= 0 && SelectedObject is { } areaDrag)
             {
                 ApplyTutorialAreaCornerDrag(areaDrag, _tutorialAreaCornerDrag, levelPt);
-                SelectedObjectMoved?.Invoke();
                 InvalidateVisual();
                 return;
             }
@@ -1460,6 +1457,7 @@ namespace CtrDxEditor.Rendering
             }
 
             bool handHandleEdited = (_handJointDrag > 0 || _handBaseDrag) && _handDragHasMoved;
+            bool tutorialAreaEdited = _tutorialAreaCornerDrag >= 0;
             bool editedDocument = (_dragging && (!_handObjectDrag || _handDragHasMoved))
                 || _resizingRadius || _resizingOrbit || _resizingTutorialText || _polylinePointDrag > 0
                 || handHandleEdited
@@ -1502,6 +1500,10 @@ namespace CtrDxEditor.Rendering
             if (editedDocument)
             {
                 CompleteDocumentEdit?.Invoke();
+            }
+            if (tutorialAreaEdited)
+            {
+                SelectedObjectMoved?.Invoke();
             }
             // Letting go ends the "grabbed" look; a fresh hover re-lights it if the cursor is on the hook.
             SetRopeHovered(false);

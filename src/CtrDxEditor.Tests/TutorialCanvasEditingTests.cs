@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -123,6 +124,41 @@ namespace CtrDxEditor.Tests
             Assert.Equal("121,110,29,40", prompt.GetAttr("inArea"));
         }
 
+        /// <summary>Pointer moves repaint the area without synchronously refreshing the property panel.</summary>
+        [Fact]
+        public void AreaCornerMoveDefersPropertyPanelRefresh()
+        {
+            string input = File.ReadAllText(SourcePath("CtrDxEditor.Shared", "Rendering", "LevelCanvas.Input.cs"));
+            int branchStart = input.IndexOf(
+                "if (_tutorialAreaCornerDrag >= 0 && SelectedObject is { } areaDrag)",
+                StringComparison.Ordinal);
+            int branchEnd = input.IndexOf(
+                "if (_vinylHandleDrag != VinylGeometry.Handle.None",
+                branchStart,
+                StringComparison.Ordinal);
+
+            Assert.True(branchStart >= 0 && branchEnd > branchStart);
+            Assert.DoesNotContain("SelectedObjectMoved?.Invoke();", input[branchStart..branchEnd], StringComparison.Ordinal);
+        }
+
+        /// <summary>Ending an area resize refreshes the property panel exactly once with its final geometry.</summary>
+        [Fact]
+        public void AreaCornerReleaseRefreshesPropertyPanelOnce()
+        {
+            LevelCanvas canvas = new();
+            int refreshes = 0;
+            canvas.SelectedObjectMoved = () => refreshes++;
+            typeof(LevelCanvas).GetField(
+                "_tutorialAreaCornerDrag",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(canvas, 0);
+
+            _ = typeof(LevelCanvas).GetMethod(
+                "EndPointerGesture",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(canvas, null);
+
+            Assert.Equal(1, refreshes);
+        }
+
         /// <summary>A corner is only hit-testable while its prompt is the single selection, matching every
         /// other per-object canvas handle (rail, rope, conveyor, ...).</summary>
         [Fact]
@@ -203,6 +239,18 @@ namespace CtrDxEditor.Tests
         private static void Invoke(object path, string method, params object[] args)
         {
             _ = path.GetType().GetMethod(method)!.Invoke(path, args);
+        }
+
+        private static string SourcePath(params string[] parts)
+        {
+            string path = AppContext.BaseDirectory;
+            while (Path.GetFileName(path) != "src")
+            {
+                path = Directory.GetParent(path)?.FullName
+                       ?? throw new InvalidOperationException("Could not locate src directory.");
+            }
+
+            return Path.Combine([path, .. parts]);
         }
 
         private static Point[] ComputeTutorialMotionPathPoints(ViewTransform v, LevelObject obj)
