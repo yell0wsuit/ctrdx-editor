@@ -1799,18 +1799,6 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
-            if (SelectedObject is { } selected && TutorialObject.IsText(selected.Type))
-            {
-                bool shouldShowWidth = !TutorialObject.IsAutoWidth(selected);
-                bool showsWidth = Fields.Any(field => field.Name == "width");
-                if (showsWidth != shouldShowWidth)
-                {
-                    PopulateFields(selected);
-                    RebuildFieldGroups();
-                    return;
-                }
-            }
-
             foreach (AttributeFieldViewModel field in Fields)
             {
                 field.Refresh();
@@ -1852,11 +1840,24 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        private void RebuildFieldGroups()
+        private void RebuildFieldGroups(bool preserveExpansion = true)
         {
+            Dictionary<(string? Header, int Index), bool> expansionByGroup = [];
+            if (preserveExpansion)
+            {
+                foreach (PropertyGroupViewModel group in FieldGroups)
+                {
+                    expansionByGroup[(group.Header, group.Index)] = group.IsExpanded;
+                }
+            }
+
             FieldGroups.Clear();
             foreach (PropertyGroupViewModel group in GroupFields(Fields))
             {
+                if (expansionByGroup.TryGetValue((group.Header, group.Index), out bool isExpanded))
+                {
+                    group.IsExpanded = isExpanded;
+                }
                 FieldGroups.Add(group);
             }
         }
@@ -1890,7 +1891,7 @@ namespace CtrDxEditor.ViewModels
             OnPropertyChanged(nameof(CanEditPolyline));
             NotifyEditCommandCapabilities();
             PopulateFields(value);
-            RebuildFieldGroups();
+            RebuildFieldGroups(preserveExpansion: false);
         }
 
         /// <summary>

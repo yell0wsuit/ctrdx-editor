@@ -202,6 +202,79 @@ namespace CtrDxEditor.Tests
             Assert.False(groups.Single(g => g.Header == "Motion").IsExpanded);
         }
 
+        /// <summary>A structural checkbox rebuild keeps the section the user opened expanded.</summary>
+        [Fact]
+        public void TriggerAreaTogglePreservesExpandedTriggerSection()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("tutorial01", 20, 30);
+            vm.FieldGroups.Single(group => group.Header == "Trigger").IsExpanded = true;
+
+            vm.Fields.Single(field => field.Name == "inArea").BoolValue = true;
+
+            Assert.True(vm.FieldGroups.Single(group => group.Header == "Trigger").IsExpanded);
+
+            vm.Fields.Single(field => field.Name == "inArea").BoolValue = false;
+
+            Assert.True(vm.FieldGroups.Single(group => group.Header == "Trigger").IsExpanded);
+        }
+
+        /// <summary>A checkbox that changes dependent-field state does not collapse another open section.</summary>
+        [Fact]
+        public void AutoWidthTogglePreservesExpandedTutorialSections()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("tutorialText", 20, 30);
+            vm.FieldGroups.Single(group => group.Header == "Look").IsExpanded = true;
+
+            vm.Fields.Single(field => field.Name == "autoWidth").BoolValue = false;
+            Assert.True(vm.FieldGroups.Single(group => group.Header == "Look").IsExpanded);
+
+            vm.Fields.Single(field => field.Name == "autoWidth").BoolValue = true;
+            Assert.True(vm.FieldGroups.Single(group => group.Header == "Look").IsExpanded);
+        }
+
+        /// <summary>Refreshing auto-width text updates disabled fields in place instead of rebuilding the panel.</summary>
+        [Fact]
+        public void AutoWidthRefreshKeepsExistingFieldInstances()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
+            _ = vm.PlaceObject("tutorialText", 20, 30);
+            AttributeFieldViewModel width = vm.Fields.Single(field => field.Name == "width");
+
+            vm.RefreshFieldValues();
+
+            Assert.Same(width, vm.Fields.Single(field => field.Name == "width"));
+            Assert.False(width.IsEnabled);
+        }
+
+        /// <summary>Expansion state belongs to the selected object and never leaks to a new selection.</summary>
+        [Fact]
+        public void SelectingAnotherTutorialUsesItsOwnInitialCollapseState()
+        {
+            EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
+            vm.LoadLevelXml("""
+                <map>
+                    <layer name="settings"><map gridSize="32" width="640" height="480" /></layer>
+                    <layer name="Objects">
+                        <tutorial01 x="20" y="30" />
+                        <tutorial02 x="40" y="50" />
+                    </layer>
+                </map>
+                """);
+            LevelObject first = vm.Document!.AllObjects[0];
+            LevelObject second = vm.Document.AllObjects[1];
+            vm.SelectedObject = first;
+            vm.FieldGroups.Single(group => group.Header == "Trigger").IsExpanded = true;
+
+            vm.SelectedObject = second;
+
+            Assert.False(vm.FieldGroups.Single(group => group.Header == "Trigger").IsExpanded);
+        }
+
         /// <summary>showOn lists all 31 tutorial events, edge events before the state conditions.</summary>
         [Fact]
         public void ShowOnListsAllThirtyOneEventsEdgeFirst()
