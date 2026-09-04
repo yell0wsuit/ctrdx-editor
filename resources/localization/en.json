@@ -1043,7 +1043,7 @@
     "Attr.opacity": "Opacity",
     "Attr.opacity.Help": "Maximum prompt opacity from 0 (transparent) to 1 (opaque). Default 1.",
     "Attr.color": "Color",
-    "Attr.color.Help": "Optional DX ink override. Enter RGB hex directly or select the swatch to choose a color; Use default removes the override. Finger artwork remains full-color.",
+    "Attr.color.Help": "Optional DX ink override. Enter RGB hex directly or select the swatch to choose a color; Use default removes the override. Finger/Cursor artwork remains full-color.",
     "Attr.lineHeight": "Line height",
     "Attr.lineHeight.Help": "Tutorial text line-spacing multiplier. Default 1.",
     "Attr.motion": "Motion",

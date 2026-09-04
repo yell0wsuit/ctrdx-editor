@@ -46,7 +46,7 @@ namespace CtrDxEditor.Tests
             return fields;
         }
 
-        /// <summary>DX keeps the finger artwork full-color, so its picker only offers clearing an imported tint.</summary>
+        /// <summary>DX keeps the finger/cursor artwork full-color, so its picker only offers clearing an imported tint.</summary>
         [Fact]
         public void FullColorIconDoesNotOfferCustomColor()
         {
