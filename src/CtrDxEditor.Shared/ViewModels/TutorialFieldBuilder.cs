@@ -293,10 +293,10 @@ namespace CtrDxEditor.ViewModels
                 && timing.FadeOut == 0.5
                 && timing.Repeat == 1;
 
-            // A sequencing tag, not a trigger condition - TutorialTrigger.cs never reads it - so it
-            // belongs with the rest of the prompt's scheduling, not with Trigger.
+            // A mutual-exclusion tag applied when a trigger fires, not a trigger condition itself,
+            // so it belongs with the rest of the prompt's scheduling rather than with Trigger.
             fields.Add(OptionalField(value, "group", AttrType.Text, null, onChanged, onChanging,
-                header, TimingGroupIndex, startsCollapsed));
+                header, TimingGroupIndex, startsCollapsed, localizationName: "tutorialGroup"));
 
             fields.Add(OptionalField(value, "delay", AttrType.Number, "0", onChanged, onChanging,
                 header, TimingGroupIndex));
@@ -566,7 +566,8 @@ namespace CtrDxEditor.ViewModels
             int groupIndex = -1,
             bool groupStartsCollapsed = false,
             Func<bool>? isEnabled = null,
-            string? disabledValue = null)
+            string? disabledValue = null,
+            string? localizationName = null)
         {
             return new AttributeFieldViewModel(
                 name,
@@ -587,7 +588,8 @@ namespace CtrDxEditor.ViewModels
                 },
                 onChanged,
                 onChanging,
-                isEnabled)
+                isEnabled,
+                localizationName)
             {
                 GroupHeader = groupHeader,
                 GroupIndex = groupIndex,

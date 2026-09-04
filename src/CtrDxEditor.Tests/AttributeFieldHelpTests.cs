@@ -50,6 +50,16 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Thrust strength.", field.HelpText);
         }
 
+        /// <summary>The generic group attribute does not inherit tutorial-specific first-trigger guidance.</summary>
+        [Fact]
+        public void GenericGroupFieldHasNoTutorialHelp()
+        {
+            AttributeFieldViewModel field = new(Obj(), "group", AttrType.Whole, null, () => { });
+
+            Assert.False(field.HasHelp);
+            Assert.Null(field.HelpText);
+        }
+
         /// <summary>The <c>time</c> field clamps to 1 so the spinner cannot reach 0, which the game would read as an instant burnout.</summary>
         [Fact]
         public void TimeFieldMinimumIsOne()

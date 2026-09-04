@@ -670,6 +670,23 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Timing", group.GroupHeader);
         }
 
+        /// <summary>The Group help explains DX's first-trigger-wins rule with two concrete prompts.</summary>
+        [Fact]
+        public void GroupHelpExplainsFirstTriggerWinsWithAConcreteExample()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            AttributeFieldViewModel group = Build(obj).Single(f => f.Name == "group");
+
+            Assert.Equal("Group", group.Label);
+            Assert.Contains("Example:", group.HelpText, StringComparison.Ordinal);
+            Assert.Contains("first trigger", group.HelpText, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Rope cut", group.HelpText, StringComparison.Ordinal);
+            Assert.Contains("Bubble popped", group.HelpText, StringComparison.Ordinal);
+            Assert.Contains("canceled", group.HelpText, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("level order", group.HelpText, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("replaces the active prompt", group.HelpText, StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>Clearing a group removes it so DX does not index every cleared prompt under group="".</summary>
         [Fact]
         public void ClearingGroupRemovesTheAttribute()
