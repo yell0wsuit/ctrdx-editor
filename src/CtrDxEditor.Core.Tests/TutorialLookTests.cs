@@ -47,6 +47,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("#FF0000", color.Format());
         }
 
+        /// <summary>Malformed or out-of-range tutorial colors are rejected.</summary>
         [Theory]
         [InlineData("#46250")]
         [InlineData("#4625000")]

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
@@ -503,36 +502,50 @@ namespace CtrDxEditor.ViewModels
             }
         }
 
-        private static string ModeToken(TutorialMotionMode mode) => mode switch
+        private static string ModeToken(TutorialMotionMode mode)
         {
-            TutorialMotionMode.Looping => "looping",
-            TutorialMotionMode.Timed => "timed",
-            _ => "none",
-        };
+            return mode switch
+            {
+                TutorialMotionMode.Looping => "looping",
+                TutorialMotionMode.Timed => "timed",
+                TutorialMotionMode.None => "none",
+                _ => "none",
+            };
+        }
 
-        private static TutorialMotionMode TokenToMode(string? token) => token switch
+        private static TutorialMotionMode TokenToMode(string? token)
         {
-            "looping" => TutorialMotionMode.Looping,
-            "timed" => TutorialMotionMode.Timed,
-            _ => TutorialMotionMode.None,
-        };
+            return token switch
+            {
+                "looping" => TutorialMotionMode.Looping,
+                "timed" => TutorialMotionMode.Timed,
+                _ => TutorialMotionMode.None,
+            };
+        }
 
-        private static string ToToken(TutorialEase ease) => ease switch
+        private static string ToToken(TutorialEase ease)
         {
-            TutorialEase.In => "in",
-            TutorialEase.Out => "out",
-            _ => "none",
-        };
+            return ease switch
+            {
+                TutorialEase.In => "in",
+                TutorialEase.Out => "out",
+                TutorialEase.None => "none",
+                _ => "none",
+            };
+        }
 
-        private static TutorialEase ToEase(string? token) => token switch
+        private static TutorialEase ToEase(string? token)
         {
-            "in" => TutorialEase.In,
-            "out" => TutorialEase.Out,
-            _ => TutorialEase.None,
-        };
+            return token switch
+            {
+                "in" => TutorialEase.In,
+                "out" => TutorialEase.Out,
+                _ => TutorialEase.None,
+            };
+        }
 
         /// <summary>Joins per-leg eases as the single-value shorthand when every leg agrees, else a comma list.</summary>
-        private static string SerializeEases(IReadOnlyList<TutorialEase> eases)
+        private static string SerializeEases(TutorialEase[] eases)
         {
             bool allSame = eases.All(e => e == eases[0]);
             return allSame ? ToToken(eases[0]) : string.Join(",", eases.Select(ToToken));

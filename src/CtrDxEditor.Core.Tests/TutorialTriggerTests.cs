@@ -64,6 +64,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(TutorialEvents.All.Count, TutorialEvents.All.Distinct().Count());
         }
 
+        /// <summary>Every supported subject spelling parses to its matching semantic value.</summary>
         [Theory]
         [InlineData(null, TutorialSubject.Any)]
         [InlineData("any", TutorialSubject.Any)]
@@ -76,6 +77,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(expected, parsed);
         }
 
+        /// <summary>An unsupported subject spelling is rejected.</summary>
         [Fact]
         public void UnknownSubjectFails()
         {

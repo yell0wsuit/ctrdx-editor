@@ -433,7 +433,7 @@ namespace CtrDxEditor.Tests
             LevelObject obj = new(new XElement(
                 "tutorial10", new XAttribute("path", "100,0"), new XAttribute("moveDelay", "0")));
             Harness harness = new(obj);
-            Assert.Single(harness.Fields, f => f.Name == "ease");
+            _ = Assert.Single(harness.Fields, f => f.Name == "ease");
 
             harness.Fields.Single(f => f.Name == "path").Value = "100,0,200,0";
 

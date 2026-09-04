@@ -257,12 +257,7 @@ namespace CtrDxEditor.Core.Editing
         {
             float? travelSeconds = TutorialMotion.TravelSecondsAtGameFloatPrecision(prompt);
             float? passSeconds = TutorialTiming.PassSecondsAtGameFloatPrecision(prompt);
-            if (travelSeconds is null || passSeconds is null)
-            {
-                return false;
-            }
-
-            return passSeconds.Value - travelSeconds.Value < 0f;
+            return travelSeconds is not null && passSeconds is not null && passSeconds.Value - travelSeconds.Value < 0f;
         }
 
         private static bool TryRepeat(string? value, out int repeat)

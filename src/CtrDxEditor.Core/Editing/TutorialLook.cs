@@ -27,12 +27,7 @@ namespace CtrDxEditor.Core.Editing
         /// </summary>
         public static bool TryParse(string? value, out TutorialColor color)
         {
-            if (value is not null && value.StartsWith('#'))
-            {
-                return TryParseHex(value, out color);
-            }
-
-            return TryParseChannels(value, out color);
+            return value is not null && value.StartsWith('#') ? TryParseHex(value, out color) : TryParseChannels(value, out color);
         }
 
         /// <summary>
@@ -132,12 +127,9 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The RGB channels to paint with. Never null.</returns>
         public TutorialColor EffectiveColor(bool dark)
         {
-            if (Color is { } authored)
-            {
-                return authored;
-            }
-
-            return dark
+            return Color is { } authored
+                ? authored
+                : dark
                 ? new TutorialColor(255, 255, 255, Triplet: false)
                 : new TutorialColor(0, 0, 0, Triplet: false);
         }

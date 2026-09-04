@@ -210,6 +210,7 @@ namespace CtrDxEditor.Core.Editing
             {
                 TutorialEase.In => progress * progress,
                 TutorialEase.Out => 1 - ((1 - progress) * (1 - progress)),
+                TutorialEase.None => progress,
                 _ => progress,
             };
         }
@@ -385,6 +386,8 @@ namespace CtrDxEditor.Core.Editing
                     {
                         o.SetAttr("ease", "none");
                     }
+                    break;
+                default:
                     break;
             }
         }

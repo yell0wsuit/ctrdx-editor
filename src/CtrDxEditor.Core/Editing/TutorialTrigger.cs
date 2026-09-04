@@ -127,41 +127,44 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The exact XML spelling for an event.</summary>
-        public static string Name(TutorialEvent value) => value switch
+        public static string Name(TutorialEvent value)
         {
-            TutorialEvent.Start => "start",
-            TutorialEvent.BubbleCapture => "bubbleCapture",
-            TutorialEvent.BubblePop => "bubblePop",
-            TutorialEvent.LanternCatch => "lanternCatch",
-            TutorialEvent.SockCatch => "sockCatch",
-            TutorialEvent.MouseGrab => "mouseGrab",
-            TutorialEvent.SpiderSteal => "spiderSteal",
-            TutorialEvent.HandGrab => "handGrab",
-            TutorialEvent.RopeCut => "ropeCut",
-            TutorialEvent.StarCollected => "starCollected",
-            TutorialEvent.CandyEaten => "candyEaten",
-            TutorialEvent.PipeEnter => "pipeEnter",
-            TutorialEvent.SpikeHit => "spikeHit",
-            TutorialEvent.ElectroHit => "electroHit",
-            TutorialEvent.GameWon => "gameWon",
-            TutorialEvent.GameLost => "gameLost",
-            TutorialEvent.RocketIgnite => "rocketIgnite",
-            TutorialEvent.BouncerHit => "bouncerHit",
-            TutorialEvent.PumpFire => "pumpFire",
-            TutorialEvent.SteamBurst => "steamBurst",
-            TutorialEvent.DiscSpin => "discSpin",
-            TutorialEvent.TimeFreeze => "timeFreeze",
-            TutorialEvent.TimeUnfreeze => "timeUnfreeze",
-            TutorialEvent.GravityFlip => "gravityFlip",
-            TutorialEvent.Bubbled => "bubbled",
-            TutorialEvent.InLantern => "inLantern",
-            TutorialEvent.CarriedByAnt => "carriedByAnt",
-            TutorialEvent.CarriedBySnail => "carriedBySnail",
-            TutorialEvent.TimeFrozen => "timeFrozen",
-            TutorialEvent.GravityInverted => "gravityInverted",
-            TutorialEvent.CandyMoved => "candyMoved",
-            _ => "start",
-        };
+            return value switch
+            {
+                TutorialEvent.Start => "start",
+                TutorialEvent.BubbleCapture => "bubbleCapture",
+                TutorialEvent.BubblePop => "bubblePop",
+                TutorialEvent.LanternCatch => "lanternCatch",
+                TutorialEvent.SockCatch => "sockCatch",
+                TutorialEvent.MouseGrab => "mouseGrab",
+                TutorialEvent.SpiderSteal => "spiderSteal",
+                TutorialEvent.HandGrab => "handGrab",
+                TutorialEvent.RopeCut => "ropeCut",
+                TutorialEvent.StarCollected => "starCollected",
+                TutorialEvent.CandyEaten => "candyEaten",
+                TutorialEvent.PipeEnter => "pipeEnter",
+                TutorialEvent.SpikeHit => "spikeHit",
+                TutorialEvent.ElectroHit => "electroHit",
+                TutorialEvent.GameWon => "gameWon",
+                TutorialEvent.GameLost => "gameLost",
+                TutorialEvent.RocketIgnite => "rocketIgnite",
+                TutorialEvent.BouncerHit => "bouncerHit",
+                TutorialEvent.PumpFire => "pumpFire",
+                TutorialEvent.SteamBurst => "steamBurst",
+                TutorialEvent.DiscSpin => "discSpin",
+                TutorialEvent.TimeFreeze => "timeFreeze",
+                TutorialEvent.TimeUnfreeze => "timeUnfreeze",
+                TutorialEvent.GravityFlip => "gravityFlip",
+                TutorialEvent.Bubbled => "bubbled",
+                TutorialEvent.InLantern => "inLantern",
+                TutorialEvent.CarriedByAnt => "carriedByAnt",
+                TutorialEvent.CarriedBySnail => "carriedBySnail",
+                TutorialEvent.TimeFrozen => "timeFrozen",
+                TutorialEvent.GravityInverted => "gravityInverted",
+                TutorialEvent.CandyMoved => "candyMoved",
+                _ => "start",
+            };
+        }
 
         /// <summary>Bubbled and later are continuously observable states.</summary>
         public static TutorialEventKind Kind(TutorialEvent value)
@@ -217,22 +220,11 @@ namespace CtrDxEditor.Core.Editing
         /// </remarks>
         public static string? KeyFor(LevelObject o)
         {
-            if (!TutorialEvents.TryParse(o.GetAttr("showOn"), out TutorialEvent showOn))
-            {
-                return InvalidKey;
-            }
-
-            if (showOn != TutorialEvent.Start)
-            {
-                return TutorialEvents.Kind(showOn) == TutorialEventKind.State ? StateKey : EdgeKey;
-            }
-
-            if (TutorialTiming.For(o).Delay > 0)
-            {
-                return DelayKey;
-            }
-
-            return string.IsNullOrEmpty(o.GetAttr("group")) ? null : GroupKey;
+            return !TutorialEvents.TryParse(o.GetAttr("showOn"), out TutorialEvent showOn)
+                ? InvalidKey
+                : showOn != TutorialEvent.Start
+                ? TutorialEvents.Kind(showOn) == TutorialEventKind.State ? StateKey : EdgeKey
+                : TutorialTiming.For(o).Delay > 0 ? DelayKey : string.IsNullOrEmpty(o.GetAttr("group")) ? null : GroupKey;
         }
     }
 
@@ -266,14 +258,17 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>The exact XML spelling for a subject.</summary>
-        public static string Name(TutorialSubject value) => value switch
+        public static string Name(TutorialSubject value)
         {
-            TutorialSubject.Any => "any",
-            TutorialSubject.Primary => "primary",
-            TutorialSubject.Left => "left",
-            TutorialSubject.Right => "right",
-            _ => "any",
-        };
+            return value switch
+            {
+                TutorialSubject.Any => "any",
+                TutorialSubject.Primary => "primary",
+                TutorialSubject.Left => "left",
+                TutorialSubject.Right => "right",
+                _ => "any",
+            };
+        }
     }
 
     /// <summary>A tutorial trigger rectangle in map coordinates.</summary>

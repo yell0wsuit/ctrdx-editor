@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 
 using CtrDxEditor.Core.Document;
@@ -70,14 +69,11 @@ namespace CtrDxEditor.Core.Editing
         public static float? PassSecondsAtGameFloatPrecision(LevelObject o)
         {
             float defaultHold = TutorialObject.IsText(o.Type) ? (float)DefaultTextHold : (float)DefaultSignHold;
-            if (!GameFloat.TryNonNegative(o.GetAttr("fadeIn"), (float)DefaultFadeIn, out float fadeIn)
+            return !GameFloat.TryNonNegative(o.GetAttr("fadeIn"), (float)DefaultFadeIn, out float fadeIn)
                 || !GameFloat.TryNonNegative(o.GetAttr("fadeOut"), (float)DefaultFadeOut, out float fadeOut)
-                || !TryHoldGameFloat(o.GetAttr("duration"), defaultHold, out float hold))
-            {
-                return null;
-            }
-
-            return hold == (float)ForeverHold ? float.MaxValue : fadeIn + hold + fadeOut;
+                || !TryHoldGameFloat(o.GetAttr("duration"), defaultHold, out float hold)
+                ? null
+                : hold == (float)ForeverHold ? float.MaxValue : fadeIn + hold + fadeOut;
         }
 
         /// <summary>Seconds the whole prompt occupies, or null when it never ends.</summary>
@@ -111,17 +107,9 @@ namespace CtrDxEditor.Core.Editing
             }
 
             double inPass = elapsed % pass;
-            if (inPass < FadeIn)
-            {
-                return FadeIn <= 0 ? 1 : inPass / FadeIn;
-            }
-
-            if (inPass < FadeIn + Hold)
-            {
-                return 1;
-            }
-
-            return FadeOut <= 0 ? 0 : 1 - ((inPass - FadeIn - Hold) / FadeOut);
+            return inPass < FadeIn
+                ? FadeIn <= 0 ? 1 : inPass / FadeIn
+                : inPass < FadeIn + Hold ? 1 : FadeOut <= 0 ? 0 : 1 - ((inPass - FadeIn - Hold) / FadeOut);
         }
 
         private static double NonNegative(string? value, double fallback)

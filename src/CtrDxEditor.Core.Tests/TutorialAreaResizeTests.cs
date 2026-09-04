@@ -27,6 +27,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(0, area.Height);
         }
 
+        /// <summary>Dragging the top-left corner moves it while preserving the opposite corner.</summary>
         [Fact]
         public void DraggingTopLeftMovesOriginAndKeepsOppositeCorner()
         {

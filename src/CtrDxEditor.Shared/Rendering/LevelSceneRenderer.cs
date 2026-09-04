@@ -839,14 +839,10 @@ namespace CtrDxEditor.Rendering
         /// <returns>The level-unit offset from the authored position, or zero when the object draws where authored.</returns>
         public static Vec2 DrawOffset(LevelObject obj, double? animationPreviewSeconds)
         {
-            if (animationPreviewSeconds is not double seconds)
-            {
-                return default;
-            }
-
-            if (TutorialObject.IsText(obj.Type) || TutorialObject.IsImage(obj.Type))
-            {
-                return TutorialMotion.ModeOf(obj) switch
+            return animationPreviewSeconds is not double seconds
+                ? default
+                : TutorialObject.IsText(obj.Type) || TutorialObject.IsImage(obj.Type)
+                ? TutorialMotion.ModeOf(obj) switch
                 {
                     // The timeline, not the shared mover: eased legs, a leading moveDelay, one pass per
                     // envelope repeat (mirroring TutorialTiming.AlphaAt's own pass wraparound so the two
@@ -856,17 +852,11 @@ namespace CtrDxEditor.Rendering
                     // A bare path runs the same shared mover as any other pathed object - genuinely the
                     // mover, not a tutorial-specific system - and it never stops for the fade.
                     TutorialMotionMode.Looping => MoverOffset(obj, seconds),
+                    TutorialMotionMode.None => default,
                     // Mode None (no path, or an unusable one for Timed) draws from authored geometry.
                     _ => default,
-                };
-            }
-
-            if (!DrawsAtPreviewPosition(obj) || string.IsNullOrWhiteSpace(obj.GetAttr("path")))
-            {
-                return default;
-            }
-
-            return MoverOffset(obj, seconds);
+                }
+                : !DrawsAtPreviewPosition(obj) || string.IsNullOrWhiteSpace(obj.GetAttr("path")) ? default : MoverOffset(obj, seconds);
         }
 
         /// <summary>The offset the shared polyline/circular mover reports for an object at an elapsed time.</summary>
