@@ -98,7 +98,7 @@ namespace CtrDxEditor.Rendering
         {
             return IsSingleSelection && SelectedObject is { } sel && View.Zoom > 0
                 && (TutorialObject.IsText(sel.Type) || TutorialObject.IsImage(sel.Type))
-                && TutorialArea.TryParse(sel.GetAttr("inArea"), out TutorialArea area)
+                && TutorialArea.TryParseRuntime(sel.GetAttr("inArea"), out TutorialArea area)
                 ? TutorialAreaResize.HitCorner(area, levelPt, HitTolerance(9))
                 : -1;
         }
@@ -109,7 +109,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="levelPt">The pointer position in level coordinates.</param>
         private static void ApplyTutorialAreaCornerDrag(LevelObject obj, int corner, Vec2 levelPt)
         {
-            if (!TutorialArea.TryParse(obj.GetAttr("inArea"), out TutorialArea area))
+            if (!TutorialArea.TryParseRuntime(obj.GetAttr("inArea"), out TutorialArea area))
             {
                 return;
             }

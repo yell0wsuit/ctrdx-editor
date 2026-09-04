@@ -27,6 +27,7 @@ namespace CtrDxEditor.Tests
 
             Assert.True(field.IsColor);
             Assert.False(field.IsText);
+            Assert.True(field.CanApplyCustomColor);
         }
 
         /// <summary>Every other attribute-backed field type still reports <c>IsColor</c> false.</summary>

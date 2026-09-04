@@ -609,7 +609,7 @@ namespace CtrDxEditor.Rendering
         private void DrawTutorialAreaCornerHandles(DrawingContext context, ViewTransform v, LevelObject obj)
         {
             if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
-                || !TutorialArea.TryParse(obj.GetAttr("inArea"), out TutorialArea area))
+                || !TutorialArea.TryParseRuntime(obj.GetAttr("inArea"), out TutorialArea area))
             {
                 return;
             }

@@ -337,12 +337,14 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>Path seeded when a mode needs one and none usable is authored.</summary>
         private const string DefaultPath = "100,0";
 
+        private const string DefaultMoveSpeed = "100";
+
         /// <summary>
         /// Removes the attributes the target mode does not read and seeds what it needs: a default
         /// path when entering a mode with none authored (or with a circular one while entering
-        /// Timed), and <c>ease="none"</c> when entering Timed with no ease. Leaves moveSpeed alone
-        /// when it is already authored - the game's default of 100 is meaningful - and never touches
-        /// it directly except to clear it along with the rest of the motion attributes in None.
+        /// Timed), <c>moveSpeed="100"</c> when entering Looping with no speed (the shared DX mover
+        /// otherwise reads an absent speed as zero), and <c>ease="none"</c> when entering Timed with
+        /// no ease. Existing authored speeds are preserved.
         /// </summary>
         /// <param name="o">The tutorial prompt whose motion attributes are updated.</param>
         /// <param name="mode">The motion mode to switch to.</param>
@@ -366,6 +368,10 @@ namespace CtrDxEditor.Core.Editing
                     if (string.IsNullOrEmpty(o.GetAttr("path")))
                     {
                         o.SetAttr("path", DefaultPath);
+                    }
+                    if (o.GetAttr("moveSpeed") is null)
+                    {
+                        o.SetAttr("moveSpeed", DefaultMoveSpeed);
                     }
                     break;
 

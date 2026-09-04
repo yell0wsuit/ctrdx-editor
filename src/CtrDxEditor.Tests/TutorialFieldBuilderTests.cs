@@ -46,6 +46,19 @@ namespace CtrDxEditor.Tests
             return fields;
         }
 
+        /// <summary>DX keeps the finger artwork full-color, so its picker only offers clearing an imported tint.</summary>
+        [Fact]
+        public void FullColorIconDoesNotOfferCustomColor()
+        {
+            LevelObject obj = new(XElement.Parse("""<tutorial10 color="#FF0000" />"""));
+
+            AttributeFieldViewModel color = Assert.Single(Build(obj), field => field.Name == "color");
+
+            Assert.False(color.CanApplyCustomColor);
+            color.Value = "";
+            Assert.Null(obj.GetAttr("color"));
+        }
+
         /// <summary>Rebuilds the field list in place, the way EditorViewModel's structural callback does.</summary>
         private sealed class Harness
         {
@@ -111,9 +124,9 @@ namespace CtrDxEditor.Tests
             Assert.Contains(fields, f => f.Name == "width");
         }
 
-        /// <summary>An auto-width tutorial text hides the manual width field.</summary>
+        /// <summary>An auto-width tutorial text keeps the manual width discoverable but disabled.</summary>
         [Fact]
-        public void AutoTextPanelHidesWidth()
+        public void AutoTextPanelDisablesWidth()
         {
             LevelObject obj = new(new XElement(
                 "tutorialText",
@@ -122,7 +135,7 @@ namespace CtrDxEditor.Tests
             ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
             Assert.Contains(fields, f => f.Name == "text");
             Assert.Contains(fields, f => f.Name == "autoWidth");
-            Assert.DoesNotContain(fields, f => f.Name == "width");
+            Assert.False(fields.Single(f => f.Name == "width").IsEnabled);
         }
 
         /// <summary>Uses the property field and F2 overlay without exposing a redundant panel command.</summary>
@@ -141,12 +154,12 @@ namespace CtrDxEditor.Tests
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
             vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject text = vm.PlaceObject("tutorialText", 20, 30)!;
-            Assert.DoesNotContain(vm.Fields, f => f.Name == "width");
+            Assert.False(vm.Fields.Single(f => f.Name == "width").IsEnabled);
 
             TutorialTextResize.ApplyDrag(text, 120);
             vm.RefreshFieldValues();
 
-            Assert.Contains(vm.Fields, f => f.Name == "width");
+            Assert.True(vm.Fields.Single(f => f.Name == "width").IsEnabled);
         }
 
         /// <summary>Groups appear content, Trigger, Timing, Look, Motion, in that order.</summary>
@@ -203,6 +216,19 @@ namespace CtrDxEditor.Tests
             Assert.Equal("candyMoved", showOn.EnumOptions![^1].Value);
         }
 
+        /// <summary>Changing showOn updates both XML and the selection the field reports back to the UI.</summary>
+        [Fact]
+        public void ShowOnSelectionRereadsTheChangedValue()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            AttributeFieldViewModel showOn = Build(obj).Single(f => f.Name == "showOn");
+
+            showOn.SelectedOption = showOn.EnumOptions!.Single(o => o.Value == "ropeCut");
+
+            Assert.Equal("ropeCut", obj.GetAttr("showOn"));
+            Assert.Equal("ropeCut", showOn.SelectedOption!.Value);
+        }
+
         /// <summary>subject offers exactly any/primary/left/right.</summary>
         [Fact]
         public void SubjectOffersFourOptions()
@@ -212,6 +238,46 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel subject = fields.Single(f => f.Name == "subject");
 
             Assert.Equal(["any", "primary", "left", "right"], subject.EnumOptions!.Select(o => o.Value));
+        }
+
+        /// <summary>Changing subject updates both XML and the selection the field reports back to the UI.</summary>
+        [Fact]
+        public void SubjectSelectionRereadsTheChangedValue()
+        {
+            LevelObject obj = new(new XElement("tutorial01"));
+            AttributeFieldViewModel subject = Build(obj).Single(f => f.Name == "subject");
+
+            subject.SelectedOption = subject.EnumOptions!.Single(o => o.Value == "primary");
+
+            Assert.Equal("primary", obj.GetAttr("subject"));
+            Assert.Equal("primary", subject.SelectedOption!.Value);
+        }
+
+        /// <summary>Effective DX defaults are visible without eagerly authoring redundant attributes.</summary>
+        [Fact]
+        public void DefaultValuesAreVisibleWithoutMutatingXml()
+        {
+            LevelObject obj = new(new XElement("tutorialText", new XAttribute("text", "hi")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+
+            Assert.Equal("0", fields.Single(f => f.Name == "delay").Value);
+            Assert.Equal("1", fields.Single(f => f.Name == "fadeIn").Value);
+            Assert.Equal("5", fields.Single(f => f.Name == "duration").Value);
+            Assert.Equal("0.5", fields.Single(f => f.Name == "fadeOut").Value);
+            Assert.Equal("1", fields.Single(f => f.Name == "repeat").Value);
+            Assert.Equal("1", fields.Single(f => f.Name == "opacity").Value);
+            Assert.Equal("0", fields.Single(f => f.Name == "angle").Value);
+            Assert.Equal("1", fields.Single(f => f.Name == "size").Value);
+            Assert.Equal("1", fields.Single(f => f.Name == "lineHeight").Value);
+            Assert.Null(obj.GetAttr("delay"));
+            Assert.Null(obj.GetAttr("fadeIn"));
+            Assert.Null(obj.GetAttr("duration"));
+            Assert.Null(obj.GetAttr("fadeOut"));
+            Assert.Null(obj.GetAttr("repeat"));
+            Assert.Null(obj.GetAttr("opacity"));
+            Assert.Null(obj.GetAttr("angle"));
+            Assert.Null(obj.GetAttr("size"));
+            Assert.Null(obj.GetAttr("lineHeight"));
         }
 
         /// <summary>Reading a color field never rewrites the raw attribute, whatever spelling or casing it carries.</summary>
@@ -276,6 +342,18 @@ namespace CtrDxEditor.Tests
             color.Value = "purple";
 
             Assert.Equal("purple", obj.GetAttr("color"));
+        }
+
+        /// <summary>Clearing an optional color restores the game's default instead of authoring color="".</summary>
+        [Fact]
+        public void ClearingColorRemovesTheAttribute()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("color", "#FF0000")));
+            AttributeFieldViewModel color = Build(obj).Single(f => f.Name == "color");
+
+            color.Value = "";
+
+            Assert.Null(obj.GetAttr("color"));
         }
 
         /// <summary>color is offered even on the two full-color quads the validator flags it on.</summary>
@@ -396,13 +474,19 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain(harness.Fields, f => f.Name == "path");
         }
 
-        /// <summary>inArea is off by default; turning it on seeds a rectangle and reveals four number fields.</summary>
+        /// <summary>inArea is off by default; its default rectangle remains visible but disabled until enabled.</summary>
         [Fact]
         public void TurningOnInAreaSeedsRectAndRevealsFields()
         {
             LevelObject obj = new(new XElement("tutorial01"));
             Harness harness = new(obj);
-            Assert.DoesNotContain(harness.Fields, f => f.Name == "inAreaX");
+            Assert.Equal("0", harness.Fields.Single(f => f.Name == "inAreaX").Value);
+            Assert.Equal("0", harness.Fields.Single(f => f.Name == "inAreaY").Value);
+            Assert.Equal("100", harness.Fields.Single(f => f.Name == "inAreaWidth").Value);
+            Assert.Equal("100", harness.Fields.Single(f => f.Name == "inAreaHeight").Value);
+            Assert.All(
+                harness.Fields.Where(f => f.Name.StartsWith("inArea", StringComparison.Ordinal) && f.Name != "inArea"),
+                field => Assert.False(field.IsEnabled));
 
             harness.Fields.Single(f => f.Name == "inArea").Value = "true";
 
@@ -412,6 +496,9 @@ namespace CtrDxEditor.Tests
             Assert.Contains(harness.Fields, f => f.Name == "inAreaY");
             Assert.Contains(harness.Fields, f => f.Name == "inAreaWidth");
             Assert.Contains(harness.Fields, f => f.Name == "inAreaHeight");
+            Assert.All(
+                harness.Fields.Where(f => f.Name.StartsWith("inArea", StringComparison.Ordinal) && f.Name != "inArea"),
+                field => Assert.True(field.IsEnabled));
         }
 
         /// <summary>Editing one inArea component preserves the other three.</summary>
@@ -426,7 +513,23 @@ namespace CtrDxEditor.Tests
             Assert.Equal("10,20,50,100", obj.GetAttr("inArea"));
         }
 
-        /// <summary>Turning inArea off removes the attribute and hides the four fields.</summary>
+        /// <summary>Area controls show the whole coordinates DX actually uses, not fractional source values.</summary>
+        [Fact]
+        public void AreaFieldsDisplayDxRuntimeCoordinatesAsWholeNumbers()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("inArea", "1.9,2.9,3.9,4.9")));
+            ObservableCollection<AttributeFieldViewModel> fields = Build(obj);
+
+            Assert.Equal("1", fields.Single(f => f.Name == "inAreaX").Value);
+            Assert.Equal("2", fields.Single(f => f.Name == "inAreaY").Value);
+            Assert.Equal("3", fields.Single(f => f.Name == "inAreaWidth").Value);
+            Assert.Equal("4", fields.Single(f => f.Name == "inAreaHeight").Value);
+            Assert.All(fields.Where(f => f.Name.StartsWith("inArea", StringComparison.Ordinal) && f.Name != "inArea"),
+                field => Assert.False(field.AllowsDecimal));
+            Assert.Equal("1.9,2.9,3.9,4.9", obj.GetAttr("inArea"));
+        }
+
+        /// <summary>Turning inArea off removes the attribute while retaining disabled default coordinates.</summary>
         [Fact]
         public void TurningOffInAreaRemovesAttribute()
         {
@@ -436,10 +539,11 @@ namespace CtrDxEditor.Tests
             harness.Fields.Single(f => f.Name == "inArea").Value = "false";
 
             Assert.Null(obj.GetAttr("inArea"));
-            Assert.DoesNotContain(harness.Fields, f => f.Name == "inAreaX");
+            Assert.False(harness.Fields.Single(f => f.Name == "inAreaX").IsEnabled);
+            Assert.Equal("100", harness.Fields.Single(f => f.Name == "inAreaWidth").Value);
         }
 
-        /// <summary>duration's forever toggle writes -1 and hides the numeric field; unchecking restores a real value.</summary>
+        /// <summary>duration's forever toggle writes -1 but leaves its normal value visible and disabled.</summary>
         [Fact]
         public void HoldForeverTogglesDurationSentinelAndFieldVisibility()
         {
@@ -450,16 +554,17 @@ namespace CtrDxEditor.Tests
             harness.Fields.Single(f => f.Name == "holdsForever").Value = "true";
 
             Assert.Equal("-1", obj.GetAttr("duration"));
-            Assert.DoesNotContain(harness.Fields, f => f.Name == "duration");
+            Assert.Equal("5", harness.Fields.Single(f => f.Name == "duration").Value);
+            Assert.False(harness.Fields.Single(f => f.Name == "duration").IsEnabled);
 
             harness.Fields.Single(f => f.Name == "holdsForever").Value = "false";
 
             Assert.Equal("5", obj.GetAttr("duration"));
-            Assert.Contains(harness.Fields, f => f.Name == "duration");
+            Assert.True(harness.Fields.Single(f => f.Name == "duration").IsEnabled);
         }
 
         /// <summary>
-        /// repeat's forever toggle writes -1 and hides the numeric field the same way duration does;
+        /// repeat's forever toggle writes -1 and disables the normal count instead of hiding it;
         /// unchecking it restores the schema's real default of one pass, not an arbitrary "2".
         /// </summary>
         [Fact]
@@ -472,12 +577,13 @@ namespace CtrDxEditor.Tests
             harness.Fields.Single(f => f.Name == "repeatsForever").Value = "true";
 
             Assert.Equal("-1", obj.GetAttr("repeat"));
-            Assert.DoesNotContain(harness.Fields, f => f.Name == "repeat");
+            Assert.Equal("1", harness.Fields.Single(f => f.Name == "repeat").Value);
+            Assert.False(harness.Fields.Single(f => f.Name == "repeat").IsEnabled);
 
             harness.Fields.Single(f => f.Name == "repeatsForever").Value = "false";
 
             Assert.Equal("1", obj.GetAttr("repeat"));
-            Assert.Contains(harness.Fields, f => f.Name == "repeat");
+            Assert.True(harness.Fields.Single(f => f.Name == "repeat").IsEnabled);
         }
 
         /// <summary>group is a sequencing tag, not a trigger condition, so it belongs in Timing.</summary>
@@ -489,6 +595,18 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel group = fields.Single(f => f.Name == "group");
 
             Assert.Equal("Timing", group.GroupHeader);
+        }
+
+        /// <summary>Clearing a group removes it so DX does not index every cleared prompt under group="".</summary>
+        [Fact]
+        public void ClearingGroupRemovesTheAttribute()
+        {
+            LevelObject obj = new(new XElement("tutorial01", new XAttribute("group", "intro")));
+            AttributeFieldViewModel group = Build(obj).Single(f => f.Name == "group");
+
+            group.Value = "";
+
+            Assert.Null(obj.GetAttr("group"));
         }
 
         /// <summary>An authored group tag alone starts Timing expanded, and leaves Trigger collapsed.</summary>

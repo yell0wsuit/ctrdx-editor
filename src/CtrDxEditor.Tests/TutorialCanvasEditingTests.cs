@@ -112,6 +112,17 @@ namespace CtrDxEditor.Tests
             Assert.Equal(-1, HitTutorialAreaCorner(canvas, new Vec2(125, 125))); // dead center of the rectangle
         }
 
+        /// <summary>Dragging a fractional pointer writes integer area geometry that DX uses verbatim.</summary>
+        [Fact]
+        public void AreaCornerDragWritesWholeCoordinates()
+        {
+            LevelObject prompt = Tutorial05("100,100,50,50");
+
+            ApplyTutorialAreaCornerDrag(prompt, 0, new Vec2(120.6, 110.4));
+
+            Assert.Equal("121,110,29,40", prompt.GetAttr("inArea"));
+        }
+
         /// <summary>A corner is only hit-testable while its prompt is the single selection, matching every
         /// other per-object canvas handle (rail, rope, conveyor, ...).</summary>
         [Fact]
@@ -170,6 +181,13 @@ namespace CtrDxEditor.Tests
             MethodInfo method = typeof(LevelCanvas).GetMethod(
                 "HitTutorialAreaCorner", BindingFlags.Instance | BindingFlags.NonPublic)!;
             return (int)method.Invoke(canvas, [levelPt])!;
+        }
+
+        private static void ApplyTutorialAreaCornerDrag(LevelObject prompt, int corner, Vec2 levelPt)
+        {
+            MethodInfo method = typeof(LevelCanvas).GetMethod(
+                "ApplyTutorialAreaCornerDrag", BindingFlags.Static | BindingFlags.NonPublic)!;
+            _ = method.Invoke(null, [prompt, corner, levelPt]);
         }
 
         private static object? For(LevelObject obj)

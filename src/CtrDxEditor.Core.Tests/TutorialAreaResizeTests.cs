@@ -8,6 +8,25 @@ namespace CtrDxEditor.Core.Tests
     /// <summary>Dragging an area's corners keeps the rectangle normalized.</summary>
     public class TutorialAreaResizeTests
     {
+        /// <summary>Runtime areas use the same raw-value truncation as DX's coordinate loader.</summary>
+        [Fact]
+        public void RuntimeProjectionTruncatesEveryComponentTowardZero()
+        {
+            Assert.True(TutorialArea.TryParseRuntime("1.9,-2.9,3.9,4.9", out TutorialArea area));
+
+            Assert.Equal(new TutorialArea(1, -2, 3, 4), area);
+        }
+
+        /// <summary>A schema-positive fractional size can still collapse after DX's integer conversion.</summary>
+        [Fact]
+        public void RuntimeProjectionPreservesDxSubunitCollapse()
+        {
+            Assert.True(TutorialArea.TryParseRuntime("1.5,2.5,0.5,0.5", out TutorialArea area));
+
+            Assert.Equal(0, area.Width);
+            Assert.Equal(0, area.Height);
+        }
+
         [Fact]
         public void DraggingTopLeftMovesOriginAndKeepsOppositeCorner()
         {
@@ -19,6 +38,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(110, dragged.Y);
             Assert.Equal(30, dragged.Width);
             Assert.Equal(40, dragged.Height);
+        }
+
+        /// <summary>Canvas drags author whole coordinates so the editor and DX display the same rectangle.</summary>
+        [Fact]
+        public void DraggingRoundsThePointerToWholeCoordinates()
+        {
+            TutorialArea area = new(100, 100, 50, 50);
+
+            TutorialArea dragged = TutorialAreaResize.DragCorner(area, corner: 0, to: new Vec2(120.6, 110.4));
+
+            Assert.Equal(new TutorialArea(121, 110, 29, 40), dragged);
         }
 
         /// <summary>Dragging a corner past its opposite flips the rectangle rather than inverting it.</summary>

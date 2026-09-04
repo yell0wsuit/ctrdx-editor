@@ -300,6 +300,28 @@ namespace CtrDxEditor.Core.Editing
             return true;
         }
 
+        /// <summary>
+        /// Parses an authored area and projects its four raw components through the integer-coordinate
+        /// conversion DX applies when it instantiates the runtime trigger. A schema-valid positive
+        /// fractional dimension can therefore become zero here, exactly as it does in the game.
+        /// </summary>
+        public static bool TryParseRuntime(string? value, out TutorialArea area)
+        {
+            area = default;
+            if (!TryParse(value, out _))
+            {
+                return false;
+            }
+
+            string[] parts = value!.Split(',');
+            area = new TutorialArea(
+                RuntimeComponent(parts[0]),
+                RuntimeComponent(parts[1]),
+                RuntimeComponent(parts[2]),
+                RuntimeComponent(parts[3]));
+            return true;
+        }
+
         /// <summary>Serializes back to the authored x,y,width,height spelling.</summary>
         public string Format()
         {
@@ -317,6 +339,15 @@ namespace CtrDxEditor.Core.Editing
 
             value = 0;
             return false;
+        }
+
+        private static int RuntimeComponent(string part)
+        {
+            return !decimal.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal parsed)
+                || parsed < int.MinValue
+                || parsed > int.MaxValue
+                    ? 0
+                    : decimal.ToInt32(decimal.Truncate(parsed));
         }
     }
 
@@ -378,6 +409,9 @@ namespace CtrDxEditor.Core.Editing
         /// <returns>The area recomputed from the dragged corner and the fixed opposite corner.</returns>
         public static TutorialArea DragCorner(TutorialArea area, int corner, Vec2 to)
         {
+            to = new Vec2(
+                Math.Round(to.X, MidpointRounding.AwayFromZero),
+                Math.Round(to.Y, MidpointRounding.AwayFromZero));
             Vec2 opposite = Corners(area)[(corner + 2) % 4];
             double minX = Math.Min(opposite.X, to.X);
             double maxX = Math.Max(opposite.X, to.X);

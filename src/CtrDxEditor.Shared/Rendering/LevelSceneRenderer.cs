@@ -2026,7 +2026,7 @@ namespace CtrDxEditor.Rendering
         public static void DrawTutorialArea(DrawingContext ctx, ViewTransform v, LevelObject obj, Pen areaPen)
         {
             if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
-                || !TutorialArea.TryParse(obj.GetAttr("inArea"), out TutorialArea area))
+                || !TutorialArea.TryParseRuntime(obj.GetAttr("inArea"), out TutorialArea area))
             {
                 return;
             }

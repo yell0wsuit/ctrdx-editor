@@ -78,7 +78,7 @@ namespace CtrDxEditor.Core.Tests
             Assert.NotNull(TutorialMotion.Timed(prompt));
         }
 
-        /// <summary>Entering a motion mode from nothing seeds a usable default path.</summary>
+        /// <summary>Entering Looping from nothing seeds the path and speed required by DX's shared mover.</summary>
         [Fact]
         public void EnteringAModeSeedsAPath()
         {
@@ -87,6 +87,7 @@ namespace CtrDxEditor.Core.Tests
             TutorialMotionEditor.SetMode(prompt, TutorialMotionMode.Looping);
 
             Assert.NotNull(prompt.GetAttr("path"));
+            Assert.Equal("100", prompt.GetAttr("moveSpeed"));
             Assert.Equal(TutorialMotionMode.Looping, TutorialMotion.ModeOf(prompt));
         }
     }

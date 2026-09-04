@@ -57,5 +57,17 @@ namespace CtrDxEditor.Tests
             AttributeFieldViewModel field = new(Obj(), "time", AttrType.Number, null, () => { });
             Assert.Equal(1, field.NumericMinimum);
         }
+
+        /// <summary>Tutorial motion help reflects DX's separate visibility and path timelines.</summary>
+        [Fact]
+        public void TutorialMotionHelpDoesNotClaimLoopingIgnoresFades()
+        {
+            AttributeOptionViewModel[] options = [new("looping", "Looping")];
+            AttributeFieldViewModel field = new("motion", options, () => "looping", _ => { }, () => { });
+
+            Assert.True(field.HasHelp);
+            Assert.Contains("visibility", field.HelpText, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("ignores the fade", field.HelpText, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

@@ -167,6 +167,12 @@ namespace CtrDxEditor.ViewModels
         public bool IsColor { get; }
 
         /// <summary>
+        /// Whether a color field may apply a custom tint. Full-color tutorial artwork opts out because
+        /// DX ignores authored tints for those icons; the picker still opens so an imported tint can be cleared.
+        /// </summary>
+        public bool CanApplyCustomColor { get; init; } = true;
+
+        /// <summary>
         /// Smallest value a numeric field accepts. Lengths and radii are magnitudes and cannot go
         /// negative in game; coordinates and sentinel fields (e.g. timeout = -1) can, so they keep the
         /// default lower bound.

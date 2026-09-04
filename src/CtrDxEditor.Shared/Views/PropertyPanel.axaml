@@ -94,12 +94,15 @@
                  Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                  Text="{Binding Value, Mode=TwoWay}" />
         <DockPanel Grid.Column="1" IsVisible="{Binding IsColor}" LastChildFill="True">
-          <Border DockPanel.Dock="Left" Width="24" Height="24" Margin="0,0,6,0" CornerRadius="4"
-                  VerticalAlignment="Center"
-                  Background="{Binding Value, Converter={x:Static conv:ColorSwatchConverters.Background}}"
-                  BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
-                  BorderThickness="1" />
-          <TextBox IsEnabled="{Binding IsEnabled}"
+          <Button DockPanel.Dock="Left" Width="30" Height="30" Margin="0,0,6,0" Padding="2"
+                  IsEnabled="{Binding IsEnabled}" Cursor="Hand" Click="ColorSwatch_Click"
+                  ToolTip.Tip="{loc:Tr Dialog.ColorPicker.Open}">
+            <Border CornerRadius="4"
+                    Background="{Binding Value, Converter={x:Static conv:ColorSwatchConverters.Background}}"
+                    BorderBrush="{DynamicResource EditorBrush.Surface.Divider}"
+                    BorderThickness="1" />
+          </Button>
+          <TextBox IsEnabled="{Binding CanApplyCustomColor}"
                    Cursor="{Binding IsEnabled, Converter={x:Static conv:PropertyFieldStateConverters.Cursor}}"
                    Text="{Binding Value, Mode=TwoWay}" />
         </DockPanel>

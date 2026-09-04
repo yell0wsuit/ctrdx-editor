@@ -132,10 +132,14 @@ namespace CtrDxEditor.ViewModels
                     structural,
                     onChanging));
 
-                if (!TutorialObject.IsAutoWidth(value))
-                {
-                    fields.Add(new AttributeFieldViewModel(value, "width", AttrType.Whole, null, onChanged, onChanging));
-                }
+                fields.Add(new AttributeFieldViewModel(
+                    "width",
+                    AttrType.Whole,
+                    () => value.GetAttr("width"),
+                    v => value.SetAttr("width", v ?? string.Empty),
+                    onChanged,
+                    onChanging,
+                    () => !TutorialObject.IsAutoWidth(value)));
 
                 return;
             }
@@ -174,7 +178,9 @@ namespace CtrDxEditor.ViewModels
             fields.Add(new AttributeFieldViewModel(
                 "showOn",
                 ShowOnOptions,
-                () => TutorialEvents.Name(showOn),
+                () => TutorialEvents.TryParse(value.GetAttr("showOn"), out TutorialEvent current)
+                    ? TutorialEvents.Name(current)
+                    : value.GetAttr("showOn"),
                 selected => value.SetAttr("showOn", selected ?? TutorialEvents.Name(TutorialEvent.Start)),
                 onChanged,
                 onChanging)
@@ -187,7 +193,9 @@ namespace CtrDxEditor.ViewModels
             fields.Add(new AttributeFieldViewModel(
                 "subject",
                 SubjectOptions,
-                () => TutorialSubjects.Name(subject),
+                () => TutorialSubjects.TryParse(value.GetAttr("subject"), out TutorialSubject current)
+                    ? TutorialSubjects.Name(current)
+                    : value.GetAttr("subject"),
                 selected => value.SetAttr("subject", selected ?? TutorialSubjects.Name(TutorialSubject.Any)),
                 onChanged,
                 onChanging)
@@ -218,13 +226,10 @@ namespace CtrDxEditor.ViewModels
                 GroupIndex = TriggerGroupIndex,
             });
 
-            if (hasArea)
-            {
-                AddAreaField(fields, value, "inAreaX", header, a => a.X, (a, v) => a with { X = v }, onChanged, onChanging);
-                AddAreaField(fields, value, "inAreaY", header, a => a.Y, (a, v) => a with { Y = v }, onChanged, onChanging);
-                AddAreaField(fields, value, "inAreaWidth", header, a => a.Width, (a, v) => a with { Width = v }, onChanged, onChanging);
-                AddAreaField(fields, value, "inAreaHeight", header, a => a.Height, (a, v) => a with { Height = v }, onChanged, onChanging);
-            }
+            AddAreaField(fields, value, "inAreaX", header, a => a.X, (a, v) => a with { X = v }, onChanged, onChanging);
+            AddAreaField(fields, value, "inAreaY", header, a => a.Y, (a, v) => a with { Y = v }, onChanged, onChanging);
+            AddAreaField(fields, value, "inAreaWidth", header, a => a.Width, (a, v) => a with { Width = v }, onChanged, onChanging);
+            AddAreaField(fields, value, "inAreaHeight", header, a => a.Height, (a, v) => a with { Height = v }, onChanged, onChanging);
         }
 
         private static void AddAreaField(
@@ -239,24 +244,36 @@ namespace CtrDxEditor.ViewModels
         {
             fields.Add(new AttributeFieldViewModel(
                 name,
-                AttrType.Number,
+                AttrType.Whole,
                 () =>
                 {
-                    _ = TutorialArea.TryParse(value.GetAttr("inArea"), out TutorialArea area);
+                    TutorialArea area = RuntimeAreaOrDefault(value.GetAttr("inArea"));
                     return read(area).ToString(CultureInfo.InvariantCulture);
                 },
                 v =>
                 {
-                    _ = TutorialArea.TryParse(value.GetAttr("inArea"), out TutorialArea area);
-                    double parsed = double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : 0;
+                    TutorialArea area = RuntimeAreaOrDefault(value.GetAttr("inArea"));
+                    double parsed = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out int d) ? d : 0;
                     value.SetAttr("inArea", write(area, parsed).Format());
                 },
                 onChanged,
-                onChanging)
+                onChanging,
+                () => value.GetAttr("inArea") is not null)
             {
                 GroupHeader = header,
                 GroupIndex = TriggerGroupIndex,
             });
+        }
+
+        private static TutorialArea RuntimeAreaOrDefault(string? raw)
+        {
+            if (raw is null)
+            {
+                return new TutorialArea(0, 0, 100, 100);
+            }
+
+            _ = TutorialArea.TryParseRuntime(raw, out TutorialArea area);
+            return area;
         }
 
         private static void BuildTiming(
@@ -279,23 +296,13 @@ namespace CtrDxEditor.ViewModels
 
             // A sequencing tag, not a trigger condition - TutorialTrigger.cs never reads it - so it
             // belongs with the rest of the prompt's scheduling, not with Trigger.
-            fields.Add(new AttributeFieldViewModel(value, "group", AttrType.Text, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = TimingGroupIndex,
-                GroupStartsCollapsed = startsCollapsed,
-            });
+            fields.Add(OptionalField(value, "group", AttrType.Text, null, onChanged, onChanging,
+                header, TimingGroupIndex, startsCollapsed));
 
-            fields.Add(new AttributeFieldViewModel(value, "delay", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = TimingGroupIndex,
-            });
-            fields.Add(new AttributeFieldViewModel(value, "fadeIn", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = TimingGroupIndex,
-            });
+            fields.Add(OptionalField(value, "delay", AttrType.Number, "0", onChanged, onChanging,
+                header, TimingGroupIndex));
+            fields.Add(OptionalField(value, "fadeIn", AttrType.Number, "1", onChanged, onChanging,
+                header, TimingGroupIndex));
 
             fields.Add(new AttributeFieldViewModel(
                 "holdsForever",
@@ -308,20 +315,14 @@ namespace CtrDxEditor.ViewModels
                 GroupHeader = header,
                 GroupIndex = TimingGroupIndex,
             });
-            if (!timing.HoldsForever)
-            {
-                fields.Add(new AttributeFieldViewModel(value, "duration", AttrType.Number, null, onChanged, onChanging)
-                {
-                    GroupHeader = header,
-                    GroupIndex = TimingGroupIndex,
-                });
-            }
+            string defaultDuration = isText ? DefaultTextHold : DefaultSignHold;
+            fields.Add(OptionalField(value, "duration", AttrType.Number,
+                defaultDuration, onChanged, onChanging, header, TimingGroupIndex,
+                isEnabled: () => !TutorialTiming.For(value).HoldsForever,
+                disabledValue: defaultDuration));
 
-            fields.Add(new AttributeFieldViewModel(value, "fadeOut", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = TimingGroupIndex,
-            });
+            fields.Add(OptionalField(value, "fadeOut", AttrType.Number, "0.5", onChanged, onChanging,
+                header, TimingGroupIndex));
 
             fields.Add(new AttributeFieldViewModel(
                 "repeatsForever",
@@ -334,18 +335,13 @@ namespace CtrDxEditor.ViewModels
                 GroupHeader = header,
                 GroupIndex = TimingGroupIndex,
             });
-            if (!timing.RepeatsForever)
-            {
-                // Structural: TutorialMotion.ModeOf treats any authored repeat - including a
-                // finite pass count typed here - as a Timed marker on a path-bearing prompt, so an
-                // edit here can silently reclassify Motion. Rebuilding keeps the Motion group (and
-                // its mode dropdown) in sync with what the document now actually reads as.
-                fields.Add(new AttributeFieldViewModel(value, "repeat", AttrType.Whole, null, structural, onChanging)
-                {
-                    GroupHeader = header,
-                    GroupIndex = TimingGroupIndex,
-                });
-            }
+            // Structural: TutorialMotion.ModeOf treats any authored repeat - including a finite
+            // pass count typed here - as a Timed marker on a path-bearing prompt. The field remains
+            // visible while Repeat forever owns the -1 sentinel, but is disabled and displays one.
+            fields.Add(OptionalField(value, "repeat", AttrType.Whole, "1", structural, onChanging,
+                header, TimingGroupIndex,
+                isEnabled: () => !TutorialTiming.For(value).RepeatsForever,
+                disabledValue: "1"));
         }
 
         private static void BuildLook(
@@ -362,12 +358,8 @@ namespace CtrDxEditor.ViewModels
                 && look.Angle == 0.0
                 && (!isText || (look.Size == 1.0 && look.LineHeight == 1.0));
 
-            fields.Add(new AttributeFieldViewModel(value, "opacity", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = LookGroupIndex,
-                GroupStartsCollapsed = startsCollapsed,
-            });
+            fields.Add(OptionalField(value, "opacity", AttrType.Number, "1", onChanged, onChanging,
+                header, LookGroupIndex, startsCollapsed));
 
             // Reads the raw attribute verbatim for display (TutorialColor.Format is not a verbatim
             // reproducer - see its doc comment) and only writes through FormatHex when the user
@@ -382,9 +374,13 @@ namespace CtrDxEditor.ViewModels
                     {
                         value.SetAttr("color", TutorialColor.FormatHex(color.Red, color.Green, color.Blue));
                     }
+                    else if (string.IsNullOrWhiteSpace(v))
+                    {
+                        value.RemoveAttr("color");
+                    }
                     else
                     {
-                        value.SetAttr("color", v ?? string.Empty);
+                        value.SetAttr("color", v);
                     }
                 },
                 onChanged,
@@ -392,26 +388,18 @@ namespace CtrDxEditor.ViewModels
             {
                 GroupHeader = header,
                 GroupIndex = LookGroupIndex,
+                CanApplyCustomColor = isText || !TutorialObject.IsColoredQuad(TutorialObject.Icon(value)),
             });
 
-            fields.Add(new AttributeFieldViewModel(value, "angle", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = LookGroupIndex,
-            });
+            fields.Add(OptionalField(value, "angle", AttrType.Number, "0", onChanged, onChanging,
+                header, LookGroupIndex));
 
             if (isText)
             {
-                fields.Add(new AttributeFieldViewModel(value, "size", AttrType.Number, null, onChanged, onChanging)
-                {
-                    GroupHeader = header,
-                    GroupIndex = LookGroupIndex,
-                });
-                fields.Add(new AttributeFieldViewModel(value, "lineHeight", AttrType.Number, null, onChanged, onChanging)
-                {
-                    GroupHeader = header,
-                    GroupIndex = LookGroupIndex,
-                });
+                fields.Add(OptionalField(value, "size", AttrType.Number, "1", onChanged, onChanging,
+                    header, LookGroupIndex));
+                fields.Add(OptionalField(value, "lineHeight", AttrType.Number, "1", onChanged, onChanging,
+                    header, LookGroupIndex));
             }
         }
 
@@ -454,21 +442,22 @@ namespace CtrDxEditor.ViewModels
                 HelpText = null,
             });
 
-            fields.Add(new AttributeFieldViewModel(value, "moveSpeed", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = MotionGroupIndex,
-            });
+            fields.Add(OptionalField(
+                value,
+                "moveSpeed",
+                AttrType.Number,
+                mode == TutorialMotionMode.Timed ? "100" : "0",
+                onChanged,
+                onChanging,
+                header,
+                MotionGroupIndex));
 
             if (mode == TutorialMotionMode.Looping)
             {
                 // Only the shared mover reads rotateSpeed (CTRMover.FromXml); Timed motion clears
                 // it because the timeline can't express rotation, so it has no effect there.
-                fields.Add(new AttributeFieldViewModel(value, "rotateSpeed", AttrType.Number, null, onChanged, onChanging)
-                {
-                    GroupHeader = header,
-                    GroupIndex = MotionGroupIndex,
-                });
+                fields.Add(OptionalField(value, "rotateSpeed", AttrType.Number, "0", onChanged, onChanging,
+                    header, MotionGroupIndex));
             }
 
             if (mode != TutorialMotionMode.Timed)
@@ -476,11 +465,8 @@ namespace CtrDxEditor.ViewModels
                 return;
             }
 
-            fields.Add(new AttributeFieldViewModel(value, "moveDelay", AttrType.Number, null, onChanged, onChanging)
-            {
-                GroupHeader = header,
-                GroupIndex = MotionGroupIndex,
-            });
+            fields.Add(OptionalField(value, "moveDelay", AttrType.Number, "0", onChanged, onChanging,
+                header, MotionGroupIndex));
 
             TutorialMotion? motion = TutorialMotion.Timed(value);
             if (motion is null)
@@ -550,6 +536,50 @@ namespace CtrDxEditor.ViewModels
         {
             bool allSame = eases.All(e => e == eases[0]);
             return allSame ? ToToken(eases[0]) : string.Join(",", eases.Select(ToToken));
+        }
+
+        /// <summary>
+        /// Builds an optional XML field that displays the game's effective default while leaving the
+        /// attribute absent until it is changed. Clearing the control removes the attribute again.
+        /// </summary>
+        private static AttributeFieldViewModel OptionalField(
+            LevelObject value,
+            string name,
+            AttrType type,
+            string? defaultValue,
+            Action onChanged,
+            Action onChanging,
+            string? groupHeader = null,
+            int groupIndex = -1,
+            bool groupStartsCollapsed = false,
+            Func<bool>? isEnabled = null,
+            string? disabledValue = null)
+        {
+            return new AttributeFieldViewModel(
+                name,
+                type,
+                () => isEnabled?.Invoke() == false
+                    ? disabledValue ?? defaultValue
+                    : value.GetAttr(name) ?? defaultValue,
+                edited =>
+                {
+                    if (string.IsNullOrWhiteSpace(edited))
+                    {
+                        value.RemoveAttr(name);
+                    }
+                    else
+                    {
+                        value.SetAttr(name, edited);
+                    }
+                },
+                onChanged,
+                onChanging,
+                isEnabled)
+            {
+                GroupHeader = groupHeader,
+                GroupIndex = groupIndex,
+                GroupStartsCollapsed = groupStartsCollapsed,
+            };
         }
     }
 }

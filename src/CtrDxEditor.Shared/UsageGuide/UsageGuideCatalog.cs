@@ -138,7 +138,7 @@ namespace CtrDxEditor.UsageGuide
                 [Heading("motion", "Paths"), Para("motion", "Modes"), List("motion", "Edit"), Tip("motion", "Angles"), Note("motion", "Limit"), Heading("motion", "Spin"), Para("motion", "Spin"), EmbeddedIllustration("motion", "Polyline", "guide-movement-path.png")],
                 ["modifier-keys", "diagnostic-overlays", "rope-hooks", "edit-properties"]),
             Article("tutorial-objects", "GameObjects",
-                [Para("tutorial-objects", "InGame"), Para("tutorial-objects", "Icons"), Para("tutorial-objects", "Text"), Para("tutorial-objects", "Editing"), Warning("tutorial-objects", "Language"), EmbeddedIllustration("tutorial-objects", "Width", "guide-tutorial-objects.png")],
+                [Para("tutorial-objects", "InGame"), Para("tutorial-objects", "Icons"), Para("tutorial-objects", "Text"), Para("tutorial-objects", "Editing"), Heading("tutorial-objects", "Trigger"), Para("tutorial-objects", "Trigger"), Heading("tutorial-objects", "Timing"), Para("tutorial-objects", "Timing"), Heading("tutorial-objects", "Motion"), Para("tutorial-objects", "Motion"), Warning("tutorial-objects", "Language"), EmbeddedIllustration("tutorial-objects", "Width", "guide-tutorial-objects.png")],
                 ["edit-properties", "level-settings", "keyboard-shortcuts"]),
 
             Article("animation-preview", "PreviewFinish",
