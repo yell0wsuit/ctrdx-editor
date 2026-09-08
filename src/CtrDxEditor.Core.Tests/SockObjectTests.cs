@@ -16,19 +16,54 @@ namespace CtrDxEditor.Core.Tests
         [InlineData(null, false, "sock")]
         [InlineData("0", false, "sock")]
         [InlineData("1", false, "sock_grouped")]
-        [InlineData("-2", false, "sock_grouped")]
         [InlineData("invalid", false, "sock")]
         [InlineData("0", true, "sock_xmas")]
-        [InlineData("3", true, "sock_xmas_grouped")]
+        [InlineData("1", true, "sock_xmas_grouped")]
         public void SpriteKeyUsesChristmasAtlasAndGroupQuad(string? group, bool isXmas, string expected)
         {
-            XElement element = new("sock");
-            if (group is not null)
-            {
-                element.SetAttributeValue("group", group);
-            }
+            Assert.Equal(expected, SockObject.SpriteKey(Sock(group), isXmas));
+        }
 
-            Assert.Equal(expected, SockObject.SpriteKey(new LevelObject(element), isXmas));
+        /// <summary>
+        /// A group past the two the art bakes a color for wears a generated band, and wraps back through
+        /// the generated colors once they run out - the same repeat as the game's ColorForGroup.
+        /// </summary>
+        [Theory]
+        [InlineData("2", "sock_band_2")]
+        [InlineData("3", "sock_band_3")]
+        [InlineData("4", "sock_band_4")]
+        [InlineData("5", "sock_band_5")]
+        [InlineData("6", "sock_band_2")]
+        [InlineData("7", "sock_band_3")]
+        [InlineData("100", "sock_band_4")]
+        public void SpriteKeyGivesGeneratedBandGroupsTheirOwnArt(string group, string expected)
+        {
+            Assert.Equal(expected, SockObject.SpriteKey(Sock(group), isXmas: false));
+        }
+
+        /// <summary>
+        /// The Christmas art draws two socks and stops there, so a generated-band group has nothing
+        /// seasonal to wear and falls back to the magic hat, matching SockArt.TextureFor.
+        /// </summary>
+        [Theory]
+        [InlineData("2", "sock_band_2")]
+        [InlineData("3", "sock_band_3")]
+        public void GeneratedBandGroupsHaveNoChristmasVariant(string group, string expected)
+        {
+            Assert.Equal(expected, SockObject.SpriteKey(Sock(group), isXmas: true));
+        }
+
+        /// <summary>
+        /// A negative group is data the level authored, not a slot: SockArt clamps it to zero before it
+        /// reaches the art, so it draws the plain hat rather than indexing off the front of the palette.
+        /// </summary>
+        [Theory]
+        [InlineData("-1", false, "sock")]
+        [InlineData("-2", false, "sock")]
+        [InlineData("-2", true, "sock_xmas")]
+        public void NegativeGroupsDrawThePlainHat(string group, bool isXmas, string expected)
+        {
+            Assert.Equal(expected, SockObject.SpriteKey(Sock(group), isXmas));
         }
 
         private static LevelObject Sock(string? group)

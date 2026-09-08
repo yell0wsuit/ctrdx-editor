@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using CtrDxEditor.Content;
+using CtrDxEditor.Core.Editing;
 
 using Xunit;
 
@@ -189,6 +190,73 @@ namespace CtrDxEditor.Tests
             Assert.Contains("images/obj_hat.webp", required);
             Assert.Contains("images/obj_sock_xmas.json", required);
             Assert.Contains("images/obj_sock_xmas.webp", required);
+        }
+
+        /// <summary>
+        /// Generated hat bands draw the base frame their slot's pattern selects, then the maskable
+        /// atlas's backdrop and mask over it, matching Sock.CreateBand's quad pair.
+        /// </summary>
+        [Theory]
+        [InlineData("sock_band_2", 0, 0, 1)]
+        [InlineData("sock_band_3", 1, 2, 3)]
+        [InlineData("sock_band_4", 0, 0, 1)]
+        [InlineData("sock_band_5", 1, 2, 3)]
+        public void HatBandDescriptorsLayerTheMaskOverTheBaseFrame(
+            string key, int baseQuad, int backdropQuad, int maskQuad)
+        {
+            VisualDescriptor band = VisualDescriptorMap.For(key)!;
+
+            Assert.Equal(3, band.Layers.Count);
+            Assert.Equal(0.7, band.Scale);
+
+            Assert.Equal("images/obj_hat", band.Layers[0].AtlasImageBasePath);
+            Assert.Equal(baseQuad, band.Layers[0].Quad);
+            Assert.Null(band.Layers[0].Tint);
+
+            Assert.Equal("images/obj_hat_maskable", band.Layers[1].AtlasImageBasePath);
+            Assert.Equal(backdropQuad, band.Layers[1].Quad);
+            Assert.Null(band.Layers[1].Tint);
+
+            Assert.Equal("images/obj_hat_maskable", band.Layers[2].AtlasImageBasePath);
+            Assert.Equal(maskQuad, band.Layers[2].Quad);
+            _ = Assert.NotNull(band.Layers[2].Tint);
+        }
+
+        /// <summary>Each generated slot's mask carries that slot's color from the palette.</summary>
+        [Theory]
+        [InlineData("sock_band_2", 2)]
+        [InlineData("sock_band_3", 3)]
+        [InlineData("sock_band_4", 4)]
+        [InlineData("sock_band_5", 5)]
+        public void HatBandMaskCarriesItsSlotColor(string key, int slot)
+        {
+            VisualDescriptor band = VisualDescriptorMap.For(key)!;
+
+            Assert.Equal(SockBandPalette.ColorForGroup(slot), band.Layers[2].Tint);
+        }
+
+        /// <summary>
+        /// The maskable atlas is deliberately not required. Bundles shipped before it exist, and a
+        /// required entry they lack would reject the whole install rather than cost the band alone.
+        /// </summary>
+        [Fact]
+        public void RequiredFilesLeaveOutTheOptionalHatBandAtlas()
+        {
+            IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
+
+            Assert.DoesNotContain("images/obj_hat_maskable.json", required);
+            Assert.DoesNotContain("images/obj_hat_maskable.webp", required);
+        }
+
+        /// <summary>Only the band overlay is optional; the hat itself still has to be there.</summary>
+        [Fact]
+        public void HatBandBaseFrameIsNotOptional()
+        {
+            VisualDescriptor band = VisualDescriptorMap.For("sock_band_2")!;
+
+            Assert.False(band.Layers[0].Optional);
+            Assert.True(band.Layers[1].Optional);
+            Assert.True(band.Layers[2].Optional);
         }
 
         /// <summary>Verifies static spikes use obj_spikes quads 8-11 and rotatable spikes use quads 0-3 plus their group buttons.</summary>

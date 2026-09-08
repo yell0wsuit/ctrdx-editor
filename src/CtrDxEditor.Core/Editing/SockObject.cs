@@ -8,24 +8,40 @@ namespace CtrDxEditor.Core.Editing
     /// <summary>Helpers for DX's magic-hat teleporter, stored as a <c>sock</c> XML element.</summary>
     public static class SockObject
     {
+        /// <summary>Prefix of the sprite keys for hats wearing a generated (rather than baked) band.</summary>
+        public const string BandKeyPrefix = "sock_band_";
+
+        /// <summary>The sprite key for a hat drawing the generated band of one palette slot.</summary>
+        /// <param name="slot">Palette slot, as <see cref="SockArt.BandSlot"/> resolves it.</param>
+        /// <returns>The key naming that slot's composited art.</returns>
+        public static string BandKey(int slot)
+        {
+            return BandKeyPrefix + slot.ToString(CultureInfo.InvariantCulture);
+        }
+
         /// <summary>Returns the visual key selected by the Christmas event and transporter group.</summary>
+        /// <remarks>
+        /// Follows <see cref="SockArt"/>: the two authored groups pick a baked frame (and the Christmas
+        /// sock during the event), while a group past them wears a generated band, which exists only over
+        /// the magic hat - so those keys have no Christmas variant, exactly as <c>SockArt.TextureFor</c>
+        /// falls back for them.
+        /// </remarks>
         /// <param name="obj">Magic-hat level object.</param>
         /// <param name="isXmas">Whether DX's Christmas event is active.</param>
-        /// <returns>A key choosing the normal or Christmas atlas and group quad.</returns>
+        /// <returns>A key choosing the atlas, the group quad, and any generated band over it.</returns>
         public static string SpriteKey(LevelObject obj, bool isXmas)
         {
-            bool grouped = int.TryParse(
-                obj.GetAttr("group"),
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out int group) && group != 0;
+            // A group the level did not author, or authored unparseably, reads as 0 - the game's
+            // ParseIntOrZero - and a negative one is clamped by SockArt before it reaches the art.
+            _ = TryParseGroup(obj.GetAttr("group"), out int group);
 
-            return (isXmas, grouped) switch
+            return (SockArt.WearsGeneratedBand(group), isXmas, SockArt.PatternFor(group)) switch
             {
-                (false, false) => "sock",
-                (false, true) => "sock_grouped",
-                (true, false) => "sock_xmas",
-                (true, true) => "sock_xmas_grouped",
+                (true, _, _) => BandKey(SockArt.BandSlot(group)),
+                (false, false, 0) => "sock",
+                (false, false, _) => "sock_grouped",
+                (false, true, 0) => "sock_xmas",
+                (false, true, _) => "sock_xmas_grouped",
             };
         }
 

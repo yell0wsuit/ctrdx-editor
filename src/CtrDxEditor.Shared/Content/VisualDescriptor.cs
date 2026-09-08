@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using CtrDxEditor.Core.Editing;
+
 namespace CtrDxEditor.Content
 {
     /// <summary>
@@ -9,7 +11,24 @@ namespace CtrDxEditor.Content
     /// <param name="AtlasJsonRelPath">Path to the atlas JSON, relative to the content root.</param>
     /// <param name="AtlasImageBasePath">The atlas image path without its extension, so either platform's format resolves.</param>
     /// <param name="Quad">The layer's zero-based index in the atlas JSON array.</param>
-    public sealed record SpriteLayer(string AtlasJsonRelPath, string AtlasImageBasePath, int Quad);
+    /// <param name="Tint">
+    /// Color to multiply the layer's art by, or null to draw it as authored. Reproduces the game's
+    /// <c>Image.useFullColorTint</c>, whose vertex color multiplies through the texture, and is how a
+    /// grayscale mask frame (the magic hat's band) keeps its shading while taking a color the art does
+    /// not contain. <see cref="SpriteCache"/> applies it once at load rather than at draw time.
+    /// </param>
+    /// <param name="Optional">
+    /// Whether the sprite is still worth drawing without this layer. An optional layer's atlas is left
+    /// out of <see cref="VisualDescriptorMap.RequiredFiles"/> and never makes its element unavailable, so
+    /// a bundle predating the art loses only the detail the layer adds - the magic hat keeps its baked
+    /// band rather than vanishing, and the rest of the bundle stays valid.
+    /// </param>
+    public sealed record SpriteLayer(
+        string AtlasJsonRelPath,
+        string AtlasImageBasePath,
+        int Quad,
+        RopeRgba? Tint = null,
+        bool Optional = false);
 
     /// <summary>
     /// Maps an object element to the ordered atlas layers that make up its sprite, plus the per-object

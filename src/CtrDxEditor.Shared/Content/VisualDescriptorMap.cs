@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using CtrDxEditor.Core.Editing;
+
 namespace CtrDxEditor.Content
 {
     /// <summary>Built-in visual descriptor lookup for supported editor object sprites.</summary>
@@ -36,6 +38,8 @@ namespace CtrDxEditor.Content
         private const string ElectrodesImageBase = "images/obj_electrodes";
         private const string HatJson = "images/obj_hat.json";
         private const string HatImageBase = "images/obj_hat";
+        private const string HatMaskableJson = "images/obj_hat_maskable.json";
+        private const string HatMaskableImageBase = "images/obj_hat_maskable";
         private const string XmasSockJson = "images/obj_sock_xmas.json";
         private const string XmasSockImageBase = "images/obj_sock_xmas";
         private const string BeeJson = "images/obj_bee.json";
@@ -444,12 +448,21 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(BambooTubeJson, BambooTubeImageBase, 2),
             ], Scale: 0.9),
 
-            // Magic hat teleporter. LoadSock uses quad 0 for group 0 and quad 1 otherwise,
-            // swaps to the Christmas sock atlas during the seasonal event, and scales it to 0.7.
+            // Magic hat teleporter. LoadSock draws obj_hat quad SockArt.PatternFor(group) - so quad 0 for
+            // the even groups and quad 1 for the odd ones - swaps to the Christmas sock atlas during the
+            // seasonal event, and scales it to 0.7.
             new("sock", [new SpriteLayer(HatJson, HatImageBase, 0)], Scale: 0.7),
             new("sock_grouped", [new SpriteLayer(HatJson, HatImageBase, 1)], Scale: 0.7),
             new("sock_xmas", [new SpriteLayer(XmasSockJson, XmasSockImageBase, 0)], Scale: 0.7),
             new("sock_xmas_grouped", [new SpriteLayer(XmasSockJson, XmasSockImageBase, 1)], Scale: 0.7),
+
+            // Hats past the two the art bakes a color for. Sock.CreateBand puts two more layers over the
+            // base frame: an opaque backdrop that paints out the band the frame already carries, then the
+            // grayscale mask over it, tinted with the group's color. Both come from the maskable atlas at
+            // quads pattern*2 and pattern*2+1, and both are anchored to the hat's own top-left corner -
+            // the editor's shared-sourceSize layer alignment already reproduces that, since obj_hat and
+            // obj_hat_maskable are drawn within the same 431x431 canvas.
+            .. HatBandDescriptors(),
 
             // Static spike quads. Game Spikes.GetSpikeTextureAndQuad maps width 1-4 to obj_spikes quads 8-11.
             new("spike1", [new SpriteLayer(SpikesJson, SpikesImageBase, 8)]),
@@ -507,6 +520,33 @@ namespace CtrDxEditor.Content
             return [.. Enumerable.Range(2, 33).Select(quad => new SpriteLayer(PipeJson, PipeImageBase, quad))];
         }
 
+        /// <summary>
+        /// One descriptor per generated band color, which is every magic hat group from
+        /// <see cref="SockArt.AuthoredCount"/> up: <see cref="SockArt.BandSlot"/> wraps the rest back
+        /// through these, the way the game's palette repeats rather than reaching for a color too close
+        /// to one already on screen.
+        /// </summary>
+        private static IEnumerable<VisualDescriptor> HatBandDescriptors()
+        {
+            for (int slot = SockArt.AuthoredCount; slot < SockArt.AuthoredCount + SockArt.GeneratedCount; slot++)
+            {
+                int pattern = SockArt.PatternFor(slot);
+                yield return new VisualDescriptor(
+                    SockObject.BandKey(slot),
+                    [
+                        new SpriteLayer(HatJson, HatImageBase, pattern),
+                        new SpriteLayer(HatMaskableJson, HatMaskableImageBase, pattern * 2, Optional: true),
+                        new SpriteLayer(
+                            HatMaskableJson,
+                            HatMaskableImageBase,
+                            (pattern * 2) + 1,
+                            Tint: SockBandPalette.ColorForGroup(slot),
+                            Optional: true),
+                    ],
+                    Scale: 0.7);
+            }
+        }
+
         /// <summary>All visual descriptors keyed by object element name.</summary>
         public static IReadOnlyDictionary<string, VisualDescriptor> ByElement { get; } =
             All.ToDictionary(v => v.Element);
@@ -521,6 +561,7 @@ namespace CtrDxEditor.Content
             return
             [
                 .. All.SelectMany(v => v.Layers.Concat(v.RandomBackLayers))
+                      .Where(l => !l.Optional)
                       .SelectMany(l => new[] { l.AtlasImageBasePath + imageExtension, l.AtlasJsonRelPath })
                       .Distinct(),
             ];

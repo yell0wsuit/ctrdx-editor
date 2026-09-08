@@ -134,6 +134,42 @@ namespace CtrDxEditor.Tests
                 store.RequestedBytePaths.Distinct().Count());
         }
 
+        /// <summary>
+        /// A layer marked optional cannot make its element unavailable. The magic hat's band overlay
+        /// ships in a later bundle than the hat itself, so a user holding the older one has to keep a
+        /// drawable hat - with its baked band - rather than lose the object.
+        /// </summary>
+        [Fact]
+        public async Task PreloadKeepsAnElementWhoseOnlyMissingLayerIsOptional()
+        {
+            ThrowingImageStore store = new();
+            SpriteCache cache = new(store);
+            // The hat's own atlas already cached, standing in for a bundle that has it; only the band
+            // overlay is left for the store to fail on.
+            SeedCachedAtlas(cache, "images/obj_hat");
+
+            await cache.PreloadAsync();
+
+            Assert.False(cache.IsUnavailable("sock_band_2"));
+            Assert.False(cache.IsUnavailable("sock"));
+            Assert.DoesNotContain("images/obj_hat.png", store.RequestedBytePaths);
+        }
+
+        /// <summary>
+        /// The optional layer's atlas is still attempted, so it appears the moment a bundle carries it.
+        /// </summary>
+        [Fact]
+        public async Task PreloadStillLooksForAnOptionalLayersAtlas()
+        {
+            ThrowingImageStore store = new();
+            SpriteCache cache = new(store);
+            SeedCachedAtlas(cache, "images/obj_hat");
+
+            await cache.PreloadAsync();
+
+            Assert.Contains("images/obj_hat_maskable.png", store.RequestedBytePaths);
+        }
+
         /// <summary>Verifies that unknown object elements still return no sprite.</summary>
         [Fact]
         public void GetSpriteReturnsNullForUnknownElement()
@@ -239,6 +275,20 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal("support-quad-3", target.Layers[0].Frame.Filename);
             Assert.Equal("sleeping-quad-6", target.Layers[1].Frame.Filename);
+        }
+
+        /// <summary>Puts one atlas in the cache before preload, as a bundle that already has it would.</summary>
+        private static void SeedCachedAtlas(SpriteCache cache, string imageBase)
+        {
+            Bitmap bitmap = (Bitmap)RuntimeHelpers.GetUninitializedObject(typeof(Bitmap));
+            SetPrivateField(cache, "_bitmaps", new Dictionary<string, Bitmap>
+            {
+                [imageBase + ".png"] = bitmap,
+            });
+            SetPrivateField(cache, "_atlases", new Dictionary<string, Atlas>
+            {
+                [imageBase + ".json"] = new Atlas([.. Enumerable.Range(0, 5).Select(i => Frame($"quad-{i}"))]),
+            });
         }
 
         private static void SeedTargetAtlases(SpriteCache cache)

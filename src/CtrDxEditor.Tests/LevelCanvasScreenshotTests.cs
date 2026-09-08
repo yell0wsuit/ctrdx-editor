@@ -170,12 +170,18 @@ namespace CtrDxEditor.Tests
             Assert.Equal(expected, key);
         }
 
-        /// <summary>Magic-hat canvas keys combine the current Christmas event with the authored group.</summary>
+        /// <summary>
+        /// Magic-hat canvas keys combine the current Christmas event with the authored group. Only the
+        /// two authored groups have a seasonal variant; a group wearing a generated band has no sock art
+        /// to fall back to, so it draws the magic hat in either season.
+        /// </summary>
         [Theory]
         [InlineData("0", false, "sock")]
-        [InlineData("2", false, "sock_grouped")]
+        [InlineData("1", false, "sock_grouped")]
+        [InlineData("2", false, "sock_band_2")]
         [InlineData("0", true, "sock_xmas")]
-        [InlineData("2", true, "sock_xmas_grouped")]
+        [InlineData("1", true, "sock_xmas_grouped")]
+        [InlineData("2", true, "sock_band_2")]
         public void CanvasSpriteKeyUsesSockSeasonAndGroup(string group, bool isXmas, string expected)
         {
             MethodInfo? method = SceneRenderer.GetMethod(
