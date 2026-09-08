@@ -182,7 +182,11 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add(new LevelWarning("Validation.CandyOnMouth", CandyLabel(candy)));
             }
 
-            return warnings;
+            warnings.AddRange(TutorialValidation.Validate(document));
+
+            // Errors cost the level content, so they lead; LINQ's sort is stable, which keeps each
+            // group in the order the rules produced it.
+            return [.. warnings.OrderBy(warning => warning.Severity == LevelWarningSeverity.Error ? 0 : 1)];
         }
 
         private static bool IsTrueAttr(LevelObject obj, string name)

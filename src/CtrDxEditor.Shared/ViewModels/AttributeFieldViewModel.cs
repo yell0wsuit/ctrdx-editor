@@ -38,6 +38,7 @@ namespace CtrDxEditor.ViewModels
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
+            IsColor = type == AttrType.Color;
             EnumValues = enumValues;
             EnumOptions = enumValues?.Select(v => new AttributeOptionViewModel(v, Localizer.AttributeOption(localizationName, v))).ToArray();
             HelpText = ConventionHelp(localizationName);
@@ -87,6 +88,7 @@ namespace CtrDxEditor.ViewModels
             IsBool = type == AttrType.Bool;
             IsNumeric = type is AttrType.Whole or AttrType.Number;
             AllowsDecimal = type == AttrType.Number;
+            IsColor = type == AttrType.Color;
             HelpText = ConventionHelp(labelName ?? name);
             _get = get;
             _set = set;
@@ -135,6 +137,14 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         public int GroupIndex { get; init; } = -1;
 
+        /// <summary>
+        /// Whether the section this field belongs to should start collapsed because every attribute in
+        /// it currently sits at its default. Read only from the field that opens a new section (see
+        /// <c>EditorViewModel.GroupFields</c>); false on every field unless a builder opts in, so
+        /// existing panels stay expanded as before.
+        /// </summary>
+        public bool GroupStartsCollapsed { get; init; }
+
         /// <summary>Whether this field has help text to surface via a help icon.</summary>
         public bool HasHelp => !string.IsNullOrEmpty(HelpText);
 
@@ -152,6 +162,15 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Whether this numeric field accepts decimal values.</summary>
         public bool AllowsDecimal { get; }
+
+        /// <summary>Whether this field edits a color, shown as a swatch beside a hex box.</summary>
+        public bool IsColor { get; }
+
+        /// <summary>
+        /// Whether a color field may apply a custom tint. Full-color tutorial artwork opts out because
+        /// DX ignores authored tints for those icons; the picker still opens so an imported tint can be cleared.
+        /// </summary>
+        public bool CanApplyCustomColor { get; init; } = true;
 
         /// <summary>
         /// Smallest value a numeric field accepts. Lengths and radii are magnitudes and cannot go
@@ -195,7 +214,7 @@ namespace CtrDxEditor.ViewModels
         }
 
         /// <summary>Whether this field renders as a free-form text box.</summary>
-        public bool IsText => EnumOptions is null && !IsBool && !IsNumeric;
+        public bool IsText => EnumOptions is null && !IsBool && !IsNumeric && !IsColor;
 
         /// <summary>Whether the field's control is interactive; false greys it out.</summary>
         [ObservableProperty]

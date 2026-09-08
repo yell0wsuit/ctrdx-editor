@@ -27,14 +27,12 @@ namespace CtrDxEditor.Core.Tests
             LevelDocument doc = LevelDocument.Parse(NightTwoPart);
 
             Assert.Equal(1.0f, doc.RopePhysicsSpeed);
-            Assert.Equal(3, doc.Special);
             Assert.True(doc.NightLevel);
             Assert.True(doc.TwoParts);
 
             LevelSettings s = doc.Settings;
             Assert.Equal(320, s.Width);
             Assert.Equal(960, s.Height);
-            Assert.Equal(3, s.Special);
             Assert.True(s.TwoParts);
             Assert.True(s.NightLevel);
         }
@@ -47,7 +45,6 @@ namespace CtrDxEditor.Core.Tests
                 "<map><layer name=\"settings\"><map gridSize=\"32\" width=\"640\" height=\"480\" /></layer></map>");
 
             Assert.Equal(1.0f, doc.RopePhysicsSpeed);
-            Assert.Equal(0, doc.Special);
             Assert.False(doc.NightLevel);
         }
 
@@ -69,7 +66,6 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(640, doc.Width);
             Assert.Equal(960, doc.Height);
             Assert.Equal(2f, doc.RopePhysicsSpeed);
-            Assert.Equal(4, doc.Special);
             Assert.Equal("Objects", Assert.Single(doc.Layers).Name);
             _ = Assert.Single(doc.AllObjects);
         }
@@ -95,7 +91,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateNewProducesSettingsAndEmptyObjectsLayer()
         {
-            LevelSettings s = new(640, 480, 1.0f, 0, TwoParts: true, NightLevel: true);
+            LevelSettings s = new(640, 480, 1.0f, TwoParts: true, NightLevel: true);
 
             LevelDocument doc = LevelDocument.CreateNew(s);
 
@@ -112,18 +108,17 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains("nightLevel=\"true\"", doc.Save());
         }
 
-        /// <summary>Updating settings rewrites resolution, special, and both flags together.</summary>
+        /// <summary>Updating settings rewrites resolution and both flags together.</summary>
         [Fact]
-        public void UpdateSettingsChangesResolutionSpecialAndFlags()
+        public void UpdateSettingsChangesResolutionAndFlags()
         {
             LevelDocument doc = LevelDocument.Parse(NightTwoPart); // twoParts=true, nightLevel=true
 
-            doc.UpdateSettings(new LevelSettings(640, 480, 2.0f, 5, TwoParts: false, NightLevel: false));
+            doc.UpdateSettings(new LevelSettings(640, 480, 2.0f, TwoParts: false, NightLevel: false));
 
             Assert.Equal(640, doc.Width);
             Assert.Equal(480, doc.Height);
             Assert.Equal(2.0f, doc.RopePhysicsSpeed);
-            Assert.Equal(5, doc.Special);
             Assert.False(doc.TwoParts);
             Assert.False(doc.NightLevel);
         }
@@ -142,7 +137,7 @@ namespace CtrDxEditor.Core.Tests
             </map>
             """);
 
-            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.Collection(doc.AllObjects,
                 candy =>
@@ -184,11 +179,11 @@ namespace CtrDxEditor.Core.Tests
         public void CreateNewWritesLevelNameOnlyWhenSet()
         {
             LevelDocument named = LevelDocument.CreateNew(
-                new LevelSettings(320, 480, 1.0f, 0, false, false, LevelName: "  Spiders  "));
+                new LevelSettings(320, 480, 1.0f, false, false, LevelName: "  Spiders  "));
             Assert.Equal("Spiders", named.LevelName);
             Assert.Contains("levelName=\"Spiders\"", named.Save());
 
-            LevelDocument unnamed = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, 0, false, false));
+            LevelDocument unnamed = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, false, false));
             Assert.DoesNotContain("levelName", unnamed.Save());
         }
 
@@ -198,11 +193,11 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelDocument doc = LevelDocument.Parse(NightTwoPart);
 
-            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, LevelName: "Bath Time"));
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, true, true, LevelName: "Bath Time"));
             Assert.Equal("Bath Time", doc.LevelName);
             Assert.Contains("levelName=\"Bath Time\"", doc.Save());
 
-            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, LevelName: "   "));
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, true, true, LevelName: "   "));
             Assert.Equal(string.Empty, doc.LevelName);
             Assert.DoesNotContain("levelName", doc.Save());
         }
@@ -239,7 +234,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void CreateNewOmitsDefaultGravity()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, 0, false, false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(320, 480, 1.0f, false, false));
 
             Assert.DoesNotContain("globalGravity", doc.Save());
         }
@@ -250,7 +245,7 @@ namespace CtrDxEditor.Core.Tests
         {
             LevelDocument doc = LevelDocument.Parse(NightTwoPart);
 
-            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, 3, true, true, GravityX: 100f, GravityY: 0f));
+            doc.UpdateSettings(new LevelSettings(320, 960, 1.0f, true, true, GravityX: 100f, GravityY: 0f));
 
             Assert.Contains("globalGravityX=\"100\"", doc.Save());
             Assert.Contains("globalGravityY=\"0\"", doc.Save());
@@ -265,10 +260,10 @@ namespace CtrDxEditor.Core.Tests
         public void UpdateSettingsRemovesGravityBackAtDefaults()
         {
             LevelDocument doc = LevelDocument.CreateNew(
-                new LevelSettings(320, 480, 1.0f, 0, false, false, GravityX: 50f, GravityY: -784f));
+                new LevelSettings(320, 480, 1.0f, false, false, GravityX: 50f, GravityY: -784f));
             Assert.Contains("globalGravityY=\"-784\"", doc.Save());
 
-            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false));
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, false, false));
 
             Assert.DoesNotContain("globalGravity", doc.Save());
             Assert.Equal(LevelGravity.DefaultY, doc.GravityY);
@@ -279,7 +274,7 @@ namespace CtrDxEditor.Core.Tests
         public void CreateNewWithMobilePhysicsWritesAttribute()
         {
             LevelDocument doc = LevelDocument.CreateNew(
-                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
+                new LevelSettings(320, 480, 1.0f, false, false, UseMobilePhysics: true));
             Assert.True(doc.UseMobilePhysics);
             Assert.Contains("useMobilePhysics=\"true\"", doc.Save());
         }
@@ -289,7 +284,7 @@ namespace CtrDxEditor.Core.Tests
         public void CreateNewWithoutMobilePhysicsOmitsAttribute()
         {
             LevelDocument doc = LevelDocument.CreateNew(
-                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: false));
+                new LevelSettings(320, 480, 1.0f, false, false, UseMobilePhysics: false));
             Assert.False(doc.UseMobilePhysics);
             Assert.DoesNotContain("useMobilePhysics", doc.Save());
         }
@@ -299,11 +294,11 @@ namespace CtrDxEditor.Core.Tests
         public void UpdateSettingsTogglesMobilePhysicsBothWays()
         {
             LevelDocument doc = LevelDocument.CreateNew(
-                new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
-            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: false));
+                new LevelSettings(320, 480, 1.0f, false, false, UseMobilePhysics: true));
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, false, false, UseMobilePhysics: false));
             Assert.False(doc.UseMobilePhysics);
             Assert.DoesNotContain("useMobilePhysics", doc.Save());
-            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, 0, false, false, UseMobilePhysics: true));
+            doc.UpdateSettings(new LevelSettings(320, 480, 1.0f, false, false, UseMobilePhysics: true));
             Assert.True(doc.UseMobilePhysics);
         }
 
@@ -321,7 +316,7 @@ namespace CtrDxEditor.Core.Tests
             </map>
             """);
 
-            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             Assert.Collection(doc.AllObjects,
                 candyL =>
@@ -354,12 +349,12 @@ namespace CtrDxEditor.Core.Tests
             </map>
             """);
 
-            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
 
             Assert.Equal(["target"], doc.Layers[0].Objects.Select(obj => obj.Type));
             Assert.Equal(["candyL", "candyR"], doc.Layers[1].Objects.Select(obj => obj.Type));
 
-            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            doc.UpdateSettings(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.Equal(["candy"], doc.Layers[1].Objects.Select(obj => obj.Type));
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -14,8 +15,16 @@ using SkiaSharp;
 namespace CtrDxEditor.Rendering
 {
     /// <summary>
-    /// Draws one tutorial atlas quad through an RGB-invert color filter, with the view transform applied
-    /// on the Skia canvas. Used only for line-art tutorial icons on the dark blank canvas.
+    /// Draws one tutorial atlas quad with its ink repainted to <paramref name="color"/>, keeping each
+    /// pixel's own alpha, with the view transform applied on the Skia canvas. Sign art is flat black
+    /// whose whole shape lives in the alpha channel, so the source RGB carries nothing worth
+    /// preserving - this mirrors the game's <c>PremultipliedTint.Apply</c>, which likewise discards
+    /// the source color and keeps only alpha. Used both for an authored <c>color</c> and for the
+    /// dark-canvas default (white), which is why the un-authored case must still resolve to white to
+    /// leave today's dark-canvas rendering unchanged. <paramref name="alpha"/> is a combined 0-1
+    /// multiplier (authored <c>opacity</c> times any extra fade-envelope alpha), applied on top of each
+    /// pixel's own alpha; it defaults to full so a caller that has not computed one yet draws at full
+    /// strength.
     /// </summary>
     internal sealed class TutorialInvertDrawOperation(
         Rect bounds,
@@ -23,17 +32,11 @@ namespace CtrDxEditor.Rendering
         Bitmap atlas,
         IntRect frame,
         Rect destLevel,
-        double rotationDegrees)
+        double rotationDegrees,
+        SKColor color,
+        double alpha = 1.0)
         : ICustomDrawOperation
     {
-        private static readonly float[] InvertMatrix =
-        [
-            -1, 0, 0, 0, 255,
-            0, -1, 0, 0, 255,
-            0, 0, -1, 0, 255,
-            0, 0, 0, 1, 0,
-        ];
-
         private static readonly ConditionalWeakTable<Bitmap, SKImage> ImageCache = [];
 
         /// <inheritdoc />
@@ -89,10 +92,30 @@ namespace CtrDxEditor.Rendering
             using SKPaint paint = new()
             {
                 IsAntialias = true,
-                ColorFilter = SKColorFilter.CreateColorMatrix(InvertMatrix),
+                ColorFilter = SKColorFilter.CreateColorMatrix(InkMatrix(color, alpha)),
             };
             canvas.DrawImage(image, src, dst, new SKSamplingOptions(SKFilterMode.Linear), paint);
             canvas.RestoreToCount(save);
+        }
+
+        /// <summary>
+        /// Builds the color matrix that repaints every pixel to <paramref name="color"/> regardless of
+        /// its own RGB, scaling its existing alpha by <paramref name="alpha"/>. The zero coefficients on
+        /// the R/G/B rows are what discard the source color (matching <c>PremultipliedTint.Apply</c>,
+        /// which never reads it either); the offsets are the only thing that reaches the output. The
+        /// alpha row keeps the source alpha's shape (coefficient 1) and only scales it, so the sign's
+        /// silhouette is unchanged - only its ink color and overall strength are.
+        /// </summary>
+        internal static float[] InkMatrix(SKColor color, double alpha)
+        {
+            float a = (float)Math.Clamp(alpha, 0.0, 1.0);
+            return
+            [
+                0, 0, 0, 0, color.Red,
+                0, 0, 0, 0, color.Green,
+                0, 0, 0, 0, color.Blue,
+                0, 0, 0, a, 0,
+            ];
         }
 
         private static SKImage ImageFor(Bitmap bmp)

@@ -14,7 +14,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void HalfCandyGrabDefaultsPartToLeft()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
             LevelObject grab = new(new XElement("grab"));
 
             LevelObjectPolicy.ApplyDefaults(grab, doc);
@@ -26,7 +26,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void FullCandyGrabDoesNotDefaultPart()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = new(new XElement("grab"));
 
             LevelObjectPolicy.ApplyDefaults(grab, doc);
@@ -40,7 +40,7 @@ namespace CtrDxEditor.Core.Tests
         [InlineData(true, false)]
         public void GrabPartVisibilityIsAlwaysHidden(bool twoParts, bool visible)
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, twoParts, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, twoParts, NightLevel: false));
 
             Assert.Equal(visible, LevelObjectPolicy.IsAttributeVisible("grab", "part", doc));
             Assert.True(LevelObjectPolicy.IsAttributeVisible("grab", "length", doc));
@@ -51,7 +51,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void FirstSockDefaultsToGroupZero()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject sock = new(new XElement("sock"));
 
             LevelObjectPolicy.ApplyDefaults(sock, doc);
@@ -63,7 +63,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void SecondSockCompletesFirstPair()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
             LevelObject sock = new(new XElement("sock"));
 
@@ -76,7 +76,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void ThirdSockStartsNewGroup()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
             doc.Add(new LevelObject(new XElement("sock", new XAttribute("group", "0"))), doc.Layers[0]);
             LevelObject sock = new(new XElement("sock"));
@@ -90,7 +90,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void FirstGapDefaultsToIndexOne()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject gap = new(new XElement("gap"));
 
             LevelObjectPolicy.ApplyDefaults(gap, doc);
@@ -102,7 +102,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void GapIndexFieldIsHidden()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             Assert.False(LevelObjectPolicy.IsAttributeVisible("gap", "index", doc));
             Assert.True(LevelObjectPolicy.IsAttributeVisible("gap", "radius", doc));
@@ -114,7 +114,7 @@ namespace CtrDxEditor.Core.Tests
         [Fact]
         public void GapIndexTakesMaxExistingPlusOne()
         {
-            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            LevelDocument doc = LevelDocument.CreateNew(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "1"))), doc.Layers[0]);
             doc.Add(new LevelObject(new XElement("gap", new XAttribute("index", "3"))), doc.Layers[0]);
             LevelObject gap = new(new XElement("gap"));

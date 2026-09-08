@@ -50,12 +50,34 @@ namespace CtrDxEditor.Tests
             Assert.Equal("Thrust strength.", field.HelpText);
         }
 
+        /// <summary>The generic group attribute does not inherit tutorial-specific first-trigger guidance.</summary>
+        [Fact]
+        public void GenericGroupFieldHasNoTutorialHelp()
+        {
+            AttributeFieldViewModel field = new(Obj(), "group", AttrType.Whole, null, () => { });
+
+            Assert.False(field.HasHelp);
+            Assert.Null(field.HelpText);
+        }
+
         /// <summary>The <c>time</c> field clamps to 1 so the spinner cannot reach 0, which the game would read as an instant burnout.</summary>
         [Fact]
         public void TimeFieldMinimumIsOne()
         {
             AttributeFieldViewModel field = new(Obj(), "time", AttrType.Number, null, () => { });
             Assert.Equal(1, field.NumericMinimum);
+        }
+
+        /// <summary>Tutorial motion help reflects DX's separate visibility and path timelines.</summary>
+        [Fact]
+        public void TutorialMotionHelpDoesNotClaimLoopingIgnoresFades()
+        {
+            AttributeOptionViewModel[] options = [new("looping", "Looping")];
+            AttributeFieldViewModel field = new("motion", options, () => "looping", _ => { }, () => { });
+
+            Assert.True(field.HasHelp);
+            Assert.Contains("visibility", field.HelpText, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("ignores the fade", field.HelpText, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

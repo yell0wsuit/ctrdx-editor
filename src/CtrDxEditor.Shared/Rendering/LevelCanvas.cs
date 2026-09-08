@@ -464,6 +464,15 @@ namespace CtrDxEditor.Rendering
         /// <summary>True while hovering the end of a selected polyline that has hit its point cap (shows the limit hint).</summary>
         private bool _polylineAtLimitHint;
 
+        /// <summary>
+        /// Corner index (0..3, see <see cref="TutorialAreaResize.Corners"/>) of the selected prompt's
+        /// <c>inArea</c> handle currently being dragged, or -1 when no such drag is active.
+        /// </summary>
+        private int _tutorialAreaCornerDrag = -1;
+
+        /// <summary>Corner index the pointer is hovering, or -1. Purely a hover ring; not used for hit-testing.</summary>
+        private int _tutorialAreaCornerHover = -1;
+
         /// <summary>The hand segment whose joint is being dragged, or 0 when no hand joint drag is active.</summary>
         private int _handJointDrag;
 
@@ -490,7 +499,8 @@ namespace CtrDxEditor.Rendering
             || _railDrag != GrabRail.Handle.None
             || _stripResizeDrag != SpikeResize.Handle.None
             || _conveyorDrag != ConveyorGeometry.Handle.None
-            || _vinylHandleDrag != VinylGeometry.Handle.None;
+            || _vinylHandleDrag != VinylGeometry.Handle.None
+            || _tutorialAreaCornerDrag >= 0;
 
         /// <summary>True when the ordinary object-drag path is moving a mechanical hand.</summary>
         private bool _handObjectDrag;

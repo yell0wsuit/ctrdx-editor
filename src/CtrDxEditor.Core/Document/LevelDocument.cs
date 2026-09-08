@@ -46,7 +46,6 @@ namespace CtrDxEditor.Core.Document
         {
             XElement gameDesignEl = new("gameDesign",
                 new XAttribute("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture)),
-                new XAttribute("special", settings.Special.ToString(CultureInfo.InvariantCulture)),
                 new XAttribute("twoParts", settings.TwoParts ? "true" : "false"),
                 new XAttribute("nightLevel", settings.NightLevel ? "true" : "false"));
             if (settings.UseMobilePhysics)
@@ -127,9 +126,6 @@ namespace CtrDxEditor.Core.Document
         /// <summary>The rope physics speed multiplier, defaulting to 1.0 when absent.</summary>
         public float RopePhysicsSpeed => ReadFloat(GameDesign, "ropePhysicsSpeed", 1.0f);
 
-        /// <summary>The special tutorial-trigger id, defaulting to 0 when absent.</summary>
-        public int Special => ReadInt(GameDesign, "special", 0);
-
         /// <summary>Whether the level is a night level (uses light bulbs).</summary>
         public bool NightLevel =>
             bool.TryParse(GameDesign?.Attribute("nightLevel")?.Value, out bool v) && v;
@@ -172,7 +168,7 @@ namespace CtrDxEditor.Core.Document
 
         /// <summary>All editable level-wide settings read from the settings layer.</summary>
         public LevelSettings Settings =>
-            new(Width, Height, RopePhysicsSpeed, Special, TwoParts, NightLevel, UseMobilePhysics,
+            new(Width, Height, RopePhysicsSpeed, TwoParts, NightLevel, UseMobilePhysics,
                 UseTimeTravelRocketPhysics, Water, WaterSpeed, LevelName, GravityX, GravityY);
 
         /// <summary>All object layers (every <c>&lt;layer&gt;</c> except <c>settings</c>), in document order.</summary>
@@ -371,7 +367,6 @@ namespace CtrDxEditor.Core.Document
             map.SetAttributeValue("height", settings.Height.ToString(CultureInfo.InvariantCulture));
             ApplyLevelName(map, settings);
             gameDesign.SetAttributeValue("ropePhysicsSpeed", settings.RopePhysicsSpeed.ToString(CultureInfo.InvariantCulture));
-            gameDesign.SetAttributeValue("special", settings.Special.ToString(CultureInfo.InvariantCulture));
             gameDesign.SetAttributeValue("twoParts", settings.TwoParts ? "true" : "false");
             gameDesign.SetAttributeValue("nightLevel", settings.NightLevel ? "true" : "false");
             if (settings.UseMobilePhysics)

@@ -165,6 +165,27 @@ namespace CtrDxEditor.Tests
             Assert.DoesNotContain("Double-click tutorial text", copy, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>The tutorial article explains the trigger, timeline and motion controls needed to author a working prompt.</summary>
+        [Fact]
+        public void TutorialArticleExplainsAuthoringLifecycle()
+        {
+            GuideArticle article = Assert.Single(
+                UsageGuideCatalog.Articles,
+                candidate => candidate.Id == "tutorial-objects");
+            string copy = string.Join(' ', article.Blocks.Select(block => block switch
+            {
+                GuideParagraph paragraph => paragraph.Text,
+                GuideCallout callout => callout.Text,
+                _ => string.Empty,
+            }));
+
+            Assert.Contains("Show on", copy, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Trigger area", copy, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("fade", copy, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Looping", copy, StringComparison.Ordinal);
+            Assert.Contains("Timed", copy, StringComparison.Ordinal);
+        }
+
         /// <summary>The shortcut reference includes the tutorial-text editor gesture.</summary>
         [Fact]
         public void ShortcutReferenceIncludesTutorialTextF2()

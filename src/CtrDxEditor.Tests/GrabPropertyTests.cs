@@ -47,7 +47,7 @@ namespace CtrDxEditor.Tests
         public void FullCandyGrabHasNoPartOrAttachToWhenSingleCandy()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 300, 300);
 
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
@@ -62,7 +62,7 @@ namespace CtrDxEditor.Tests
         public void HalfCandyGrabShowsAttachToLeftRight()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
             _ = vm.PlaceObject("candyL", 200, 200);
             _ = vm.PlaceObject("candyR", 300, 200);
 
@@ -85,7 +85,7 @@ namespace CtrDxEditor.Tests
         public void MultiCandyGrabAttachToBindsByNumber()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             _ = vm.PlaceObject("candy", 300, 200);
 
@@ -105,7 +105,7 @@ namespace CtrDxEditor.Tests
         public void CandyAndBulbIdsAreNotEditablePropertyFields(string element, string attribute)
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: true));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: true));
 
             LevelObject obj = vm.PlaceObject(element, 100, 120)!;
             vm.SelectedObject = obj;
@@ -119,7 +119,7 @@ namespace CtrDxEditor.Tests
         public void GrabBoolAttributeSurfacesAsCheckbox()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
@@ -137,7 +137,7 @@ namespace CtrDxEditor.Tests
         public void AutoCatchToggleRevealsRadiusAndHidesLength()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -157,7 +157,7 @@ namespace CtrDxEditor.Tests
         public void StarTimedToggleRevealsDuration()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject star = vm.PlaceObject("star", 100, 120)!;
             vm.SelectedObject = star;
 
@@ -180,7 +180,7 @@ namespace CtrDxEditor.Tests
         public void StarTimeoutZeroReadsAsUntimed()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject star = vm.PlaceObject("star", 100, 120)!;
             star.SetAttr("timeout", "0");
             vm.SelectedObject = star;
@@ -195,7 +195,7 @@ namespace CtrDxEditor.Tests
         public void MovableToggleRevealsRailFields()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -213,7 +213,7 @@ namespace CtrDxEditor.Tests
         public void DetachedShownOnlyWhenSuctionCupOn()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -229,7 +229,7 @@ namespace CtrDxEditor.Tests
         public void GunDisablesHookVariantsAndRopeGeometry()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
@@ -249,7 +249,7 @@ namespace CtrDxEditor.Tests
         public void ActiveHookVariantDisablesGun()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
@@ -264,7 +264,7 @@ namespace CtrDxEditor.Tests
         public void MovableRailDisablesRailBlockingVariants()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -282,7 +282,7 @@ namespace CtrDxEditor.Tests
         public void RailBlockingVariantsClearMoveLength(string fieldName)
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
@@ -302,7 +302,7 @@ namespace CtrDxEditor.Tests
         public void SuctionCupDisablesMovableRail()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -316,7 +316,7 @@ namespace CtrDxEditor.Tests
         public void GunEnabledInTwoPartsLevel()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: true, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: true, NightLevel: false));
             _ = vm.PlaceObject("candyL", 200, 200);
             _ = vm.PlaceObject("candyR", 300, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
@@ -330,7 +330,7 @@ namespace CtrDxEditor.Tests
         public void SingleFullCandyEnablesGunTargeting()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
@@ -343,7 +343,7 @@ namespace CtrDxEditor.Tests
         public void EmptyFullCandyLevelEnablesGunAuthoring()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -355,7 +355,7 @@ namespace CtrDxEditor.Tests
         public void MultiCandyEnablesGunAuthoring()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             _ = vm.PlaceObject("candy", 300, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
@@ -369,7 +369,7 @@ namespace CtrDxEditor.Tests
         public void SelectedCandyHidesCandyNumberField()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
 
             LevelObject candy = vm.PlaceObject("candy", 100, 120)!;
             vm.SelectedObject = candy;
@@ -383,7 +383,7 @@ namespace CtrDxEditor.Tests
         public void LengthAndRadiusForbidNegativesButCoordsAllow()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
             vm.SelectedObject = grab;
 
@@ -399,7 +399,7 @@ namespace CtrDxEditor.Tests
         public void AutoCatchGraysOutAttachTo()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             _ = vm.PlaceObject("candy", 300, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;
@@ -417,7 +417,7 @@ namespace CtrDxEditor.Tests
         public void GunGraysOutAttachToInsteadOfHiding()
         {
             EditorViewModel vm = Vm();
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             _ = vm.PlaceObject("candy", 200, 200);
             _ = vm.PlaceObject("lightBulb", 300, 200);
             LevelObject grab = vm.PlaceObject("grab", 100, 120)!;

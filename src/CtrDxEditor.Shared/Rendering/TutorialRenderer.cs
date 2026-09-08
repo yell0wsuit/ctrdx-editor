@@ -18,14 +18,36 @@ namespace CtrDxEditor.Rendering
     {
         private const double MinimumIconSelectionSize = 16.0;
 
-        /// <summary>Draws a tutorial icon, inverted on the dark canvas unless it is a color quad.</summary>
+        /// <summary>
+        /// Draws a tutorial icon at its authored look: an authored <c>color</c> replaces the ink outright
+        /// and supersedes the dark-canvas invert (white ink on dark) that otherwise keeps black line art
+        /// visible; a full-color quad (finger/fingers) never takes ink, matching the game refusing to
+        /// color one.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="view">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache supplying the tutorial atlas.</param>
+        /// <param name="obj">The tutorial icon object.</param>
+        /// <param name="operationBounds">Screen bounds for the custom draw operation.</param>
+        /// <param name="dark">Whether the canvas is the dark blank background.</param>
+        /// <param name="alpha">
+        /// Extra alpha multiplier, on top of the authored <c>opacity</c>. Defaults to full so a prompt
+        /// drawn with preview off shows at its authored peak; a fade envelope multiplies this down.
+        /// </param>
+        /// <param name="drawOffset">
+        /// Level-unit offset from the authored position, from <c>LevelSceneRenderer.DrawOffset</c>.
+        /// Defaults to zero so a prompt drawn with preview off (or with no authored motion) draws exactly
+        /// where authored; live preview of a Timed or Looping prompt shifts it here.
+        /// </param>
         public static void DrawIcon(
             DrawingContext ctx,
             ViewTransform view,
             SpriteCache sprites,
             LevelObject obj,
             Rect operationBounds,
-            bool dark)
+            bool dark,
+            double alpha = 1.0,
+            Vec2 drawOffset = default)
         {
             if (sprites.GetSprite(obj.Type) is not { Layers.Count: > 0 } sprite)
             {
@@ -38,9 +60,14 @@ namespace CtrDxEditor.Rendering
                 : 0.0;
 
             int quad = TutorialObject.Icon(obj);
-            LevelBounds artBounds = IconArtBounds(layer, obj.X, obj.Y, sprite.Scale);
-            if (TutorialObject.ShouldInvert(quad, dark))
+            LevelBounds artBounds = IconArtBounds(layer, obj.X + drawOffset.X, obj.Y + drawOffset.Y, sprite.Scale);
+
+            // An authored color replaces the ink outright, which is what the game does; the invert
+            // exists only so black ink stays visible on a dark canvas, so a color supersedes it.
+            TutorialLook look = TutorialLook.For(obj);
+            if (TutorialObject.ShouldInk(quad, dark, look.Color is not null))
             {
+                TutorialColor ink = look.EffectiveColor(dark);
                 Rect destination = new(artBounds.X, artBounds.Y, artBounds.W, artBounds.H);
                 ctx.Custom(new TutorialInvertDrawOperation(
                     operationBounds,
@@ -48,34 +75,66 @@ namespace CtrDxEditor.Rendering
                     layer.Bitmap,
                     layer.Frame.Frame,
                     destination,
-                    angle));
+                    angle,
+                    new SKColor(ink.Red, ink.Green, ink.Blue),
+                    look.Opacity * alpha));
             }
             else
             {
-                DrawIconLayer(ctx, view, layer, artBounds, angle);
+                // DrawIconLayer is a plain DrawImage call, which PushOpacity reaches (unlike the ink
+                // path's ctx.Custom operation, which is why that path threads alpha through its own
+                // constructor instead). Both branches must agree on the same opacity*alpha strength.
+                using (ctx.PushOpacity(look.Opacity * alpha))
+                {
+                    DrawIconLayer(ctx, view, layer, artBounds, angle);
+                }
             }
         }
 
-        /// <summary>Draws game-aligned tutorial text, white on the dark canvas and black otherwise.</summary>
+        /// <summary>
+        /// Draws game-aligned tutorial text at its authored look: an authored <c>color</c> supersedes the
+        /// dark-canvas invert (white on dark, black otherwise), and <c>opacity</c>, <c>size</c> and
+        /// <c>lineHeight</c> all apply as the game applies them.
+        /// </summary>
+        /// <param name="ctx">Destination drawing context.</param>
+        /// <param name="view">View transform mapping level coordinates to screen coordinates.</param>
+        /// <param name="sprites">Sprite cache supplying the tutorial font.</param>
+        /// <param name="obj">The tutorial text object.</param>
+        /// <param name="operationBounds">Screen bounds for the custom draw operation.</param>
+        /// <param name="dark">Whether the canvas is the dark blank background.</param>
+        /// <param name="alpha">
+        /// Extra alpha multiplier, on top of the authored <c>opacity</c>. Defaults to full so a prompt
+        /// drawn with preview off shows at its authored peak; a fade envelope multiplies this down.
+        /// </param>
+        /// <param name="drawOffset">
+        /// Level-unit offset from the authored position, from <c>LevelSceneRenderer.DrawOffset</c>.
+        /// Defaults to zero so a prompt drawn with preview off (or with no authored motion) draws exactly
+        /// where authored; live preview of a Timed or Looping prompt shifts it here.
+        /// </param>
         public static void DrawText(
             DrawingContext ctx,
             ViewTransform view,
             SpriteCache sprites,
             LevelObject obj,
             Rect operationBounds,
-            bool dark)
+            bool dark,
+            double alpha = 1.0,
+            Vec2 drawOffset = default)
         {
             string text = obj.GetAttr("text") ?? string.Empty;
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
+            TutorialLook look = TutorialLook.For(obj);
             ctx.Custom(new TutorialTextDrawOperation(
                 operationBounds,
                 view,
                 sprites,
                 text,
-                obj.X,
-                obj.Y,
+                obj.X + drawOffset.X,
+                obj.Y + drawOffset.Y,
                 width,
-                dark));
+                dark,
+                look,
+                alpha));
         }
 
         /// <summary>
@@ -96,30 +155,34 @@ namespace CtrDxEditor.Rendering
             return new LevelBounds(obj.X - (width / 2), obj.Y - (height / 2), width, height);
         }
 
-        /// <summary>Returns the game's top-left-anchored, authored-width tutorial text box.</summary>
+        /// <summary>
+        /// Returns the game's top-left-anchored, authored-width tutorial text box, wrapped and sized at
+        /// the prompt's authored <c>size</c>/<c>lineHeight</c> so the selection box matches what
+        /// <see cref="DrawText"/> paints.
+        /// </summary>
         public static LevelBounds TextBounds(SpriteCache sprites, LevelObject obj)
         {
             double width = ParseDouble(obj.GetAttr("width"), TutorialObject.DefaultTextWidth);
             string text = obj.GetAttr("text") ?? string.Empty;
-            using SKFont font = TutorialFont.CreateFont(sprites);
+            TutorialLook look = TutorialLook.For(obj);
+            using SKFont font = TutorialFont.CreateFont(sprites, look.Size);
             int lineCount = TutorialTextLayout.Wrap(text, width, value => font.MeasureText(value)).Count;
-            double height = lineCount > 0
-                ? ((lineCount - 1) * TutorialFont.LineAdvanceLevel)
-                    + TutorialFont.FontSizeLevel
-                    + TutorialFont.TopSpacingLevel
-                : TutorialFont.FontSizeLevel + TutorialFont.TopSpacingLevel;
+            double height = TutorialTextMetrics.HeightLevel(lineCount, look);
             return new LevelBounds(obj.X, obj.Y, width, height);
         }
 
-        /// <summary>Measures the widest line of <paramref name="text"/> in level units with the gooddog font.</summary>
-        public static double MeasureTextWidth(SpriteCache sprites, string text)
+        /// <summary>
+        /// Measures the widest line of <paramref name="text"/> in level units with the gooddog font at
+        /// <paramref name="sizeScale"/>, matching the size a caller intends to draw or wrap it at.
+        /// </summary>
+        public static double MeasureTextWidth(SpriteCache sprites, string text, double sizeScale = 1.0)
         {
             if (string.IsNullOrEmpty(text))
             {
                 return 0;
             }
 
-            using SKFont font = TutorialFont.CreateFont(sprites);
+            using SKFont font = TutorialFont.CreateFont(sprites, sizeScale);
             double max = 0;
             foreach (string line in text.Replace("\r\n", "\n").Split('\n'))
             {
@@ -131,8 +194,9 @@ namespace CtrDxEditor.Rendering
 
         /// <summary>
         /// When the tutorial text is in auto-width mode, syncs its <c>width</c> attribute to the measured
-        /// text so the box fits exactly (no wrapping) and the game renders the same single lines. No-op for
-        /// a fixed (manual) width.
+        /// text — at the prompt's authored <c>size</c>, since a bigger face needs a wider box for the same
+        /// text — so the box fits exactly (no wrapping) and the game renders the same single lines. No-op
+        /// for a fixed (manual) width.
         /// </summary>
         public static void ApplyAutoWidth(SpriteCache sprites, LevelObject obj)
         {
@@ -141,7 +205,10 @@ namespace CtrDxEditor.Rendering
                 return;
             }
 
-            int width = Math.Max(1, (int)Math.Ceiling(MeasureTextWidth(sprites, obj.GetAttr("text") ?? string.Empty)));
+            double sizeScale = TutorialLook.For(obj).Size;
+            int width = Math.Max(
+                1,
+                (int)Math.Ceiling(MeasureTextWidth(sprites, obj.GetAttr("text") ?? string.Empty, sizeScale)));
             obj.SetAttr("width", width.ToString(CultureInfo.InvariantCulture));
         }
 

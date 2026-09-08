@@ -26,6 +26,7 @@
     <FluentTheme />
     <icons:MaterialIconStyles />
     <dialogHostAvalonia:DialogHostStyles />
+    <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
     <StyleInclude Source="avares://CtrDxEditor.Shared/Styles/EditorStyles.axaml" />
   </Application.Styles>
 </Application>

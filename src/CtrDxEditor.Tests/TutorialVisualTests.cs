@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -12,6 +13,8 @@ using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Document;
 using CtrDxEditor.Core.Editing;
 using CtrDxEditor.Core.Geometry;
+
+using SkiaSharp;
 
 using Xunit;
 
@@ -56,18 +59,69 @@ namespace CtrDxEditor.Tests
             Assert.True(iconLayer > textLayer);
         }
 
-        /// <summary>Uses byte-domain translation values so black line art inverts to white.</summary>
+        /// <summary>
+        /// With no authored color, the ink matrix must still resolve to white at full alpha - exactly
+        /// what today's dark-canvas invert produces for flat black art (R=G=B=0 everywhere), so this is
+        /// the regression guard that the no-color path is unchanged.
+        /// </summary>
         [Fact]
-        public void InvertMatrixMapsBlackToWhite()
+        public void InkMatrixDefaultsToWhiteAtFullAlpha()
         {
-            Type operation = typeof(VisualDescriptorMap).Assembly.GetType(
-                "CtrDxEditor.Rendering.TutorialInvertDrawOperation")!;
-            FieldInfo matrixField = operation.GetField("InvertMatrix", BindingFlags.NonPublic | BindingFlags.Static)!;
-            float[] matrix = (float[])matrixField.GetValue(null)!;
+            float[] matrix = InvokeInkMatrix(new SKColor(255, 255, 255), 1.0);
 
             Assert.Equal(255, matrix[4]);
             Assert.Equal(255, matrix[9]);
             Assert.Equal(255, matrix[14]);
+            Assert.Equal(1f, matrix[18]);
+        }
+
+        /// <summary>
+        /// The ink matrix discards the source RGB entirely (coefficients zero on every R/G/B row) and
+        /// writes an authored color's own channels as the offsets, regardless of what color art it is
+        /// painting over - matching the game's <c>PremultipliedTint.Apply</c>, which never reads the
+        /// source color either.
+        /// </summary>
+        [Fact]
+        public void InkMatrixIgnoresSourceColorAndWritesAuthoredChannels()
+        {
+            float[] matrix = InvokeInkMatrix(new SKColor(0x8B, 0x45, 0x13), 1.0);
+
+            for (int i = 0; i < 15; i++)
+            {
+                if (i is not (4 or 9 or 14))
+                {
+                    Assert.Equal(0f, matrix[i]);
+                }
+            }
+
+            Assert.Equal(0x8B, matrix[4]);
+            Assert.Equal(0x45, matrix[9]);
+            Assert.Equal(0x13, matrix[14]);
+        }
+
+        /// <summary>
+        /// The alpha row keeps the source alpha's shape (coefficient 1 slot carries the multiplier
+        /// instead) rather than replacing it with a constant, so a half-strength ink still traces the
+        /// art's own silhouette instead of painting a solid rectangle.
+        /// </summary>
+        [Theory]
+        [InlineData(0.4)]
+        [InlineData(1.5)]
+        [InlineData(-0.2)]
+        public void InkMatrixClampsAlphaScaleToUnitRange(double alpha)
+        {
+            float[] matrix = InvokeInkMatrix(new SKColor(1, 2, 3), alpha);
+
+            Assert.InRange(matrix[18], 0f, 1f);
+            Assert.Equal(0f, matrix[19]);
+        }
+
+        private static float[] InvokeInkMatrix(SKColor color, double alpha)
+        {
+            Type operation = typeof(VisualDescriptorMap).Assembly.GetType(
+                "CtrDxEditor.Rendering.TutorialInvertDrawOperation")!;
+            MethodInfo inkMatrix = operation.GetMethod("InkMatrix", BindingFlags.NonPublic | BindingFlags.Static)!;
+            return (float[])inkMatrix.Invoke(null, [color, alpha])!;
         }
 
         /// <summary>Palette drag ghosts use the tutorial renderer so dark-theme inversion is preserved.</summary>
@@ -201,6 +255,117 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal(16, actual.H, precision: 9);
             Assert.Equal(icon.Y, actual.Y + (actual.H / 2), precision: 9);
+        }
+
+        /// <summary>
+        /// Authored <c>size</c> scales the font's own height but not the fixed top spacing, matching the
+        /// game's <c>GetTopSpacing()</c>, which is added after the size multiplier rather than scaled by
+        /// it. Isolating the delta (rather than asserting the whole formula) still fails if size scaling
+        /// is missing, applied to the wrong term, or applied non-linearly.
+        /// </summary>
+        [Fact]
+        public void TextSelectionHeightGrowsByExactlyOneFontSizeWhenSizeDoubles()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            LevelObject unscaled = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Hi"),
+                new XAttribute("width", "1000")));
+            LevelObject scaled = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Hi"),
+                new XAttribute("width", "1000"),
+                new XAttribute("size", "2")));
+            MethodInfo textBounds = TutorialRendererMethod("TextBounds");
+            double fontSizeLevel = (double)TutorialFontField("FontSizeLevel").GetValue(null)!;
+
+            LevelBounds unscaledBounds = (LevelBounds)textBounds.Invoke(null, [sprites, unscaled])!;
+            LevelBounds scaledBounds = (LevelBounds)textBounds.Invoke(null, [sprites, scaled])!;
+
+            Assert.Equal(fontSizeLevel, scaledBounds.H - unscaledBounds.H, precision: 6);
+        }
+
+        /// <summary>
+        /// Authored <c>lineHeight</c> scales the gap between wrapped lines. The text is forced to wrap
+        /// to exactly two lines by a width narrower than either word, so the delta isolates the single
+        /// inter-line gap the multiplier controls, independent of the font actually resolved.
+        /// </summary>
+        [Fact]
+        public void TextSelectionHeightGrowsByLineAdvanceTimesLineHeightDelta()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            LevelObject oneLineHeight = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Hi There"),
+                new XAttribute("width", "1")));
+            LevelObject tripleLineHeight = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Hi There"),
+                new XAttribute("width", "1"),
+                new XAttribute("lineHeight", "3")));
+            MethodInfo textBounds = TutorialRendererMethod("TextBounds");
+            double lineAdvanceLevel = (double)TutorialFontField("LineAdvanceLevel").GetValue(null)!;
+
+            LevelBounds baseline = (LevelBounds)textBounds.Invoke(null, [sprites, oneLineHeight])!;
+            LevelBounds tripled = (LevelBounds)textBounds.Invoke(null, [sprites, tripleLineHeight])!;
+
+            // A width of 1 forces "Hi" and "There" onto separate lines regardless of the resolved font,
+            // since Wrap never splits a single word and always starts a line with at least one word.
+            Assert.Equal(2 * lineAdvanceLevel, tripled.H - baseline.H, precision: 6);
+        }
+
+        /// <summary>
+        /// Auto-width measures at the authored size, so a bigger face gets a wider box for the same text
+        /// rather than wrapping against a box sized for the default scale.
+        /// </summary>
+        [Fact]
+        public void AutoWidthScalesWithAuthoredSize()
+        {
+            SpriteCache sprites = new(new EmptyContentStore());
+            LevelObject unscaled = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Om Nom")));
+            LevelObject scaled = new(new XElement(
+                "tutorialText",
+                new XAttribute("x", "0"),
+                new XAttribute("y", "0"),
+                new XAttribute("text", "Om Nom"),
+                new XAttribute("size", "2")));
+            TutorialObject.SetAutoWidth(unscaled, true);
+            TutorialObject.SetAutoWidth(scaled, true);
+            MethodInfo applyAutoWidth = TutorialRendererMethod("ApplyAutoWidth");
+
+            _ = applyAutoWidth.Invoke(null, [sprites, unscaled]);
+            _ = applyAutoWidth.Invoke(null, [sprites, scaled]);
+
+            double unscaledWidth = double.Parse(unscaled.GetAttr("width")!, CultureInfo.InvariantCulture);
+            double scaledWidth = double.Parse(scaled.GetAttr("width")!, CultureInfo.InvariantCulture);
+            double ratio = scaledWidth / unscaledWidth;
+
+            // Not exactly 2x: both widths are rounded up to a whole level unit by ApplyAutoWidth.
+            Assert.InRange(ratio, 1.8, 2.2);
+        }
+
+        private static MethodInfo TutorialRendererMethod(string name)
+        {
+            Type renderer = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.TutorialRenderer")!;
+            return renderer.GetMethod(name, BindingFlags.Public | BindingFlags.Static)!;
+        }
+
+        private static FieldInfo TutorialFontField(string name)
+        {
+            Type font = typeof(VisualDescriptorMap).Assembly.GetType("CtrDxEditor.Rendering.TutorialFont")!;
+            return font.GetField(name, BindingFlags.Public | BindingFlags.Static)!;
         }
 
         private static void SetPrivateField<T>(SpriteCache cache, string name, T value)

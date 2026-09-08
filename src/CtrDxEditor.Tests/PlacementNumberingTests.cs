@@ -38,7 +38,7 @@ namespace CtrDxEditor.Tests
         private static EditorViewModel Vm()
         {
             EditorViewModel vm = new(new SpriteCache(new EmptyStore()));
-            vm.NewLevel(new LevelSettings(640, 480, 1.0f, 0, TwoParts: false, NightLevel: false));
+            vm.NewLevel(new LevelSettings(640, 480, 1.0f, TwoParts: false, NightLevel: false));
             return vm;
         }
 

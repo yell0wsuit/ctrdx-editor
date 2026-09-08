@@ -108,12 +108,29 @@ namespace CtrDxEditor.Rendering
             {
                 if (ShowMovementPaths)
                 {
-                    LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    // A Timed tutorial prompt draws its own path: TutorialMotion.Timed falls back to the
+                    // game's moveSpeed default (100) when none is authored, so the shared mover's "moveSpeed
+                    // must be authored and positive" active-movement gate would otherwise hide the line (and
+                    // leave the ease markers below floating with nothing to sit on) for a prompt that really
+                    // does move in the game.
+                    bool timedTutorial = (TutorialObject.IsText(obj.Type) || TutorialObject.IsImage(obj.Type))
+                        && TutorialMotion.ModeOf(obj) == TutorialMotionMode.Timed;
+                    if (timedTutorial)
+                    {
+                        LevelSceneRenderer.DrawTutorialMotionPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    }
+                    else
+                    {
+                        LevelSceneRenderer.DrawMovementPath(context, v, obj, _palette.OrbitPath, _palette.OrbitPathArrow, viewport);
+                    }
+                    LevelSceneRenderer.DrawTutorialEaseMarkers(context, v, obj, _palette.OrbitPathArrow);
                 }
+                LevelSceneRenderer.DrawTutorialArea(context, v, obj, _palette.TutorialArea);
                 if (!IsAnimationPreviewing(obj))
                 {
                     LevelSceneRenderer.DrawSpinArrow(context, v, obj, _palette.SpinArrow);
                 }
+                DrawTutorialBadge(context, v, sprites, obj);
             }
 
             if (ShowHitboxes)
@@ -252,6 +269,7 @@ namespace CtrDxEditor.Rendering
                 Point[] points = LevelSceneRenderer.SelectionOutlinePointsWithPreview(v, selected, sb, PreviewSpinDegrees(selected), PreviewAnimationSeconds(selected));
                 DrawTutorialTextResizeHandle(context, v, sprites, selected);
                 DrawPolylinePointHandles(context, v, selected);
+                DrawTutorialAreaCornerHandles(context, v, selected);
                 DrawRopeLengthHandle(context, v);
 
                 // Tint the active hand segment so it is clear which one the dial and fields act on, and give
@@ -580,6 +598,33 @@ namespace CtrDxEditor.Rendering
                 new Point(nubScreen.X - 3, nubScreen.Y), new Point(nubScreen.X + 3, nubScreen.Y));
             context.DrawLine(_palette.OrbitPathArrow,
                 new Point(nubScreen.X, nubScreen.Y - 3), new Point(nubScreen.X, nubScreen.Y + 3));
+        }
+
+        /// <summary>
+        /// Draws the four corner handles of the selected prompt's <c>inArea</c> trigger region. Only these
+        /// dots are hit-testable (see <see cref="HitTutorialAreaCorner"/>); the rectangle's interior, drawn
+        /// faintly for every prompt in <see cref="LevelSceneRenderer.DrawTutorialArea"/>, never intercepts a
+        /// click so an object sitting inside a <c>candyMoved</c> region stays selectable.
+        /// </summary>
+        private void DrawTutorialAreaCornerHandles(DrawingContext context, ViewTransform v, LevelObject obj)
+        {
+            if ((!TutorialObject.IsText(obj.Type) && !TutorialObject.IsImage(obj.Type))
+                || !TutorialArea.TryParseRuntime(obj.GetAttr("inArea"), out TutorialArea area))
+            {
+                return;
+            }
+
+            Vec2[] corners = TutorialAreaResize.Corners(area);
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vec2 screen = v.LevelToScreen(corners[i]);
+                Point center = new(screen.X, screen.Y);
+                context.DrawEllipse(Brushes.White, _palette.TutorialArea, center, 5, 5);
+                if (i == _tutorialAreaCornerHover || i == _tutorialAreaCornerDrag)
+                {
+                    context.DrawEllipse(null, _palette.TutorialArea, center, 8, 8);
+                }
+            }
         }
 
         /// <summary>
