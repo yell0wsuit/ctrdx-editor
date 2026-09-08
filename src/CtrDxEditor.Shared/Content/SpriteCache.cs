@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 using CtrDxEditor.Core.Atlas;
 using CtrDxEditor.Core.Editing;
@@ -600,7 +603,7 @@ namespace CtrDxEditor.Content
             List<SpriteLayerDraw> layers = new(v.Layers.Count);
             foreach (SpriteLayer layer in v.Layers)
             {
-                Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(layer.AtlasImageBasePath + imageExtension);
+                Bitmap? bitmap = isCandy ? candyBitmap : LoadBitmap(ImagePathFor(layer));
                 Atlas? atlas = isCandy ? candyAtlas : LoadAtlas(layer.AtlasJsonRelPath);
                 // The target's platform is whichever char_supports frame the active support selects.
                 AtlasFrame? frame = omNomSupport > 0 && layer.AtlasJsonRelPath == SupportsAtlasJson
@@ -615,7 +618,7 @@ namespace CtrDxEditor.Content
             List<SpriteLayerDraw> variants = new(v.RandomBackLayers.Count);
             foreach (SpriteLayer layer in v.RandomBackLayers)
             {
-                Bitmap? bitmap = LoadBitmap(layer.AtlasImageBasePath + imageExtension);
+                Bitmap? bitmap = LoadBitmap(ImagePathFor(layer));
                 AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)
                 {
@@ -698,7 +701,7 @@ namespace CtrDxEditor.Content
                 string imagePath = layer.AtlasImageBasePath + imageExtension;
                 if (failedPaths.Contains(imagePath) || failedPaths.Contains(layer.AtlasJsonRelPath))
                 {
-                    complete = false;
+                    complete &= layer.Optional;
                     continue;
                 }
 
@@ -715,15 +718,29 @@ namespace CtrDxEditor.Content
                         string json = await store.ReadTextAsync(layer.AtlasJsonRelPath);
                         _atlases[layer.AtlasJsonRelPath] = new Atlas(AtlasJsonLoader.ParseFrames(json));
                     }
+                    // Tinted here, while the cache is still single-threaded, rather than on first draw:
+                    // _bitmaps is a plain dictionary that preload alone writes to, and an off-thread
+                    // skin warm-up reads it concurrently with the UI thread.
+                    if (layer.Tint is RopeRgba tint)
+                    {
+                        string tintedPath = TintedPath(imagePath, tint);
+                        if (!_bitmaps.ContainsKey(tintedPath))
+                        {
+                            _bitmaps[tintedPath] = MultiplyTint(_bitmaps[imagePath], tint);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
                     _ = failedPaths.Add(imagePath);
                     _ = failedPaths.Add(layer.AtlasJsonRelPath);
-                    complete = false;
+                    complete &= layer.Optional;
                     Console.WriteLine(
-                        $"[CtrDx] Sprite art for '{descriptor.Element}' is missing from the installed "
-                        + $"content ({imagePath}); the object will be unavailable.\n{ex}");
+                        layer.Optional
+                            ? $"[CtrDx] Optional sprite art for '{descriptor.Element}' is missing from the "
+                                + $"installed content ({imagePath}); the object will draw without it.\n{ex}"
+                            : $"[CtrDx] Sprite art for '{descriptor.Element}' is missing from the installed "
+                                + $"content ({imagePath}); the object will be unavailable.\n{ex}");
                 }
             }
             return complete;
@@ -739,6 +756,96 @@ namespace CtrDxEditor.Content
             {
                 yield return layer;
             }
+        }
+
+        /// <summary>The cache key a layer's art is held under: the tinted copy when it asks for one.</summary>
+        private string ImagePathFor(SpriteLayer layer)
+        {
+            string imagePath = layer.AtlasImageBasePath + imageExtension;
+            return layer.Tint is RopeRgba tint ? TintedPath(imagePath, tint) : imagePath;
+        }
+
+        /// <summary>
+        /// Cache key for one tinted copy of an atlas. Not a real content path - no store is ever asked
+        /// for it - but it shares the bitmap cache, so it has to be a string no atlas could occupy.
+        /// </summary>
+        private static string TintedPath(string imagePath, RopeRgba tint)
+        {
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"{imagePath}#tint:{tint.R:R},{tint.G:R},{tint.B:R},{tint.A:R}");
+        }
+
+        /// <summary>
+        /// A copy of an atlas with every texel multiplied by <paramref name="tint"/>, reproducing the
+        /// game's <c>Image.useFullColorTint</c> - the vertex color multiplies through the texture, so a
+        /// grayscale frame keeps its shading and takes the tint's hue.
+        /// </summary>
+        /// <remarks>
+        /// Baked into a bitmap rather than applied while drawing so that every existing draw path renders
+        /// a tinted layer with the same <c>DrawImage</c> call as any other. That is only affordable
+        /// because the atlases tinted this way are small and few - the hat's band mask is 469x62, held
+        /// once per color - and it would be the wrong trade for a full-size atlas or a color that moves.
+        /// <para>
+        /// The multiply is applied to premultiplied channels, which is the same answer as tinting the
+        /// straight color and premultiplying afterwards: alpha is untouched and scaling commutes with it.
+        /// </para>
+        /// </remarks>
+        private static WriteableBitmap MultiplyTint(Bitmap source, RopeRgba tint)
+        {
+            PixelSize size = source.PixelSize;
+            int rowBytes = size.Width * 4;
+            byte[] pixels = new byte[rowBytes * size.Height];
+
+            GCHandle handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+            try
+            {
+                source.CopyPixels(
+                    new PixelRect(0, 0, size.Width, size.Height),
+                    handle.AddrOfPinnedObject(),
+                    pixels.Length,
+                    rowBytes);
+            }
+            finally
+            {
+                handle.Free();
+            }
+
+            MultiplyInPlace(pixels, tint);
+
+            WriteableBitmap target = new(size, source.Dpi, PixelFormat.Bgra8888, AlphaFormat.Premul);
+            using (ILockedFramebuffer buffer = target.Lock())
+            {
+                // Row by row: the framebuffer's stride is the platform's to choose and need not be the
+                // packed width the pixels were read back at.
+                for (int y = 0; y < size.Height; y++)
+                {
+                    Marshal.Copy(pixels, y * rowBytes, buffer.Address + (y * buffer.RowBytes), rowBytes);
+                }
+            }
+            return target;
+        }
+
+        /// <summary>Multiplies every BGRA texel of a packed buffer by the tint, in place.</summary>
+        private static void MultiplyInPlace(byte[] pixels, RopeRgba tint)
+        {
+            byte[] channels = [Channel(tint.B), Channel(tint.G), Channel(tint.R), Channel(tint.A)];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = Multiply(pixels[i], channels[i & 3]);
+            }
+        }
+
+        /// <summary>One tint channel as a byte, clamped so a value outside 0..1 cannot wrap.</summary>
+        private static byte Channel(double value)
+        {
+            return (byte)Math.Clamp((int)Math.Round(value * 255.0), 0, 255);
+        }
+
+        /// <summary>Multiplies two 0..255 channels, rounding the way a 0..1 multiply would.</summary>
+        private static byte Multiply(byte channel, byte tint)
+        {
+            return (byte)(((channel * tint) + 127) / 255);
         }
 
         private Bitmap? LoadBitmap(string relPath)

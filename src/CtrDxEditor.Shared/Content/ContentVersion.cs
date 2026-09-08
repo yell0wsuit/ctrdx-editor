@@ -31,8 +31,16 @@ namespace CtrDxEditor.Content
         /// this build needs: obj_axe, obj_pause, obj_exp_chain, obj_hook_chain, and obj_hook_auto_chain.
         /// Without it the axe and pause switcher have no sprite, so the palette hides them.
         /// </para>
+        /// <para>
+        /// Revision 5 is the published ctrdx-assets v5.0 bundle, which adds obj_hat_maskable - the
+        /// backdrop and band mask a magic hat past the two authored groups wears. Unlike the art above,
+        /// its absence hides nothing: the band layers are optional, so an older bundle still draws the
+        /// hat, just with the frame's baked band showing on every group. That is what this prompt is
+        /// for - the hats are usable either way, and re-downloading is what makes their groups legible.
+        /// (Revision 4 added Time Travel's Pirate Ship art, which the editor does not draw.)
+        /// </para>
         /// </remarks>
-        public const int CurrentAssetVersion = 3;
+        public const int CurrentAssetVersion = 5;
 
         /// <summary>Whether an installed bundle predates the revision this build wants.</summary>
         /// <param name="installed">Revision declared by the installed bundle's manifest.</param>
