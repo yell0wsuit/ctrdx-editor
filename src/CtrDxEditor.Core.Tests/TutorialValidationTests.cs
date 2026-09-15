@@ -93,17 +93,6 @@ namespace CtrDxEditor.Core.Tests
             Assert.DoesNotContain("Validation.Tutorial.SplitSubject", Keys(document));
         }
 
-        /// <summary>A dead special is inert, so it is a warning rather than an error.</summary>
-        [Fact]
-        public void DeadSpecialIsAWarning()
-        {
-            LevelWarning finding = Assert.Single(
-                TutorialValidation.Validate(Level("""<tutorial01 x="1" y="1" special="2" />""")),
-                w => w.Key == "Validation.Tutorial.DeadSpecial");
-
-            Assert.Equal(LevelWarningSeverity.Warning, finding.Severity);
-        }
-
         /// <summary>Every locale copy is checked, because a broken copy costs that language its prompt.</summary>
         [Fact]
         public void NonEnglishLocaleCopiesAreValidated()

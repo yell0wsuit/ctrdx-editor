@@ -15,11 +15,6 @@ namespace CtrDxEditor.Core.Editing
         public static IEnumerable<LevelWarning> Validate(LevelDocument document)
         {
             List<LevelWarning> findings = [];
-            if (document.GameDesignElement?.Attribute("special") is not null)
-            {
-                findings.Add(Warning("DeadSpecial", "-", "gameDesign"));
-            }
-
             foreach (LevelObject prompt in document.AllObjects)
             {
                 if (!TutorialObject.IsText(prompt.Type) && !TutorialObject.IsImage(prompt.Type))
@@ -149,11 +144,6 @@ namespace CtrDxEditor.Core.Editing
                 && TravelExceedsPass(prompt))
             {
                 AddError("TravelExceedsPass");
-            }
-
-            if (prompt.GetAttr("special") is not null)
-            {
-                findings.Add(Warning("DeadSpecial", locale, element));
             }
         }
 
@@ -291,11 +281,6 @@ namespace CtrDxEditor.Core.Editing
             {
                 Severity = LevelWarningSeverity.Error,
             };
-        }
-
-        private static LevelWarning Warning(string rule, string locale, string element)
-        {
-            return new LevelWarning($"Validation.Tutorial.{rule}", locale, element);
         }
     }
 }
