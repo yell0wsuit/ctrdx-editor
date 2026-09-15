@@ -17,8 +17,11 @@ using CtrDxEditor.Core.Geometry;
 
 namespace CtrDxEditor.Content
 {
-    /// <summary>One resolved layer ready to draw: its atlas bitmap and the frame within it.</summary>
-    public readonly record struct SpriteLayerDraw(Bitmap Bitmap, AtlasFrame Frame);
+    /// <summary>
+    /// One resolved layer ready to draw: its atlas bitmap, the frame within it, and whether the trimmed
+    /// frame is centered on the anchor (see <see cref="SpriteLayer.CenterOnFrame"/>).
+    /// </summary>
+    public readonly record struct SpriteLayerDraw(Bitmap Bitmap, AtlasFrame Frame, bool CenterOnFrame = false);
 
     /// <summary>
     /// A fully resolved, composited object sprite: ordered layers plus per-object scale.
@@ -481,7 +484,8 @@ namespace CtrDxEditor.Content
             {
                 SpriteLayerDraw layer = drawn[i];
                 double offsetY = SteamTubeThumbnailOffsetY(element, i, layer);
-                LevelBounds d = SpritePlacement.Compute(layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0).Dest;
+                LevelBounds d = SpritePlacement.Compute(
+                    layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0, centerOnFrame: layer.CenterOnFrame).Dest;
                 minX = Math.Min(minX, d.X);
                 minY = Math.Min(minY, d.Y);
                 maxX = Math.Max(maxX, d.X + d.W);
@@ -519,7 +523,8 @@ namespace CtrDxEditor.Content
                 {
                     SpriteLayerDraw layer = drawn[i];
                     double offsetY = SteamTubeThumbnailOffsetY(element, i, layer);
-                    SpriteLayout layout = SpritePlacement.Compute(layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0);
+                    SpriteLayout layout = SpritePlacement.Compute(
+                        layer.Frame, 0, offsetY, sprite.Scale, mapScale: 1.0, centerOnFrame: layer.CenterOnFrame);
                     Rect src = new(layout.Source.X, layout.Source.Y, layout.Source.W, layout.Source.H);
                     Rect dst = new(layout.Dest.X, layout.Dest.Y, layout.Dest.W, layout.Dest.H);
                     ctx.DrawImage(layer.Bitmap, src, dst);
@@ -611,7 +616,7 @@ namespace CtrDxEditor.Content
                     : atlas?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)
                 {
-                    layers.Add(new SpriteLayerDraw(bitmap, frame));
+                    layers.Add(new SpriteLayerDraw(bitmap, frame, layer.CenterOnFrame));
                 }
             }
 
@@ -622,7 +627,7 @@ namespace CtrDxEditor.Content
                 AtlasFrame? frame = LoadAtlas(layer.AtlasJsonRelPath)?.At(layer.Quad);
                 if (bitmap is not null && frame is not null)
                 {
-                    variants.Add(new SpriteLayerDraw(bitmap, frame));
+                    variants.Add(new SpriteLayerDraw(bitmap, frame, layer.CenterOnFrame));
                 }
             }
 

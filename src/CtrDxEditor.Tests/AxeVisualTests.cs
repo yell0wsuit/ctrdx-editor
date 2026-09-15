@@ -34,6 +34,8 @@ namespace CtrDxEditor.Tests
 
             Assert.Equal([0, 1, 2], axe.Layers.Select(l => l.Quad));
             Assert.All(axe.Layers, l => Assert.Equal("images/obj_axe.json", l.AtlasJsonRelPath));
+            // Axe never restores cut transparency, so each trimmed part is centered on the axe.
+            Assert.All(axe.Layers, l => Assert.True(l.CenterOnFrame));
 
             IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
             Assert.Contains("images/obj_axe.json", required);

@@ -34,6 +34,9 @@ namespace CtrDxEditor.Tests
             SpriteLayer face = Assert.Single(switcher.Layers);
             Assert.Equal(0, face.Quad);
             Assert.Equal("images/obj_pause.json", face.AtlasJsonRelPath);
+            // PauseSwitcher never restores cut transparency, so the face is centered on the switcher
+            // rather than parked where it sits in the 998x1498 animation stage.
+            Assert.True(face.CenterOnFrame);
 
             IReadOnlyCollection<string> required = VisualDescriptorMap.RequiredFiles(".webp");
             Assert.Contains("images/obj_pause.json", required);

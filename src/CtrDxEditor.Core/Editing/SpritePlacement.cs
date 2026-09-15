@@ -26,11 +26,24 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="y">The sprite's center Y in level units.</param>
         /// <param name="scale">The per-object scale the game applies to this sprite.</param>
         /// <param name="mapScale">Atlas pixels per level unit; defaults to <see cref="MapScale"/>.</param>
+        /// <param name="centerOnFrame">
+        /// Center the trimmed frame itself on (x,y), ignoring where it sat in the untrimmed sourceSize. This
+        /// is how the game draws an <c>Image</c> that never calls <c>DoRestoreCutTransparency</c>: its size
+        /// is the quad rect, <c>DrawQuad</c> skips the quad offset, and anchor 18 centers that rect.
+        /// </param>
         /// <returns>The atlas source rect plus the level-space destination and hit bounds.</returns>
         public static SpriteLayout Compute(
-            AtlasFrame frame, double x, double y, double scale = 1.0, double mapScale = MapScale)
+            AtlasFrame frame, double x, double y, double scale = 1.0, double mapScale = MapScale, bool centerOnFrame = false)
         {
             double s = scale / mapScale;
+            if (centerOnFrame)
+            {
+                double fw = frame.Frame.W * s;
+                double fh = frame.Frame.H * s;
+                LevelBounds box = new(x - (fw / 2.0), y - (fh / 2.0), fw, fh);
+                return new SpriteLayout(frame.Frame, box, box);
+            }
+
             double w = frame.SourceSize.W * s;
             double h = frame.SourceSize.H * s;
             double left = x - (w / 2.0);

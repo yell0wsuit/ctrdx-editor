@@ -48,6 +48,29 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal(128.0 / 3.0, layout.Dest.H, precision: 9);
         }
 
+        /// <summary>
+        /// A frame centered on itself ignores its trim origin, like a game Image that never restores cut
+        /// transparency. obj_pause's face sits at x=607 of a 998-wide stage, so placing it by the trim
+        /// would push it right of the object; centered, it straddles (x,y) exactly.
+        /// </summary>
+        [Fact]
+        public void CenterOnFrameCentersTheTrimmedQuadOnXy()
+        {
+            AtlasFrame pauseFace = new(
+                Filename: "frame_0000.png",
+                Frame: new IntRect(248, 697, 216, 215),
+                SpriteSource: new IntRect(607, 641, 216, 215),
+                SourceSize: new IntSize(998, 1498),
+                Rotated: false, Trimmed: true);
+
+            SpriteLayout layout = SpritePlacement.Compute(pauseFace, x: 200, y: 150, centerOnFrame: true);
+
+            Assert.Equal(200 - (216.0 / 6.0), layout.Dest.X, precision: 9);
+            Assert.Equal(150 - (215.0 / 6.0), layout.Dest.Y, precision: 9);
+            Assert.Equal(216.0 / 3.0, layout.Dest.W, precision: 9);
+            Assert.Equal(layout.Dest, layout.Hit);
+        }
+
         /// <summary>Verifies that per-object scale shrinks the sprite about its center point.</summary>
         [Fact]
         public void PerObjectScaleShrinksTheSpriteAboutItsCenter()

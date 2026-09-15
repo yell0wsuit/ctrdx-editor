@@ -289,19 +289,24 @@ namespace CtrDxEditor.Content
                 new SpriteLayer(LanternJson, LanternImageBase, 1),
             ]),
 
-            // Axe (game ObjAxe): base (0), blade (1), and pivot cap (2), all centered on the same
-            // 183x201 sourceSize. The game spins the blade while the axe swings; the editor draws the
-            // rest pose.
+            // Axe (game ObjAxe): base (0), blade (1), and pivot cap (2). Axe builds each part with
+            // GameObject_createWithResIDQuad and never restores cut transparency, so every trimmed quad is
+            // centered on the axe on its own rather than placed within the shared sourceSize. The game
+            // spins the blade while the axe swings; the editor draws the rest pose.
             new("axe",
             [
-                new SpriteLayer(AxeJson, AxeImageBase, 0),
-                new SpriteLayer(AxeJson, AxeImageBase, 1),
-                new SpriteLayer(AxeJson, AxeImageBase, 2),
+                new SpriteLayer(AxeJson, AxeImageBase, 0, CenterOnFrame: true),
+                new SpriteLayer(AxeJson, AxeImageBase, 1, CenterOnFrame: true),
+                new SpriteLayer(AxeJson, AxeImageBase, 2, CenterOnFrame: true),
             ]),
 
             // Pause switcher (game ObjPause). Quad 0 is the running face, which is how a level starts;
             // quad 1 is the frozen face and the remaining quads belong to the burst animation.
-            new("pauseSwitcher", [new SpriteLayer(PauseJson, PauseImageBase, 0)]),
+            // PauseSwitcher.Create never restores cut transparency, so the 216x215 face is centered on
+            // the switcher. Its sourceSize is the 998x1498 animation stage, which parks the face far off
+            // center - placing it by that trim drew the button well right of where the game does.
+            new("pauseSwitcher", [new SpriteLayer(PauseJson, PauseImageBase, 0, CenterOnFrame: true)]),
+
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
             // upright; layers 1-2 are the idle mouse body (Mouse.IdleQuad) and its open eyes

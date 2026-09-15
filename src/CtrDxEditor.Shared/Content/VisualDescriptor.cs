@@ -23,12 +23,18 @@ namespace CtrDxEditor.Content
     /// a bundle predating the art loses only the detail the layer adds - the magic hat keeps its baked
     /// band rather than vanishing, and the rest of the bundle stays valid.
     /// </param>
+    /// <param name="CenterOnFrame">
+    /// Whether the trimmed frame is centered on the object's (x,y) rather than placed by its trim within the
+    /// untrimmed sourceSize. Set it for game sprites that never call <c>DoRestoreCutTransparency</c>
+    /// (see <see cref="CtrDxEditor.Core.Editing.SpritePlacement.Compute"/>).
+    /// </param>
     public sealed record SpriteLayer(
         string AtlasJsonRelPath,
         string AtlasImageBasePath,
         int Quad,
         RopeRgba? Tint = null,
-        bool Optional = false);
+        bool Optional = false,
+        bool CenterOnFrame = false);
 
     /// <summary>
     /// Maps an object element to the ordered atlas layers that make up its sprite, plus the per-object
