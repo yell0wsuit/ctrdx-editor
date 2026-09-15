@@ -12,10 +12,11 @@ namespace CtrDxEditor.Browser.Playtest
     /// exactly: <see cref="Play"/> returns true for a cold launch and false for a reload, so the
     /// shared view layer needs no per-platform branch.
     /// <para>
-    /// The level travels in the message rather than through any storage. That matches desktop, where
-    /// the temp level file is deleted when the editor session ends - level availability is tied to
-    /// editor liveness on both heads - and it avoids leaving a stale copy of somebody's level sitting
-    /// in browser storage forever.
+    /// The level travels in the message, and is also left in localStorage under the session nonce
+    /// before the game opens. Opening the game backgrounds the editor, and a mobile browser may suspend
+    /// or discard a background tab before it can answer the game's announcement; the stored copy
+    /// reaches the game with the editor doing nothing. The entry is removed when the session ends or a
+    /// new one replaces it, and swept once a day old, so a level does not sit in storage for good.
     /// </para>
     /// </remarks>
     public sealed class BroadcastPlaytestLauncher : IPlaytestLauncher, IBlockableLauncher
@@ -101,6 +102,11 @@ namespace CtrDxEditor.Browser.Playtest
                 // is what a refreshed window must be given, and the level from the original launch
                 // would be the wrong one.
                 _sessionXml = levelXml;
+                string levelMessage = PlaytestChannelMessage.FormatLevel(_nonce, levelXml);
+
+                // Kept current so a game tab that reloads, including one the browser discarded in
+                // the background, boots into this level rather than the one first launched.
+                PlaytestInterop.StoreLevel(_nonce, levelMessage);
 
                 // Post directly only once the game has announced itself. Between window.open and the
                 // game's own subscribe there is a gap of seconds while its runtime boots, and a
@@ -108,10 +114,16 @@ namespace CtrDxEditor.Browser.Playtest
                 // OnReady delivers it instead.
                 if (_handshook)
                 {
-                    PlaytestInterop.Post(PlaytestChannelMessage.FormatLevel(_nonce, levelXml));
+                    PlaytestInterop.Post(levelMessage);
                 }
 
                 return false;
+            }
+
+            // The previous session's game is gone, so nothing will read its level again.
+            if (_nonce.Length > 0)
+            {
+                PlaytestInterop.ForgetLevel(_nonce);
             }
 
             _nonce = Guid.NewGuid().ToString("N")[..8];
@@ -119,8 +131,9 @@ namespace CtrDxEditor.Browser.Playtest
             _handshook = false;
             _handshakeDeadline = DateTime.UtcNow + HandshakeGracePeriod;
 
-            if (!PlaytestInterop.Launch(_nonce))
+            if (!PlaytestInterop.Launch(_nonce, PlaytestChannelMessage.FormatLevel(_nonce, levelXml)))
             {
+                PlaytestInterop.ForgetLevel(_nonce);
                 LastLaunchBlocked = true;
                 _handshakeDeadline = DateTime.MaxValue;
                 _sessionXml = null;
@@ -164,6 +177,7 @@ namespace CtrDxEditor.Browser.Playtest
                     case PlaytestMessageKind.Error:
                         break;
                     case PlaytestMessageKind.Bye when IsOurs(nonce):
+                        PlaytestInterop.ForgetLevel(_nonce);
                         Exited?.Invoke(this, new PlaytestExitedEventArgs(0, string.Empty));
                         break;
                     case PlaytestMessageKind.Bye:

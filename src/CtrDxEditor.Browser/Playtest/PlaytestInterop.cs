@@ -27,11 +27,23 @@ namespace CtrDxEditor.Browser.Playtest
         [JSImport("drain", "playtest")]
         public static partial string[] Drain();
 
-        /// <summary>Opens the game in a new window with a playtest nonce.</summary>
+        /// <summary>Stores the session's level, then opens the game in a new window with its nonce.</summary>
         /// <param name="nonce">The session nonce to launch with.</param>
+        /// <param name="levelMessage">The level message the game reads when it boots.</param>
         /// <returns>False when the browser blocked the popup.</returns>
         [JSImport("launch", "playtest")]
-        public static partial bool Launch(string nonce);
+        public static partial bool Launch(string nonce, string levelMessage);
+
+        /// <summary>Replaces the level a session's game reads when it boots.</summary>
+        /// <param name="nonce">The session nonce the level is stored under.</param>
+        /// <param name="levelMessage">The level message to store.</param>
+        [JSImport("storeLevel", "playtest")]
+        public static partial void StoreLevel(string nonce, string levelMessage);
+
+        /// <summary>Removes a session's stored level.</summary>
+        /// <param name="nonce">The session nonce the level was stored under.</param>
+        [JSImport("forgetLevel", "playtest")]
+        public static partial void ForgetLevel(string nonce);
 
         /// <summary>Whether a launched game window is still open.</summary>
         /// <returns>True while the window exists and has not been closed.</returns>
