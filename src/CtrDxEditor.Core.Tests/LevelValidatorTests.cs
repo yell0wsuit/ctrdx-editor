@@ -131,6 +131,37 @@ namespace CtrDxEditor.Core.Tests
             Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.ResolutionTooSmall");
         }
 
+        /// <summary>An object past the declared level size is cropped on non-16:9 screens, so it warns.</summary>
+        [Theory]
+        [InlineData(-1, 100)]
+        [InlineData(321, 100)]
+        [InlineData(100, -1)]
+        [InlineData(100, 481)]
+        public void ObjectOutsideLevelBoundsWarns(int x, int y)
+        {
+            LevelDocument doc = Doc("", $"<candy x=\"10\" y=\"10\" /><target x=\"{x}\" y=\"{y}\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.ObjectOutsideLevelBounds");
+        }
+
+        /// <summary>Objects on the edge of the declared level size are still inside it.</summary>
+        [Fact]
+        public void ObjectsOnLevelEdgeDoNotWarnAboutBounds()
+        {
+            LevelDocument doc = Doc("", "<candy x=\"0\" y=\"0\" /><target x=\"320\" y=\"480\" />");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.ObjectOutsideLevelBounds");
+        }
+
+        /// <summary>The game adds mapOffsetX after the x3 map scale, pushing x=310 to 330 level units.</summary>
+        [Fact]
+        public void MapOffsetPushesObjectOutsideLevelBounds()
+        {
+            LevelDocument doc = Doc("mapOffsetX=\"60\"", "<candy x=\"10\" y=\"10\" /><target x=\"310\" y=\"100\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.ObjectOutsideLevelBounds");
+        }
+
         /// <summary>Several case variants of settings warn because only the first layer is authoritative.</summary>
         [Fact]
         public void DuplicateSettingsLayersWarnCaseInsensitively()

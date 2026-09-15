@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 using CtrDxEditor.Core.Document;
@@ -72,6 +73,16 @@ namespace CtrDxEditor.Core.Editing
             if (document.Width < 320 || document.Height < 480)
             {
                 warnings.Add(new LevelWarning("Validation.ResolutionTooSmall"));
+            }
+
+            // DX fits the declared map to whatever aspect ratio the window has, so only the declared
+            // width x height is guaranteed on screen; anything past it is cropped off on non-16:9
+            // displays. The game adds gameDesign mapOffsetX/Y after the x3 map scale while the camera
+            // bounds ignore it (GameScene.Show / LoadMetadata), so it shifts objects by offset / 3
+            // level units relative to the visible area.
+            if (objects.Any(o => IsOutsideLevelBounds(o, document)))
+            {
+                warnings.Add(new LevelWarning("Validation.ObjectOutsideLevelBounds"));
             }
 
             // Duplicate candy keys collide under string-identity matching.
@@ -209,6 +220,32 @@ namespace CtrDxEditor.Core.Editing
             // Errors cost the level content, so they lead; LINQ's sort is stable, which keeps each
             // group in the order the rules produced it.
             return [.. warnings.OrderBy(warning => warning.Severity == LevelWarningSeverity.Error ? 0 : 1)];
+        }
+
+        private const double MapScale = 3.0;
+
+        private static bool IsOutsideLevelBounds(LevelObject obj, LevelDocument document)
+        {
+            // Elements without coordinates (if any) have no on-screen position to lose.
+            if (obj.GetAttr("x") is null && obj.GetAttr("y") is null)
+            {
+                return false;
+            }
+
+            double x = obj.X + (ReadDesignInt(document, "mapOffsetX") / MapScale);
+            double y = obj.Y + (ReadDesignInt(document, "mapOffsetY") / MapScale);
+            return x < 0 || x > document.Width || y < 0 || y > document.Height;
+        }
+
+        private static int ReadDesignInt(LevelDocument document, string name)
+        {
+            return int.TryParse(
+                document.GameDesignElement?.Attribute(name)?.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int v)
+                ? v
+                : 0;
         }
 
         private static bool IsTrueAttr(LevelObject obj, string name)

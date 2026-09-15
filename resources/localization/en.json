@@ -1100,6 +1100,7 @@
     "Validation.NoCandy": "Level has no candy.",
     "Validation.NoTarget": "Level has no Om Nom.",
     "Validation.ResolutionTooSmall": "Level resolution is smaller than 320x480.",
+    "Validation.ObjectOutsideLevelBounds": "Some objects are outside the designated level resolution. This will cause visibility problems on non-16:9 screens. Please adjust either the object positions or the level resolution to cover them if needed.",
     "Validation.DuplicateSettingsLayer": "Multiple settings layers found; only the first one is used.",
     "Validation.DuplicateCandyNumber": "Duplicate candyNumber values found; grabs cannot tell those candies apart.",
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
