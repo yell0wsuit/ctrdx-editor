@@ -26,6 +26,7 @@ namespace CtrDxEditor.Core.Editing
             Dictionary<string, string> candyRemap = [];
             Dictionary<string, string> bulbRemap = [];
             Dictionary<string, string> axeRemap = [];
+            Dictionary<string, string> bombRemap = [];
 
             foreach (LevelObject src in source)
             {
@@ -39,6 +40,7 @@ namespace CtrDxEditor.Core.Editing
                 string? oldCandy = src.GetAttr("candyNumber");
                 string? oldBulb = src.GetAttr("bulbNumber");
                 string? oldAxe = src.GetAttr(AxeBinding.KeyAttribute);
+                string? oldBomb = src.GetAttr(BombBinding.KeyAttribute);
                 LevelObjectPolicy.ApplyDefaults(clone, doc);
                 doc.Add(clone, target);
 
@@ -57,6 +59,11 @@ namespace CtrDxEditor.Core.Editing
                 {
                     axeRemap[oldAxe.Trim()] = newAxe;
                 }
+                if (BombBinding.IsBomb(clone) && oldBomb is not null
+                    && clone.GetAttr(BombBinding.KeyAttribute) is { } newBomb)
+                {
+                    bombRemap[oldBomb.Trim()] = newBomb;
+                }
 
                 clones.Add(clone);
             }
@@ -66,6 +73,10 @@ namespace CtrDxEditor.Core.Editing
                 if (IsTrue(grab.GetAttr("bindBulb")))
                 {
                     Retarget(grab, "bulbNumber", bulbRemap);
+                }
+                else if (grab.GetAttr(BombBinding.KeyAttribute) is not null)
+                {
+                    Retarget(grab, BombBinding.KeyAttribute, bombRemap);
                 }
                 else if (grab.GetAttr(AxeBinding.KeyAttribute) is not null)
                 {

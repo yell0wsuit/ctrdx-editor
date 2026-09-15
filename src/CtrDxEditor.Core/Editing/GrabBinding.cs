@@ -56,6 +56,12 @@ namespace CtrDxEditor.Core.Editing
                 options.Add(new GrabBindOption($"axe:{key}", $"Blade {key}"));
             }
 
+            foreach (LevelObject bomb in objects.Where(BombBinding.IsBomb))
+            {
+                string key = BombBinding.KeyOf(bomb);
+                options.Add(new GrabBindOption($"bomb:{key}", $"Bomb {key}"));
+            }
+
             return options;
         }
 
@@ -85,6 +91,14 @@ namespace CtrDxEditor.Core.Editing
             if (IsTrue(grab.GetAttr("bindBulb")))
             {
                 return $"bulb:{grab.GetAttr("bulbNumber") ?? ""}";
+            }
+
+            // A bombed grab's bomb outranks both the axe and the candy in LoadGrabs. As with the axe, only a
+            // key some bomb answers to counts.
+            if (BombBinding.RequestedKey(grab) is { } bombKey
+                && objects.Any(o => BombBinding.IsBomb(o) && AxeBinding.KeyEquals(BombBinding.KeyOf(o), bombKey)))
+            {
+                return $"bomb:{bombKey}";
             }
 
             // An axe target outranks a candy one in LoadGrabs, so it is read first here too. Only a key
@@ -129,6 +143,7 @@ namespace CtrDxEditor.Core.Editing
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
                 ClearAxe(grab);
+                ClearBomb(grab);
             }
             else if (token.StartsWith("candy:", StringComparison.Ordinal))
             {
@@ -136,6 +151,7 @@ namespace CtrDxEditor.Core.Editing
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
                 ClearAxe(grab);
+                ClearBomb(grab);
             }
             else if (token is "part:L" or "part:R")
             {
@@ -144,6 +160,7 @@ namespace CtrDxEditor.Core.Editing
                 grab.RemoveAttr("bindBulb");
                 grab.RemoveAttr("bulbNumber");
                 ClearAxe(grab);
+                ClearBomb(grab);
             }
             else if (token.StartsWith("bulb:", StringComparison.Ordinal))
             {
@@ -151,6 +168,7 @@ namespace CtrDxEditor.Core.Editing
                 grab.SetAttr("bulbNumber", token["bulb:".Length..]);
                 grab.RemoveAttr("candyNumber");
                 ClearAxe(grab);
+                ClearBomb(grab);
             }
             else if (token.StartsWith("axe:", StringComparison.Ordinal))
             {
@@ -161,6 +179,18 @@ namespace CtrDxEditor.Core.Editing
                 // The editor writes only explicit keys, so the imported flag is dropped rather than
                 // left to disagree with the key beside it.
                 grab.RemoveAttr(AxeBinding.LegacyFlagAttribute);
+                // A bomb outranks the axe in LoadGrabs, so a leftover bomb target would win over this one.
+                ClearBomb(grab);
+            }
+            else if (token.StartsWith("bomb:", StringComparison.Ordinal))
+            {
+                // LoadGrabs looks a bomb up only for a bombed grab, so the flag is written with the key.
+                grab.SetAttr(BombBinding.FlagAttribute, "true");
+                grab.SetAttr(BombBinding.KeyAttribute, token["bomb:".Length..]);
+                grab.RemoveAttr("candyNumber");
+                grab.RemoveAttr("bindBulb");
+                grab.RemoveAttr("bulbNumber");
+                ClearAxe(grab);
             }
         }
 
@@ -170,6 +200,14 @@ namespace CtrDxEditor.Core.Editing
         {
             grab.RemoveAttr(AxeBinding.KeyAttribute);
             grab.RemoveAttr(AxeBinding.LegacyFlagAttribute);
+        }
+
+        // Drops a bomb target's key and flag together, so a bombed="true" left behind cannot turn a
+        // later candyNumber into a bomb key on the next load.
+        private static void ClearBomb(LevelObject grab)
+        {
+            grab.RemoveAttr(BombBinding.KeyAttribute);
+            grab.RemoveAttr(BombBinding.FlagAttribute);
         }
 
         private static bool KeyEquals(string? a, string? b)

@@ -66,6 +66,8 @@ namespace CtrDxEditor.Content
         private const string AxeImageBase = "images/obj_axe";
         private const string PauseJson = "images/obj_pause.json";
         private const string PauseImageBase = "images/obj_pause";
+        private const string BombJson = "images/obj_bomb.json";
+        private const string BombImageBase = "images/obj_bomb";
         private const string ChainJson = "images/obj_exp_chain.json";
         private const string ChainImageBase = "images/obj_exp_chain";
         private const string HookChainJson = "images/obj_hook_chain.json";
@@ -307,6 +309,9 @@ namespace CtrDxEditor.Content
             // center - placing it by that trim drew the button well right of where the game does.
             new("pauseSwitcher", [new SpriteLayer(PauseJson, PauseImageBase, 0, CenterOnFrame: true)]),
 
+            // Bomb (game ObjBomb). Quad 0 is the intact body; the rest are its debris fragments. Bomb
+            // builds the body with GameObject_createWithResIDQuad, so the trimmed quad is centered too.
+            new(BombBinding.Element, [new SpriteLayer(BombJson, BombImageBase, 0, CenterOnFrame: true)]),
 
             // Mouse (game element gap/mouse). Layer 0 is the static hole (Mouse.HoleQuad) drawn
             // upright; layers 1-2 are the idle mouse body (Mouse.IdleQuad) and its open eyes

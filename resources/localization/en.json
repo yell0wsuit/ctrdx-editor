@@ -305,6 +305,13 @@
     "Guide.Article.axes.Editing": "Drag a blade from the palette, in the **Cut the Rope: Time Travel** group. It has no properties to set. It does have weight, though: a blade with nothing holding it drops out of the level as soon as play starts, taking the level's only way to cut a chain with it. Decide what will hold or carry it before you place it.",
     "Guide.Article.axes.Chains": "A rope can hang from a blade as well as from a candy: select a rope hook and pick the blade under **Attach to**. That is the usual way to both keep a blade in play and swing it into the chain it has to cut. The editor keys each blade for you, so there is no number to type.",
     "Guide.Article.axes.Hazard.Warning": "A blade breaks any candy that comes near it, at a slightly shorter reach than it cuts chains at. A candy placed that close to a blade breaks the moment play starts, so leave room between them.",
+    "Guide.Article.bombs.Title": "Bombs",
+    "Guide.Article.bombs.Summary": "Place a bomb that blows up on contact, and hang ropes from it.",
+    "Guide.Article.bombs.SearchTerms": "bomb|explosion|blast|detonate|time travel|bombNumber|bombed",
+    "Guide.Article.bombs.InGame": "A bomb is a physics body that falls under gravity like a candy. It blows up when a candy or a blade comes near it, when two bombs touch, or when a spike runs through it. The blast pushes every nearby candy, blade and bomb away, harder the closer they are, and drops the ropes holding the bomb. A swipe doesn't set it off, so cutting its ropes is safe.",
+    "Guide.Article.bombs.Editing": "Drag a bomb from the palette, in the **Cut the Rope: Time Travel** group. It has no properties to set. Like a blade, a bomb with nothing holding it falls out of the level as soon as play starts.",
+    "Guide.Article.bombs.Ropes": "To hang a rope from a bomb, select a rope hook and pick the bomb under **Attach to**. The editor numbers each bomb for you and writes both attributes the game needs, `bombed` and `bombNumber`, so there is nothing to type.",
+    "Guide.Article.bombs.Blast.Warning": "A bomb blows up the moment a candy starts close to it, so leave room between them. The blast can also push the candy off screen, so check it in playtest.",
     "Guide.Article.pause-switchers.Title": "Pause switchers",
     "Guide.Article.pause-switchers.Summary": "Place the button that stops and restarts time.",
     "Guide.Article.pause-switchers.SearchTerms": "pause|switcher|freeze|time|stop|time travel",
@@ -830,6 +837,7 @@
     "Object.pipe": "Bamboo tube",
     "Object.axe": "Blade",
     "Object.pauseSwitcher": "Pause switcher",
+    "Object.bomb": "Bomb",
 
     "Attr.velocity": "Velocity",
     "Attr.water": "Water",
@@ -1097,11 +1105,13 @@
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
     "Validation.GrabUnmatchedAxeNumber": "A grab binds to axeNumber '{0}', which no blade has, it will bind to the candy instead.",
+    "Validation.GrabUnmatchedBombNumber": "A grab binds to bombNumber '{0}', but no bomb has that number or the grab lacks bombed=\"true\", so it will not hang from a bomb.",
     "Validation.GrabVerticallyAligned": "A grab and what its rope binds to are both at x={0}. Offset one of them by a pixel or more.",
     "Validation.GhostIdle": "A ghost has no enabled states (grab/bubble/bouncer), it will sit idle and do nothing.",
     "Validation.CandyInHazard": "Candy {0} starts inside a spike and will break immediately.",
     "Validation.CandyOnMouth": "Candy {0} starts on Om Nom's mouth and will be eaten immediately, winning the level.",
     "Validation.RocketWithoutMobilePhysics": "Level has a rocket but mobile physics is off; rockets are tuned for mobile physics and will feel off without it.",
     "Validation.WaterWithoutMobilePhysics": "Level has water but mobile physics is off; water is tuned for mobile physics and will feel off without it.",
-    "Validation.SnailWithoutMobilePhysics": "Level has a snail but mobile physics is off; snails are tuned for mobile physics and will feel off without it."
+    "Validation.SnailWithoutMobilePhysics": "Level has a snail but mobile physics is off; snails are tuned for mobile physics and will feel off without it.",
+    "Validation.BombWithoutMobilePhysics": "Level has a bomb but mobile physics is off; bombs are tuned for mobile physics and will feel off without it."
 }

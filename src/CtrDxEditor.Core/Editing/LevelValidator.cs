@@ -95,13 +95,21 @@ namespace CtrDxEditor.Core.Editing
                     && axes.Any(a => AxeBinding.KeyEquals(AxeBinding.KeyOf(a), key));
             }
 
+            List<LevelObject> bombs = [.. objects.Where(BombBinding.IsBomb)];
+            bool BindsToABomb(LevelObject grab)
+            {
+                return BombBinding.RequestedKey(grab) is { } key
+                    && bombs.Any(b => AxeBinding.KeyEquals(BombBinding.KeyOf(b), key));
+            }
+
             foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
             {
                 string? candyNumber = grab.GetAttr("candyNumber");
-                // An imported axed="true" grab keeps its axe key in candyNumber, so a key the axes do
-                // answer to is not a dangling candy reference.
+                // An imported axed="true" or bombed="true" grab keeps its key in candyNumber, so a key an
+                // axe or bomb does answer to is not a dangling candy reference.
                 if (candyNumber is not null
                     && !BindsToAnAxe(grab)
+                    && !BindsToABomb(grab)
                     && !candyKeys.Any(k => string.Equals(k, candyNumber.Trim(), StringComparison.OrdinalIgnoreCase)))
                 {
                     warnings.Add(new LevelWarning("Validation.GrabUnmatchedCandyNumber", candyNumber));
@@ -112,6 +120,13 @@ namespace CtrDxEditor.Core.Editing
                 if (grab.GetAttr(AxeBinding.KeyAttribute) is { } axeNumber && !BindsToAnAxe(grab))
                 {
                     warnings.Add(new LevelWarning("Validation.GrabUnmatchedAxeNumber", axeNumber));
+                }
+
+                // Same for a bombNumber, which binds nothing unless a bomb answers to it and the grab
+                // also carries bombed="true".
+                if (grab.GetAttr(BombBinding.KeyAttribute) is { } bombNumber && !BindsToABomb(grab))
+                {
+                    warnings.Add(new LevelWarning("Validation.GrabUnmatchedBombNumber", bombNumber));
                 }
 
                 // A hook exactly above or below what its rope binds to starts the bungee as a perfectly
@@ -161,6 +176,13 @@ namespace CtrDxEditor.Core.Editing
                 if (HasType("load"))
                 {
                     warnings.Add(new LevelWarning("Validation.SnailWithoutMobilePhysics"));
+                }
+
+                // Bombs come from Time Travel, a mobile-physics game, so their blast and trigger
+                // distances are tuned against that model.
+                if (HasType(BombBinding.Element))
+                {
+                    warnings.Add(new LevelWarning("Validation.BombWithoutMobilePhysics"));
                 }
             }
 

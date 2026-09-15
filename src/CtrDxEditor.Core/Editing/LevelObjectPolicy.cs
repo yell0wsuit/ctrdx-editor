@@ -63,6 +63,16 @@ namespace CtrDxEditor.Core.Editing
                 obj.SetAttr(AxeBinding.KeyAttribute, KeyNumbering.NextKey(axeKeys));
             }
 
+            // Bombs are keyed the same way, for the same reason: LoadBomb also reads a missing
+            // bombNumber as "".
+            if (BombBinding.IsBomb(obj))
+            {
+                IEnumerable<string?> bombKeys = document.AllObjects
+                    .Where(BombBinding.IsBomb)
+                    .Select(o => o.GetAttr(BombBinding.KeyAttribute));
+                obj.SetAttr(BombBinding.KeyAttribute, KeyNumbering.NextKey(bombKeys));
+            }
+
             // A rope needs something to hang from, and until a candy exists the only candidates are a
             // blade or a bulb. The game never binds either on its own - it wants an explicit axeNumber
             // or bindBulb - so the editor authors that attribute rather than drawing a rope the game
@@ -77,7 +87,7 @@ namespace CtrDxEditor.Core.Editing
                 {
                     BindToFirstRopeTarget(obj, RopeTargetsIn(document.AllObjects));
                 }
-                else if (AxeBinding.IsAxe(obj) || obj.Type is "lightBulb" or "lightbulb")
+                else if (IsRopeTarget(obj))
                 {
                     // The new object is not in the document yet, and its own key was just assigned
                     // above, so it is offered here explicitly.
@@ -123,14 +133,20 @@ namespace CtrDxEditor.Core.Editing
         }
 
         /// <summary>
-        /// The blades and bulbs a rope may hang from, in document order, so the first one placed is the
-        /// one a rope adopts.
+        /// The blades, bombs, and bulbs a rope may hang from, in document order, so the first one placed is
+        /// the one a rope adopts.
         /// </summary>
         /// <param name="objects">The level's objects.</param>
         /// <returns>The candidate targets, in placement order.</returns>
         private static IEnumerable<LevelObject> RopeTargetsIn(IEnumerable<LevelObject> objects)
         {
-            return objects.Where(o => AxeBinding.IsAxe(o) || o.Type is "lightBulb" or "lightbulb");
+            return objects.Where(IsRopeTarget);
+        }
+
+        /// <summary>Whether a rope can be told to hang from <paramref name="obj"/> in place of a candy.</summary>
+        private static bool IsRopeTarget(LevelObject obj)
+        {
+            return AxeBinding.IsAxe(obj) || BombBinding.IsBomb(obj) || obj.Type is "lightBulb" or "lightbulb";
         }
 
         /// <summary>
@@ -155,7 +171,9 @@ namespace CtrDxEditor.Core.Editing
 
             GrabBinding.Apply(grab, AxeBinding.IsAxe(target)
                 ? $"axe:{AxeBinding.KeyOf(target)}"
-                : $"bulb:{target.GetAttr("bulbNumber") ?? string.Empty}");
+                : BombBinding.IsBomb(target)
+                    ? $"bomb:{BombBinding.KeyOf(target)}"
+                    : $"bulb:{target.GetAttr("bulbNumber") ?? string.Empty}");
         }
 
         /// <summary>
@@ -260,12 +278,24 @@ namespace CtrDxEditor.Core.Editing
             Dictionary<string, string> axeMap = NormalizeObjects(
                 objects.Where(AxeBinding.IsAxe),
                 AxeBinding.KeyAttribute);
+            Dictionary<string, string> bombMap = NormalizeObjects(
+                objects.Where(BombBinding.IsBomb),
+                BombBinding.KeyAttribute);
 
             foreach (LevelObject grab in objects.Where(o => o.Type == "grab"))
             {
                 if (IsTrue(grab.GetAttr("bindBulb")))
                 {
                     Retarget(grab, "bulbNumber", bulbMap);
+                }
+                else if (BombBinding.RequestedKey(grab) is { } bombKey && bombMap.ContainsKey(bombKey.Trim()))
+                {
+                    // A bomb outranks the axe in LoadGrabs. An imported bombed grab keeps its key in
+                    // candyNumber, so remap whichever attribute holds it, against the bomb map.
+                    Retarget(
+                        grab,
+                        grab.GetAttr(BombBinding.KeyAttribute) is not null ? BombBinding.KeyAttribute : "candyNumber",
+                        bombMap);
                 }
                 else if (AxeBinding.RequestedKey(grab) is { } axeKey && axeMap.ContainsKey(axeKey.Trim()))
                 {
@@ -311,7 +341,8 @@ namespace CtrDxEditor.Core.Editing
             // Binding keys are authored internally and selected through grab "Attach to".
             return (element != "candy" || attribute != "candyNumber")
                 && (element is not ("lightBulb" or "lightbulb") || attribute != "bulbNumber")
-                && (element != AxeBinding.Element || attribute != AxeBinding.KeyAttribute);
+                && (element != AxeBinding.Element || attribute != AxeBinding.KeyAttribute)
+                && (element != BombBinding.Element || attribute != BombBinding.KeyAttribute);
         }
 
         private static Dictionary<string, string> NormalizeObjects(IEnumerable<LevelObject> objects, string attribute)

@@ -266,6 +266,8 @@ namespace CtrDxEditor.Rendering
                 "lantern" => 13,
                 // The game keeps axes in the candies list, so they draw in the same whole-candy pass.
                 "axe" => 13,
+                // Bombs live in the candies list as well (LoadBomb adds them there).
+                "bomb" => 13,
                 "lightBulb" => 14,
                 "tutorialText" => 15,
                 "tutorial01" or "tutorial02" or "tutorial03" or "tutorial04" or "tutorial05" or "tutorial06"

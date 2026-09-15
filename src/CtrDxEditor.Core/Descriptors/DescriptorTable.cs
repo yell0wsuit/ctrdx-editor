@@ -259,6 +259,14 @@ namespace CtrDxEditor.Core.Descriptors
             // Pause switcher. The button that stops and restarts time; the game gives it no
             // attributes at all (LoadPauseSwitcher reads only x and y).
             new ObjectDescriptor("pauseSwitcher", "Pause switcher", [], MaxCount: int.MaxValue, Game: TimeTravel),
+
+            // Bomb. Blows up on contact and shoves every nearby body away; ropes may hang from it,
+            // keyed by bombNumber. Like the axe's, the key is auto-assigned and picked through the
+            // grab "Attach to" control, never typed (see LevelObjectPolicy).
+            new ObjectDescriptor(BombBinding.Element, "Bomb",
+            [
+                new AttributeSpec(BombBinding.KeyAttribute, AttrType.Text, null),
+            ], MaxCount: int.MaxValue, Game: TimeTravel),
         ]);
 
         /// <summary>Palette section for objects that originate from Cut the Rope: Time Travel.</summary>

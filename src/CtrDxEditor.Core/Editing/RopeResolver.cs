@@ -18,6 +18,9 @@ namespace CtrDxEditor.Core.Editing
         /// <summary>The rope targets an axe object.</summary>
         Axe,
 
+        /// <summary>The rope targets a bomb object.</summary>
+        Bomb,
+
         /// <summary>The rope has no resolved target.</summary>
         None,
     }
@@ -56,8 +59,18 @@ namespace CtrDxEditor.Core.Editing
                 // Not to an axe - LoadGrabs only reaches its axe branch when bindBulb is off.
             }
 
-            // LoadGrabs tries the axe before the candy, and an unmatched axe key drops through to the
-            // candy branch rather than leaving the rope unbound.
+            // LoadGrabs tries a bombed grab's bomb first, then the axe, then the candy; an unmatched key
+            // at either step drops through to the next rather than leaving the rope unbound.
+            if (!bindBulb && BombBinding.RequestedKey(grab) is { } bombKey)
+            {
+                LevelObject? bomb = objects.FirstOrDefault(o =>
+                    BombBinding.IsBomb(o) && AxeBinding.KeyEquals(BombBinding.KeyOf(o), bombKey));
+                if (bomb is not null)
+                {
+                    return new RopeTarget(RopeTargetKind.Bomb, bomb);
+                }
+            }
+
             if (!bindBulb && AxeBinding.RequestedKey(grab) is { } axeKey)
             {
                 LevelObject? axe = objects.FirstOrDefault(o =>

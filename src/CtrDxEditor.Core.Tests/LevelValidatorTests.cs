@@ -286,6 +286,7 @@ namespace CtrDxEditor.Core.Tests
         [InlineData("<rocket x=\"100\" y=\"100\" />", "", "Validation.RocketWithoutMobilePhysics")]
         [InlineData("<load x=\"100\" y=\"100\" />", "", "Validation.SnailWithoutMobilePhysics")]
         [InlineData("", "water=\"120\"", "Validation.WaterWithoutMobilePhysics")]
+        [InlineData("<bomb x=\"100\" y=\"100\" bombNumber=\"0\" />", "", "Validation.BombWithoutMobilePhysics")]
         public void MobileTunedFeatureWithoutMobilePhysicsWarns(string objects, string flags, string key)
         {
             LevelDocument doc = Doc(flags,
@@ -298,6 +299,7 @@ namespace CtrDxEditor.Core.Tests
         [Theory]
         [InlineData("<rocket x=\"100\" y=\"100\" />", "Validation.RocketWithoutMobilePhysics")]
         [InlineData("<load x=\"100\" y=\"100\" />", "Validation.SnailWithoutMobilePhysics")]
+        [InlineData("<bomb x=\"100\" y=\"100\" bombNumber=\"0\" />", "Validation.BombWithoutMobilePhysics")]
         public void MobileTunedObjectWithMobilePhysicsDoesNotWarn(string objects, string key)
         {
             LevelDocument doc = Doc("useMobilePhysics=\"true\"",
