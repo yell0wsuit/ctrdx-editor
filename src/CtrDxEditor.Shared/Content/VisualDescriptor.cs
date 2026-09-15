@@ -26,7 +26,7 @@ namespace CtrDxEditor.Content
     /// <param name="CenterOnFrame">
     /// Whether the trimmed frame is centered on the object's (x,y) rather than placed by its trim within the
     /// untrimmed sourceSize. Set it for game sprites that never call <c>DoRestoreCutTransparency</c>
-    /// (see <see cref="CtrDxEditor.Core.Editing.SpritePlacement.Compute"/>).
+    /// (see <see cref="SpritePlacement.Compute"/>).
     /// </param>
     public sealed record SpriteLayer(
         string AtlasJsonRelPath,
