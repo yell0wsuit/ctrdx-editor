@@ -13,8 +13,9 @@ namespace CtrDxEditor.Views
     internal static class RecoveryPrompt
     {
         /// <summary>
-        /// Shows the prompt when a snapshot is stored. Restore loads it; Discard clears it; dismissing the
-        /// dialog keeps it for the next launch. A snapshot that fails to restore is logged and cleared.
+        /// Shows the prompt when a snapshot is stored. Restore loads it; Discard clears it. The prompt
+        /// requires an answer: capture starts once it resolves, so a dismissed prompt would let the next edit
+        /// overwrite work the user never chose to give up. A snapshot that fails to restore is logged and cleared.
         /// </summary>
         /// <param name="vm">The editor that receives a restored level.</param>
         public static async Task RunAsync(EditorViewModel vm)
@@ -35,8 +36,10 @@ namespace CtrDxEditor.Views
                 NegativeText = Localizer.Get("Dialog.Recovery.Discard"),
                 // Restoring discards nothing, so the confirming button keeps the neutral style.
                 IsDestructive = false,
+                RequireAnswer = true,
             };
             Optional<bool> choice = await dialog.ShowAsync();
+            // Only reachable if the dialog host goes away; keep the snapshot rather than guess.
             if (!choice.HasValue)
             {
                 return;
