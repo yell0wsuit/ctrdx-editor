@@ -1285,8 +1285,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
         /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
@@ -1297,8 +1296,7 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             SpriteCache sprites,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             RopeVisual? rope,
             int ropeSeed,
             Rect opBounds,
@@ -1313,12 +1311,12 @@ namespace CtrDxEditor.Rendering
             {
                 using (ctx.PushOpacity(opacity))
                 {
-                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
+                    DrawGrabContent(ctx, v, sprites, obj, gunAimTarget, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
                 }
             }
             else
             {
-                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
+                DrawGrabContent(ctx, v, sprites, obj, gunAimTarget, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
             }
         }
 
@@ -1338,8 +1336,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
         /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
@@ -1352,8 +1349,7 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             SpriteCache sprites,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             RopeVisual? rope,
             int ropeSeed,
             Rect opBounds,
@@ -1386,12 +1382,12 @@ namespace CtrDxEditor.Rendering
                     DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], previewPosition.X, previewPosition.Y, sprite.Scale);
                 }
                 int back = Math.Min(GrabRenderer.BackLayerCount(obj), sprite.Layers.Count);
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back, previewPosition);
+                DrawGrabLayers(ctx, v, sprite, obj, gunAimTarget, 0, back, previewPosition);
                 if (drawRope && rope is not null)
                 {
                     RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count, previewPosition);
+                DrawGrabLayers(ctx, v, sprite, obj, gunAimTarget, back, sprite.Layers.Count, previewPosition);
             }
             else if (drawRope && rope is not null)
             {
@@ -1409,8 +1405,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprite">The grab's resolved sprite.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve the gun-aim target.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="from">First layer index to draw (inclusive).</param>
         /// <param name="to">Last layer index to draw (exclusive).</param>
         /// <param name="position">Preview-aware layer anchor.</param>
@@ -1419,14 +1414,13 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             ObjectSprite sprite,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             int from,
             int to,
             Vec2 position)
         {
             double? gunAim = sprite.Layers.Count >= 3
-                ? GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts)
+                ? GrabRenderer.GunAimRotationDegrees(obj, gunAimTarget)
                 : null;
             for (int i = from; i < to; i++)
             {

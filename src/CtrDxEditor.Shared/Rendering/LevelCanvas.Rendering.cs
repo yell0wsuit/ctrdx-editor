@@ -807,6 +807,7 @@ namespace CtrDxEditor.Rendering
             // Draw in the game's fixed z-order (GameScene.Draw), a stable sort so same-layer objects keep list order.
             int ropeSeed = 0;
             bool tutorialDark = ActiveBackground == 0 && ActualThemeVariant == ThemeVariant.Dark;
+            LevelObject? gunAimTarget = GrabRenderer.GunAimTarget(objects, doc.TwoParts);
             foreach (LevelObject obj in objects.OrderBy(LevelSceneRenderer.GameDrawLayer))
             {
                 if (obj.Type == "grab")
@@ -816,7 +817,7 @@ namespace CtrDxEditor.Rendering
                     bool hookHighlighted =
                         (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
                     LevelSceneRenderer.DrawGrab(
-                        context, v, sprites, obj, objects, doc.TwoParts, rope, ropeSeed, opBounds, hookHighlighted,
+                        context, v, sprites, obj, gunAimTarget, rope, ropeSeed, opBounds, hookHighlighted,
                         useAnimationPreview && IsAnimationPreviewing(obj) ? AnimationPreviewElapsedSeconds : null);
                     if (rope is not null)
                     {
