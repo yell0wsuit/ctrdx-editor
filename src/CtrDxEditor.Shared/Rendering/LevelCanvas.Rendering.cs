@@ -48,6 +48,9 @@ namespace CtrDxEditor.Rendering
         /// <summary>Cross-frame memo for the background layout; see <see cref="BackgroundLayoutCache"/>.</summary>
         private readonly BackgroundLayoutCache _backgroundLayout = new();
 
+        /// <summary>Cross-frame memo for grab ropes; see <see cref="RopeVisualCache"/>.</summary>
+        private readonly RopeVisualCache _ropeVisuals = new();
+
         /// <summary>The pixel size and view transform for a clean full-level screenshot.</summary>
         /// <param name="Size">Output bitmap size in pixels (level units x MapScale).</param>
         /// <param name="View">Transform placing the frame's top-left at pixel (0, 0).</param>
@@ -773,9 +776,11 @@ namespace CtrDxEditor.Rendering
             }
 
             // AllObjects rebuilds its list from the XML on every read, so a frame reads it once. Rope binding
-            // resolves against the unfiltered list: a hidden candy still claims its rope, which then goes undrawn.
+            // gathers its candidates from the unfiltered list: a hidden candy still claims its rope, which then
+            // goes undrawn.
             IReadOnlyList<LevelObject> allObjects = doc.AllObjects;
             IReadOnlyList<LevelObject> objects = [.. allObjects.Where(obj => !IsHidden(obj))];
+            RopeCandidates ropeCandidates = new(allObjects);
             Rect opBounds = new(renderSize);
 
             // Light-bulb lit-glow halos: an additive Skia pass under the bottles (game's DrawLight order).
@@ -816,7 +821,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab")
                 {
-                    RopeVisual? rope = BuildRopeForVisibleGrab(obj, allObjects, doc);
+                    RopeVisual? rope = BuildRopeForVisibleGrab(obj, ropeCandidates, doc);
                     // The movable hook lights up while the selected grab's hook is hovered or being slid.
                     bool hookHighlighted =
                         (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
@@ -927,13 +932,12 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        private RopeVisual? BuildRopeForVisibleGrab(
-            LevelObject grab, IReadOnlyList<LevelObject> allObjects, LevelDocument doc)
+        private RopeVisual? BuildRopeForVisibleGrab(LevelObject grab, RopeCandidates candidates, LevelDocument doc)
         {
-            RopeTarget target = RopeResolver.Resolve(grab, allObjects, doc.TwoParts);
+            RopeTarget target = RopeResolver.Resolve(grab, candidates, doc.TwoParts);
             return target.Target is { } boundObject && IsHidden(boundObject)
                 ? null
-                : RopeRenderer.BuildRope(grab, target, RopePhysics.For(doc.UseMobilePhysics), ActiveRopeSkin);
+                : _ropeVisuals.Get(grab, target, RopePhysics.For(doc.UseMobilePhysics), ActiveRopeSkin);
         }
 
         /// <summary>

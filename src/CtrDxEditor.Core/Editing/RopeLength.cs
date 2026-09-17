@@ -86,7 +86,7 @@ namespace CtrDxEditor.Core.Editing
         /// which matches the property panel greying out its Length field.
         /// </summary>
         /// <param name="grab">The grab whose rope is being edited.</param>
-        /// <param name="rope">The resolved rope target, from <see cref="RopeResolver.Resolve"/>.</param>
+        /// <param name="rope">The resolved rope target, from <see cref="RopeResolver"/>.</param>
         /// <param name="physics">The level's physics model, which sets how the cord is subdivided.</param>
         /// <returns>The rope geometry, or null when there is no rope to edit.</returns>
         public static Geometry? Of(LevelObject grab, RopeTarget rope, RopePhysics physics)
