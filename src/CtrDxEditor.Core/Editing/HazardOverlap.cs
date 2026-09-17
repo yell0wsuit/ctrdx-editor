@@ -22,45 +22,48 @@ namespace CtrDxEditor.Core.Editing
         {
             HitboxModel model = HitboxTable.ModelFor(document.UseMobilePhysics);
             IReadOnlyList<LevelObject> objects = document.AllObjects;
-            List<LevelObject> result = [];
-            foreach (LevelObject candy in objects)
-            {
-                if (!CandyTypes.Contains(candy.Type))
-                {
-                    continue;
-                }
-                if (CandyInAnyHazard(candy, objects, model))
-                {
-                    result.Add(candy);
-                }
-            }
-            return result;
-        }
 
-        /// <summary>True when the candy center point is inside any breaking hazard's rotated band.</summary>
-        public static bool CandyInAnyHazard(
-            LevelObject candy, IReadOnlyList<LevelObject> objects, HitboxModel model)
-        {
+            // Resolve every hazard's band once. Testing each candy against the whole object list instead
+            // re-ran the type check and band math per candy, which is quadratic in a level of many candies.
+            List<HazardBand> hazards = [];
             foreach (LevelObject hazard in objects)
             {
-                if (!IsBreakingHazard(hazard.Type))
-                {
-                    continue;
-                }
-                if (HitboxTable.Compute(hazard, scale: 1, model) is not { } band)
+                if (!IsBreakingHazard(hazard.Type) || HitboxTable.Compute(hazard, scale: 1, model) is not { } band)
                 {
                     continue;
                 }
                 double degrees = RotationTable.For(hazard.Type) is { } spec
                     ? ObjectRotation.DisplayDegrees(hazard, spec)
                     : 0;
-                if (PointInRotatedBounds(candy.X, candy.Y, hazard.X, hazard.Y, degrees, band))
+                hazards.Add(new HazardBand(hazard.X, hazard.Y, degrees, band));
+            }
+
+            List<LevelObject> result = [];
+            if (hazards.Count == 0)
+            {
+                return result;
+            }
+
+            foreach (LevelObject candy in objects)
+            {
+                if (!CandyTypes.Contains(candy.Type))
                 {
-                    return true;
+                    continue;
+                }
+                foreach (HazardBand hazard in hazards)
+                {
+                    if (PointInRotatedBounds(candy.X, candy.Y, hazard.X, hazard.Y, hazard.Degrees, hazard.Band))
+                    {
+                        result.Add(candy);
+                        break;
+                    }
                 }
             }
-            return false;
+            return result;
         }
+
+        /// <summary>A breaking hazard's collision band, placed and rotated as the game tests it.</summary>
+        private readonly record struct HazardBand(double X, double Y, double Degrees, LevelBounds Band);
 
         private static bool IsBreakingHazard(string type)
         {
