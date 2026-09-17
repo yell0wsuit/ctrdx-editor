@@ -786,6 +786,11 @@
     "Dialog.Unsaved.Open": "Discard and open",
     "Dialog.Unsaved.New": "Discard and continue",
     "Dialog.Unsaved.Quit": "Discard and quit",
+    "Dialog.Recovery.Header": "Recover unsaved work?",
+    "Dialog.Recovery.Body": "The editor found unsaved changes to {0} from {1}. Restore them, or discard them for good?",
+    "Dialog.Recovery.Untitled": "an untitled level",
+    "Dialog.Recovery.Restore": "Restore",
+    "Dialog.Recovery.Discard": "Discard",
 
     "Dialog.Update.Header": "A new version is available",
     "Dialog.Update.Body": "There's a new version of the editor available. Would you like to check on GitHub Releases now?",
