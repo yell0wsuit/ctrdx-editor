@@ -70,7 +70,7 @@ namespace CtrDxEditor.Tests
             try
             {
                 _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                await File.WriteAllTextAsync(path, "{not json");
+                await File.WriteAllTextAsync(path, "{not json", TestContext.Current.CancellationToken);
 
                 Assert.Null(await new FileRecoveryStore(path).LoadAsync());
             }
