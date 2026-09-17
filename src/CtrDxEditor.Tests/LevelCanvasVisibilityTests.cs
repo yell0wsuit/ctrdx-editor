@@ -94,7 +94,7 @@ namespace CtrDxEditor.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(method);
 
-            RopeVisual? rope = (RopeVisual?)method.Invoke(canvas, [grab, doc]);
+            RopeVisual? rope = (RopeVisual?)method.Invoke(canvas, [grab, doc.AllObjects, doc]);
 
             Assert.Equal(bulbHidden, rope is null);
         }

@@ -772,7 +772,10 @@ namespace CtrDxEditor.Rendering
                 }
             }
 
-            IReadOnlyList<LevelObject> objects = [.. doc.AllObjects.Where(obj => !IsHidden(obj))];
+            // AllObjects rebuilds its list from the XML on every read, so a frame reads it once. Rope binding
+            // resolves against the unfiltered list: a hidden candy still claims its rope, which then goes undrawn.
+            IReadOnlyList<LevelObject> allObjects = doc.AllObjects;
+            IReadOnlyList<LevelObject> objects = [.. allObjects.Where(obj => !IsHidden(obj))];
             Rect opBounds = new(renderSize);
 
             // Light-bulb lit-glow halos: an additive Skia pass under the bottles (game's DrawLight order).
@@ -812,7 +815,7 @@ namespace CtrDxEditor.Rendering
             {
                 if (obj.Type == "grab")
                 {
-                    RopeVisual? rope = BuildRopeForVisibleGrab(obj, doc);
+                    RopeVisual? rope = BuildRopeForVisibleGrab(obj, allObjects, doc);
                     // The movable hook lights up while the selected grab's hook is hovered or being slid.
                     bool hookHighlighted =
                         (_railDrag == GrabRail.Handle.SlideHook || _hookHovered) && Equals(obj, SelectedObject);
@@ -922,9 +925,10 @@ namespace CtrDxEditor.Rendering
             }
         }
 
-        private RopeVisual? BuildRopeForVisibleGrab(LevelObject grab, LevelDocument doc)
+        private RopeVisual? BuildRopeForVisibleGrab(
+            LevelObject grab, IReadOnlyList<LevelObject> allObjects, LevelDocument doc)
         {
-            RopeTarget target = RopeResolver.Resolve(grab, doc.AllObjects, doc.TwoParts);
+            RopeTarget target = RopeResolver.Resolve(grab, allObjects, doc.TwoParts);
             return target.Target is { } boundObject && IsHidden(boundObject)
                 ? null
                 : RopeRenderer.BuildRope(grab, target, RopePhysics.For(doc.UseMobilePhysics), ActiveRopeSkin);
