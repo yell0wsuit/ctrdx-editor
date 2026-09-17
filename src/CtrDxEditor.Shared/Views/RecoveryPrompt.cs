@@ -31,7 +31,7 @@ namespace CtrDxEditor.Views
                 Message = Localizer.Format(
                     "Dialog.Recovery.Body",
                     snapshot.FileName ?? Localizer.Get("Dialog.Recovery.Untitled"),
-                    snapshot.SavedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)),
+                    DateText.LongDateTime(snapshot.SavedAt.ToLocalTime(), CultureInfo.CurrentCulture)),
                 PositiveText = Localizer.Get("Dialog.Recovery.Restore"),
                 NegativeText = Localizer.Get("Dialog.Recovery.Discard"),
                 // Restoring discards nothing, so the confirming button keeps the neutral style.
