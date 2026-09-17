@@ -98,6 +98,35 @@ namespace CtrDxEditor.Benchmarks
             return Build(objects.ToString());
         }
 
+        /// <summary>
+        /// A playable rope level with gun grabs stacked on one point, the shape of a real stress level that
+        /// made pan and drag stutter. Guns resolve no rope, so the fixture weighs on the per-grab walk of the
+        /// scene pass rather than on rope building.
+        /// </summary>
+        /// <param name="guns">How many gun grabs to stack.</param>
+        /// <returns>A parsed level document.</returns>
+        public static LevelDocument StackedGuns(int guns)
+        {
+            StringBuilder objects = new("""
+                        <candy x="158" y="437" />
+                        <grab x="159" y="337" length="90" wheel="false" gun="false" radius="-1" moveLength="-1" moveVertical="false" moveOffset="0" spider="false" part="L" hidePath="false" />
+                        <target x="161" y="147" />
+                        <star x="62" y="170" timeout="-1" />
+                        <star x="161" y="250" timeout="-1" />
+                        <star x="261" y="360" timeout="-1" />
+
+                """);
+            for (int i = 0; i < guns; i++)
+            {
+                _ = objects.Append("""
+                        <grab x="159" y="50" length="90" wheel="false" gun="true" radius="-1" moveLength="-1" moveVertical="false" moveOffset="0" spider="false" part="L" hidePath="false" />
+
+                    """);
+            }
+
+            return Build(objects.ToString());
+        }
+
         private static LevelDocument Build(string objectElements)
         {
             string xml = $"""
