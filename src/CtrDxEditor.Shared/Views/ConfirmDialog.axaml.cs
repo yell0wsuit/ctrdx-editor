@@ -75,13 +75,29 @@ namespace CtrDxEditor.Views
             DataContext = this;
         }
 
+        /// <summary>
+        /// Whether the dialog closes only through its two buttons, ignoring a light dismiss (Escape or a
+        /// click away). For questions where "no answer" has no safe meaning.
+        /// </summary>
+        public bool RequireAnswer { get; init; }
+
+        private bool _answered;
+
+        /// <inheritdoc />
+        public override bool OnClosing()
+        {
+            return _answered || !RequireAnswer;
+        }
+
         private void Confirm_Click(object? sender, RoutedEventArgs e)
         {
+            _answered = true;
             Close(true);
         }
 
         private void Cancel_Click(object? sender, RoutedEventArgs e)
         {
+            _answered = true;
             Close(false);
         }
     }

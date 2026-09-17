@@ -24,6 +24,7 @@ AppBuilder BuildAvaloniaApp()
     PlatformStartup startup = new()
     {
         Settings = settings,
+        Recovery = new IndexedDbRecoveryStore(),
         Installer = new BrowserContentInstaller(".webp"),
         InstalledStore = () => new IndexedDbContentStore(),
         SpriteImageExtension = ".webp",

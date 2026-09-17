@@ -34,6 +34,7 @@ namespace CtrDxEditor.Desktop
             PlatformStartup startup = new()
             {
                 Settings = settings,
+                Recovery = new FileRecoveryStore(ContentRoot.RecoveryPath),
                 Installer = new FolderContentInstaller(ContentRoot.DefaultContentDir, spriteExt),
                 InstalledStore = () => new FolderContentStore(ContentRoot.DefaultContentDir),
                 SpriteImageExtension = spriteExt,

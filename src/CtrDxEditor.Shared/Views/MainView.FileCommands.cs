@@ -330,6 +330,7 @@ namespace CtrDxEditor.Views
             {
                 await WriteXmlAsync(_currentLevelFile, xml);
                 vm.MarkSaved();
+                await ClearRecoveryAfterSaveAsync(vm);
             }
         }
 
@@ -456,6 +457,7 @@ namespace CtrDxEditor.Views
                     // A level already living at a file keeps that file's name; the level name only fills in
                     // the first save, so renaming a level never quietly proposes saving somewhere else.
                     SuggestedFileName = _currentLevelFile?.Name
+                        ?? vm.RecoveredFileName
                         ?? LevelFileNaming.Suggest(vm.Document?.LevelName, "xml"),
                     FileTypeChoices = [new FilePickerFileType(Localizer.Get("Dialog.FileType.LevelXml")) { Patterns = ["*.xml"] }],
                 });
@@ -465,6 +467,7 @@ namespace CtrDxEditor.Views
                 await WriteXmlAsync(file, xml);
                 _currentLevelFile = file;
                 vm.MarkSaved();
+                await ClearRecoveryAfterSaveAsync(vm);
             }
         }
 
@@ -488,6 +491,20 @@ namespace CtrDxEditor.Views
             await using Stream stream = await file.OpenWriteAsync();
             await using StreamWriter writer = new(stream);
             await writer.WriteAsync(xml);
+        }
+
+        // The level is safely on disk, so its snapshot is no longer needed. A store failure here must not
+        // report the save itself as failed; the stale snapshot is at worst offered once more next launch.
+        private static async Task ClearRecoveryAfterSaveAsync(EditorViewModel vm)
+        {
+            try
+            {
+                await vm.ClearRecoveryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CtrDx] Clearing the recovery snapshot failed.\n{ex}");
+            }
         }
     }
 }

@@ -10,6 +10,10 @@ namespace CtrDxEditor.Content
         public static string SettingsPath =>
             Path.Combine(UserDataDirectory.Current, "settings.json");
 
+        /// <summary>Path to the unsaved-work recovery snapshot in the user data directory.</summary>
+        public static string RecoveryPath =>
+            Path.Combine(UserDataDirectory.Current, "recovery.json");
+
         /// <summary>Default download destination: content/ in the user data directory.</summary>
         public static string DefaultContentDir =>
             Path.Combine(UserDataDirectory.Current, "content");

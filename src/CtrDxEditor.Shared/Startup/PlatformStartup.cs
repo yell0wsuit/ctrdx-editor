@@ -42,6 +42,9 @@ namespace CtrDxEditor.Startup
         /// <summary>Draws the user's attention to the editor window (taskbar flash / dock bounce); null where unavailable (the browser).</summary>
         public IUserAttention? Attention { get; init; }
 
+        /// <summary>Persists unsaved-work snapshots; null disables recovery.</summary>
+        public IRecoveryStore? Recovery { get; init; }
+
         /// <summary>
         /// Reports whether a newer release has been published, offering the user the release page at
         /// startup. Null where the head is not user-updatable (the browser, which always loads the

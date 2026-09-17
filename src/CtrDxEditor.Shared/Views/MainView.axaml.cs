@@ -437,6 +437,7 @@ namespace CtrDxEditor.Views
             UnregisterLevelDrop();
             _paletteDrag.Cancel();
             _animationPreviewTimer.Stop();
+            _recoveryTimer.Stop();
             if (_mutatedSubscription is not null)
             {
                 _mutatedSubscription.ObjectMutated -= _invalidateCanvas;

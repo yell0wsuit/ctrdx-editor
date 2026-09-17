@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 
 using CtrDxEditor.Content;
 using CtrDxEditor.Startup;
@@ -121,10 +122,40 @@ namespace CtrDxEditor
                 while (root.DataContext is null);
             }
 
+            // Awaited, and ahead of the stale checks, so the recovery prompt never stacks with them.
+            await OfferRecoveryAsync(root);
+
             // Deliberately not awaited: the editor is already usable, and neither check blocks it.
             // Reached only once the editor is up, so these can never stack on top of the content setup
             // dialog the user must complete first.
             _ = PromptForStaleThingsAsync(root);
+        }
+
+        /// <summary>
+        /// Offers any unsaved work left by an earlier session, then starts snapshotting this one.
+        /// </summary>
+        /// <param name="root">The attached root: the desktop window, or the browser's main view.</param>
+        /// <remarks>
+        /// Capture starts only after the prompt resolves, so it cannot overwrite a snapshot the user has
+        /// not been offered. Failures are swallowed: recovery must never bring startup down.
+        /// </remarks>
+        private static async Task OfferRecoveryAsync(Control root)
+        {
+            try
+            {
+                if (root.DataContext is EditorViewModel editor)
+                {
+                    await RecoveryPrompt.RunAsync(editor);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CtrDx] Recovery prompt failed; continuing without it.\n{ex}");
+            }
+            finally
+            {
+                (root as MainView ?? root.FindDescendantOfType<MainView>())?.StartRecoveryCapture();
+            }
         }
 
         /// <summary>
@@ -253,7 +284,8 @@ namespace CtrDxEditor
                 SpriteCache sprites = new(store, _startup.SpriteImageExtension);
                 await Task.Run(sprites.PreloadAsync);
                 EditorSettings initial = await _startup.Settings.LoadAsync();
-                EditorViewModel editor = new(sprites, _startup.Settings, initial, _startup.Playtest, _startup.Attention);
+                EditorViewModel editor = new(
+                    sprites, _startup.Settings, initial, _startup.Playtest, _startup.Attention, _startup.Recovery);
                 editor.InitializeDecorationFromSettings();
                 root.DataContext = editor;
                 return true;
