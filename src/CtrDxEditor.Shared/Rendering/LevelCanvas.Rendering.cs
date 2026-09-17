@@ -811,6 +811,7 @@ namespace CtrDxEditor.Rendering
             int ropeSeed = 0;
             bool tutorialDark = ActiveBackground == 0 && ActualThemeVariant == ThemeVariant.Dark;
             LevelObject? gunAimTarget = GrabRenderer.GunAimTarget(objects, doc.TwoParts);
+            IReadOnlyDictionary<LevelObject, string> bindingIdLabels = LevelSceneRenderer.BindingIdLabels(objects);
             foreach (LevelObject obj in objects.OrderBy(LevelSceneRenderer.GameDrawLayer))
             {
                 if (obj.Type == "grab")
@@ -864,6 +865,7 @@ namespace CtrDxEditor.Rendering
                     LevelSceneRenderer.DrawObject(context, v, sprites, obj, ActiveCandySkin, ActiveOmNomSupport, doc.NightLevel,
                         ActiveBackground > 0 ? Brushes.Black : _palette.StarDurationText,
                         objects,
+                        bindingIdLabels,
                         drawOffset,
                         previewSeconds,
                         opBounds,
