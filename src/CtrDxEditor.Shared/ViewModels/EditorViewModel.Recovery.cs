@@ -14,6 +14,10 @@ namespace CtrDxEditor.ViewModels
         // or a level the user discarded.
         private string? _lastRecoveryXml;
 
+        // The most recent capture, which a clear waits out. Without that, a save landing while a snapshot
+        // write is still in flight clears first and the write then puts the saved work back in the slot.
+        private Task _pendingRecoveryCapture = Task.CompletedTask;
+
         /// <summary>
         /// The file name a restored level came from, suggested by its first Save As. Null for any level
         /// that was not restored, and after a load, new, close or save.
@@ -26,7 +30,14 @@ namespace CtrDxEditor.ViewModels
         /// </summary>
         /// <param name="fileName">The level's file name for the Save As suggestion, or null when it has none.</param>
         /// <returns>True when a snapshot was written.</returns>
-        public async Task<bool> TryCaptureRecoveryAsync(string? fileName)
+        public Task<bool> TryCaptureRecoveryAsync(string? fileName)
+        {
+            Task<bool> capture = CaptureRecoveryAsync(fileName);
+            _pendingRecoveryCapture = capture;
+            return capture;
+        }
+
+        private async Task<bool> CaptureRecoveryAsync(string? fileName)
         {
             if (Recovery is null || ToXml() is not { } xml)
             {
@@ -66,6 +77,15 @@ namespace CtrDxEditor.ViewModels
         /// <summary>Empties the recovery slot, after a save or when the user discards a recovered level.</summary>
         public async Task ClearRecoveryAsync()
         {
+            try
+            {
+                await _pendingRecoveryCapture;
+            }
+            catch (Exception)
+            {
+                // The capture's own caller reports its failure; here it only matters that it has finished.
+            }
+
             _lastRecoveryXml = null;
             if (Recovery is not null)
             {

@@ -22,12 +22,21 @@ namespace CtrDxEditor.Tests
             return Task.FromResult(Stored);
         }
 
+        /// <summary>
+        /// When set, <see cref="SaveAsync"/> waits for this before storing, standing in for a slow write
+        /// (a file move or an IndexedDB put) that lands after other work has run.
+        /// </summary>
+        public Task? SaveGate { get; set; }
+
         /// <inheritdoc />
-        public Task SaveAsync(RecoverySnapshot snapshot)
+        public async Task SaveAsync(RecoverySnapshot snapshot)
         {
+            if (SaveGate is { } gate)
+            {
+                await gate;
+            }
             Stored = snapshot;
             SaveCount++;
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />

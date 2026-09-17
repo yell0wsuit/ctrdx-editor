@@ -130,6 +130,29 @@ namespace CtrDxEditor.Tests
             Assert.NotNull(store.Stored);
         }
 
+        /// <summary>A save that finishes while a snapshot write is still landing does not leave that snapshot behind.</summary>
+        [Fact]
+        public async Task ClearWaitsForInFlightCapture()
+        {
+            TaskCompletionSource gate = new();
+            InMemoryRecoveryStore store = new() { SaveGate = gate.Task };
+            EditorViewModel vm = Editor(store);
+            vm.LoadLevelXml(Level);
+            Edit(vm);
+
+            Task<bool> capture = vm.TryCaptureRecoveryAsync(null);
+            vm.MarkSaved();
+            Task clear = vm.ClearRecoveryAsync();
+            gate.SetResult();
+            _ = await capture;
+            await clear;
+
+            Assert.Null(store.Stored);
+            // The slot no longer holds this session's write, so a clean tick has nothing to clear.
+            _ = await vm.TryCaptureRecoveryAsync(null);
+            Assert.Equal(1, store.ClearCount);
+        }
+
         /// <summary>Clearing after a save empties the slot and lets the next edit write again.</summary>
         [Fact]
         public async Task ClearAfterSaveEmptiesSlot()
