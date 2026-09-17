@@ -279,10 +279,9 @@ namespace CtrDxEditor.Tests
         private static double? GunAimRotationDegrees(LevelObject grab, LevelObject[] objects, bool twoParts)
         {
             Type grabRenderer = typeof(LevelCanvas).Assembly.GetType("CtrDxEditor.Rendering.GrabRenderer")!;
-            MethodInfo method = grabRenderer.GetMethod(
-                "GunAimRotationDegrees",
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
-            return (double?)method.Invoke(null, [grab, objects, twoParts]);
+            BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+            object? target = grabRenderer.GetMethod("GunAimTarget", flags)!.Invoke(null, [objects, twoParts]);
+            return (double?)grabRenderer.GetMethod("GunAimRotationDegrees", flags)!.Invoke(null, [grab, target]);
         }
     }
 }

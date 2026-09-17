@@ -329,7 +329,8 @@ namespace CtrDxEditor.Rendering
         /// <param name="omNomSupport">Active Om Nom support index.</param>
         /// <param name="nightLevel">Whether night sprite variants apply.</param>
         /// <param name="starDurationText">Brush for the timed-star duration label.</param>
-        /// <param name="objects">All level objects, used to decide whether binding id labels are needed.</param>
+        /// <param name="objects">All level objects, used to find the primary candy a captured lantern dims.</param>
+        /// <param name="bindingIdLabels">The frame's labels from <see cref="BindingIdLabels"/>.</param>
         /// <param name="drawOffset">How far preview has moved the object, from <see cref="DrawOffset"/>.</param>
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
         /// <param name="tutorialBounds">Screen bounds for tutorial custom draw operations.</param>
@@ -344,6 +345,7 @@ namespace CtrDxEditor.Rendering
             bool nightLevel,
             IBrush starDurationText,
             IReadOnlyList<LevelObject> objects,
+            IReadOnlyDictionary<LevelObject, string> bindingIdLabels,
             Vec2 drawOffset,
             double? animationPreviewSeconds = null,
             Rect tutorialBounds = default,
@@ -387,7 +389,7 @@ namespace CtrDxEditor.Rendering
                     DrawDurationLabel(ctx, v, star, x, y, timeout, starDurationText);
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
@@ -402,14 +404,14 @@ namespace CtrDxEditor.Rendering
                     DrawLayer(ctx, v, innerCandy, x, y, 1.0, spinRotation, LanternInnerCandyOffsetY);
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
             if (obj.Type == "transporter")
             {
                 ConveyorRenderer.Draw(ctx, v, sprites, obj);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
@@ -441,7 +443,7 @@ namespace CtrDxEditor.Rendering
                     }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
@@ -461,7 +463,7 @@ namespace CtrDxEditor.Rendering
                     }
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
@@ -493,11 +495,11 @@ namespace CtrDxEditor.Rendering
                         DrawDurationLabel(ctx, v, rotSprite, x, y + offsetY, burnTime, starDurationText);
                     }
                     DrawOverlays(ctx, v, sprites, obj, x, y);
-                    DrawBindingIdLabel(ctx, v, obj, objects, x, y + offsetY);
+                    DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y + offsetY);
                     return;
                 }
                 DrawOverlays(ctx, v, sprites, obj, x, y);
-                DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+                DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
                 return;
             }
 
@@ -521,7 +523,7 @@ namespace CtrDxEditor.Rendering
                 }
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);
-            DrawBindingIdLabel(ctx, v, obj, objects, x, y);
+            DrawBindingIdLabel(ctx, v, obj, bindingIdLabels, x, y);
         }
 
         /// <summary>Draws a generic sprite's selected back-layer variant followed by its main layers.</summary>
@@ -796,15 +798,39 @@ namespace CtrDxEditor.Rendering
         /// <returns>The id label for multi-object candy/bulb groups, otherwise null.</returns>
         internal static string? BindingIdLabel(LevelObject obj, IReadOnlyList<LevelObject> objects)
         {
-            return obj.Type switch
+            return BindingIdLabels(objects).GetValueOrDefault(obj);
+        }
+
+        /// <summary>
+        /// Every binding id label in the level, keyed by object. Labels depend on the whole level (a candy is only
+        /// labeled when it has company), so a frame resolves them all in one pass rather than rescanning the level
+        /// for each labeled object.
+        /// </summary>
+        /// <param name="objects">All level objects.</param>
+        /// <returns>The label for each object that shows one; objects without a label are absent.</returns>
+        internal static IReadOnlyDictionary<LevelObject, string> BindingIdLabels(IReadOnlyList<LevelObject> objects)
+        {
+            Dictionary<LevelObject, string> labels = [];
+            AddGroupLabels(labels, objects, "candy", "candyNumber");
+            AddGroupLabels(labels, objects, "lightBulb", "bulbNumber");
+            AddGroupLabels(labels, objects, "lightbulb", "bulbNumber");
+
+            bool severalSockGroups = SockObject.HasSeveralGroups(objects);
+            foreach (LevelObject obj in objects)
             {
-                "candy" => LabelForGroup(obj, objects, "candy", "candyNumber"),
-                "lightBulb" or "lightbulb" => LabelForGroup(obj, objects, obj.Type, "bulbNumber"),
-                "sock" => SockObject.GroupLabel(obj, objects),
-                // The mouse's activation index (auto-numbered, hidden from the field panel).
-                "gap" => obj.GetAttr("index"),
-                _ => null,
-            };
+                string? label = obj.Type switch
+                {
+                    "sock" => SockObject.GroupLabel(obj, severalSockGroups),
+                    // The mouse's activation index (auto-numbered, hidden from the field panel).
+                    "gap" => obj.GetAttr("index"),
+                    _ => null,
+                };
+                if (label is not null)
+                {
+                    labels[obj] = label;
+                }
+            }
+            return labels;
         }
 
         internal static string PreviewSpriteKey(LevelObject obj, double? animationPreviewSeconds)
@@ -1116,8 +1142,8 @@ namespace CtrDxEditor.Rendering
             return new Point(point.X, point.Y);
         }
 
-        private static string? LabelForGroup(
-            LevelObject obj,
+        private static void AddGroupLabels(
+            Dictionary<LevelObject, string> labels,
             IReadOnlyList<LevelObject> objects,
             string element,
             string attribute)
@@ -1125,16 +1151,15 @@ namespace CtrDxEditor.Rendering
             List<LevelObject> group = [.. objects.Where(o => o.Type == element)];
             if (group.Count <= 1)
             {
-                return null;
+                return;
             }
 
-            if (obj.GetAttr(attribute) is { Length: > 0 } key)
+            for (int i = 0; i < group.Count; i++)
             {
-                return key;
+                labels[group[i]] = group[i].GetAttr(attribute) is { Length: > 0 } key
+                    ? key
+                    : i.ToString(CultureInfo.InvariantCulture);
             }
-
-            int index = group.IndexOf(obj);
-            return index >= 0 ? index.ToString(CultureInfo.InvariantCulture) : null;
         }
 
         /// <summary>
@@ -1158,12 +1183,11 @@ namespace CtrDxEditor.Rendering
             DrawingContext ctx,
             ViewTransform v,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
+            IReadOnlyDictionary<LevelObject, string> bindingIdLabels,
             double x,
             double y)
         {
-            string? label = BindingIdLabel(obj, objects);
-            if (label is null)
+            if (!bindingIdLabels.TryGetValue(obj, out string? label))
             {
                 return;
             }
@@ -1285,8 +1309,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
         /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
@@ -1297,8 +1320,7 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             SpriteCache sprites,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             RopeVisual? rope,
             int ropeSeed,
             Rect opBounds,
@@ -1313,12 +1335,12 @@ namespace CtrDxEditor.Rendering
             {
                 using (ctx.PushOpacity(opacity))
                 {
-                    DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
+                    DrawGrabContent(ctx, v, sprites, obj, gunAimTarget, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
                 }
             }
             else
             {
-                DrawGrabContent(ctx, v, sprites, obj, objects, twoParts, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
+                DrawGrabContent(ctx, v, sprites, obj, gunAimTarget, rope, ropeSeed, opBounds, opacity, hookHighlighted, previewPosition, animationPreviewSeconds);
             }
         }
 
@@ -1338,8 +1360,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprites">Sprite cache used to resolve the grab's art.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve gun-aim targets.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="rope">The grab's rope visual, or null when it has nothing to hang from.</param>
         /// <param name="ropeSeed">Per-rope seed for deterministic rope decoration.</param>
         /// <param name="opBounds">Screen bounds passed to the rope's custom draw op.</param>
@@ -1352,8 +1373,7 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             SpriteCache sprites,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             RopeVisual? rope,
             int ropeSeed,
             Rect opBounds,
@@ -1386,12 +1406,12 @@ namespace CtrDxEditor.Rendering
                     DrawLayer(ctx, v, sprite.Variants[SpriteVariantPicker.Pick(obj.Element, sprite.Variants.Count)], previewPosition.X, previewPosition.Y, sprite.Scale);
                 }
                 int back = Math.Min(GrabRenderer.BackLayerCount(obj), sprite.Layers.Count);
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, 0, back, previewPosition);
+                DrawGrabLayers(ctx, v, sprite, obj, gunAimTarget, 0, back, previewPosition);
                 if (drawRope && rope is not null)
                 {
                     RopeRenderer.DrawRope(ctx, v, sprites, rope, ropeSeed, opBounds, ropeOpacity);
                 }
-                DrawGrabLayers(ctx, v, sprite, obj, objects, twoParts, back, sprite.Layers.Count, previewPosition);
+                DrawGrabLayers(ctx, v, sprite, obj, gunAimTarget, back, sprite.Layers.Count, previewPosition);
             }
             else if (drawRope && rope is not null)
             {
@@ -1409,8 +1429,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="v">View transform mapping level coordinates to screen coordinates.</param>
         /// <param name="sprite">The grab's resolved sprite.</param>
         /// <param name="obj">The grab object.</param>
-        /// <param name="objects">All level objects, used to resolve the gun-aim target.</param>
-        /// <param name="twoParts">Whether the level uses two-part rope physics.</param>
+        /// <param name="gunAimTarget">The candy gun arrows aim at, from <c>GrabRenderer.GunAimTarget</c>, or null for no aim.</param>
         /// <param name="from">First layer index to draw (inclusive).</param>
         /// <param name="to">Last layer index to draw (exclusive).</param>
         /// <param name="position">Preview-aware layer anchor.</param>
@@ -1419,14 +1438,13 @@ namespace CtrDxEditor.Rendering
             ViewTransform v,
             ObjectSprite sprite,
             LevelObject obj,
-            IReadOnlyList<LevelObject> objects,
-            bool twoParts,
+            LevelObject? gunAimTarget,
             int from,
             int to,
             Vec2 position)
         {
             double? gunAim = sprite.Layers.Count >= 3
-                ? GrabRenderer.GunAimRotationDegrees(obj, objects, twoParts)
+                ? GrabRenderer.GunAimRotationDegrees(obj, gunAimTarget)
                 : null;
             for (int i = from; i < to; i++)
             {

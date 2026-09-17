@@ -54,21 +54,42 @@ namespace CtrDxEditor.Core.Editing
         /// <param name="objects">All level objects.</param>
         public static string? GroupLabel(LevelObject obj, IEnumerable<LevelObject> objects)
         {
-            if (!TryParseGroup(obj.GetAttr("group"), out int group) || group == 0)
-            {
-                return null;
-            }
+            return GroupLabel(obj, HasSeveralGroups(objects));
+        }
 
-            HashSet<int> distinctNonzero = [];
+        /// <summary>
+        /// Returns the group number to draw on a grouped hat, given whether the level holds at least two distinct
+        /// nonzero groups. Labeling many hats checks <see cref="HasSeveralGroups"/> once rather than once per hat.
+        /// </summary>
+        /// <param name="obj">The hat being drawn.</param>
+        /// <param name="severalGroups">The level's <see cref="HasSeveralGroups"/> answer.</param>
+        public static string? GroupLabel(LevelObject obj, bool severalGroups)
+        {
+            return severalGroups && TryParseGroup(obj.GetAttr("group"), out int group) && group != 0
+                ? group.ToString(CultureInfo.InvariantCulture)
+                : null;
+        }
+
+        /// <summary>Whether the level's hats span at least two distinct nonzero groups, so grouped hats need labels.</summary>
+        /// <param name="objects">All level objects.</param>
+        public static bool HasSeveralGroups(IEnumerable<LevelObject> objects)
+        {
+            int? first = null;
             foreach (LevelObject other in objects)
             {
                 if (other.Type == "sock" && TryParseGroup(other.GetAttr("group"), out int g) && g != 0)
                 {
-                    _ = distinctNonzero.Add(g);
+                    if (first is null)
+                    {
+                        first = g;
+                    }
+                    else if (first != g)
+                    {
+                        return true;
+                    }
                 }
             }
-
-            return distinctNonzero.Count >= 2 ? group.ToString(CultureInfo.InvariantCulture) : null;
+            return false;
         }
 
         private static bool TryParseGroup(string? value, out int group)

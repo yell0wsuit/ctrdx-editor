@@ -28,12 +28,72 @@ namespace CtrDxEditor.Core.Editing
     /// <summary>The resolved rope target kind and object, when one exists.</summary>
     public readonly record struct RopeTarget(RopeTargetKind Kind, LevelObject? Target);
 
+    /// <summary>
+    /// The objects a grab rope can bind to, gathered from a level once. Resolving many grabs against one
+    /// <see cref="RopeCandidates"/> filters the level a single time rather than once per grab.
+    /// </summary>
+    public sealed class RopeCandidates
+    {
+        /// <summary>Gathers the bindable objects of a level, each list in level order.</summary>
+        /// <param name="objects">All level objects.</param>
+        public RopeCandidates(IReadOnlyList<LevelObject> objects)
+        {
+            foreach (LevelObject o in objects)
+            {
+                if (o.Type is "lightBulb" or "lightbulb")
+                {
+                    Bulbs.Add(o);
+                }
+                if (BombBinding.IsBomb(o))
+                {
+                    Bombs.Add(o);
+                }
+                if (AxeBinding.IsAxe(o))
+                {
+                    Axes.Add(o);
+                }
+                switch (o.Type)
+                {
+                    case "candy":
+                        Candies.Add(o);
+                        break;
+                    case "candyL":
+                        CandyL ??= o;
+                        break;
+                    case "candyR":
+                        CandyR ??= o;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        internal List<LevelObject> Bulbs { get; } = [];
+
+        internal List<LevelObject> Bombs { get; } = [];
+
+        internal List<LevelObject> Axes { get; } = [];
+
+        internal List<LevelObject> Candies { get; } = [];
+
+        internal LevelObject? CandyL { get; }
+
+        internal LevelObject? CandyR { get; }
+    }
+
     /// <summary>Resolves grab rope targets against the objects in a level, mirroring the game loaders.</summary>
     public static class RopeResolver
     {
         /// <summary>Finds the object a grab rope should visually connect to.</summary>
         public static RopeTarget Resolve(
             LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
+        {
+            return Resolve(grab, new RopeCandidates(objects), twoParts);
+        }
+
+        /// <summary>Finds the object a grab rope should visually connect to among already gathered candidates.</summary>
+        public static RopeTarget Resolve(LevelObject grab, RopeCandidates candidates, bool twoParts)
         {
             // The game builds the bungee only when radius == -1 && !gun (LoadGrabs). A gun grab, or an
             // auto-catch grab (positive radius), has no authored rope - it binds candy at runtime - so
@@ -46,7 +106,7 @@ namespace CtrDxEditor.Core.Editing
             bool bindBulb = IsTrue(grab.GetAttr("bindBulb"));
             if (bindBulb)
             {
-                List<LevelObject> bulbs = [.. objects.Where(o => o.Type is "lightBulb" or "lightbulb")];
+                List<LevelObject> bulbs = candidates.Bulbs;
                 if (bulbs.Count > 0)
                 {
                     string? num = grab.GetAttr("bulbNumber");
@@ -63,8 +123,8 @@ namespace CtrDxEditor.Core.Editing
             // at either step drops through to the next rather than leaving the rope unbound.
             if (!bindBulb && BombBinding.RequestedKey(grab) is { } bombKey)
             {
-                LevelObject? bomb = objects.FirstOrDefault(o =>
-                    BombBinding.IsBomb(o) && AxeBinding.KeyEquals(BombBinding.KeyOf(o), bombKey));
+                LevelObject? bomb = candidates.Bombs.FirstOrDefault(o =>
+                    AxeBinding.KeyEquals(BombBinding.KeyOf(o), bombKey));
                 if (bomb is not null)
                 {
                     return new RopeTarget(RopeTargetKind.Bomb, bomb);
@@ -73,8 +133,8 @@ namespace CtrDxEditor.Core.Editing
 
             if (!bindBulb && AxeBinding.RequestedKey(grab) is { } axeKey)
             {
-                LevelObject? axe = objects.FirstOrDefault(o =>
-                    AxeBinding.IsAxe(o) && AxeBinding.KeyEquals(AxeBinding.KeyOf(o), axeKey));
+                LevelObject? axe = candidates.Axes.FirstOrDefault(o =>
+                    AxeBinding.KeyEquals(AxeBinding.KeyOf(o), axeKey));
                 if (axe is not null)
                 {
                     return new RopeTarget(RopeTargetKind.Axe, axe);
@@ -84,11 +144,11 @@ namespace CtrDxEditor.Core.Editing
             LevelObject? candy;
             if (twoParts)
             {
-                candy = objects.FirstOrDefault(o => o.Type == (grab.GetAttr("part") == "R" ? "candyR" : "candyL"));
+                candy = grab.GetAttr("part") == "R" ? candidates.CandyR : candidates.CandyL;
             }
             else
             {
-                List<LevelObject> candies = [.. objects.Where(o => o.Type == "candy")];
+                List<LevelObject> candies = candidates.Candies;
                 string? key = grab.GetAttr("candyNumber");
                 candy = key is not null
                     ? candies.FirstOrDefault(c => KeyEquals(c.GetAttr("candyNumber"), key)) ?? candies.FirstOrDefault()

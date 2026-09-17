@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using Avalonia;
 using Avalonia.Media;
@@ -110,25 +109,42 @@ namespace CtrDxEditor.Rendering
         }
 
         /// <summary>
-        /// Rotation for the gun arrow preview. DX updates gunArrow.rotation from grab position to star.pos,
-        /// where star is the primary full candy, so the editor only previews this in single-full-candy levels.
+        /// The candy every gun arrow aims at. DX updates gunArrow.rotation from grab position to star.pos,
+        /// where star is the primary full candy, so the editor only previews aim in single-full-candy levels.
+        /// Every gun shares the target, so a draw pass resolves it once rather than once per gun.
         /// </summary>
-        public static double? GunAimRotationDegrees(
-            LevelObject grab, IReadOnlyList<LevelObject> objects, bool twoParts)
+        public static LevelObject? GunAimTarget(IReadOnlyList<LevelObject> objects, bool twoParts)
         {
-            if (grab.Type != "grab" || !IsTrue(grab.GetAttr("gun")) || twoParts)
+            if (twoParts)
             {
                 return null;
             }
 
-            List<LevelObject> candies = [.. objects.Where(o => o.Type == "candy")];
-            if (candies.Count != 1)
+            LevelObject? candy = null;
+            foreach (LevelObject obj in objects)
             {
-                return null;
+                if (obj.Type != "candy")
+                {
+                    continue;
+                }
+                if (candy is not null)
+                {
+                    return null;
+                }
+                candy = obj;
             }
+            return candy;
+        }
 
-            LevelObject candy = candies[0];
-            return Math.Atan2(grab.Y - candy.Y, grab.X - candy.X) * 180.0 / Math.PI;
+        /// <summary>
+        /// Rotation for the gun arrow preview, pointing from the gun toward a <see cref="GunAimTarget"/>, or null
+        /// when the grab is not a gun or there is no target.
+        /// </summary>
+        public static double? GunAimRotationDegrees(LevelObject grab, LevelObject? target)
+        {
+            return target is null || grab.Type != "grab" || !IsTrue(grab.GetAttr("gun"))
+                ? null
+                : Math.Atan2(grab.Y - target.Y, grab.X - target.X) * 180.0 / Math.PI;
         }
 
         private static bool IsTrue(string? value)
