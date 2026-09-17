@@ -27,12 +27,14 @@ namespace CtrDxEditor.ViewModels
     /// <param name="initial">The editor settings snapshot loaded at startup (decoration defaults, content path).</param>
     /// <param name="playtest">Plays levels in Cut the Rope: DX, or null where playtesting is unavailable.</param>
     /// <param name="attention">Draws attention to the editor window (taskbar flash / dock bounce), or null where unavailable.</param>
+    /// <param name="recovery">Stores unsaved-work snapshots, or null where recovery is disabled.</param>
     public sealed partial class EditorViewModel(
         SpriteCache sprites,
         ISettingsStore? settings = null,
         EditorSettings? initial = null,
         IPlaytestLauncher? playtest = null,
-        IUserAttention? attention = null) : ViewModelBase
+        IUserAttention? attention = null,
+        IRecoveryStore? recovery = null) : ViewModelBase
     {
         private const int UndoHistoryLimit = 100;
         private static readonly LevelDocument EmptyDocument = LevelDocument.Parse("<map/>");
@@ -58,6 +60,9 @@ namespace CtrDxEditor.ViewModels
 
         /// <summary>Draws attention to the editor window (taskbar flash / dock bounce); null where unavailable.</summary>
         public IUserAttention? Attention { get; } = attention;
+
+        /// <summary>Stores unsaved-work snapshots; null where recovery is disabled.</summary>
+        public IRecoveryStore? Recovery { get; } = recovery;
 
         /// <summary>Whether this platform can play levels at all; hides the commands when false.</summary>
         public bool CanPlaytest => Playtest is not null;
@@ -313,6 +318,7 @@ namespace CtrDxEditor.ViewModels
         public void MarkSaved()
         {
             SavedBaselineXml = ToXml();
+            RecoveredFileName = null;
         }
 
         /// <summary>Whether the selected object has real polyline movement with direct-edit handles.</summary>
@@ -1174,6 +1180,7 @@ namespace CtrDxEditor.ViewModels
 
         private void ResetDocumentSessionState()
         {
+            ResetRecoverySession();
             _hiddenObjectElements.Clear();
             _hiddenLayerNames.Clear();
             _lockedLayerNames.Clear();
