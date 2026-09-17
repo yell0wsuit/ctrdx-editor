@@ -32,9 +32,10 @@ with someone's saved content. These shapes isolate different costs:
 | `OffMapMovers` |      56 | ~1,296,900 units  | path length (sentinel off-map paths) |
 | `LocalMovers`  |      56 |     ~26,900 units | mover count, without the length   |
 | `DenseStatic`  |      56 |                 0 | object count, with no paths at all |
-| `StackedGuns`  | 6 + guns |                0 | per-grab work in a whole frame     |
+| `Stacked`      |    606 |                 0 | per-object work in a whole frame, by kind |
 
-`StackedGuns` mirrors a real stress level (600+ gun grabs on one point) whose frames allocated ~30 MB each.
+`Stacked` piles 600 copies of one object into a small rope level. Its `Gun` kind mirrors a real stress level
+(600+ gun grabs on one point) whose frames allocated ~30 MB each.
 
 `OffMapMovers` is tuned to match a real pathological level (~1.30M level units across 56 movers) that made
 the editor lag. Run `--describe` to confirm a fixture still carries the workload it claims to.
@@ -51,5 +52,6 @@ what the path drawing itself costs.
 
 `SceneRenderBenchmarks` renders a whole `LevelCanvas` frame. `OnScreen = False` pans the level away so Skia
 rejects every draw, leaving the editor's own per-frame work; the gap to `OnScreen = True` is rasterization,
-which the headless target does on the CPU and the desktop app hands to the GPU. **Allocated** should grow
-linearly with `Guns` — a quadratic climb means something is rebuilding a per-level list per object.
+which the headless target does on the CPU and the desktop app hands to the GPU. `Star` is the baseline: a
+plain sprite with no cross-object work. A kind that costs well above it off screen is doing per-object work
+that scales with the level — rescanning every object for each one of its kind.

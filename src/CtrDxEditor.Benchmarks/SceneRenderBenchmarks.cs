@@ -26,13 +26,17 @@ namespace CtrDxEditor.Benchmarks
         private const int SurfaceWidth = 1400;
         private const int SurfaceHeight = 900;
         private const double Zoom = 1.5;
+        private const int Count = 600;
 
         private HeadlessRenderTarget _target = null!;
         private LevelCanvas _canvas = null!;
 
-        /// <summary>Gun grabs stacked in the level. Cost should grow gently with this, not quadratically.</summary>
-        [Params(0, 150, 600)]
-        public int Guns { get; set; }
+        /// <summary>
+        /// The object stacked 600 times. <see cref="StressLevels.StackedKind.Star"/> does no cross-object work, so a
+        /// kind that costs well above it is doing per-object work that scales with the level.
+        /// </summary>
+        [ParamsAllValues]
+        public StressLevels.StackedKind Kind { get; set; }
 
         /// <summary>
         /// Whether the level sits inside the surface. Off screen, Skia rejects every draw before rasterizing,
@@ -69,7 +73,7 @@ namespace CtrDxEditor.Benchmarks
 
             _canvas = new LevelCanvas
             {
-                Document = StressLevels.StackedGuns(Guns),
+                Document = StressLevels.Stacked(Kind, Count),
                 Sprites = sprites,
             };
             Size size = new(SurfaceWidth, SurfaceHeight);

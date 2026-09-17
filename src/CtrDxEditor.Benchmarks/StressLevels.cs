@@ -98,15 +98,48 @@ namespace CtrDxEditor.Benchmarks
             return Build(objects.ToString());
         }
 
-        /// <summary>
-        /// A playable rope level with gun grabs stacked on one point, the shape of a real stress level that
-        /// made pan and drag stutter. Guns resolve no rope, so the fixture weighs on the per-grab walk of the
-        /// scene pass rather than on rope building.
-        /// </summary>
-        /// <param name="guns">How many gun grabs to stack.</param>
-        /// <returns>A parsed level document.</returns>
-        public static LevelDocument StackedGuns(int guns)
+        /// <summary>The object a <see cref="Stacked"/> level piles up.</summary>
+        public enum StackedKind
         {
+            /// <summary>Gun grabs, which resolve no rope; the shape of a real stress level.</summary>
+            Gun,
+
+            /// <summary>Rope grabs, each hanging a rope to the level's first candy.</summary>
+            RopeGrab,
+
+            /// <summary>Candies, which label themselves with a binding id once there is more than one.</summary>
+            Candy,
+
+            /// <summary>Light bulbs, labelled like candies.</summary>
+            LightBulb,
+
+            /// <summary>Magic hats in one group, which check every other hat for a distinct group.</summary>
+            Sock,
+
+            /// <summary>Stars: plain sprites with no cross-object work, the baseline to compare against.</summary>
+            Star,
+        }
+
+        /// <summary>
+        /// A playable rope level with many copies of one object stacked on a point. A real stress level of 600+
+        /// gun grabs made pan and drag stutter; the other kinds probe the same per-object walk for other types.
+        /// </summary>
+        /// <param name="kind">The object to stack.</param>
+        /// <param name="count">How many copies to stack.</param>
+        /// <returns>A parsed level document.</returns>
+        public static LevelDocument Stacked(StackedKind kind, int count)
+        {
+            string element = kind switch
+            {
+                StackedKind.Gun => """<grab x="159" y="50" length="90" wheel="false" gun="true" radius="-1" moveLength="-1" moveVertical="false" moveOffset="0" spider="false" part="L" hidePath="false" />""",
+                StackedKind.RopeGrab => """<grab x="159" y="50" length="90" radius="-1" />""",
+                StackedKind.Candy => """<candy x="100" y="300" />""",
+                StackedKind.LightBulb => """<lightBulb x="100" y="300" />""",
+                StackedKind.Sock => """<sock x="100" y="300" angle="0" group="1" />""",
+                StackedKind.Star => """<star x="100" y="100" timeout="-1" />""",
+                _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+            };
+
             StringBuilder objects = new("""
                         <candy x="158" y="437" />
                         <grab x="159" y="337" length="90" wheel="false" gun="false" radius="-1" moveLength="-1" moveVertical="false" moveOffset="0" spider="false" part="L" hidePath="false" />
@@ -116,12 +149,9 @@ namespace CtrDxEditor.Benchmarks
                         <star x="261" y="360" timeout="-1" />
 
                 """);
-            for (int i = 0; i < guns; i++)
+            for (int i = 0; i < count; i++)
             {
-                _ = objects.Append("""
-                        <grab x="159" y="50" length="90" wheel="false" gun="true" radius="-1" moveLength="-1" moveVertical="false" moveOffset="0" spider="false" part="L" hidePath="false" />
-
-                    """);
+                _ = objects.Append("        ").AppendLine(element);
             }
 
             return Build(objects.ToString());
