@@ -34,14 +34,7 @@ jobs:
         runs-on: macos-latest
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-dotnet@v6
-              with:
-                  dotnet-version: "10.x"
-            - uses: actions/cache@v6
-              with:
-                  path: ~/.nuget/packages
-                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
-                  restore-keys: nuget-${{ runner.os }}-
+            - uses: ./.github/actions/setup-dotnet
             - run: ./distribution/bundle_macos.sh "${{ needs.version.outputs.version }}"
             - uses: actions/upload-artifact@v7
               with:
@@ -53,16 +46,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-dotnet@v6
-              with:
-                  dotnet-version: "10.x"
+            - uses: ./.github/actions/setup-dotnet
             # NativeAOT links with clang and needs zlib headers; neither ships on the runner.
             - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
-            - uses: actions/cache@v6
-              with:
-                  path: ~/.nuget/packages
-                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
-                  restore-keys: nuget-${{ runner.os }}-
             - run: ./distribution/build_appimage.sh "${{ needs.version.outputs.version }}"
             - uses: actions/upload-artifact@v7
               with:
@@ -74,14 +60,7 @@ jobs:
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-dotnet@v6
-              with:
-                  dotnet-version: "10.x"
-            - uses: actions/cache@v6
-              with:
-                  path: ~/.nuget/packages
-                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
-                  restore-keys: nuget-${{ runner.os }}-
+            - uses: ./.github/actions/setup-dotnet
             - run: python distribution/release_windows.py "${{ needs.version.outputs.version }}"
             - uses: actions/upload-artifact@v7
               with:

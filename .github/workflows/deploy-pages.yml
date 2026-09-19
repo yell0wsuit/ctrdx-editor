@@ -25,23 +25,11 @@ jobs:
         steps:
             - uses: actions/checkout@v7
 
-            - name: Set up .NET
-              uses: actions/setup-dotnet@v5
-              with:
-                  dotnet-version: "10.x"
+            - uses: ./.github/actions/setup-dotnet
 
             # Required for the browser-wasm publish (native relink; WasmNativeStrip).
             - name: Install wasm-tools workload
               run: dotnet workload install wasm-tools
-
-            # Avoids re-downloading NuGet packages every run. No packages.lock.json
-            # in this repo, so key off the project/props files instead.
-            - name: Cache NuGet packages
-              uses: actions/cache@v6
-              with:
-                  path: ~/.nuget/packages
-                  key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'Directory.Build.props') }}
-                  restore-keys: nuget-${{ runner.os }}-
 
             - name: Publish Browser head
               run: >
