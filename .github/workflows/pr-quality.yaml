@@ -5,6 +5,8 @@ on:
         branches: [main]
         paths:
             - "**/*.cs"
+            - ".github/workflows/pr-quality.yaml"
+            - ".github/actions/**"
 
 permissions:
     contents: read
@@ -15,12 +17,9 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@main
+              uses: actions/checkout@v7
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@main
-              with:
-                  dotnet-version: "10.x"
+            - uses: ./.github/actions/setup-dotnet
 
             - name: Install WebAssembly workload
               run: dotnet workload install wasm-tools
