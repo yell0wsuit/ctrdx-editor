@@ -1,12 +1,29 @@
 name: PR Code Quality
 
+# Also runs on main so the caches the PR runs restore from exist there: a PR can read main's
+# caches but never save one that another PR could use.
+#
+# Only changes the .NET build or tests can see wake it: code, XAML, project files, the test
+# levels, and the localization files compiled in as resources.
 on:
-    pull_request:
+    push:
         branches: [main]
-        paths:
+        paths: &quality-paths
             - "**/*.cs"
+            - "**/*.axaml"
+            - "**/*.csproj"
+            - "**/*.props"
+            - "**/*.targets"
+            - "**/*.slnx"
+            - "global.json"
+            - "nuget.config"
+            - "src/**/TestData/**"
+            - "resources/localization/**"
             - ".github/workflows/pr-quality.yaml"
             - ".github/actions/**"
+    pull_request:
+        branches: [main]
+        paths: *quality-paths
 
 permissions:
     contents: read
