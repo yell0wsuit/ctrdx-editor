@@ -51,7 +51,10 @@ namespace CtrDxEditor.Core.Descriptors
             new ObjectDescriptor("target", "Om Nom", [], MaxCount: int.MaxValue),
 
             // Candy
-            new ObjectDescriptor("candy", "Candy", [], MaxCount: int.MaxValue),
+            new ObjectDescriptor("candy", "Candy",
+            [
+                new AttributeSpec(FlyingCandy.Attribute, AttrType.Bool, "false"),
+            ], MaxCount: int.MaxValue),
             new ObjectDescriptor("candyL", "Candy (left)", [], MaxCount: 1),
             new ObjectDescriptor("candyR", "Candy (right)", [], MaxCount: 1),
 

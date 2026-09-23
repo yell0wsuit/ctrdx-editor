@@ -105,6 +105,29 @@ namespace CtrDxEditor.Core.Tests
             Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.NoCandy");
         }
 
+        /// <summary>When every candy flies, none has a leader, so the game grounds them all: warn.</summary>
+        [Theory]
+        [InlineData("<candy x=\"1\" y=\"1\" isDriven=\"true\" />")]
+        [InlineData("<candy x=\"1\" y=\"1\" isDriven=\"true\" /><candy x=\"5\" y=\"5\" isDriven=\"1\" />")]
+        public void AllCandiesFlyingWarns(string candies)
+        {
+            LevelDocument doc = Doc("twoParts=\"false\"", candies + "<target x=\"3\" y=\"3\" />");
+
+            Assert.Contains(LevelValidator.Validate(doc), w => w.Key == "Validation.FlyingCandyNoLeader");
+        }
+
+        /// <summary>A flying candy with a plain candy, or a twoParts split candy, to follow is fine.</summary>
+        [Theory]
+        [InlineData("twoParts=\"false\"", "<candy x=\"1\" y=\"1\" /><candy x=\"5\" y=\"5\" isDriven=\"true\" />")]
+        [InlineData("twoParts=\"true\"", "<candyL x=\"1\" y=\"1\" /><candyR x=\"2\" y=\"2\" /><candy x=\"5\" y=\"5\" isDriven=\"true\" />")]
+        [InlineData("twoParts=\"false\"", "<candy x=\"1\" y=\"1\" isDriven=\"false\" />")]
+        public void FlyingCandyWithLeaderDoesNotWarn(string settings, string candies)
+        {
+            LevelDocument doc = Doc(settings, candies + "<target x=\"3\" y=\"3\" />");
+
+            Assert.DoesNotContain(LevelValidator.Validate(doc), w => w.Key == "Validation.FlyingCandyNoLeader");
+        }
+
         /// <summary>Levels below the supported resolution floor produce a size warning.</summary>
         [Fact]
         public void UndersizedResolutionWarns()

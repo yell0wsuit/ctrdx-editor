@@ -99,6 +99,13 @@ namespace CtrDxEditor.Core.Editing
                 warnings.Add(new LevelWarning("Validation.DuplicateCandyNumber"));
             }
 
+            // A flying candy follows a candy without wings. When every candy flies there is none, and
+            // the game quietly plays them all as ordinary candies.
+            if (objects.Any(FlyingCandy.IsDriven) && !FlyingCandy.HasLeader(objects, document.TwoParts))
+            {
+                warnings.Add(new LevelWarning("Validation.FlyingCandyNoLeader"));
+            }
+
             List<LevelObject> axes = [.. objects.Where(AxeBinding.IsAxe)];
             bool BindsToAnAxe(LevelObject grab)
             {

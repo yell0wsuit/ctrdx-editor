@@ -26,6 +26,25 @@ namespace CtrDxEditor.Tests
             Assert.Contains("images/obj_bee.json", required);
             Assert.Contains("images/obj_bee.webp", required);
         }
+
+        /// <summary>
+        /// Flying candy wings pair each flap quad (0-3) with the wing root (quad 4) at the game's 0.8
+        /// scale, and stay optional so a bundle older than ctrdx-assets v7.0 is still accepted.
+        /// </summary>
+        [Fact]
+        public void CandyWingDescriptorsUseFlapAndRootQuads()
+        {
+            for (int frame = 0; frame < FlyingCandy.FlapFrameCount; frame++)
+            {
+                VisualDescriptor wings = VisualDescriptorMap.For(FlyingCandy.WingSpriteKey(frame))!;
+                Assert.Equal([frame, 4], wings.Layers.Select(l => l.Quad));
+                Assert.All(wings.Layers, l => Assert.True(l.Optional));
+                Assert.Equal(0.8, wings.Scale);
+            }
+
+            Assert.DoesNotContain("images/obj_candy_timetravel.json", VisualDescriptorMap.RequiredFiles(".webp"));
+        }
+
         private static readonly string[] ElectroSpriteKeys =
         [
             "electro",

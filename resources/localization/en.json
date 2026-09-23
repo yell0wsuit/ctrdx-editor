@@ -895,6 +895,7 @@
     "Attr.kicked.Help": "Starts a suction-cup hook already knocked loose, so its rope is detached when the level begins.",
     "Attr.invisible.Help": "Hides the hook and its rope in game. The editor still draws it, faintly, so you can select and move it.",
     "Attr.hidePath.Help": "A hook with a movement path becomes a bee in game and leaves a pollen trail along its route. This hides that trail.",
+    "Attr.isDriven.Help": "Gives the candy wings, as in Time Travel. It copies every move of the first candy without wings, keeping its distance, until a hand, mouse, ants or a lantern takes it, or any candy leaves play. Needs another candy to follow; on its own it plays as an ordinary candy.",
 
     "Attr.grab.Help": "Lets the ghost morph into a rope hook, using the radius below. Tapping the ghost cycles through whichever states are enabled.",
     "Attr.bubble.Help": "Lets the ghost morph into a bubble that lifts the candy.",
@@ -956,6 +957,7 @@
     "Attr.kicked": "Detached",
     "Attr.hidePath": "Hide pollen path",
     "Attr.invisible": "Invisible",
+    "Attr.isDriven": "Flying",
     "Attr.autoCatch": "Auto rope",
     "Attr.chain": "Chain",
     "Attr.movable": "Movable rail",
@@ -1108,6 +1110,7 @@
     "Validation.ObjectOutsideLevelBounds": "Some objects are outside the designated level resolution. This will cause visibility problems on non-16:9 screens. Please adjust either the object positions or the level resolution to cover them if needed.",
     "Validation.DuplicateSettingsLayer": "Multiple settings layers found; only the first one is used.",
     "Validation.DuplicateCandyNumber": "Duplicate candyNumber values found; grabs cannot tell those candies apart.",
+    "Validation.FlyingCandyNoLeader": "Every candy is set to Flying, so none has a candy to follow and the game plays them all as ordinary candies. Leave at least one candy without wings.",
     "Validation.GrabUnmatchedCandyNumber": "A grab references candyNumber '{0}', which no candy has, it will bind to the primary candy.",
     "Validation.GrabUnmatchedBulbNumber": "A grab binds to bulbNumber '{0}', which no light bulb has.",
     "Validation.GrabUnmatchedAxeNumber": "A grab binds to axeNumber '{0}', which no blade has, it will bind to the candy instead.",

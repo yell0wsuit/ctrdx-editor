@@ -39,8 +39,14 @@ namespace CtrDxEditor.Content
         /// for - the hats are usable either way, and re-downloading is what makes their groups legible.
         /// (Revision 4 added Time Travel's Pirate Ship art, which the editor does not draw.)
         /// </para>
+        /// <para>
+        /// Revision 7 is the published ctrdx-assets v7.0 bundle, which adds obj_candy_timetravel - the
+        /// flying candy's wings. Like the hat bands its layers are optional: an older bundle still lets
+        /// a candy be set to fly, it just draws without wings. (Revision 6 only recompressed textures
+        /// and music.)
+        /// </para>
         /// </remarks>
-        public const int CurrentAssetVersion = 5;
+        public const int CurrentAssetVersion = 7;
 
         /// <summary>Whether an installed bundle predates the revision this build wants.</summary>
         /// <param name="installed">Revision declared by the installed bundle's manifest.</param>

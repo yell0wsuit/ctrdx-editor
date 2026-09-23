@@ -874,7 +874,8 @@ namespace CtrDxEditor.Rendering
                         drawOffset,
                         previewSeconds,
                         opBounds,
-                        tutorialDark);
+                        tutorialDark,
+                        doc.TwoParts);
                 }
             }
 

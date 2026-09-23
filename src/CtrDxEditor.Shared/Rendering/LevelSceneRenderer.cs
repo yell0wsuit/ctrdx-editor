@@ -335,6 +335,7 @@ namespace CtrDxEditor.Rendering
         /// <param name="animationPreviewSeconds">Elapsed live-preview seconds, or null for authored static rendering.</param>
         /// <param name="tutorialBounds">Screen bounds for tutorial custom draw operations.</param>
         /// <param name="tutorialDark">Whether tutorials use dark blank-canvas styling.</param>
+        /// <param name="twoParts">The level's <c>twoParts</c> setting, which decides whether a split candy can lead a flying candy.</param>
         public static void DrawObject(
             DrawingContext ctx,
             ViewTransform v,
@@ -349,7 +350,8 @@ namespace CtrDxEditor.Rendering
             Vec2 drawOffset,
             double? animationPreviewSeconds = null,
             Rect tutorialBounds = default,
-            bool tutorialDark = false)
+            bool tutorialDark = false,
+            bool twoParts = false)
         {
             if (TutorialObject.IsText(obj.Type))
             {
@@ -508,6 +510,10 @@ namespace CtrDxEditor.Rendering
             bool candyCaptured = obj.Type == "candy"
                 && LanternObject.IsPrimaryCandy(obj, objects)
                 && LanternObject.AnyCaptured(objects);
+            // The game adds the wings as a child of the candy visual, so they draw over it, unrotated.
+            ObjectSprite? wings = FlyingCandy.HasWings(obj, objects, twoParts)
+                ? sprites.GetSprite(FlyingCandy.WingSpriteKey(FlyingCandy.FlapFrame(animationPreviewSeconds)))
+                : null;
             if (sprite is not null)
             {
                 if (candyCaptured)
@@ -515,11 +521,19 @@ namespace CtrDxEditor.Rendering
                     using (ctx.PushOpacity(CapturedPrimaryCandyOpacity))
                     {
                         DrawGenericSprite(ctx, v, obj, sprite, x, y, spinRotation);
+                        if (wings is not null)
+                        {
+                            DrawSprite(ctx, v, wings, x, y);
+                        }
                     }
                 }
                 else
                 {
                     DrawGenericSprite(ctx, v, obj, sprite, x, y, spinRotation);
+                    if (wings is not null)
+                    {
+                        DrawSprite(ctx, v, wings, x, y);
+                    }
                 }
             }
             DrawOverlays(ctx, v, sprites, obj, x, y);

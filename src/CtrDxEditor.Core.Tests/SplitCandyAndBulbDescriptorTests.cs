@@ -37,14 +37,20 @@ namespace CtrDxEditor.Core.Tests
             Assert.Equal("50", litRadius.Default);
         }
 
-        /// <summary>Plain candy ids are assigned internally and are not editable descriptor fields.</summary>
+        /// <summary>
+        /// Plain candy ids are assigned internally and are not editable descriptor fields; the only field
+        /// is Time Travel's flying-candy flag.
+        /// </summary>
         [Fact]
-        public void PlainCandyHasNoEditableAttributes()
+        public void PlainCandyOnlyExposesFlyingFlag()
         {
             ObjectDescriptor? candy = DescriptorTable.CtrObjects.For("candy");
             Assert.NotNull(candy);
 
-            Assert.Empty(candy.Attributes);
+            AttributeSpec isDriven = Assert.Single(candy.Attributes);
+            Assert.Equal("isDriven", isDriven.Name);
+            Assert.Equal(AttrType.Bool, isDriven.Type);
+            Assert.Equal("false", isDriven.Default);
         }
     }
 }
