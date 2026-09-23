@@ -74,6 +74,8 @@ namespace CtrDxEditor.Content
         private const string HookChainImageBase = "images/obj_hook_chain";
         private const string HookAutoChainJson = "images/obj_hook_auto_chain.json";
         private const string HookAutoChainImageBase = "images/obj_hook_auto_chain";
+        private const string CandyWingsJson = "images/obj_candy_timetravel.json";
+        private const string CandyWingsImageBase = "images/obj_candy_timetravel";
 
         private static readonly VisualDescriptor[] All =
         [
@@ -114,6 +116,18 @@ namespace CtrDxEditor.Content
             [
                 new SpriteLayer(CandyJson, CandyImageBase, 9),
             ], Scale: 0.71),
+
+            // Flying candy wings: one flap frame (quads 0-3) under the wing root (quad 4), both centered
+            // on the candy at the game's 0.8 scale - the candy root does not pass its 0.71 to children.
+            // Matches GameScene.CreateFlyingCandyWings. Optional: ctrdx-assets v6.0 and older lack the
+            // atlas, and the flying candy still plays, just drawn without wings.
+            .. Enumerable.Range(0, FlyingCandy.FlapFrameCount).Select(frame => new VisualDescriptor(
+                FlyingCandy.WingSpriteKey(frame),
+                [
+                    new SpriteLayer(CandyWingsJson, CandyWingsImageBase, frame, Optional: true),
+                    new SpriteLayer(CandyWingsJson, CandyWingsImageBase, 4, Optional: true),
+                ],
+                Scale: 0.8)),
 
             // Grab hook = arm + ring (share sourceSize 276x276). Two interchangeable pairs exist: the game's
             // RandomHookBaseQuad rolls base 0 or 2 per placed hook and draws back=base, front=base+1. This is
