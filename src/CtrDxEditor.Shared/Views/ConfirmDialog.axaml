@@ -5,12 +5,22 @@
              x:Class="CtrDxEditor.Views.ConfirmDialog"
              x:CompileBindings="True"
              x:DataType="views:ConfirmDialog">
-  <StackPanel Margin="24" Spacing="16"
-              Width="{Binding $parent[TopLevel].Bounds.Width,
-                      Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=380}">
-    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
-    <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />
-    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+  <!-- Clamped MaxHeight + scrolling message row: a long body (e.g. many validation warnings) would
+       otherwise grow past the window and push the buttons off-screen with no way to reach them. -->
+  <Grid Margin="24" RowDefinitions="Auto,*,Auto"
+        Width="{Binding $parent[TopLevel].Bounds.Width,
+                Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=380}"
+        MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
+                    Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=640}">
+    <TextBlock Grid.Row="0" Margin="0,0,0,16"
+               FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
+    <ScrollViewer Grid.Row="1"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />
+    </ScrollViewer>
+    <StackPanel Grid.Row="2" Margin="0,16,0,0"
+                Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
       <Button Content="{Binding NegativeText}" Click="Cancel_Click"
               MinWidth="96" Padding="16,6"
               HorizontalContentAlignment="Center"
@@ -20,5 +30,5 @@
               HorizontalContentAlignment="Center"
               VerticalContentAlignment="Center" />
     </StackPanel>
-  </StackPanel>
+  </Grid>
 </UserControl>
