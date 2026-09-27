@@ -36,6 +36,16 @@ namespace CtrDxEditor.Views
             }
 
             e.Cancel = true;
+            // A user close (the close button, or Cmd+Q, which bypasses the in-app chords) while a dialog is
+            // up would stack a second prompt over it - possibly another unsaved-changes prompt from Close or
+            // Open. Refuse it instead, as the in-app shortcuts already stand down; the user answers the open
+            // dialog first. Programmatic and OS-shutdown closes still prompt.
+            if (!e.IsProgrammatic && e.CloseReason != WindowCloseReason.OSShutdown
+                && Content is MainView { IsDialogOpen: true })
+            {
+                return;
+            }
+
             _ = PromptThenCloseAsync();
         }
 
