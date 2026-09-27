@@ -11,12 +11,21 @@
       <Setter Property="Foreground" Value="{DynamicResource EditorBrush.DangerText}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Margin="24" Spacing="16"
-              Width="{Binding $parent[TopLevel].Bounds.Width,
-                      Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=460}">
-    <TextBlock Classes="dialog-header" Classes.danger="{Binding IsDanger}"
+  <!-- Clamped MaxHeight + scrolling message row, so a long message never pushes OK off-screen. -->
+  <Grid Margin="24" RowDefinitions="Auto,*,Auto"
+        Width="{Binding $parent[TopLevel].Bounds.Width,
+                Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=460}"
+        MaxHeight="{Binding $parent[TopLevel].Bounds.Height,
+                    Converter={x:Static conv:DialogSizeConverter.Clamp}, ConverterParameter=640}">
+    <TextBlock Grid.Row="0" Margin="0,0,0,16"
+               Classes="dialog-header" Classes.danger="{Binding IsDanger}"
                FontSize="18" FontWeight="SemiBold" Text="{Binding Header}" />
-    <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />
-    <Button Content="{loc:Tr Dialog.Common.Ok}" Click="Ok_Click" HorizontalAlignment="Right" />
-  </StackPanel>
+    <ScrollViewer Grid.Row="1"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <TextBlock TextWrapping="Wrap" Text="{Binding Message}" />
+    </ScrollViewer>
+    <Button Grid.Row="2" Margin="0,16,0,0"
+            Content="{loc:Tr Dialog.Common.Ok}" Click="Ok_Click" HorizontalAlignment="Right" />
+  </Grid>
 </UserControl>

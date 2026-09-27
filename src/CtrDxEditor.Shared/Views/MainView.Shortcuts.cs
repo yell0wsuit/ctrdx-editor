@@ -52,7 +52,10 @@ namespace CtrDxEditor.Views
         // A dialog hosted in this same TopLevel is modal over the editor, so the chords stand down while one
         // is up - same reasoning as DialogOwnsDrop, and the handler above deliberately sees keys the dialog
         // has already handled, so nothing else would stop them.
-        private bool DialogOwnsKeyboard => this.FindControl<ReactiveDialogHost>("DialogHost")?.IsOpen == true;
+        private bool DialogOwnsKeyboard => IsDialogOpen;
+
+        /// <summary>Whether a dialog is currently up in this view's dialog host.</summary>
+        internal bool IsDialogOpen => this.FindControl<ReactiveDialogHost>("DialogHost")?.IsOpen == true;
 
         private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
         {
