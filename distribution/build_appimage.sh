@@ -1,9 +1,9 @@
 #!/bin/bash
 # Builds a Linux AppImage for the Cut the Rope DX Level Editor.
 # Usage: ./build_appimage.sh <version>
-# Must run on Linux x64: NativeAOT does not support cross-OS compilation.
+# Run on Linux x64 to package the AppImage.
 #
-# Requirements: .NET 10 SDK, clang, zlib1g-dev, wget.
+# Requirements: .NET 10 SDK, wget.
 
 set -euo pipefail
 
@@ -34,9 +34,12 @@ echo "=== Building $DISPLAY_NAME v$VERSION AppImage ==="
 
 echo "[1/5] Publishing $RID..."
 rm -rf "$PUBLISH_DIR"
+# Use the prebuilt .NET runtime instead of linking NativeAOT against the runner's glibc.
 dotnet publish "$PROJECT" \
     -c Release \
     -r "$RID" \
+    -p:PublishAot=false \
+    --self-contained true \
     -p:VersionPrefix="$VERSION" \
     -p:VersionSuffix= \
     -o "$PUBLISH_DIR"
@@ -103,7 +106,10 @@ if [ ! -f "$APPIMAGETOOL" ]; then
 fi
 
 mkdir -p "$RELEASE_DIR"
-APPIMAGE_PATH="$RELEASE_DIR/$APP_NAME-v$VERSION-Linux-x86_64.AppImage"
+# Use the desktop display name for the download, with filename-safe punctuation.
+APPIMAGE_NAME="${DISPLAY_NAME//:/}"
+APPIMAGE_NAME="${APPIMAGE_NAME// /_}"
+APPIMAGE_PATH="$RELEASE_DIR/$APPIMAGE_NAME-v$VERSION-x86_64.AppImage"
 rm -f "$APPIMAGE_PATH"
 
 # GitHub's ubuntu runners have no libfuse2, so appimagetool cannot mount itself.
