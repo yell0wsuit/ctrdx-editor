@@ -110,14 +110,26 @@ mkdir -p "$RELEASE_DIR"
 APPIMAGE_NAME="${DISPLAY_NAME//:/}"
 APPIMAGE_NAME="${APPIMAGE_NAME// /_}"
 APPIMAGE_PATH="$RELEASE_DIR/$APPIMAGE_NAME-v$VERSION-x86_64.AppImage"
-rm -f "$APPIMAGE_PATH"
+ZSYNC_PATH="$APPIMAGE_PATH.zsync"
+rm -f "$APPIMAGE_PATH" "$ZSYNC_PATH"
+
+# Lets AppImageUpdate find the newest release's .zsync; the wildcard covers the version.
+UPDATE_INFO="gh-releases-zsync|yell0wsuit|ctrdx-editor|latest|$APPIMAGE_NAME-*-x86_64.AppImage.zsync"
 
 # GitHub's ubuntu runners have no libfuse2, so appimagetool cannot mount itself.
 # Extracting and running sidesteps that without installing anything.
-ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$APPIMAGETOOL" "$APPDIR" "$APPIMAGE_PATH"
+# zsyncmake writes the .zsync into the working directory, so run from the release dir.
+(cd "$RELEASE_DIR" && ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
+    "$APPIMAGETOOL" -u "$UPDATE_INFO" "$APPDIR" "$APPIMAGE_PATH")
+
+if [ ! -f "$ZSYNC_PATH" ]; then
+    echo "Error: expected zsync file not found at $ZSYNC_PATH" >&2
+    exit 1
+fi
 
 rm -rf "$BUILD_DIR"
 
 echo ""
 echo "=== Build complete ==="
 echo "AppImage: $APPIMAGE_PATH ($(du -h "$APPIMAGE_PATH" | cut -f1))"
+echo "Zsync:    $ZSYNC_PATH"
