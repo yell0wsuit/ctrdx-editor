@@ -47,8 +47,6 @@ jobs:
         steps:
             - uses: actions/checkout@v7
             - uses: ./.github/actions/setup-dotnet
-            # NativeAOT links with clang and needs zlib headers; neither ships on the runner.
-            - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
             - run: ./distribution/build_appimage.sh "${{ needs.version.outputs.version }}"
             - uses: actions/upload-artifact@v7
               with:
