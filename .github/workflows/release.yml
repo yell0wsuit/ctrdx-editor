@@ -51,7 +51,9 @@ jobs:
             - uses: actions/upload-artifact@v7
               with:
                   name: linux
-                  path: publish/release_github/*.AppImage
+                  path: |
+                      publish/release_github/*.AppImage
+                      publish/release_github/*.AppImage.zsync
 
     windows:
         needs: version
